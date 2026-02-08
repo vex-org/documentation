@@ -12,6 +12,7 @@ VitePress documentation site for [Vex](https://vex-lang.org).
 
 ## Deploy (Vercel)
 
-- Root: this repo root.
-- Build command: `bun run build` or `npm run build`
-- Output directory: `docs/.vitepress/dist`
+- **Root Directory:** (leave empty — repo root)
+- **Build Command:** `bun run build` or `npm run build`
+- **Output Directory:** `docs/.vitepress/dist`
+- **Install Command:** `bun install` or `npm install` (optional; Vercel auto-detects)
