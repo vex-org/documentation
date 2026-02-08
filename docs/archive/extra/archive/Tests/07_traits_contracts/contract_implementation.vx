@@ -1,0 +1,36 @@
+// Test contract implementation for multiple types
+// Expected: All assertions pass
+
+contract Printable {
+    toString(): string;
+}
+
+struct User {
+    id: i32,
+    name: string,
+}
+
+// External implementation for User
+fn (self: &User) toString(): string {
+    return self.name;
+}
+
+struct Product {
+    sku: string,
+}
+
+// External implementation for Product
+fn (self: &Product) toString(): string {
+    return self.sku;
+}
+
+fn main(): i32 {
+    let u = User { id: 1, name: "Bob" };
+    let p = Product { sku: "XYZ-123" };
+    
+    assert(u.toString() == "Bob", "User implementation");
+    assert(p.toString() == "XYZ-123", "Product implementation");
+
+    $print("✅ All contract implementation tests passed!");
+    return 0;
+}

@@ -1,0 +1,36 @@
+// Test type aliases
+// Expected: All assertions pass
+
+type Distance = f64;
+type Age = u8;
+type Point2D = (i32, i32);
+type Matrix2x2 = [[f64; 2]; 2];
+
+fn main(): i32 {
+    // Simple type alias
+    let dist: Distance = 100.5;
+    assert(dist > 100.0, "Distance type alias");
+    
+    let age: Age = 25;
+    assert(age == 25, "Age type alias");
+    
+    // Tuple type alias
+    let point: Point2D = (10, 20);
+    assert(point.0 == 10, "Point2D x");
+    assert(point.1 == 20, "Point2D y");
+    
+    // Array type alias
+    let matrix: Matrix2x2 = [[1.0, 2.0], [3.0, 4.0]];
+    assert(matrix[0][0] == 1.0, "Matrix type alias");
+    
+    // Function using type alias
+    let traveled = calculate_distance(0.0, dist);
+    assert(traveled > 0.0, "Function with type alias");
+    
+    $print("✅ All type alias tests passed!");
+    return 0;
+}
+
+fn calculate_distance(start: Distance, end: Distance): Distance {
+    return end - start;
+}

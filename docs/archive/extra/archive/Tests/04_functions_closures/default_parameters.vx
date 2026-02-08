@@ -1,0 +1,28 @@
+// Test default parameters
+// Expected: All assertions pass
+
+fn add_with_default(a: i32, b: i32 = 10): i32 {
+    return a + b;
+}
+
+fn multiple_defaults(x: i32 = 1, y: i32 = 2): i32 {
+    return x + y;
+}
+
+fn main(): i32 {
+    // Use default
+    let sum1 = add_with_default(5);
+    assert(sum1 == 15, "Default parameter used"); // 5 + 10
+
+    // Override default
+    let sum2 = add_with_default(5, 20);
+    assert(sum2 == 25, "Default parameter overridden"); // 5 + 20
+
+    // Multiple defaults
+    assert(multiple_defaults() == 3, "All defaults"); // 1 + 2
+    assert(multiple_defaults(10) == 12, "First arg provided"); // 10 + 2
+    assert(multiple_defaults(10, 20) == 30, "All args provided"); // 10 + 20
+
+    $print("✅ All default parameter tests passed!");
+    return 0;
+}

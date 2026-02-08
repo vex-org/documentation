@@ -1,0 +1,40 @@
+// Test: Methods
+// Category: Methods
+// Description: Test instance methods and static methods
+
+struct Counter {
+    value: i32,
+}
+
+fn (c: &Counter) get(): i32 {
+    return c.value;
+}
+
+fn (c: &Counter) increment(): i32 {
+    return c.value + 1;
+}
+
+fn Counter.new(initial: i32): Counter {
+    return Counter { value: initial };
+}
+
+fn main(): i32 {
+    // Static method
+    let counter = Counter.new(10);
+    assert(counter.value == 10, "Static method");
+    
+    // Instance method
+    let val = counter.get();
+    assert(val == 10, "Instance method get");
+    
+    // Instance method with logic
+    let next = counter.increment();
+    assert(next == 11, "Instance method increment");
+    
+    // Multiple method calls
+    let c2 = Counter.new(5);
+    assert(c2.get() == 5, "Second instance");
+    
+    $print("✅ All method tests passed!");
+    return 0;
+}

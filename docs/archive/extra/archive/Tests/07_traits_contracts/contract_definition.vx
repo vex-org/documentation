@@ -1,0 +1,33 @@
+// Test contract definition
+// Expected: All assertions pass
+
+// Define a simple contract (pure interface)
+contract Shape {
+    area(): f64;
+    perimeter(): f64;
+}
+
+// Struct definition (data only)
+struct Rectangle {
+    width: f64,
+    height: f64,
+}
+
+// Implement contract via external methods (Go-style)
+fn (self: Rectangle) area(): f64 {
+    return self.width * self.height;
+}
+
+fn (self: Rectangle) perimeter(): f64 {
+    return 2.0 * (self.width + self.height);
+}
+
+fn main(): i32 {
+    let rect = Rectangle { width: 10.0, height: 5.0 };
+    
+    assert(rect.area() == 50.0, "Rectangle area");
+    assert(rect.perimeter() == 30.0, "Rectangle perimeter");
+    
+    $print("✅ All contract definition tests passed!");
+    return 0;
+}

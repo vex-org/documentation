@@ -1,0 +1,48 @@
+// Test type casting and coercion
+// Expected: Most assertions pass
+
+fn main(): i32 {
+    // Integer widening
+    let small: i8 = 42;
+    let big: i64 = small as i64;
+    assert(big == 42, "i8 to i64 cast");
+    
+    // Integer narrowing (may truncate)
+    let large: i32 = 1000;
+    let narrow: i8 = large as i8;  // Truncates
+    
+    // Unsigned to signed
+    let unsigned: u32 = 100;
+    let signed: i32 = unsigned as i32;
+    assert(signed == 100, "u32 to i32");
+    
+    // Float to int (truncates)
+    let pi: f64 = 3.14;
+    let int_pi: i32 = pi as i32;
+    assert(int_pi == 3, "f64 to i32 truncates");
+    
+    // Int to float
+    let num: i32 = 42;
+    let float_num: f64 = num as f64;
+    assert(float_num == 42.0, "i32 to f64");
+    
+    // f32 to f64
+    let small_float: f32 = 1.5;
+    let big_float: f64 = small_float as f64;
+    assert(big_float == 1.5, "f32 to f64");
+    
+    // f64 to f32 (may lose precision)
+    let precise: f64 = 1.123456789;
+    let less_precise: f32 = precise as f32;
+    assert(less_precise > 1.0, "f64 to f32");
+    
+    // Pointer casts
+    let x: i32 = 100;
+    let ptr: *i32 = &x;
+    let void_ptr: *void = ptr as *void;
+    let back: *i32 = void_ptr as *i32;
+    assert(*back == 100, "Pointer cast roundtrip");
+    
+    $print("✅ All type casting tests passed!");
+    return 0;
+}

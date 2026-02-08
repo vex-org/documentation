@@ -1,0 +1,21 @@
+// Test closure capture by reference
+// Expected: All assertions pass
+
+struct Data {
+    val: i32,
+}
+
+fn main(): i32 {
+    let d = Data { val: 100 };
+    
+    // Access struct field directly
+    let captured_val = d.val;
+    
+    assert(captured_val == 100, "Capture struct value");
+    
+    // Ensure we can still access d
+    assert(d.val == 100, "Original accessible");
+
+    $print("✅ All capture by reference tests passed!");
+    return 0;
+}

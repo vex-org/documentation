@@ -1,0 +1,57 @@
+// Test basic enum definition and pattern matching
+
+enum Color {
+    Red,
+    Green,
+    Blue
+}
+
+enum Message {
+    Quit,
+    Move { x: i32, y: i32 },
+    Write(string),
+    ChangeColor(i32, i32, i32)
+}
+
+fn main(): i32 {
+    // Unit variant enums
+    let red = Color.Red;
+    let green = Color.Green;
+    let blue = Color.Blue;
+    
+    // Match on simple enum
+    let color_code = match red {
+        Color.Red => 0,
+        Color.Green => 1,
+        Color.Blue => 2
+    };
+    assert(color_code == 0, "Red color code");
+    
+    // Enum with data - struct variant
+    let msg1 = Message.Move { x: 10, y: 20 };
+    
+    // Enum with data - tuple variant
+    let msg2 = Message.Write("Hello");
+    let msg3 = Message.ChangeColor(255, 0, 0);
+    
+    // Unit variant
+    let msg4 = Message.Quit;
+    
+    // Match on enum with data
+    let result = match msg1 {
+        Message.Quit => 0,
+        Message.Move { x, y } => x + y,
+        Message.Write(s) => 1,
+        Message.ChangeColor(r, g, b) => r + g + b
+    };
+    assert(result == 30, "Move message sum");
+    
+    let quit_result = match msg4 {
+        Message.Quit => true,
+        _ => false
+    };
+    assert(quit_result, "Quit message matched");
+    
+    $print("✅ All basic enum tests passed!");
+    return 0;
+}

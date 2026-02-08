@@ -1,0 +1,50 @@
+// Test unit type () and never type !
+// Expected: Partial pass (never type may not be implemented)
+
+fn returns_unit() {
+    // No return statement, implicitly returns ()
+    $print("This function returns unit");
+}
+
+fn explicit_unit(): () {
+    return ();
+}
+
+// Never type - function never returns
+// fn infinite_loop(): ! {
+//     loop {}
+// }
+
+// fn always_panics(): ! {
+//     panic("Always panics");
+// }
+
+fn main(): i32 {
+    // Call function returning unit
+    let unit_val = returns_unit();
+    
+    // Explicit unit value
+    let unit: () = ();
+    
+    // Unit in tuple
+    let tuple: (i32, ()) = (42, ());
+    assert(tuple.0 == 42, "Tuple with unit");
+    
+    // Function returning explicit unit
+    let result = explicit_unit();
+    
+    // Never type in match arm (unreachable)
+    let x: i32 = 5;
+    let val = match x {
+        5 => 100,
+        _ => {
+            // This arm is never reached
+            // panic("Unreachable")  // Would return !
+            200
+        }
+    };
+    assert(val == 100, "Match with never arm");
+    
+    $print("✅ All unit/never type tests passed!");
+    return 0;
+}

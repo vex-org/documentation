@@ -1,0 +1,46 @@
+// Test: Arithmetic operators
+// Category: Operators
+// Description: Test +, -, *, /, % operators
+
+fn main(): i32 {
+    // Addition
+    let add_result = 5 + 3;
+    assert(add_result == 8, "Addition");
+    
+    // Subtraction
+    let sub_result = 10 - 4;
+    assert(sub_result == 6, "Subtraction");
+    
+    // Multiplication
+    let mul_result = 6 * 7;
+    assert(mul_result == 42, "Multiplication");
+    
+    // Division
+    let div_result = 20 / 4;
+    assert(div_result == 5, "Division");
+    
+    // Modulo
+    let mod_result = 17 % 5;
+    assert(mod_result == 2, "Modulo");
+    
+    // Negative numbers
+    let neg_result = -10;
+    assert(neg_result == -10, "Negation");
+    
+    // Mixed operations
+    let mixed = 2 + 3 * 4;
+    assert(mixed == 14, "Operator precedence");
+    
+    let parens = (2 + 3) * 4;
+    assert(parens == 20, "Parentheses");
+    
+    // Float arithmetic
+    let float_add = 1.5 + 2.5;
+    assert(float_add == 4.0, "Float addition");
+    
+    let float_mul = 2.0 * 3.5;
+    assert(float_mul == 7.0, "Float multiplication");
+    
+    $print("✅ All arithmetic operator tests passed!");
+    return 0;
+}

@@ -1,0 +1,54 @@
+// Test: Ternary Operator
+// Tests the ternary conditional operator: condition ? true_expr : false_expr
+
+fn main(): i32 {
+    // Basic ternary
+    let x = 10;
+    let result = x > 5 ? 1 : 0;
+    assert(result == 1, "Basic ternary: x > 5 should be 1");
+    
+    // Ternary with false condition
+    let y = 3;
+    let result2 = y > 5 ? 1 : 0;
+    assert(result2 == 0, "False condition: y > 5 should be 0");
+    
+    // Nested ternary (right-associative)
+    let z = 7;
+    let nested = z > 10 ? 100 : z > 5 ? 50 : 0;
+    assert(nested == 50, "Nested ternary: z > 5 should give 50");
+    
+    // Ternary with expressions as branches
+    let a = 5;
+    let b = 3;
+    let max = a > b ? a : b;
+    assert(max == 5, "Max of a and b should be 5");
+    
+    let min = a < b ? a : b;
+    assert(min == 3, "Min of a and b should be 3");
+    
+    // Ternary with boolean condition directly
+    let flag = true;
+    let value = flag ? 42 : 0;
+    assert(value == 42, "Boolean true should give 42");
+    
+    let flag2 = false;
+    let value2 = flag2 ? 42 : 0;
+    assert(value2 == 0, "Boolean false should give 0");
+    
+    // Ternary with strings
+    let score = 85;
+    let grade = score >= 80 ? "Pass" : "Fail";
+     $println("Grade: {}", grade);
+    
+    // Complex condition in ternary
+    let age = 25;
+    let status = age >= 18 && age < 65 ? "Adult" : "Other";
+     $println("Status: {}", status);
+    
+    // Ternary in expression context
+    let sum = (x > 5 ? 10 : 5) + (y < 5 ? 2 : 1);
+    assert(sum == 12, "Sum should be 10 + 2 = 12");
+    
+     $print("✅ All ternary operator tests passed!");
+    return 0;
+}

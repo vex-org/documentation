@@ -1,0 +1,24 @@
+// Test sizeof and alignof intrinsics
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // sizeof
+    let size_i32 = #sizeof<i32>();
+    assert(size_i32 == 4, "sizeof i32");
+    
+    let size_i64 = #sizeof<i64>();
+    assert(size_i64 == 8, "sizeof i64");
+    
+    let size_arr = #sizeof<[i32; 10]>();
+    assert(size_arr == 40, "sizeof array");
+
+    // alignof
+    let align_i32 = alignof<i32>();
+    assert(align_i32 == 4, "alignof i32");
+    
+    let align_u8 = alignof<u8>();
+    assert(align_u8 == 1, "alignof u8");
+
+    $print("✅ All low-level op tests passed!");
+    return 0;
+}

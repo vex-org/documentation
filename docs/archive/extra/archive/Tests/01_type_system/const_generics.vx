@@ -1,0 +1,21 @@
+// Test const generics (compile-time constant parameters)
+// Expected: May not be implemented yet - const generics are advanced feature
+// This test will likely fail until const generics are implemented
+
+// Note: Vex may not support const generics yet
+// This is a placeholder test for future implementation
+
+fn main(): i32 {
+    // For now, just test basic arrays without const generics
+    let arr1: [i32; 5] = [1, 2, 3, 4, 5];
+    assert(arr1[0] == 1, "Array access");
+    
+    let arr2: [i32; 3] = [10, 20, 30];
+    assert(arr2[0] == 10, "Array access 2");
+    
+    // TODO: Add const generic tests when feature is implemented
+    // struct FixedArray<T, const N: usize> { data: [T; N] }
+    
+    $print("✅ Basic array tests passed (const generics not yet implemented)");
+    return 0;
+}

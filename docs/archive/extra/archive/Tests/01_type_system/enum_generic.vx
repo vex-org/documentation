@@ -1,0 +1,60 @@
+
+enum Option<T> {
+    Some(T),
+    None
+}
+
+enum Result<T, E> {
+    Ok(T),
+    Err(E)
+}
+
+fn main(): i32 {
+    // Option with value
+    let some_val: Option<i32> =Some(42);
+    let result1 = match some_val {
+       Some(x) => x,
+       None => 0
+    };
+    assert(result1 == 42, "Option.Some unwrap");
+    
+    // Option without value
+    let none_val: Option<i32> =None;
+    let result2 = match none_val {
+       Some(x) => x,
+       None => -1
+    };
+    assert(result2 == -1, "Option.None default");
+    
+    // Result with success
+    let ok_val: Result<i32, string> = Result.Ok(100);
+    let result3 = match ok_val {
+        Result.Ok(x) => x,
+        Result.Err(e) => 0
+    };
+    assert(result3 == 100, "Result.Ok unwrap");
+    
+    // Result with error
+    let err_val: Result<i32, string> = Result.Err("error");
+    let result4 = match err_val {
+        Result.Ok(x) => x,
+        Result.Err(e) => -999
+    };
+    assert(result4 == -999, "Result.Err handled");
+    
+    // Nested generics
+    let nested: Option<Result<i32, string>> =Some(Result.Ok(42));
+    let final_result = match nested {
+       Some(r) => match r {
+            Result.Ok(x) => x,
+            Result.Err(e) => 0
+        },
+       None => -1
+    };
+    $print("Final result: ");
+    $print(final_result);
+    assert(final_result == 42, "Nested generic match");
+    
+    $print("✅ All generic enum tests passed!");
+    return 0;
+}

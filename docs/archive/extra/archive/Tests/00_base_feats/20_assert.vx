@@ -1,0 +1,29 @@
+// Test: Assert statements
+// Category: Testing
+// Description: Test assert functionality
+
+fn main(): i32 {
+    // Basic assert
+    assert(true, "Basic assert");
+    
+    // Assert with expressions
+    assert(5 > 3, "Expression assert");
+    assert(10 == 10, "Equality assert");
+    
+    // Assert with variables
+    let x = 42;
+    assert(x == 42, "Variable assert");
+    
+    // Assert with function calls
+    let result = 5 + 3;
+    assert(result == 8, "Function result assert");
+    
+    // Multiple asserts
+    let a = 1;
+    let b = 2;
+    assert(a < b, "Assert a < b");
+    assert(a + b == 3, "Assert sum");
+    
+    $print("✅ All assert tests passed!");
+    return 0;
+}

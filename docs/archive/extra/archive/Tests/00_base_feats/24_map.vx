@@ -1,0 +1,179 @@
+// Test: Map - Hash map implementation
+// Expected: Tests for Map operations
+
+import { Map } from "prelude/alpha/map_alpha";
+
+fn test_map_create(): i32 {
+    let map = Map.new<str, i32>();
+    
+    if map.isEmpty() {
+        return 1;  // Pass: new map is empty
+    };
+    return 0;  // Fail
+}
+
+fn test_map_insert_get(): i32 {
+    let! map = Map.new<str, i32>();
+    
+    map.insert("one", 1);
+    map.insert("two", 2);
+    map.insert("three", 3);
+    
+    if map.len() != 3 {
+        return 0;  // Fail: wrong length
+    };
+    
+    let v1 = map.get("one");
+    let v2 = map.get("two");
+    let v3 = map.get("three");
+    
+    if v1 == 1 && v2 == 2 && v3 == 3 {
+        return 1;  // Pass
+    };
+    return 0;  // Fail
+}
+
+fn test_map_contains(): i32 {
+    let! map = Map.new<str, i32>();
+    
+    map.insert("exists", 42);
+    
+    if map.contains("exists") && !map.contains("missing") {
+        return 1;  // Pass
+    };
+    return 0;  // Fail
+}
+
+fn test_map_remove(): i32 {
+    let! map = Map.new<str, i32>();
+    
+    map.insert("key", 100);
+    
+    if !map.contains("key") {
+        return 0;  // Fail: key should exist
+    };
+    
+    let removed = map.remove("key");
+    
+    if removed && !map.contains("key") && map.isEmpty() {
+        return 1;  // Pass
+    };
+    return 0;  // Fail
+}
+
+fn test_map_clear(): i32 {
+    let! map = Map.new<str, i32>();
+    
+    map.insert("a", 1);
+    map.insert("b", 2);
+    map.insert("c", 3);
+    
+    map.clear();
+    
+    if map.isEmpty() && map.len() == 0 {
+        return 1;  // Pass
+    };
+    return 0;  // Fail
+}
+
+fn test_map_update(): i32 {
+    let! map = Map.new<str, i32>();
+    
+    map.insert("counter", 10);
+    map.insert("counter", 20);  // Update same key
+    
+    let val = map.get("counter");
+    
+    if val == 20 && map.len() == 1 {
+        return 1;  // Pass: value updated, no duplicate
+    };
+    return 0;  // Fail
+}
+
+fn test_map_withCap(): i32 {
+    let map = Map.withCapacity<str, i32>(100);
+    
+    if map.isEmpty() {
+        return 1;  // Pass: capacity doesn't affect empty state
+    };
+    return 0;  // Fail
+}
+
+fn main(): i32 {
+    let! passed = 0;
+    let! failed = 0;
+    
+    $print("=== Map Tests ===\n");
+    
+    // Test 1: Create
+    if test_map_create() == 1 {
+        $print("✓ test_map_create\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_create\n");
+        failed = failed + 1;
+    };
+    
+    // Test 2: Insert/Get
+    if test_map_insert_get() == 1 {
+        $print("✓ test_map_insert_get\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_insert_get\n");
+        failed = failed + 1;
+    };
+    
+    // Test 3: Contains
+    if test_map_contains() == 1 {
+        $print("✓ test_map_contains\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_contains\n");
+        failed = failed + 1;
+    };
+    
+    // Test 4: Remove
+    if test_map_remove() == 1 {
+        $print("✓ test_map_remove\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_remove\n");
+        failed = failed + 1;
+    };
+    
+    // Test 5: Clear
+    if test_map_clear() == 1 {
+        $print("✓ test_map_clear\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_clear\n");
+        failed = failed + 1;
+    };
+    
+    // Test 6: Update
+    if test_map_update() == 1 {
+        $print("✓ test_map_update\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_update\n");
+        failed = failed + 1;
+    };
+    
+    // Test 7: With Capacity
+    if test_map_withCap() == 1 {
+        $print("✓ test_map_withCap\n");
+        passed = passed + 1;
+    } else {
+        $print("✗ test_map_withCap\n");
+        failed = failed + 1;
+    };
+    
+    $print("\n--- Results ---\n");
+    $print("Passed: ");
+    $print(passed);
+    $print("\nFailed: ");
+    $print(failed);
+    $print("\n");
+    
+    return failed;
+}

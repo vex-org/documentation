@@ -1,0 +1,41 @@
+// Test: String Edge Cases
+// Category: Strings - Edge Cases
+// Description: Test edge cases and boundary conditions
+
+fn main(): i32 {
+    // Empty string operations
+    let empty = "";
+    assert(empty.len() == 0, "Empty length");
+    assert(empty.is_empty(), "Empty is_empty");
+    assert(empty.char_count() == 0, "Empty char_count");
+    assert(empty.contains(""), "Empty contains empty");
+    assert(!empty.contains("x"), "Empty does not contain 'x'");
+    assert(empty.starts_with(""), "Empty starts with empty");
+    assert(empty.ends_with(""), "Empty ends with empty");
+    assert(empty.find("x") == -1, "Find in empty returns -1");
+    assert(empty.trim() == "", "Trim empty");
+    assert(empty.toUpper() == "", "Upper empty");
+    assert(empty.toLower() == "", "Lower empty");
+    
+    // Single character
+    let single = "a";
+    assert(single.len() == 1, "Single char length");
+    assert(!single.is_empty(), "Single char not empty");
+    assert(single.contains("a"), "Single contains self");
+    assert(single.starts_with("a"), "Single starts with self");
+    assert(single.ends_with("a"), "Single ends with self");
+    
+    // Special characters
+    let special = "!@#$%";
+    assert(special.len() == 5, "Special chars length");
+    assert(special.contains("@"), "Contains special char");
+    
+    // Numeric strings
+    let numbers = "12345";
+    assert(numbers.len() == 5, "Numeric string length");
+    assert(numbers.contains("3"), "Contains digit");
+    assert(numbers.toUpper() == "12345", "Numbers unchanged by toUpper");
+    
+    $print("✅ All string edge case tests passed!");
+    return 0;
+}

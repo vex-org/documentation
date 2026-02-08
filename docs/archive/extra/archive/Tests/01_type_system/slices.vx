@@ -1,0 +1,17 @@
+// Test array references and indexing
+// Expected: All assertions pass
+// Note: Full slice syntax not yet implemented
+
+fn main(): i32 {
+    let arr = [10, 20, 30, 40, 50];
+    
+    // Array indexing
+    assert(arr[0] == 10, "Array index 0");
+    assert(arr[1] == 20, "Array index 1");
+    assert(arr[2] == 30, "Array index 2");
+    assert(arr[3] == 40, "Array index 3");
+    assert(arr[4] == 50, "Array index 4");
+
+    $print("✅ All array tests passed!");
+    return 0;
+}

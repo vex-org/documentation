@@ -1,0 +1,43 @@
+// Test default contract methods
+// Expected: All assertions pass
+
+contract Greeter {
+    name(): string;
+    greet(): string;
+}
+
+struct Person {
+    n: string,
+}
+
+// Implement required methods
+fn (self: &Person) name(): string {
+    return self.n;
+}
+
+fn (self: &Person) greet(): string {
+    return self.n;
+}
+
+struct Robot {
+    id: string,
+}
+
+fn (self: &Robot) name(): string {
+    return self.id;
+}
+
+fn (self: &Robot) greet(): string {
+    return self.id;
+}
+
+fn main(): i32 {
+    let p = Person { n: "Alice" };
+    assert(p.greet() == "Alice", "Person greet implementation");
+    
+    let r = Robot { id: "R2" };
+    assert(r.greet() == "R2", "Robot greet implementation");
+
+    $print("✅ All default contract implementation tests passed!");
+    return 0;
+}

@@ -1,0 +1,22 @@
+// Test variadic functions
+// Expected: All assertions pass
+
+// Variadic parameter must be last
+fn sum_all(base: i32, numbers: ...i32): i32 {
+    // Note: Iteration over variadic args might be future feature
+    // For now we just test the call syntax and maybe first arg if accessible
+    // Assuming we can't easily iterate yet based on docs "Runtime iteration... future feature"
+    // So we'll just return base to verify it compiles and runs
+    return base;
+}
+
+fn main(): i32 {
+    let res1 = sum_all(10);
+    assert(res1 == 10, "Variadic with 0 args");
+
+    let res2 = sum_all(10, 1, 2, 3);
+    assert(res2 == 10, "Variadic with multiple args");
+
+    $print("✅ All variadic function tests passed!");
+    return 0;
+}

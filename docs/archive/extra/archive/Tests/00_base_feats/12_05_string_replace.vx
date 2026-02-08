@@ -1,0 +1,41 @@
+// Test: String Replace Operations
+// Category: Strings - Replacement
+// Description: Test replace
+
+fn main(): i32 {
+    // Simple replace
+    let text = "hello world";
+    assert(text.replace("world", "vex") == "hello vex", "Replace 'world' with 'vex'");
+    
+    // Replace multiple occurrences
+    let repeated = "foo bar foo";
+    assert(repeated.replace("foo", "baz") == "baz bar baz", "Replace all 'foo' with 'baz'");
+    
+    // Replace with empty string (remove)
+    let with_spaces = "hello world";
+    assert(with_spaces.replace(" ", "") == "helloworld", "Replace space with empty");
+    
+    // Replace not found
+    let no_match = "hello";
+    assert(no_match.replace("xyz", "abc") == "hello", "Replace not found");
+    
+    // Replace empty string (no change)
+    let empty_pattern = "hello";
+    assert(empty_pattern.replace("", "x") == "hello", "Replace empty pattern");
+    
+    // Replace with longer string
+    let short = "hi";
+    assert(short.replace("hi", "hello") == "hello", "Replace with longer");
+    
+    // Replace with shorter string
+    let long = "hello";
+    assert(long.replace("hello", "hi") == "hi", "Replace with shorter");
+    
+    // Multiple different replacements needed (sequential)
+    let text2 = "foo bar foo baz foo";
+    let result = text2.replace("foo", "X");
+    assert(result == "X bar X baz X", "Replace all occurrences");
+    
+    $print("✅ All string replace tests passed!");
+    return 0;
+}

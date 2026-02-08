@@ -1,0 +1,45 @@
+// Test: Match expressions
+// Category: Pattern Matching
+// Description: Test basic match expressions
+
+fn main(): i32 {
+    // Match on integer
+    let x = 2;
+    let result1 = match x {
+        1 => 10,
+        2 => 20,
+        3 => 30,
+        _ => 0,
+    };
+    assert(result1 == 20, "Match integer");
+    
+    // Match with default
+    let y = 99;
+    let result2 = match y {
+        1 => 10,
+        2 => 20,
+        _ => -1,
+    };
+    assert(result2 == -1, "Match default");
+    
+    // Match on boolean
+    let flag = true;
+    let result3 = match flag {
+        true => 1,
+        false => 0,
+    };
+    assert(result3 == 1, "Match boolean");
+    
+    // Match with expressions
+    let n = 5;
+    let category = match n {
+        0 => "zero",
+        1 => "one",
+        2 => "two",
+        _ => "many",
+    };
+    assert(category == "many", "Match with string result");
+    
+    $print("✅ All match expression tests passed!");
+    return 0;
+}

@@ -1,0 +1,37 @@
+// Test: Vec iteration with for-in loop
+// Tests that for-in loops work correctly with Vec<T>
+
+fn main(): i32 {
+    // Test 1: Basic Vec<i32> iteration
+    let! nums = Vec.new<i32>();
+    nums.push(1);
+    nums.push(2);
+    nums.push(3);
+    nums.push(4);
+    nums.push(5);
+    
+    let! sum = 0;
+    for n in nums {
+        sum = sum + n;
+    }
+    assert(sum == 15, "Vec iteration: 1+2+3+4+5=15");
+    
+    // Test 2: Empty Vec iteration
+    let! empty = Vec.new<i32>();
+    let! empty_count = 0;
+    for x in empty {
+        empty_count = empty_count + 1;
+    }
+    assert(empty_count == 0, "Empty Vec iteration");
+    
+    // Test 3: Vec with single element
+    let! single = Vec.new<i32>();
+    single.push(42);
+    let! single_sum = 0;
+    for v in single {
+        single_sum = single_sum + v;
+    }
+    assert(single_sum == 42, "Single element Vec");
+    
+    return 0;
+}

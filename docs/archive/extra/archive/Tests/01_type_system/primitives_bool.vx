@@ -1,0 +1,57 @@
+// Test boolean primitive type
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // Basic booleans
+    let t: bool = true;
+    let f: bool = false;
+    
+    assert(t == true, "true literal");
+    assert(f == false, "false literal");
+    assert(t != f, "true != false");
+    
+    // Logical AND
+    assert(true && true, "AND true true");
+    assert(!(true && false), "AND true false");
+    assert(!(false && true), "AND false true");
+    assert(!(false && false), "AND false false");
+    
+    // Logical OR
+    assert(true || true, "OR true true");
+    assert(true || false, "OR true false");
+    assert(false || true, "OR false true");
+    assert(!(false || false), "OR false false");
+    
+    // Logical NOT
+    assert(!false, "NOT false");
+    assert(!!true, "NOT NOT true becomes true");
+    
+    let not_true: bool = !true;
+    assert(!not_true, "!true is false");
+    
+    // Comparison operators
+    let x: i32 = 10;
+    let y: i32 = 20;
+    
+    assert(x < y, "less than");
+    assert(y > x, "greater than");
+    assert(x <= 10, "less than or equal");
+    assert(y >= 20, "greater than or equal");
+    assert(x == 10, "equality");
+    assert(x != y, "inequality");
+    
+    // Short-circuit evaluation
+    let should_not_eval: bool = true || panic("Should not execute");
+    assert(should_not_eval, "Short-circuit OR");
+    
+    let should_not_eval2: bool = false && panic("Should not execute");
+    assert(!should_not_eval2, "Short-circuit AND");
+    
+    $print("✅ All boolean primitive tests passed!");
+    return 0;
+}
+
+fn panic(msg: string): bool {
+    // This should never be called due to short-circuit
+    return false;
+}

@@ -1,0 +1,38 @@
+// Test: String Split Operation
+// Category: Strings - Split
+// Description: Test split to Vec<String>
+
+fn main(): i32 {
+    // Basic split
+    let csv = "a,b,c";
+    let parts = csv.split(",");
+    assert(parts.len() == 3, "Split by comma gives 3 parts");
+    
+    // Split with spaces
+    let sentence = "hello world vex";
+    let words = sentence.split(" ");
+    assert(words.len() == 3, "Split by space gives 3 words");
+    
+    // Split with no delimiter found
+    let no_delim = "hello";
+    let single = no_delim.split(",");
+    assert(single.len() == 1, "No delimiter gives 1 part");
+    
+    // Split empty string
+    let empty = "";
+    let empty_parts = empty.split(",");
+    assert(empty_parts.len() == 1, "Empty string split gives 1 empty part");
+    
+    // Split with multiple character delimiter
+    let multi = "foo::bar::baz";
+    let multi_parts = multi.split("::");
+    assert(multi_parts.len() == 3, "Split by '::' gives 3 parts");
+    
+    // Split with consecutive delimiters
+    let consec = "a,,b";
+    let consec_parts = consec.split(",");
+    assert(consec_parts.len() == 3, "Consecutive delimiters create empty parts");
+    
+    $print("✅ All string split tests passed!");
+    return 0;
+}

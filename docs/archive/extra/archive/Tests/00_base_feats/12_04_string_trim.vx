@@ -1,0 +1,45 @@
+// Test: String Trimming Operations
+// Category: Strings - Trimming
+// Description: Test trim, trim_start, trim_end
+
+fn main(): i32 {
+    // Trim both ends
+    let whitespace = "  hello world  ";
+    assert(whitespace.trim() == "hello world", "Trim both ends");
+    
+    let tabs = "\thello\t";
+    assert(tabs.trim() == "hello", "Trim tabs");
+    
+    let newlines = "\nhello\n";
+    assert(newlines.trim() == "hello", "Trim newlines");
+    
+    let mixed_ws = " \t\nhello\n\t ";
+    assert(mixed_ws.trim() == "hello", "Trim mixed whitespace");
+    
+    // Trim start only
+    let leading = "  hello";
+    assert(leading.trim_start() == "hello", "Trim start");
+    
+    let leading_tabs = "\t\thello";
+    assert(leading_tabs.trim_start() == "hello", "Trim start tabs");
+    
+    // Trim end only
+    let trailing = "hello  ";
+    assert(trailing.trim_end() == "hello", "Trim end");
+    
+    let trailing_tabs = "hello\t\t";
+    assert(trailing_tabs.trim_end() == "hello", "Trim end tabs");
+    
+    // No whitespace
+    let no_ws = "hello";
+    assert(no_ws.trim() == "hello", "Trim no whitespace");
+    assert(no_ws.trim_start() == "hello", "Trim start no whitespace");
+    assert(no_ws.trim_end() == "hello", "Trim end no whitespace");
+    
+    // All whitespace
+    let all_ws = "   ";
+    assert(all_ws.trim() == "", "Trim all whitespace");
+    
+    $print("✅ All string trimming tests passed!");
+    return 0;
+}

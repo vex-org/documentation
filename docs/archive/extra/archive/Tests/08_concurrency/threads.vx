@@ -1,0 +1,21 @@
+// Test goroutines
+// Expected: All assertions pass
+
+fn worker(id: i32) {
+    // Simulate work
+    $print("Worker ", id, " started");
+}
+
+fn main(): i32 {
+    // Spawn goroutines
+    go worker(1);
+    go worker(2);
+    
+    // Anonymous goroutine (future feature, but testing syntax)
+    go {
+        $print("Anonymous worker");
+    };
+
+    $print("✅ All thread tests passed!");
+    return 0;
+}

@@ -1,0 +1,42 @@
+// Test: Comparison operators
+// Category: Operators
+// Description: Test ==, !=, <, <=, >, >= operators
+
+fn main(): i32 {
+    // Equality
+    assert(5 == 5, "Equality ==");
+    assert(!(5 == 6), "Equality == false");
+    
+    // Inequality
+    assert(5 != 6, "Inequality !=");
+    assert(!(5 != 5), "Inequality != false");
+    
+    // Less than
+    assert(3 < 5, "Less than <");
+    assert(!(5 < 3), "Less than < false");
+    
+    // Less than or equal
+    assert(5 <= 5, "Less than or equal <=");
+    assert(3 <= 5, "Less than or equal <= true");
+    assert(!(6 <= 5), "Less than or equal <= false");
+    
+    // Greater than
+    assert(5 > 3, "Greater than >");
+    assert(!(3 > 5), "Greater than > false");
+    
+    // Greater than or equal
+    assert(5 >= 5, "Greater than or equal >=");
+    assert(7 >= 5, "Greater than or equal >= true");
+    assert(!(3 >= 5), "Greater than or equal >= false");
+    
+    // Float comparisons
+    assert(3.14 > 3.0, "Float comparison >");
+    assert(2.5 <= 2.5, "Float comparison <=");
+    
+    // Boolean comparisons
+    assert(true == true, "Bool equality");
+    assert(false != true, "Bool inequality");
+    
+    $print("✅ All comparison operator tests passed!");
+    return 0;
+}

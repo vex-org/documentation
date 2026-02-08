@@ -1,0 +1,29 @@
+// Test: String Length and Empty Check
+// Category: Strings - Basic Operations
+// Description: Test string length and empty check
+
+fn main(): i32 {
+    // Length tests
+    let s1 = "hello";
+    assert(s1.len() == 5, "String length 'hello'");
+    
+    let s2 = "";
+    assert(s2.len() == 0, "Empty string length");
+    
+    let s3 = "a";
+    assert(s3.len() == 1, "Single char length");
+    
+    let s4 = "hello world!";
+    assert(s4.len() == 12, "String with space length");
+    
+    // Empty check tests
+    assert(s2.is_empty(), "Empty string is_empty");
+    assert(!s1.is_empty(), "Non-empty string is_empty");
+    
+    // UTF-8 character count
+    let ascii = "hello";
+    assert(ascii.char_count() == 5, "ASCII char count");
+    
+    $print("✅ All string length tests passed!");
+    return 0;
+}

@@ -1,0 +1,50 @@
+// Test struct methods (Inline and External)
+// Expected: All assertions pass
+
+struct Rectangle {
+    width: i32,
+    height: i32,
+
+    // Inline immutable method
+    fn area(): i32 {
+        return self.width * self.height;
+    }
+
+    // Inline mutable method
+    fn scale_inline(factor: i32)! {
+        self.width = self.width * factor;
+        self.height = self.height * factor;
+    }
+}
+
+// External immutable method
+fn (r: &Rectangle) perimeter(): i32 {
+    return 2 * (r.width + r.height);
+}
+
+// External mutable method
+fn (r: &Rectangle!) scale_external(factor: i32) {
+    r.width = r.width * factor;
+    r.height = r.height * factor;
+}
+
+fn main(): i32 {
+    // Test Inline Methods
+    let! rect1 = Rectangle { width: 10, height: 20 };
+    assert(rect1.area() == 200, "Inline immutable method");
+    
+    rect1.scale_inline(2);
+    assert(rect1.width == 20, "Inline mutable method width");
+    assert(rect1.height == 40, "Inline mutable method height");
+
+    // Test External Methods
+    let! rect2 = Rectangle { width: 5, height: 10 };
+    assert(rect2.perimeter() == 30, "External immutable method");
+    
+    rect2.scale_external(3);
+    assert(rect2.width == 15, "External mutable method width");
+    assert(rect2.height == 30, "External mutable method height");
+
+    $print("✅ All struct method tests passed!");
+    return 0;
+}

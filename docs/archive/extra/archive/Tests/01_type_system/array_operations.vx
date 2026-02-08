@@ -1,0 +1,26 @@
+// Test array operations
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // Array definition
+    let arr: [i32; 5] = [1, 2, 3, 4, 5];
+    
+    // Indexing
+    assert(arr[0] == 1, "Array index 0");
+    assert(arr[4] == 5, "Array index 4");
+
+    // Length
+    assert(arr.len() == 5, "Array length");
+
+    // Mutation
+    let! mut_arr = [0, 0, 0];
+    mut_arr[1] = 42;
+    assert(mut_arr[1] == 42, "Array mutation");
+
+    // Repeat syntax (if supported, docs say future but let's try basic)
+    // let zeros = [0; 10]; 
+    // assert(zeros[0] == 0, "Array repeat");
+
+    $print("✅ All array operation tests passed!");
+    return 0;
+}

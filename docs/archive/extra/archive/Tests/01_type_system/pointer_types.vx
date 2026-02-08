@@ -1,0 +1,40 @@
+// Test pointer types and dereferencing
+// Expected: Partial pass (pointer syntax may need work)
+
+fn main(): i32 {
+    // Basic pointer
+    let x: i32 = 42;
+    let ptr: *i32 = &x;
+    let val: i32 = *ptr;
+    assert(val == 42, "Pointer dereference");
+    
+    // Pointer to struct
+    let p = Point { x: 10, y: 20 };
+    let p_ptr: *Point = &p;
+    assert((*p_ptr).x == 10, "Struct pointer x");
+    assert((*p_ptr).y == 20, "Struct pointer y");
+    
+    // Null pointer check (TODO: implement null keyword)
+    // let null_ptr: *i32 = null;
+    // assert(null_ptr == null, "Null pointer");
+    
+    // Pointer arithmetic (newly implemented)
+    let arr: [i32; 5] = [10, 20, 30, 40, 50];
+    let arr_ptr: *i32 = &arr[0];
+    
+    // Access via pointer arithmetic
+    let first: i32 = *arr_ptr;
+    assert(first == 10, "Array pointer first");
+    
+    let second_ptr: *i32 = arr_ptr + 1;
+    let second: i32 = *second_ptr;
+    assert(second == 20, "Pointer arithmetic +1");
+    
+    $print("✅ All pointer type tests passed!");
+    return 0;
+}
+
+struct Point {
+    x: i32,
+    y: i32
+}

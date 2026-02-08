@@ -1,0 +1,33 @@
+// Test: Logical operators
+// Category: Operators
+// Description: Test &&, ||, ! operators
+
+fn main(): i32 {
+    // Logical AND
+    assert(true && true, "AND true && true");
+    assert(!(true && false), "AND true && false");
+    assert(!(false && true), "AND false && true");
+    assert(!(false && false), "AND false && false");
+    
+    // Logical OR
+    assert(true || true, "OR true || true");
+    assert(true || false, "OR true || false");
+    assert(false || true, "OR false || true");
+    assert(!(false || false), "OR false || false");
+    
+    // Logical NOT
+    assert(!false, "NOT !false");
+    assert(!!true, "NOT !true");
+    
+    // Combined logical operations
+    assert((true && true) || false, "Combined && ||");
+    assert(!(false && true) && true, "Combined ! && &&");
+    
+    // Short-circuit evaluation
+    let x = 5;
+    assert(x > 3 && x < 10, "Short-circuit AND");
+    assert(x < 3 || x == 5, "Short-circuit OR");
+    
+    $print("✅ All logical operator tests passed!");
+    return 0;
+}

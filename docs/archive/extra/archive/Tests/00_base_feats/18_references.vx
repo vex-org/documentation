@@ -1,0 +1,29 @@
+// Test: References
+// Category: Memory
+// Description: Test basic reference types
+
+struct Data {
+    value: i32,
+}
+
+fn read_data(d: &Data): i32 {
+    return d.value;
+}
+
+fn main(): i32 {
+    // Reference parameter
+    let data = Data { value: 42 };
+    let val = read_data(&data);
+    assert(val == 42, "Reference parameter");
+    
+    // Original unchanged
+    assert(data.value == 42, "Original data unchanged");
+    
+    // Multiple references
+    let v1 = read_data(&data);
+    let v2 = read_data(&data);
+    assert(v1 == v2, "Multiple references");
+    
+    $print("✅ All reference tests passed!");
+    return 0;
+}

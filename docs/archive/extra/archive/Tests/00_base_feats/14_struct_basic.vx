@@ -1,0 +1,39 @@
+// Test: Basic structs
+// Category: Structs
+// Description: Test struct definition and field access
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+struct Person {
+    name: string,
+    age: u8,
+}
+
+fn main(): i32 {
+    // Struct instantiation
+    let p = Point { x: 10, y: 20 };
+    
+    // Field access
+    assert(p.x == 10, "Struct field x");
+    assert(p.y == 20, "Struct field y");
+    
+    // Mutable struct
+    let! mut_p = Point { x: 5, y: 15 };
+    mut_p.x = 25;
+    assert(mut_p.x == 25, "Mutable struct field");
+    
+    // Struct with string
+    let person = Person { name: "Alice", age: 30 };
+    assert(person.age == 30, "Person age");
+    
+    // Multiple structs
+    let p1 = Point { x: 1, y: 2 };
+    let p2 = Point { x: 3, y: 4 };
+    assert(p1.x != p2.x, "Different struct instances");
+    
+    $print("✅ All basic struct tests passed!");
+    return 0;
+}

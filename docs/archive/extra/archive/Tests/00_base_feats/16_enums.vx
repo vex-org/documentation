@@ -1,0 +1,46 @@
+// Test: Enums
+// Category: Enums
+// Description: Test enum definition and matching
+
+enum Color {
+    Red,
+    Green,
+    Blue,
+}
+
+enum Status {
+    Success,
+    Error,
+}
+
+fn main(): i32 {
+    // Enum variants
+    let red = Color.Red;
+    let green = Color.Green;
+    
+    // Match on enum
+    let color_value = match red {
+        Color.Red => 1,
+        Color.Green => 2,
+        Color.Blue => 3,
+    };
+    assert(color_value == 1, "Enum match Red");
+    
+    let green_value = match green {
+        Color.Red => 1,
+        Color.Green => 2,
+        Color.Blue => 3,
+    };
+    assert(green_value == 2, "Enum match Green");
+    
+    // Different enum type
+    let status = Status.Success;
+    let is_ok = match status {
+        Status.Success => true,
+        Status.Error => false,
+    };
+    assert(is_ok, "Status enum");
+    
+    $print("✅ All enum tests passed!");
+    return 0;
+}

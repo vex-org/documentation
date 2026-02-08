@@ -1,0 +1,39 @@
+// Test enum usage with helper functions
+// Expected: All assertions pass
+
+enum TrafficLight {
+    Red,
+    Yellow,
+    Green,
+}
+
+// Helper functions instead of methods
+fn is_stop(t: TrafficLight): bool {
+    match t {
+        TrafficLight.Red => true,
+        _ => false,
+    }
+}
+
+fn action(t: TrafficLight): string {
+    match t {
+        TrafficLight.Red => "Stop",
+        TrafficLight.Yellow => "Caution",
+        TrafficLight.Green => "Go",
+    }
+}
+
+fn main(): i32 {
+    let red = TrafficLight.Red;
+    let green = TrafficLight.Green;
+
+    // Test helper functions
+    assert(is_stop(red) == true, "Helper function Red");
+    assert(is_stop(green) == false, "Helper function Green");
+
+    assert(action(red) == "Stop", "Action function Red");
+    assert(action(green) == "Go", "Action function Green");
+
+    $print("✅ All enum tests passed!");
+    return 0;
+}

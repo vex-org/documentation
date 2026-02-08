@@ -1,0 +1,28 @@
+// Test higher order functions (passing closures)
+// Expected: All assertions pass
+
+// Function taking a closure
+// Syntax for function type might be fn(args): ret or similar
+// Assuming: fn apply(f: fn(i32): i32, val: i32): i32
+
+// Note: Vex syntax for function types needs to be confirmed. 
+// Using generic syntax or specific function type syntax.
+
+fn apply(op: fn(i32): i32, x: i32): i32 {
+    return op(x);
+}
+
+fn main(): i32 {
+    let double = |x: i32| x * 2;
+    let square = |x: i32| x * x;
+
+    assert(apply(double, 5) == 10, "Pass closure 1");
+    assert(apply(square, 4) == 16, "Pass closure 2");
+
+    // Inline closure
+    let res = apply(|x: i32| x + 10, 20);
+    assert(res == 30, "Pass inline closure");
+
+    $print("✅ All higher order function tests passed!");
+    return 0;
+}

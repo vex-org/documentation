@@ -1,0 +1,45 @@
+// Test: Primitive types
+// Category: Type System Basics
+// Description: Test all primitive integer, float, and bool types
+
+fn main(): i32 {
+    // Signed integers
+    let i8_val: i8 = 127;
+    assert(i8_val == 127, "i8 type");
+    
+    let i16_val: i16 = 32767;
+    assert(i16_val == 32767, "i16 type");
+    
+    let i32_val: i32 = 2147483647;
+    assert(i32_val == 2147483647, "i32 type");
+    
+    let i64_val: i64 = 9223372036854775807;
+    assert(i64_val > 0, "i64 type");
+    
+    // Unsigned integers
+    let u8_val: u8 = 255;
+    assert(u8_val == 255, "u8 type");
+    
+    let u16_val: u16 = 65535;
+    assert(u16_val == 65535, "u16 type");
+    
+    let u32_val: u32 = 4294967295;
+    assert(u32_val > 0, "u32 type");
+    
+    let u64_val: u64 = 18446744073709551615;
+    assert(u64_val > 0, "u64 type");
+    
+    // Floating point
+    let f32_val: f32 = 3.14;
+    assert(f32_val > 3.0, "f32 type");
+    
+    let f64_val: f64 = 2.718281828;
+    assert(f64_val > 2.7, "f64 type");
+    
+    // Boolean
+    let bool_val: bool = true;
+    assert(bool_val, "bool type");
+    
+    $print("✅ All primitive type tests passed!");
+    return 0;
+}

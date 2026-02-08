@@ -1,0 +1,29 @@
+// Test: String iteration with for-in loop
+// Tests that for-in loops work correctly with strings (character by character)
+
+fn main(): i32 {
+    // Test 1: Basic string iteration
+    let s = "hello";
+    let! count = 0;
+    for ch in s {
+        count = count + 1;
+    }
+    assert(count == 5, "String 'hello' has 5 chars");
+    
+    // Test 2: Empty string
+    let empty = "";
+    let! empty_count = 0;
+    for c in empty {
+        empty_count = empty_count + 1;
+    }
+    assert(empty_count == 0, "Empty string has 0 chars");
+    
+    // Test 3: String literal directly
+    let! literal_count = 0;
+    for x in "abc" {
+        literal_count = literal_count + 1;
+    }
+    assert(literal_count == 3, "Literal 'abc' has 3 chars");
+    
+    return 0;
+}

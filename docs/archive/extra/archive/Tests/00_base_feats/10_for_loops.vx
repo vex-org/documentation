@@ -1,0 +1,51 @@
+// Test: For loops
+// Category: Control Flow
+// Description: Test for..in range loops
+
+fn main(): i32 {
+    // Basic for loop
+    let! sum = 0;
+    for i in 0..5 {
+        sum = sum + i;
+    }
+    assert(sum == 10, "Basic for loop");
+    
+    // For loop with break
+    let! early_exit = 0;
+    for i in 0..10 {
+        if i == 5 {
+            break;
+        }
+        early_exit = i;
+    }
+    assert(early_exit == 4, "For loop with break");
+    
+    // For loop with continue
+    let! odd_sum = 0;
+    for i in 0..10 {
+        if i % 2 == 0 {
+            continue;
+        }
+        odd_sum = odd_sum + i;
+    }
+    assert(odd_sum == 25, "For loop with continue");
+    
+    // Nested for loops
+    let! nested_sum = 0;
+    for i in 0..3 {
+        for j in 0..3 {
+            nested_sum = nested_sum + 1;
+        }
+    }
+    assert(nested_sum == 9, "Nested for loops");
+    
+    // Inclusive range
+    let! inclusive_sum = 0;
+    for i in 1..=5 {
+        inclusive_sum = inclusive_sum + i;
+    }
+    assert(inclusive_sum == 15, "Inclusive range");
+    
+    $print("✅ All for loop tests passed!");
+    return 0;
+}

@@ -1,0 +1,83 @@
+$ vitepress build docs
+
+  vitepress v2.0.0-alpha.15
+
+- building client + server bundles...
+
+
+(!) Found dead link ./../Specifications/02_Lexical_Structure in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/25_Automatic_Optimization in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/03_Type_System in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/04_Variables_and_Constants in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/06_Expressions in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/07_Statements in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/05_Functions_and_Methods in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/06_Control_Flow in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/07_Structs_and_Data_Types in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/08_Enums in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/09_Contracts in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/10_Generics in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/11_Pattern_Matching in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/17_Error_Handling in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/13_Concurrency in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/14_Memory_Management in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/15_Modules_and_Imports in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/20_Policy_System in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/16_Standard_Library in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/23_Operator_Overloading in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/Error_rescue_operator.spec in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./../Specifications/19_Package_Manager in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/Reference.md
+(!) Found dead link ./REFERENCE in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/RAII_Model.md
+(!) Found dead link ./ARCHITECTURE in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/RAII_Model.md
+(!) Found dead link ./../STDLIB_ARCHITECTURE in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/RAII_Model.md
+(!) Found dead link ./../Specifications/09_Contracts in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/RAII_Model.md
+(!) Found dead link ./../Specifications/14_Memory_Management in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/extra/RAII_Model.md
+(!) Found dead link ./../Specifications/23_Operator_Overloading in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/03_Type_System.md
+(!) Found dead link ./../Specifications/23_Operator_Overloading in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/09_Contracts.md
+(!) Found dead link ./12_Memory_Management in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/13_Concurrency.md
+(!) Found dead link ./14_Modules_and_Imports in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/13_Concurrency.md
+(!) Found dead link ./14_Modules_and_Imports in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/16_Standard_Library.md
+(!) Found dead link ./14_Concurrency in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/12_Closures_and_Lambda_Expressions.md
+(!) Found dead link ./15_Standard_Library in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/15_Modules_and_Imports.md
+(!) Found dead link ./22_Advanced_Topics in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/21_Mutability_and_Pointers.md
+(!) Found dead link ./07_variables in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/01_literals.md
+(!) Found dead link ./07_variables in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/02_primitive_types.md
+(!) Found dead link ./07_variables in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/12_strings.md
+(!) Found dead link ./../06_Expressions in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/12_strings.md
+(!) Found dead link ./04_comparison_ops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/03_arithmetic_ops.md
+(!) Found dead link ./05_logical_ops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/03_arithmetic_ops.md
+(!) Found dead link ./06_bitwise_ops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/03_arithmetic_ops.md
+(!) Found dead link ./07_variables in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/03_arithmetic_ops.md
+(!) Found dead link ./04_comparison_ops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./05_logical_ops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./06_bitwise_ops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./07_variables in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./08_if_statements in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./09_while_loops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./10_for_loops in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./11_functions in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./13_arrays in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./14_struct_basic in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./15_methods in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./16_enums in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./17_match_simple in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./18_references in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./19_return_statement in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+(!) Found dead link ./20_assert in file /Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/docs/specs/Baseline/README.md
+
+If this is expected, you can disable this check via config. Refer: https://vitepress.dev/reference/site-config#ignoredeadlinks
+
+✗ Build failed in 3.40s
+[31m✗[0m building client + server bundles...
+build error:
+[vitepress] 60 dead link(s) found.
+[vitepress] 60 dead link(s) found.
+    at Object.renderStart (file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/vitepress/dist/node/chunk-BssBsV50.js:42653:15)
+    at Object.handler (file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/vite/dist/node/chunks/config.js:33742:13)
+    at file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/rollup/dist/es/shared/node-entry.js:22494:40
+    at async Promise.all (index 1)
+    at async PluginDriver.hookParallel (file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/rollup/dist/es/shared/node-entry.js:22404:9)
+    at async Bundle.generate (file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/rollup/dist/es/shared/node-entry.js:20601:13)
+    at async file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/rollup/dist/es/shared/node-entry.js:23481:27
+    at async catchUnfinishedHookActions (file:///Users/mapletechnologies/Desktop/big_projects/vex_lang/vex-documentation-app/node_modules/rollup/dist/es/shared/node-entry.js:22848:16)
+error: script "build" exited with code 1

@@ -1,0 +1,36 @@
+// Test ownership basics (move semantics)
+// Expected: All assertions pass
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+fn take_ownership(p: Point): i32 {
+    return p.x + p.y;
+}
+
+fn main(): i32 {
+    // Test move semantics for structs
+    let p1 = Point { x: 10, y: 20 };
+    let p2 = p1; // Move p1 to p2
+    
+    // p1 is now invalid (compiler check, hard to test runtime validity without failure)
+    // But we can verify p2 works
+    assert(p2.x == 10, "Moved value access");
+    
+    // Test function taking ownership
+    let sum = take_ownership(p2);
+    assert(sum == 30, "Function took ownership");
+    
+    // p2 is now invalid
+    
+    // Test Copy types (i32)
+    let x = 42;
+    let y = x; // Copy
+    assert(x == 42, "Copy type original valid");
+    assert(y == 42, "Copy type new valid");
+
+    $print("✅ All ownership basic tests passed!");
+    return 0;
+}

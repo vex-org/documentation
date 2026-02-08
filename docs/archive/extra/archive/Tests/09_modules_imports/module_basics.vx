@@ -1,0 +1,29 @@
+// Test module definition and exports
+// Expected: All assertions pass
+
+// In a real scenario, this would be in a separate file.
+// For testing, we simulate the syntax.
+
+export fn public_api(): i32 {
+    return 42;
+}
+
+fn private_helper(): i32 {
+    return 0;
+}
+
+export struct PublicStruct {
+    x: i32,
+}
+
+fn main(): i32 {
+    // Test local access
+    assert(public_api() == 42, "Public function access");
+    assert(private_helper() == 0, "Private function access (same module)");
+    
+    let s = PublicStruct { x: 10 };
+    assert(s.x == 10, "Public struct access");
+
+    $print("✅ All module basic tests passed!");
+    return 0;
+}

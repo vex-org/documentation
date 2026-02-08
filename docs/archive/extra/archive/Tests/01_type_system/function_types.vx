@@ -1,0 +1,37 @@
+// Test function types and function pointers
+// Expected: Partial pass (function pointers may not be fully implemented)
+
+fn main(): i32 {
+    // Direct function call
+    let result1 = add(10, 20);
+    assert(result1 == 30, "Direct function call");
+    
+    // Function pointer (if supported)
+    // let fn_ptr: fn(i32, i32): i32 = add;
+    // let result2 = fn_ptr(5, 7);
+    // assert(result2 == 12, "Function pointer call");
+    
+    // Higher-order function
+    let result3 = apply_twice(5, double);
+    assert(result3 == 20, "Higher-order function");
+    
+    // Function returning function
+    // let adder = make_adder(10);
+    // let result4 = adder(5);
+    // assert(result4 == 15, "Returned function");
+    
+    $print("✅ All function type tests passed!");
+    return 0;
+}
+
+fn add(a: i32, b: i32): i32 {
+    return a + b;
+}
+
+fn double(x: i32): i32 {
+    return x * 2;
+}
+
+fn apply_twice(x: i32, f: fn(i32):i32): i32 {
+    return f(f(x));
+}

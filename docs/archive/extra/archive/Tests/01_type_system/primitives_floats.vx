@@ -1,0 +1,43 @@
+// Test floating-point primitive types
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // f32 tests
+    let f32_val: f32 = 3.14;
+    let f32_neg: f32 = -2.71;
+    
+    assert(f32_val > 3.0, "f32 comparison");
+    assert(f32_neg < 0.0, "f32 negative");
+    
+    let f32_sum: f32 = 1.5 + 2.5;
+    assert(f32_sum == 4.0, "f32 addition");
+    
+    let f32_diff: f32 = 10.0 - 3.5;
+    assert(f32_diff == 6.5, "f32 subtraction");
+    
+    let f32_prod: f32 = 2.0 * 3.0;
+    assert(f32_prod == 6.0, "f32 multiplication");
+    
+    let f32_quot: f32 = 9.0 / 3.0;
+    assert(f32_quot == 3.0, "f32 division");
+    
+    // f64 tests  
+    let f64_val: f64 = 3.141592653589793;
+    let f64_neg: f64 = -1.414213562373095;
+    
+    assert(f64_val > 3.14, "f64 comparison");
+    assert(f64_neg < 0.0, "f64 negative");
+    
+    let f64_sum: f64 = 1.25 + 2.75;
+    assert(f64_sum == 4.0, "f64 addition");
+    
+    // Scientific notation
+    let sci: f64 = 1.0e10;
+    assert(sci == 10000000000.0, "Scientific notation");
+    
+    let small: f64 = 1.0e-5;
+    assert(small < 0.001, "Small scientific");
+    
+    $print("✅ All float primitive tests passed!");
+    return 0;
+}

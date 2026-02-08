@@ -1,0 +1,52 @@
+// Test: Functions
+// Category: Functions
+// Description: Test function declarations, parameters, return values
+
+fn add(a: i32, b: i32): i32 {
+    return a + b;
+}
+
+fn multiply(x: i32, y: i32): i32 {
+    return x * y;
+}
+
+fn no_return() {
+    let x = 42;
+    return;
+}
+
+fn implicit_return(n: i32): i32 {
+    n * 2
+}
+
+fn multiple_params(a: i32, b: i32, c: i32): i32 {
+    return a + b + c;
+}
+
+fn main(): i32 {
+    // Basic function call
+    let result1 = add(5, 3);
+    assert(result1 == 8, "Basic function call");
+    
+    // Multiple function calls
+    let result2 = multiply(4, 5);
+    assert(result2 == 20, "Multiply function");
+    
+    // Function with no return
+    no_return();
+    
+    // Implicit return
+    let result3 = implicit_return(10);
+    assert(result3 == 20, "Implicit return");
+    
+    // Multiple parameters
+    let result4 = multiple_params(1, 2, 3);
+    assert(result4 == 6, "Multiple parameters");
+    
+    // Nested function calls
+    let result5 = add(multiply(2, 3), 4);
+    assert(result5 == 10, "Nested function calls");
+    
+    $print("✅ All function tests passed!");
+    return 0;
+}

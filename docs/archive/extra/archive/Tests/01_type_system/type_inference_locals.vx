@@ -1,0 +1,39 @@
+// Test local variable type inference
+// Expected: All assertions pass without explicit type annotations
+
+fn main(): i32 {
+    // Integer inference from literal
+    let x = 42;  // Should infer i32
+    assert(x == 42, "Inferred integer");
+    
+    // Float inference from literal
+    let pi = 3.14;  // Should infer f64
+    assert(pi > 3.0, "Inferred float");
+    
+    // Boolean inference
+    let flag = true;  // Should infer bool
+    assert(flag, "Inferred bool");
+    
+    // String inference
+    let msg = "Hello";  // Should infer string
+    // assert(msg == "Hello", "Inferred string");
+    
+    // Inference from expression
+    let sum = x + 10;  // Should infer i32 from x's type
+    assert(sum == 52, "Inferred from expression");
+    
+    // Inference from function call
+    let result = add(5, 7);  // Should infer i32 from return type
+    assert(result == 12, "Inferred from function");
+    
+    // Array inference
+    let arr = [1, 2, 3, 4, 5];  // Should infer [i32; 5]
+    assert(arr[0] == 1, "Inferred array type");
+    
+    $print("✅ All type inference tests passed!");
+    return 0;
+}
+
+fn add(a: i32, b: i32): i32 {
+    return a + b;
+}

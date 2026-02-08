@@ -1,0 +1,50 @@
+// Test: Return statements
+// Category: Control Flow
+// Description: Test early return and multiple return points
+
+fn early_return(x: i32): i32 {
+    if x < 0 {
+        return -1;
+    }
+    if x == 0 {
+        return 0;
+    }
+    return 1;
+}
+
+fn nested_return(a: i32, b: i32): i32 {
+    if a > b {
+        if a > 10 {
+            return a;
+        }
+        return a - b;
+    }
+    return b;
+}
+
+fn main(): i32 {
+    // Early return negative
+    let r1 = early_return(-5);
+    assert(r1 == -1, "Early return negative");
+    
+    // Early return zero
+    let r2 = early_return(0);
+    assert(r2 == 0, "Early return zero");
+    
+    // Final return
+    let r3 = early_return(10);
+    assert(r3 == 1, "Final return");
+    
+    // Nested returns
+    let r4 = nested_return(15, 5);
+    assert(r4 == 15, "Nested return case 1");
+    
+    let r5 = nested_return(8, 5);
+    assert(r5 == 3, "Nested return case 2");
+    
+    let r6 = nested_return(3, 10);
+    assert(r6 == 10, "Nested return case 3");
+    
+    $print("✅ All return statement tests passed!");
+    return 0;
+}

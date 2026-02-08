@@ -1,0 +1,39 @@
+// Test: Variables
+// Category: Variables
+// Description: Test let, let!, const declarations
+// Constants
+const MAX:i32 = 100;
+fn main(): i32 {
+    // Immutable variable
+    let x = 42;
+    assert(x == 42, "Immutable variable");
+    
+    // Mutable variable
+    let! y = 10;
+    y = 20;
+    assert(y == 20, "Mutable variable");
+    
+    // Type annotation
+    let typed: i32 = 100;
+    assert(typed == 100, "Type annotated variable");
+    
+    // Multiple variables
+    let a = 1;
+    let b = 2;
+    let c = a + b;
+    assert(c == 3, "Multiple variables");
+    
+    // Shadowing
+    let shadow = 5;
+    let shadow = shadow + 1;
+    assert(shadow == 6, "Variable shadowing");
+    
+
+    assert(MAX == 100, "Constant");
+    
+    // Underscore variables (unused)
+    let _unused = 42;
+    
+    $print("✅ All variable tests passed!");
+    return 0;
+}

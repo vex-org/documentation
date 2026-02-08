@@ -1,0 +1,42 @@
+
+struct Container<T> {
+    value: T,
+}
+
+fn Container.new<T>(value: T): Container<T> {
+    return Container { value: value };
+}
+
+struct Pair<T, U> {
+    first: T,
+    second: U,
+}
+
+fn Pair.new<T, U>(first: T, second: U): Pair<T, U> {
+    return Pair { first: first, second: second };
+}
+
+fn main(): i32 {
+    // Generic struct with i32
+    let int_container = Container.new(42);
+    assert(int_container.value == 42, "Container<i32>");
+    
+    // Generic struct with f64
+    let float_container = Container.new(3.14);
+    assert(float_container.value > 3.0, "Container<f64>");
+    
+    // Generic struct with bool
+    let bool_container = Container.new(true);
+    assert(bool_container.value, "Container<bool>");
+    
+    // Two type parameters
+    let pair1 = Pair.new(10, "ten");
+    assert(pair1.first == 10, "Pair first");
+    
+    let pair2 = Pair.new(true, 42);
+    assert(pair2.first, "Pair<bool, i32> first");
+    assert(pair2.second == 42, "Pair<bool, i32> second");
+    
+    $print("✅ All generic struct tests passed!");
+    return 0;
+}

@@ -1,0 +1,32 @@
+// Test: String Repeat Operation
+// Category: Strings - Repeat
+// Description: Test repeat
+
+fn main(): i32 {
+    // Basic repeat
+    let s = "ab";
+    assert(s.repeat(3) == "ababab", "Repeat 'ab' 3 times");
+    
+    // Repeat once
+    let once = "hello";
+    assert(once.repeat(1) == "hello", "Repeat once");
+    
+    // Repeat zero times
+    let zero = "hello";
+    assert(zero.repeat(0) == "", "Repeat zero times");
+    
+    // Repeat single character
+    let char = "x";
+    assert(char.repeat(5) == "xxxxx", "Repeat single char 5 times");
+    
+    // Repeat empty string
+    let empty = "";
+    assert(empty.repeat(10) == "", "Repeat empty string");
+    
+    // Repeat with space
+    let space = "- ";
+    assert(space.repeat(3) == "- - - ", "Repeat '- ' 3 times");
+    
+    $print("✅ All string repeat tests passed!");
+    return 0;
+}

@@ -1,0 +1,31 @@
+// Test Go-style external methods
+// Expected: All assertions pass
+
+struct IntBox {
+    value: i32,
+}
+
+fn (b: &IntBox) get(): i32 {
+    return b.value;
+}
+
+struct FloatBox {
+    value: f64,
+}
+
+fn (b: &FloatBox) get(): f64 {
+    return b.value;
+}
+
+fn main(): i32 {
+    let int_box = IntBox { value: 42 };
+    let int_val = int_box.get();
+    assert(int_val == 42, "IntBox get method");
+    
+    let float_box = FloatBox { value: 3.14 };
+    let float_val = float_box.get();
+    assert(float_val > 3.0, "FloatBox get method");
+    
+    $print("✅ All external method tests passed!");
+    return 0;
+}

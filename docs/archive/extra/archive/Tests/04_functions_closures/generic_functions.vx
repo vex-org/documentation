@@ -1,0 +1,31 @@
+// Test generic functions
+// Expected: All assertions pass
+
+fn identity<T>(x: T): T {
+    return x;
+}
+
+fn swap_tuple<A, B>(a: A, b: B): (B, A) {
+    return (b, a);
+}
+
+fn main(): i32 {
+    // Basic generic inference
+    let x = identity(42);
+    assert(x == 42, "Identity i32");
+    
+    let s = identity("hello");
+    assert(s == "hello", "Identity string");
+
+    // Explicit type args (if supported syntax, usually inferred)
+    let y = identity<i32>(100);
+    assert(y == 100, "Identity explicit i32");
+
+    // Multiple generics
+    let (b, a) = swap_tuple(1, "two");
+    assert(b == "two", "Swap tuple first");
+    assert(a == 1, "Swap tuple second");
+
+    $print("✅ All generic function tests passed!");
+    return 0;
+}

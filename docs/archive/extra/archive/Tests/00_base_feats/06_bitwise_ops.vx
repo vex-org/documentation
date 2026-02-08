@@ -1,0 +1,36 @@
+// Test: Bitwise operators
+// Category: Operators
+// Description: Test &, |, ^, <<, >> operators
+
+fn main(): i32 {
+    // Bitwise AND
+    let and_result = 12 & 10;
+    assert(and_result == 8, "Bitwise AND");
+    
+    // Bitwise OR
+    let or_result = 12 | 10;
+    assert(or_result == 14, "Bitwise OR");
+    
+    // Bitwise XOR
+    let xor_result = 12 ^ 10;
+    assert(xor_result == 6, "Bitwise XOR");
+    
+    // Bitwise NOT
+    let not_result = ~0;
+    assert(not_result == -1, "Bitwise NOT");
+    
+    // Left shift
+    let lshift_result = 5 << 2;
+    assert(lshift_result == 20, "Left shift");
+    
+    // Right shift
+    let rshift_result = 20 >> 2;
+    assert(rshift_result == 5, "Right shift");
+    
+    // Combined bitwise operations
+    let combined = (8 | 4) & 12;
+    assert(combined == 12, "Combined bitwise ops");
+    
+    $print("✅ All bitwise operator tests passed!");
+    return 0;
+}

@@ -1,0 +1,46 @@
+// Test: String Search Operations
+// Category: Strings - Search
+// Description: Test contains, starts_with, ends_with, find, rfind
+
+fn main(): i32 {
+    let text = "hello world";
+    
+    // Contains tests
+    assert(text.contains("hello"), "Contains 'hello'");
+    assert(text.contains("world"), "Contains 'world'");
+    assert(text.contains("o w"), "Contains 'o w'");
+    assert(!text.contains("xyz"), "Does not contain 'xyz'");
+    assert(text.contains(""), "Contains empty string");
+    
+    // Starts with tests
+    assert(text.starts_with("hello"), "Starts with 'hello'");
+    assert(text.starts_with("h"), "Starts with 'h'");
+    assert(!text.starts_with("world"), "Does not start with 'world'");
+    assert(text.starts_with(""), "Starts with empty");
+    
+    // Ends with tests
+    assert(text.ends_with("world"), "Ends with 'world'");
+    assert(text.ends_with("d"), "Ends with 'd'");
+    assert(!text.ends_with("hello"), "Does not end with 'hello'");
+    assert(text.ends_with(""), "Ends with empty");
+    
+    // Find tests
+    assert(text.find("hello") == 0, "Find 'hello' at 0");
+    assert(text.find("world") == 6, "Find 'world' at 6");
+    assert(text.find("o") == 4, "Find first 'o' at 4");
+    assert(text.find("xyz") == -1, "Find 'xyz' returns -1");
+    
+    // Rfind tests (find last occurrence)
+    assert(text.rfind("o") == 7, "Rfind last 'o' at 7");
+    assert(text.rfind("l") == 9, "Rfind last 'l' at 9");
+    assert(text.rfind("xyz") == -1, "Rfind 'xyz' returns -1");
+    
+    // Count occurrences
+    let repeated = "aaa bbb aaa ccc aaa";
+    assert(repeated.count("aaa") == 3, "Count 'aaa' = 3");
+    assert(repeated.count("b") == 3, "Count 'b' = 3");
+    assert(repeated.count("xyz") == 0, "Count 'xyz' = 0");
+    
+    $print("✅ All string search tests passed!");
+    return 0;
+}

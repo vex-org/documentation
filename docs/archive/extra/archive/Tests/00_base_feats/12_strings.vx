@@ -1,0 +1,28 @@
+// Test: String operations
+// Category: Strings
+// Description: Test basic string operations
+
+fn main(): i32 {
+    // String literals
+    let s1 = "hello";
+    assert(s1 == "hello", "String literal");
+    
+    // String comparison
+    let s2 = "world";
+    assert(s1 != s2, "String inequality");
+    assert(s1 == "hello", "String equality");
+    
+    // Empty string
+    let empty = "";
+    assert(empty == "", "Empty string");
+    
+    // String with escapes
+    let escaped = "line1\nline2";
+    
+    // String concatenation (if supported)
+    // let concat = s1 + " " + s2;
+    // assert(concat == "hello world", "String concatenation");
+    
+    $print("✅ All string tests passed!");
+    return 0;
+}

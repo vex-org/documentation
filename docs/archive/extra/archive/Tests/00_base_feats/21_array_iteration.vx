@@ -1,0 +1,60 @@
+// Test: Array iteration with for-in
+// Category: Control Flow
+// Description: Test for..in loop with arrays
+
+fn main(): i32 {
+    // Test 1: Array literal iteration
+    let! sum1 = 0;
+    for item in [1, 2, 3, 4, 5] {
+        sum1 = sum1 + item;
+    }
+    assert(sum1 == 15, "Array literal for-in");
+    
+    // Test 2: Array variable iteration
+    let arr = [10, 20, 30];
+    let! sum2 = 0;
+    for x in arr {
+        sum2 = sum2 + x;
+    }
+    assert(sum2 == 60, "Array variable for-in");
+    
+    // Test 3: Array with break
+    let! count = 0;
+    for n in [1, 2, 3, 4, 5] {
+        if n == 4 {
+            break;
+        }
+        count = count + 1;
+    }
+    assert(count == 3, "Array for-in with break");
+    
+    // Test 4: Array with continue
+    let! odd_sum = 0;
+    for n in [1, 2, 3, 4, 5] {
+        if n % 2 == 0 {
+            continue;
+        }
+        odd_sum = odd_sum + n;
+    }
+    assert(odd_sum == 9, "Array for-in with continue");
+    
+    // Test 5: Simple iteration count
+    let! iterations = 0;
+    for dummy in [1, 2, 3] {
+        iterations = iterations + 1;
+    }
+    assert(iterations == 3, "Array for-in iteration count");
+    
+    // Test 6: Nested array iteration
+    let! nested_sum = 0;
+    for i in [1, 2] {
+        for j in [10, 20] {
+            nested_sum = nested_sum + i * j;
+        }
+    }
+    // (1*10 + 1*20) + (2*10 + 2*20) = 30 + 60 = 90
+    assert(nested_sum == 90, "Nested array for-in");
+    
+    $print("✅ All array iteration tests passed!");
+    return 0;
+}

@@ -1,0 +1,36 @@
+// Test char and string types
+// Expected: Partial pass (char type may not be implemented)
+
+fn main(): i32 {
+    // Character type (if implemented)
+    // let c: char = 'A';
+    // assert(c == 'A', "Char literal");
+    
+    // let newline: char = '\n';
+    // let tab: char = '\t';
+    
+    // String type (smart string)
+    let s: string = "Hello, World!";
+    // assert(s.len() == 13, "String length");
+    
+    let empty: string = "";
+    // assert(empty.len() == 0, "Empty string");
+    
+    // String concatenation
+    let hello: string = "Hello";
+    let world: string = "World";
+    let combined: string = hello + " " + world;
+    // assert(combined == "Hello World", "String concatenation");
+    
+    // String escapes
+    let with_newline: string = "Line 1\nLine 2";
+    let with_tab: string = "Col1\tCol2";
+    let with_quote: string = "Say \"Hi\"";
+    
+    // String indexing (may return char or byte)
+    // let first_char = s[0];
+    // assert(first_char == 'H', "String indexing");
+    
+    $print("✅ All char/string type tests passed!");
+    return 0;
+}

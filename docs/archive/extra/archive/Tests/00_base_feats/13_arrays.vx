@@ -1,0 +1,28 @@
+// Test: Arrays
+// Category: Collections
+// Description: Test array literals and indexing
+
+fn main(): i32 {
+    // Array literal
+    let arr = [1, 2, 3, 4, 5];
+    
+    // Array indexing
+    assert(arr[0] == 1, "Array index 0");
+    assert(arr[2] == 3, "Array index 2");
+    assert(arr[4] == 5, "Array index 4");
+    
+    // Mutable array
+    let! mut_arr = [10, 20, 30];
+    mut_arr[1] = 25;
+    assert(mut_arr[1] == 25, "Mutable array");
+    
+    // Array of different sizes
+    let small = [1, 2];
+    assert(small[0] == 1, "Small array");
+    
+    let large = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    assert(large[9] == 10, "Large array");
+    
+    $print("✅ All array tests passed!");
+    return 0;
+}

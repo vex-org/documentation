@@ -1,0 +1,37 @@
+// Test: String Equality and Comparison
+// Category: Strings - Comparison
+// Description: Test string equality
+
+fn main(): i32 {
+    // Basic equality
+    let s1 = "hello";
+    let s2 = "hello";
+    assert(s1 == s2, "Equal strings");
+    
+    // Inequality
+    let s3 = "world";
+    assert(s1 != s3, "Different strings");
+    
+    // Case sensitive
+    let lower = "hello";
+    let upper = "HELLO";
+    assert(lower != upper, "Case sensitive comparison");
+    
+    // Empty strings
+    let empty1 = "";
+    let empty2 = "";
+    assert(empty1 == empty2, "Empty strings equal");
+    
+    // Different lengths
+    let short = "hi";
+    let long = "hello";
+    assert(short != long, "Different length strings");
+    
+    // Whitespace matters
+    let with_space = "hello ";
+    let without = "hello";
+    assert(with_space != without, "Whitespace matters");
+    
+    $print("✅ All string equality tests passed!");
+    return 0;
+}

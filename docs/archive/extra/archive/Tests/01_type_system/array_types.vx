@@ -1,0 +1,36 @@
+// Test fixed-size array types
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // Array literal
+    let arr: [i32; 5] = [1, 2, 3, 4, 5];
+    assert(arr[0] == 1, "Array first element");
+    assert(arr[4] == 5, "Array last element");
+    
+    // Array indexing
+    let third = arr[2];
+    assert(third == 3, "Array indexing");
+    
+    // Array with same value
+    let zeros: [i32; 3] = [0, 0, 0];
+    assert(zeros[0] == 0, "Array zeros first");
+    assert(zeros[2] == 0, "Array zeros last");
+    
+    // Multi-dimensional array
+    let matrix: [[i32; 2]; 2] = [[1, 2], [3, 4]];
+    assert(matrix[0][0] == 1, "Matrix [0][0]");
+    assert(matrix[0][1] == 2, "Matrix [0][1]");
+    assert(matrix[1][0] == 3, "Matrix [1][0]");
+    assert(matrix[1][1] == 4, "Matrix [1][1]");
+    
+    // Array of different types
+    let floats: [f64; 3] = [1.1, 2.2, 3.3];
+    assert(floats[1] > 2.0, "Float array");
+    
+    let bools: [bool; 2] = [true, false];
+    assert(bools[0], "Bool array first");
+    assert(!bools[1], "Bool array second");
+    
+    $print("✅ All array type tests passed!");
+    return 0;
+}

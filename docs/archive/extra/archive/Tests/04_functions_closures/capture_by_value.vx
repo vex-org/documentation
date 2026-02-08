@@ -1,0 +1,27 @@
+// Test closure capture by value
+// Expected: All assertions pass
+
+fn main(): i32 {
+    let x = 10;
+    
+    // Capture 'x' by value (copy for primitive)
+    let add_x = |y: i32| x + y;
+    
+    assert(add_x(5) == 15, "Capture by value (read)");
+    
+    // Ensure original is unchanged (for copy types)
+    assert(x == 10, "Original variable unchanged");
+
+    // Mutable capture (if supported)
+    // let mut counter = 0;
+    // let mut inc = || {
+    //     counter += 1;
+    //     return counter;
+    // };
+    // assert(inc() == 1, "Mutable capture 1");
+    // assert(inc() == 2, "Mutable capture 2");
+    // assert(counter == 2, "Original mutated");
+
+    $print("✅ All capture by value tests passed!");
+    return 0;
+}

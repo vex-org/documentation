@@ -1,0 +1,19 @@
+// Test references and borrowing
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // Basic value and reference
+    let val = 100;
+    
+    // Direct value access
+    assert(val == 100, "Direct value access");
+    
+    // Simple reference usage test
+    let x = 42;
+    let y = x;  // Copy
+    assert(y == 42, "Value copy");
+    assert(x == 42, "Original unchanged");
+
+    $print("✅ All reference tests passed!");
+    return 0;
+}

@@ -1,0 +1,55 @@
+// Test all integer primitive types
+// Expected: All assertions pass
+
+fn main(): i32 {
+    // Signed integers
+    let i8_val: i8 = 127;
+    let i8_min: i8 = -128;
+    assert(i8_val == 127, "i8 max value");
+    assert(i8_min == -128, "i8 min value");
+    
+    let i16_val: i16 = 32767;
+    let i16_min: i16 = -32768;
+    assert(i16_val == 32767, "i16 max value");
+    assert(i16_min == -32768, "i16 min value");
+    
+    let i32_val: i32 = 2147483647;
+    let i32_min: i32 = -2147483648;
+    assert(i32_val == 2147483647, "i32 max value");
+    assert(i32_min == -2147483648, "i32 min value");
+    
+    let i64_val: i64 = 9223372036854775807;
+    assert(i64_val > 0, "i64 positive");
+    
+    // Unsigned integers
+    let u8_val: u8 = 255;
+    assert(u8_val == 255, "u8 max value");
+    
+    let u16_val: u16 = 65535;
+    assert(u16_val == 65535, "u16 max value");
+    
+    let u32_val: u32 = 4294967295;
+    assert(u32_val == 4294967295, "u32 max value");
+    
+    let u64_val: u64 = 123456789012345;
+    assert(u64_val > 0, "u64 positive");
+    
+    // Arithmetic operations
+    let sum: i32 = 10 + 20;
+    assert(sum == 30, "i32 addition");
+    
+    let diff: u32 = 50 - 30;
+    assert(diff == 20, "u32 subtraction");
+    
+    let prod: i64 = 6 * 7;
+    assert(prod == 42, "i64 multiplication");
+    
+    let quot: i32 = 100 / 4;
+    assert(quot == 25, "i32 division");
+    
+    let rem: u32 = 17 % 5;
+    assert(rem == 2, "u32 modulo");
+    
+    $print("✅ All integer primitive tests passed!");
+    return 0;
+}

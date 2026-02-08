@@ -1,0 +1,32 @@
+// Test operator overloading
+// Expected: All assertions pass
+
+contract Add {
+    op+(rhs: Self): Self;
+}
+
+struct Vector2 {
+    x: i32,
+    y: i32,
+}
+
+// Go-style implementation
+fn (self: Vector2) op+(other: Vector2): Vector2 {
+    return Vector2 {
+        x: self.x + other.x,
+        y: self.y + other.y,
+    };
+}
+
+fn main(): i32 {
+    let v1 = Vector2 { x: 1, y: 2 };
+    let v2 = Vector2 { x: 3, y: 4 };
+    
+    let v3 = v1 + v2;
+    
+    assert(v3.x == 4, "Vector addition x");
+    assert(v3.y == 6, "Vector addition y");
+
+    $print("✅ All operator overloading tests passed!");
+    return 0;
+}

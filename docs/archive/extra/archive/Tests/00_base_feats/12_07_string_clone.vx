@@ -1,0 +1,26 @@
+// Test: String Clone Operation
+// Category: Strings - Clone
+// Description: Test clone
+
+fn main(): i32 {
+    // Basic clone
+    let original = "hello";
+    let cloned = original.clone();
+    assert(cloned == "hello", "Cloned string equals original");
+    assert(cloned == original, "Clone equals original");
+    
+    // Clone empty string
+    let empty = "";
+    let empty_clone = empty.clone();
+    assert(empty_clone == "", "Clone empty string");
+    
+    // Clone and modify (strings are immutable, so this creates new string)
+    let s1 = "hello";
+    let s2 = s1.clone();
+    let s3 = s2.toUpper();
+    assert(s1 == "hello", "Original unchanged");
+    assert(s3 == "HELLO", "Transformed clone");
+    
+    $print("✅ All string clone tests passed!");
+    return 0;
+}

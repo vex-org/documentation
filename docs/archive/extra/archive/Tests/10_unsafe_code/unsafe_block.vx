@@ -1,0 +1,25 @@
+// Test unsafe blocks and raw pointers
+// Expected: All assertions pass
+
+fn main(): i32 {
+    let! val = 42;
+    
+    unsafe {
+        // Create raw pointer
+        let ptr: *i32 = &val as *i32;
+        
+        // Dereference raw pointer
+        assert(*ptr == 42, "Raw pointer deref");
+        
+        // Modify through raw pointer
+        *ptr = 100;
+    }
+    
+    assert(val == 100, "Modification via raw pointer");
+    
+    // Pointer arithmetic (if supported/safe to test)
+    // Assuming simple pointer logic for now
+    
+    $print("✅ All unsafe block tests passed!");
+    return 0;
+}

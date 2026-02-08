@@ -1,0 +1,36 @@
+// Test Result type usage
+// Expected: All assertions pass
+
+// Assuming Result<T, E> is a built-in or standard type
+// If not, we might need to define a mock one, but RequiredFeatures implies it's a feature.
+
+fn safe_div(a: i32, b: i32): Result<i32, string> {
+    if b == 0 {
+        return Err("Division by zero");
+    }
+    return Ok(a / b);
+}
+
+fn main(): i32 {
+    // Test Ok case
+    let res1 = safe_div(10, 2);
+    match res1 {
+        Ok(val) => assert(val == 5, "Result Ok value"),
+        Err(_) => assert(false, "Result should be Ok"),
+    }
+
+    // Test Err case
+    let res2 = safe_div(10, 0);
+    match res2 {
+        Ok(_) => assert(false, "Result should be Err"),
+        Err(msg) => assert(msg == "Division by zero", "Result Err message"),
+    }
+
+    // Helper methods (if available)
+    // assert(res1.is_ok(), "is_ok check");
+    // assert(res2.is_err(), "is_err check");
+    // assert(res1.unwrap() == 5, "unwrap check");
+
+    $print("✅ All Result type tests passed!");
+    return 0;
+}

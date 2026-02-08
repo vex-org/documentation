@@ -1,0 +1,45 @@
+// Test: Basic literals
+// Category: Primitives
+// Description: Test integer, float, bool, string literals
+
+fn main(): i32 {
+    // Integer literals
+    let int_decimal = 42;
+    assert(int_decimal == 42, "Decimal integer");
+    
+    let int_hex = 0xFF;
+    assert(int_hex == 255, "Hexadecimal integer");
+    
+    let int_binary = 0b1010;
+    assert(int_binary == 10, "Binary integer");
+    
+    let int_octal = 0o755;
+    assert(int_octal == 493, "Octal integer");
+    
+    // Float literals
+    let float_basic = 3.14;
+    assert(float_basic > 3.0, "Basic float");
+    
+    let float_exp = 1.5e2;
+    assert(float_exp == 150.0, "Float with exponent");
+    
+    // Boolean literals
+    let bool_true = true;
+    let bool_false = false;
+    assert(bool_true, "Boolean true");
+    assert(!bool_false, "Boolean false");
+    
+    // String literals
+    let str_basic = "hello";
+    assert(str_basic == "hello", "Basic string");
+    
+    let str_escaped = "line1\nline2";
+    
+    // Byte literals (u8 for ASCII characters)
+    let byte_a: u8 = 97;  // 'a' in ASCII
+    let byte_zero: u8 = 0;
+    assert(byte_a == 97, "Byte literal");
+    
+    $print("✅ All literal tests passed!");
+    return 0;
+}

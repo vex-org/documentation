@@ -1,0 +1,50 @@
+// Test: While loops
+// Category: Control Flow
+// Description: Test while loop with break and continue
+
+fn main(): i32 {
+    // Basic while loop
+    let! count = 0;
+    while count < 5 {
+        count = count + 1;
+    }
+    assert(count == 5, "Basic while loop");
+    
+    // While with break
+    let! i = 0;
+    while true {
+        i = i + 1;
+        if i == 3 {
+            break;
+        }
+    }
+    assert(i == 3, "While with break");
+    
+    // While with continue
+    let! sum = 0;
+    let! j = 0;
+    while j < 10 {
+        j = j + 1;
+        if j % 2 == 0 {
+            continue;
+        }
+        sum = sum + j;
+    }
+    assert(sum == 25, "While with continue");
+    
+    // Nested while loops
+    let! outer = 0;
+    let! inner_total = 0;
+    while outer < 3 {
+        let! inner = 0;
+        while inner < 2 {
+            inner_total = inner_total + 1;
+            inner = inner + 1;
+        }
+        outer = outer + 1;
+    }
+    assert(inner_total == 6, "Nested while loops");
+    
+    $print("✅ All while loop tests passed!");
+    return 0;
+}

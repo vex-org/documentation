@@ -1,0 +1,35 @@
+// Test pattern matching
+// Expected: All assertions pass
+
+fn main(): i32 {
+    let x = 3;
+    
+    // Basic integer match
+    let result = match x {
+        1 => 10,
+        2 => 20,
+        3 => 30,
+        _ => 0,
+    };
+    assert(result == 30, "Integer match");
+
+    // Multiple patterns (if supported)
+    let y = 2;
+    let group = match y {
+        1 | 2 | 3 => "small",
+        4 | 5 | 6 => "medium",
+        _ => "large",
+    };
+    assert(group == "small", "Multiple patterns");
+
+    // Tuple matching
+    let pair = (10, 20);
+    let sum = match pair {
+        (0, 0) => 0,
+        (a, b) => a + b,
+    };
+    assert(sum == 30, "Tuple matching");
+
+    $print("✅ All pattern matching tests passed!");
+    return 0;
+}

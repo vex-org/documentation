@@ -1,0 +1,35 @@
+// Test: String Case Transformation
+// Category: Strings - Transformation
+// Description: Test toUpper, toLower
+
+fn main(): i32 {
+    // To upper tests
+    let lower = "hello";
+    let upper = lower.toUpper();
+    assert(upper == "HELLO", "toUpper 'hello': 'HELLO'");
+    
+    let mixed = "Hello World";
+    assert(mixed.toUpper() == "HELLO WORLD", "toUpper mixed case");
+    
+    let already_upper = "HELLO";
+    assert(already_upper.toUpper() == "HELLO", "toUpper already uppercase");
+    
+    // To lower tests
+    let upper2 = "WORLD";
+    let lower2 = upper2.toLower();
+    assert(lower2 == "world", "toLower 'WORLD': 'world'");
+    
+    let mixed2 = "Hello World";
+    assert(mixed2.toLower() == "hello world", "toLower mixed case");
+    
+    let already_lower = "hello";
+    assert(already_lower.toLower() == "hello", "toLower already lowercase");
+    
+    // With numbers and symbols
+    let alphanumeric = "Hello123!";
+    assert(alphanumeric.toUpper() == "HELLO123!", "toUpper with numbers/symbols");
+    assert(alphanumeric.toLower() == "hello123!", "toLower with numbers/symbols");
+    
+    $print("✅ All string case transformation tests passed!");
+    return 0;
+}

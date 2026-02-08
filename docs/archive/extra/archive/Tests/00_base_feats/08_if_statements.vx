@@ -1,0 +1,57 @@
+// Test: If statements
+// Category: Control Flow
+// Description: Test if, elif, else conditionals
+
+fn main(): i32 {
+    // Simple if
+    let x = 10;
+    if x > 5 {
+        assert(true, "Simple if");
+    }
+    
+    // If-else
+    let y = 3;
+    if y > 5 {
+        assert(false, "Should not reach");
+    } else {
+        assert(true, "If-else");
+    }
+    
+    // If-elif-else
+    let z = 7;
+    if z < 5 {
+        assert(false, "Should not reach");
+    } elif z < 10 {
+        assert(true, "If-elif-else middle");
+    } else {
+        assert(false, "Should not reach");
+    }
+    
+    // Nested if
+    if x > 5 {
+        if y < 5 {
+            assert(true, "Nested if");
+        }
+    }
+    
+    // Ternary operator (replaces if-expression)
+    let result = x > 5 ? 1 : 0;
+    assert(result == 1, "Ternary operator");
+    
+    // Multiple elif with variable assignment
+    let score = 85;
+    let! grade = "";
+    if score >= 90 {
+        grade = "A";
+    } elif score >= 80 {
+        grade = "B";
+    } elif score >= 70 {
+        grade = "C";
+    } else {
+        grade = "F";
+    }
+    assert(grade == "B", "Multiple elif");
+    
+    $print("✅ All if statement tests passed!");
+    return 0;
+}
