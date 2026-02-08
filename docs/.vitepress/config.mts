@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "Vex Language",
   description: "Modern Systems Programming with Auto-Vectorization",
+  base: '/docs/',
   markdown:{
     languageAlias:{
       "vex":"rust"

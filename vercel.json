@@ -1,0 +1,9 @@
+{
+  "buildCommand": "bun run build",
+  "outputDirectory": "dist",
+  "installCommand": "bun install",
+  "rewrites": [
+    { "source": "/docs/:path*", "destination": "/docs/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
