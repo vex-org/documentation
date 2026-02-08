@@ -33,7 +33,7 @@ async function logout() {
 
         <!-- Desktop nav -->
         <nav class="hidden md:flex items-center gap-1">
-          <RouterLink to="/docs/" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Docs</RouterLink>
+          <a href="/docs/" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Docs</a>
           <RouterLink to="/packages" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Packages</RouterLink>
           <RouterLink to="/blog" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Blog</RouterLink>
           <div class="w-px h-6 bg-vex-border mx-2"></div>
@@ -55,7 +55,7 @@ async function logout() {
 
       <!-- Mobile nav -->
       <div v-if="mobileOpen" class="md:hidden border-t border-vex-border bg-vex-bg px-4 py-3 space-y-1">
-        <RouterLink to="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Docs</RouterLink>
+        <a href="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Docs</a>
         <RouterLink to="/packages" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Packages</RouterLink>
         <RouterLink to="/blog" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Blog</RouterLink>
         <template v-if="user">
@@ -81,7 +81,7 @@ async function logout() {
           </div>
           <div class="flex items-center gap-6 text-sm">
             <a href="https://github.com/vex-org" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">GitHub</a>
-            <RouterLink to="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Docs</RouterLink>
+            <a href="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Docs</a>
             <RouterLink to="/packages" class="text-vex-text-muted hover:text-white transition-colors">Packages</RouterLink>
             <RouterLink to="/blog" class="text-vex-text-muted hover:text-white transition-colors">Blog</RouterLink>
           </div>
