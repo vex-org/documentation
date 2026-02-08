@@ -81,25 +81,27 @@ async function upload() {
 
 <template>
   <div>
-    <h1>Publish version: {{ packageName }}</h1>
-    <form @submit.prevent="upload" class="form">
-      <label>Version (semver) <input v-model="version" required placeholder="1.0.0" /></label>
-      <label>Readme <textarea v-model="readmeText" rows="6" /></label>
-      <label>Manifest (JSON) <textarea v-model="manifestJson" rows="4" /></label>
-      <label>Artifact (tarball) <input type="file" accept=".tar.gz,.tgz,.zip" @change="onFileChange" /></label>
-      <p v-if="error" class="error">{{ error }}</p>
-      <button type="submit" :disabled="uploading || !pkgId || !artifactFile">{{ uploading ? 'Uploading…' : 'Publish version' }}</button>
+    <h1 class="text-2xl font-bold text-white mb-6">Publish Version: <span class="text-vex-primary">{{ packageName }}</span></h1>
+    <form @submit.prevent="upload" class="max-w-lg space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Version (semver)</label>
+        <input v-model="version" required placeholder="1.0.0" class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Readme</label>
+        <textarea v-model="readmeText" rows="6" class="w-full px-4 py-3 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all resize-y" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Manifest (JSON)</label>
+        <textarea v-model="manifestJson" rows="4" class="w-full px-4 py-3 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all resize-y font-mono text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Artifact (tarball)</label>
+        <input type="file" accept=".tar.gz,.tgz,.zip" @change="onFileChange" class="w-full text-sm text-vex-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-vex-primary/10 file:text-vex-primary file:font-medium file:cursor-pointer hover:file:bg-vex-primary/20 cursor-pointer" />
+      </div>
+      <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+      <button type="submit" :disabled="uploading || !pkgId || !artifactFile" class="w-full py-2.5 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-all disabled:opacity-50 cursor-pointer">{{ uploading ? 'Uploading…' : 'Publish Version' }}</button>
     </form>
-    <p class="hint">Create bucket <code>artifacts</code> in Supabase Dashboard (Storage). Allow authenticated uploads and public read if needed for installs.</p>
+    <p class="mt-4 text-sm text-vex-text-muted">Create bucket <code class="px-1.5 py-0.5 rounded bg-vex-surface border border-vex-border text-vex-accent text-xs">artifacts</code> in Supabase Dashboard (Storage).</p>
   </div>
 </template>
-
-<style scoped>
-.form { max-width: 500px; }
-.form label { display: block; margin-bottom: 0.75rem; }
-.form input, .form textarea { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid var(--border, #e2e8f0); border-radius: 4px; }
-.form .error { color: var(--error, #dc2626); }
-.form button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
-.hint { margin-top: 1rem; color: var(--text-muted, #64748b); font-size: 0.875rem; }
-.hint code { background: var(--bg-code, #f1f5f9); padding: 0.125rem 0.25rem; border-radius: 4px; }
-</style>

@@ -121,30 +121,41 @@ async function save() {
 
 <template>
   <div>
-    <h1>{{ isEdit ? 'Edit post' : 'New post' }}</h1>
-    <form @submit.prevent="save" class="form">
-      <label>Title <input v-model="title" required /></label>
-      <label>Slug <input v-model="slug" required /></label>
-      <label>Excerpt <input v-model="excerpt" /></label>
-      <label>Cover image <input type="file" accept="image/*" @change="onCoverFileChange" /></label>
-      <label>Body (Markdown) <textarea v-model="bodyMd" rows="12" required /></label>
-      <label>Tags (comma-separated) <input v-model="tagsStr" placeholder="vex, tutorial" /></label>
-      <label>Status
-        <select v-model="status">
+    <h1 class="text-2xl font-bold text-white mb-6">{{ isEdit ? 'Edit Post' : 'New Post' }}</h1>
+    <form @submit.prevent="save" class="max-w-2xl space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Title</label>
+        <input v-model="title" required class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Slug</label>
+        <input v-model="slug" required class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Excerpt</label>
+        <input v-model="excerpt" class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Cover image</label>
+        <input type="file" accept="image/*" @change="onCoverFileChange" class="w-full text-sm text-vex-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-vex-primary/10 file:text-vex-primary file:font-medium file:cursor-pointer hover:file:bg-vex-primary/20 cursor-pointer" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Body (Markdown)</label>
+        <textarea v-model="bodyMd" rows="14" required class="w-full px-4 py-3 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all resize-y font-mono text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Tags (comma-separated)</label>
+        <input v-model="tagsStr" placeholder="vex, tutorial" class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-vex-text mb-1.5">Status</label>
+        <select v-model="status" class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all cursor-pointer">
           <option value="draft">Draft</option>
           <option value="published">Published</option>
         </select>
-      </label>
-      <p v-if="error" class="error">{{ error }}</p>
-      <button type="submit" :disabled="saving">{{ saving ? 'Saving…' : 'Save' }}</button>
+      </div>
+      <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+      <button type="submit" :disabled="saving" class="w-full py-2.5 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-all disabled:opacity-50 cursor-pointer">{{ saving ? 'Saving…' : 'Save' }}</button>
     </form>
   </div>
 </template>
-
-<style scoped>
-.form { max-width: 600px; }
-.form label { display: block; margin-bottom: 0.75rem; }
-.form input, .form textarea, .form select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; border: 1px solid var(--border, #e2e8f0); border-radius: 4px; }
-.form .error { color: var(--error, #dc2626); }
-.form button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
-</style>

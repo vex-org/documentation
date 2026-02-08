@@ -3,8 +3,8 @@ import { ref, onMounted } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { supabase } from '../supabase/client'
 
-const DOCS_URL = 'https://docs.vex-lang.org'
 const user = ref<{ id: string; email?: string } | null>(null)
+const mobileOpen = ref(false)
 const router = useRouter()
 
 onMounted(async () => {
@@ -22,43 +22,71 @@ async function logout() {
 </script>
 
 <template>
-  <div class="app">
-    <header class="header">
-      <div class="header-inner">
-        <RouterLink to="/" class="logo">Vex</RouterLink>
-        <nav class="nav">
-          <a :href="DOCS_URL" target="_blank" rel="noopener">Docs</a>
-          <RouterLink to="/packages">Packages</RouterLink>
-          <RouterLink to="/blog">Blog</RouterLink>
+  <div class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 border-b border-vex-border bg-vex-bg/80 backdrop-blur-xl">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <RouterLink to="/" class="flex items-center gap-2 group">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white font-bold text-sm">V</div>
+          <span class="text-xl font-bold text-white group-hover:text-vex-accent transition-colors">Vex</span>
+        </RouterLink>
+
+        <!-- Desktop nav -->
+        <nav class="hidden md:flex items-center gap-1">
+          <RouterLink to="/docs/" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Docs</RouterLink>
+          <RouterLink to="/packages" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Packages</RouterLink>
+          <RouterLink to="/blog" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Blog</RouterLink>
+          <div class="w-px h-6 bg-vex-border mx-2"></div>
           <template v-if="user">
-            <RouterLink to="/dashboard">Dashboard</RouterLink>
-            <button type="button" class="auth-btn" @click="logout">Logout</button>
+            <RouterLink to="/dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Dashboard</RouterLink>
+            <button type="button" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all cursor-pointer" @click="logout">Logout</button>
           </template>
-          <RouterLink v-else to="/login" class="auth">Login</RouterLink>
+          <RouterLink v-else to="/login" class="px-4 py-2 rounded-lg text-sm font-medium bg-vex-primary hover:bg-vex-primary-light text-white transition-all">Sign in</RouterLink>
         </nav>
+
+        <!-- Mobile toggle -->
+        <button type="button" class="md:hidden p-2 text-vex-text-muted hover:text-white" @click="mobileOpen = !mobileOpen">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path v-if="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile nav -->
+      <div v-if="mobileOpen" class="md:hidden border-t border-vex-border bg-vex-bg px-4 py-3 space-y-1">
+        <RouterLink to="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Docs</RouterLink>
+        <RouterLink to="/packages" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Packages</RouterLink>
+        <RouterLink to="/blog" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Blog</RouterLink>
+        <template v-if="user">
+          <RouterLink to="/dashboard" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Dashboard</RouterLink>
+          <button type="button" class="block w-full text-left px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5 cursor-pointer" @click="logout(); mobileOpen = false">Logout</button>
+        </template>
+        <RouterLink v-else to="/login" class="block px-3 py-2 rounded-lg text-sm font-medium text-vex-primary" @click="mobileOpen = false">Sign in</RouterLink>
       </div>
     </header>
-    <main class="main">
+
+    <!-- Main -->
+    <main class="flex-1">
       <slot />
     </main>
-    <footer class="footer">
-      <a href="https://vex-lang.org" target="_blank" rel="noopener">vex-lang.org</a>
+
+    <!-- Footer -->
+    <footer class="border-t border-vex-border">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-vex-text-muted text-sm">
+            <div class="w-5 h-5 rounded bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white text-xs font-bold">V</div>
+            <span>&copy; {{ new Date().getFullYear() }} Vex Language</span>
+          </div>
+          <div class="flex items-center gap-6 text-sm">
+            <a href="https://github.com/vex-org" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">GitHub</a>
+            <RouterLink to="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Docs</RouterLink>
+            <RouterLink to="/packages" class="text-vex-text-muted hover:text-white transition-colors">Packages</RouterLink>
+            <RouterLink to="/blog" class="text-vex-text-muted hover:text-white transition-colors">Blog</RouterLink>
+          </div>
+        </div>
+      </div>
     </footer>
   </div>
 </template>
-
-<style scoped>
-.app { min-height: 100vh; display: flex; flex-direction: column; }
-.header { border-bottom: 1px solid var(--border, #e2e8f0); background: var(--bg-header, #fff); }
-.header-inner { max-width: 960px; margin: 0 auto; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; }
-.logo { font-weight: 700; font-size: 1.25rem; color: var(--text, #0f172a); text-decoration: none; }
-.nav { display: flex; gap: 1.5rem; align-items: center; }
-.nav a, .nav .auth { color: var(--text-muted, #64748b); text-decoration: none; background: none; border: none; font: inherit; cursor: pointer; }
-.nav a:hover, .nav .router-link-active { color: var(--text, #0f172a); }
-.auth-btn { color: var(--text-muted, #64748b); background: none; border: none; font: inherit; cursor: pointer; padding: 0; }
-.auth-btn:hover { color: var(--text, #0f172a); }
-.auth { margin-left: 0.5rem; }
-.main { flex: 1; max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; width: 100%; }
-.footer { padding: 1rem; text-align: center; border-top: 1px solid var(--border, #e2e8f0); font-size: 0.875rem; }
-.footer a { color: var(--text-muted, #64748b); text-decoration: none; }
-</style>

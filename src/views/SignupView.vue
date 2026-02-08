@@ -11,31 +11,32 @@ const router = useRouter()
 async function signup() {
   error.value = ''
   const { error: e } = await supabase.auth.signUp({ email: email.value, password: password.value })
-  if (e) {
-    error.value = e.message
-    return
-  }
+  if (e) { error.value = e.message; return }
   router.push('/dashboard')
 }
 </script>
 
 <template>
-  <div class="auth">
-    <h1>Sign up</h1>
-    <form @submit.prevent="signup">
-      <input v-model="email" type="email" placeholder="Email" required />
-      <input v-model="password" type="password" placeholder="Password" required />
-      <p v-if="error" class="error">{{ error }}</p>
-      <button type="submit">Sign up</button>
-    </form>
-    <p><router-link to="/login">Log in</router-link></p>
+  <div class="min-h-[60vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">V</div>
+        <h1 class="text-2xl font-bold text-white">Create account</h1>
+        <p class="text-sm text-vex-text-muted mt-1">Join the Vex community</p>
+      </div>
+      <form class="space-y-4" @submit.prevent="signup">
+        <div>
+          <label class="block text-sm font-medium text-vex-text-muted mb-1.5">Email</label>
+          <input v-model="email" type="email" required class="w-full px-4 py-3 rounded-xl border border-vex-border bg-vex-bg-card text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-vex-text-muted mb-1.5">Password</label>
+          <input v-model="password" type="password" required class="w-full px-4 py-3 rounded-xl border border-vex-border bg-vex-bg-card text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" placeholder="••••••••" />
+        </div>
+        <p v-if="error" class="text-sm text-vex-error">{{ error }}</p>
+        <button type="submit" class="w-full py-3 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-all cursor-pointer">Create account</button>
+      </form>
+      <p class="text-center text-sm text-vex-text-muted mt-6">Already have an account? <router-link to="/login" class="text-vex-primary hover:text-vex-accent transition-colors">Sign in</router-link></p>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.auth { max-width: 320px; margin: 0 auto; }
-.auth h1 { margin-bottom: 1rem; }
-.auth input { display: block; width: 100%; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid var(--border, #e2e8f0); border-radius: 4px; }
-.auth button { padding: 0.5rem 1rem; margin-top: 0.5rem; cursor: pointer; }
-.error { color: var(--error, #dc2626); font-size: 0.875rem; margin-top: 0.25rem; }
-</style>
