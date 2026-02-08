@@ -32,7 +32,9 @@ onMounted(async () => {
       </router-link>
     </div>
     <div v-else class="text-center py-12">
-      <div class="text-4xl mb-3">📝</div>
+      <div class="w-12 h-12 rounded-xl bg-vex-primary/10 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6 text-vex-text-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+      </div>
       <p class="text-vex-text-muted">No posts yet.</p>
     </div>
   </div>

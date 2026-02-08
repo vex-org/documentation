@@ -1,12 +1,15 @@
 <script setup lang="ts">
+import { Zap, Shield, Brain, Gamepad2, RefreshCw, Package } from 'lucide-vue-next'
+import { markRaw, type Component } from 'vue'
+
 const features = [
-  { icon: '⚡', title: 'Rust-Level Speed', desc: 'Zero-cost abstractions with LLVM 21 backend. 4ns per random number, competitive with native Rust.' },
-  { icon: '🛡️', title: 'Memory Safe', desc: '4-phase Polonius borrow checker with automatic lifetimes. No GC, no leaks, no data races.' },
-  { icon: '🧠', title: 'Auto-Vectorization', desc: 'SIR (Silicon IR) generates optimal SIMD for AVX-512, ARM SVE/NEON, and RISC-V vectors automatically.' },
-  { icon: '🎮', title: 'GPU Offloading', desc: 'Write Vex, run on CUDA, Metal, Vulkan, ROCm, or WebGPU. 7 backends, zero boilerplate.' },
-  { icon: '🔄', title: 'Go-Style Concurrency', desc: 'M:N scheduler with go {} blocks, async/await, and lock-free channels. Millions of tasks.' },
-  { icon: '📦', title: 'Batteries Included', desc: 'LSP, formatter, fuzzer, benchmarks, package manager, and VS Code extension — all built in.' },
-]
+  { icon: markRaw(Zap), title: 'Rust-Level Speed', desc: 'Zero-cost abstractions with LLVM 21 backend. 4ns per random number, competitive with native Rust.' },
+  { icon: markRaw(Shield), title: 'Memory Safe', desc: '4-phase Polonius borrow checker with automatic lifetimes. No GC, no leaks, no data races.' },
+  { icon: markRaw(Brain), title: 'Auto-Vectorization', desc: 'SIR (Silicon IR) generates optimal SIMD for AVX-512, ARM SVE/NEON, and RISC-V vectors automatically.' },
+  { icon: markRaw(Gamepad2), title: 'GPU Offloading', desc: 'Write Vex, run on CUDA, Metal, Vulkan, ROCm, or WebGPU. 7 backends, zero boilerplate.' },
+  { icon: markRaw(RefreshCw), title: 'Go-Style Concurrency', desc: 'M:N scheduler with go {} blocks, async/await, and lock-free channels. Millions of tasks.' },
+  { icon: markRaw(Package), title: 'Batteries Included', desc: 'LSP, formatter, fuzzer, benchmarks, package manager, and VS Code extension — all built in.' },
+] as { icon: Component; title: string; desc: string }[]
 
 const codeExample = `fn main(): i32 {
     let! data = Vec<i32>();
@@ -101,7 +104,9 @@ const stats = [
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div v-for="f in features" :key="f.title" class="group p-6 rounded-xl border border-vex-border bg-vex-bg-card hover:bg-vex-bg-card-hover hover:border-vex-primary/30 transition-all">
-          <div class="text-2xl mb-3">{{ f.icon }}</div>
+          <div class="w-10 h-10 rounded-lg bg-vex-primary/10 flex items-center justify-center mb-3">
+            <component :is="f.icon" class="w-5 h-5 text-vex-primary" />
+          </div>
           <h3 class="text-lg font-semibold text-white mb-2">{{ f.title }}</h3>
           <p class="text-sm text-vex-text-muted leading-relaxed">{{ f.desc }}</p>
         </div>

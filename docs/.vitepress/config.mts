@@ -16,8 +16,8 @@ export default defineConfig({
       { text: 'Guide', link: '/guide/introduction' },
       { text: 'Reference', link: '/specs/01_Introduction_and_Overview' },
       { text: 'Architecture', link: '/architecture/' },
-      { text: 'Packages', link: '/packages' },
-      { text: 'Blog', link: '/blog' }
+      { text: 'Packages', link: 'https://vex-lang.org/packages' },
+      { text: 'Blog', link: 'https://vex-lang.org/blog' }
     ],
 
     search: {

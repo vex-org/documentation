@@ -70,9 +70,9 @@ async function yankVersion(versionId: string) {
         <p v-if="pkg.description" class="text-vex-text-muted text-lg">{{ pkg.description }}</p>
         <div class="flex flex-wrap items-center gap-4 mt-4 text-sm text-vex-text-muted">
           <span v-if="latestVersion" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-vex-primary/10 text-vex-primary font-mono text-xs">v{{ latestVersion.version }}</span>
-          <span v-if="downloadCount > 0" class="inline-flex items-center gap-1">⬇️ {{ downloadCount.toLocaleString() }} downloads</span>
-          <span v-if="pkg.license" class="inline-flex items-center gap-1">📄 {{ pkg.license }}</span>
-          <a v-if="pkg.repository_url" :href="pkg.repository_url" target="_blank" rel="noopener" class="inline-flex items-center gap-1 hover:text-white transition-colors">🔗 Repository</a>
+          <span v-if="downloadCount > 0" class="inline-flex items-center gap-1.5"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg> {{ downloadCount.toLocaleString() }} downloads</span>
+          <span v-if="pkg.license" class="inline-flex items-center gap-1.5"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg> {{ pkg.license }}</span>
+          <a v-if="pkg.repository_url" :href="pkg.repository_url" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:text-white transition-colors"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Repository</a>
         </div>
       </div>
 
@@ -108,7 +108,9 @@ async function yankVersion(versionId: string) {
     </template>
 
     <div v-else class="text-center py-20">
-      <div class="text-4xl mb-4">🔍</div>
+      <div class="w-14 h-14 rounded-xl bg-vex-primary/10 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7 text-vex-text-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </div>
       <p class="text-vex-text-muted">Package not found.</p>
     </div>
   </div>

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '../supabase/client'
+import { AlertTriangle } from 'lucide-vue-next'
 
 const router = useRouter()
 const route = useRoute()
@@ -45,7 +46,9 @@ onMounted(async () => {
         <p class="text-vex-text-muted">Completing sign in…</p>
       </div>
       <div v-else>
-        <div class="text-4xl mb-4">⚠️</div>
+        <div class="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle class="w-7 h-7 text-red-400" />
+        </div>
         <p class="text-red-400 mb-4">{{ error }}</p>
         <router-link to="/login" class="text-vex-primary hover:text-vex-accent transition-colors">Try again</router-link>
       </div>

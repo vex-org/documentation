@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { supabase } from '../supabase/client'
+import { Package } from 'lucide-vue-next'
 
 const packages = ref<{ id: string; name: string; description: string | null }[]>([])
 const loading = ref(true)
@@ -67,7 +68,9 @@ async function doSearch() {
 
     <!-- Empty -->
     <div v-else class="text-center py-20">
-      <div class="text-4xl mb-4">📦</div>
+      <div class="w-14 h-14 rounded-xl bg-vex-primary/10 flex items-center justify-center mx-auto mb-4">
+        <Package class="w-7 h-7 text-vex-text-muted" />
+      </div>
       <p class="text-vex-text-muted">No packages found.</p>
     </div>
   </div>

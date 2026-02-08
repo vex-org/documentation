@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import { LayoutDashboard, PenLine, PenSquare, Package, Rocket } from 'lucide-vue-next'
+import { type Component } from 'vue'
 
-const navItems = [
-  { to: '/dashboard', label: 'Overview', icon: '📊' },
-  { to: '/dashboard/posts', label: 'My Posts', icon: '📝' },
-  { to: '/dashboard/posts/new', label: 'New Post', icon: '✏️' },
-  { to: '/dashboard/packages', label: 'My Packages', icon: '📦' },
-  { to: '/dashboard/packages/new', label: 'Publish Package', icon: '🚀' },
+const navItems: { to: string; label: string; icon: Component }[] = [
+  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard/posts', label: 'My Posts', icon: PenLine },
+  { to: '/dashboard/posts/new', label: 'New Post', icon: PenSquare },
+  { to: '/dashboard/packages', label: 'My Packages', icon: Package },
+  { to: '/dashboard/packages/new', label: 'Publish Package', icon: Rocket },
 ]
 </script>
 
@@ -24,7 +26,7 @@ const navItems = [
             active-class="!text-white !bg-vex-primary/15 !border-l-2 !border-vex-primary"
             :exact="item.to === '/dashboard'"
           >
-            <span>{{ item.icon }}</span>
+            <component :is="item.icon" class="w-4 h-4" />
             <span>{{ item.label }}</span>
           </RouterLink>
         </nav>

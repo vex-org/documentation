@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '../supabase/client'
+import { PenLine } from 'lucide-vue-next'
 
 const route = useRoute()
 interface AuthorRow { display_name: string | null; username: string | null }
@@ -86,7 +87,9 @@ function authorLabel(a: AuthorRow | AuthorRow[] | undefined | null): string {
 
     <!-- Empty -->
     <div v-else class="text-center py-20">
-      <div class="text-4xl mb-4">📝</div>
+      <div class="w-14 h-14 rounded-xl bg-vex-primary/10 flex items-center justify-center mx-auto mb-4">
+        <PenLine class="w-7 h-7 text-vex-text-muted" />
+      </div>
       <p class="text-vex-text-muted">No posts yet. Check back soon!</p>
     </div>
   </div>
