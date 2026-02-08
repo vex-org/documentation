@@ -10,8 +10,9 @@ const router = createRouter({
     { path: '/packages/:name/v/:version', name: 'PackageVersion', component: () => import('../views/PackageDetailView.vue'), meta: { title: 'Package' } },
     { path: '/blog', name: 'Blog', component: () => import('../views/BlogView.vue'), meta: { title: 'Blog' } },
     { path: '/blog/:slug', name: 'Post', component: () => import('../views/PostView.vue'), meta: { title: 'Post' } },
-    { path: '/login', name: 'Login', component: () => import('../views/LoginView.vue'), meta: { title: 'Login' } },
-    { path: '/signup', name: 'Signup', component: () => import('../views/SignupView.vue'), meta: { title: 'Sign Up' } },
+    { path: '/login', name: 'Login', component: () => import('../views/LoginView.vue'), meta: { title: 'Sign In' } },
+    { path: '/signup', redirect: '/login' },
+    { path: '/auth/callback', name: 'AuthCallback', component: () => import('../views/AuthCallbackView.vue'), meta: { title: 'Signing in…' } },
     {
       path: '/dashboard',
       component: () => import('../views/DashboardView.vue'),
