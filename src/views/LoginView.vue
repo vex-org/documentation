@@ -20,7 +20,7 @@ async function signInWith(provider: 'github' | 'google') {
   <div class="min-h-[60vh] flex items-center justify-center px-4">
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
-        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">V</div>
+        <img src="/vex-logo.svg" alt="Vex" class="w-12 h-12 mx-auto mb-4" />
         <h1 class="text-2xl font-bold text-white">Welcome to Vex</h1>
         <p class="text-sm text-vex-text-muted mt-1">Sign in to publish packages, write posts, and more</p>
       </div>

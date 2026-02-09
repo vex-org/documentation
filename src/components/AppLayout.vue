@@ -33,7 +33,7 @@ async function logout() {
     <header class="sticky top-0 z-50 border-b border-vex-border bg-vex-bg/80 backdrop-blur-xl">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2 group">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white font-bold text-sm">V</div>
+          <img src="/vex-logo.svg" alt="Vex" class="w-8 h-8" />
           <span class="text-xl font-bold text-white group-hover:text-vex-accent transition-colors">Vex</span>
         </RouterLink>
 
@@ -82,7 +82,7 @@ async function logout() {
       <div class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-2 text-vex-text-muted text-sm">
-            <div class="w-5 h-5 rounded bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white text-xs font-bold">V</div>
+            <img src="/vex-logo.svg" alt="Vex" class="w-5 h-5" />
             <span>&copy; {{ new Date().getFullYear() }} Vex Language</span>
           </div>
           <div class="flex items-center gap-6 text-sm">
