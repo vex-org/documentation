@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { supabase } from '../../supabase/client'
+import { Trash2 } from 'lucide-vue-next'
 
 interface PostRow { id: string; title: string; slug: string; status: string; published_at: string | null; created_at: string }
 const posts = ref<PostRow[]>([])
@@ -13,6 +14,18 @@ onMounted(async () => {
   posts.value = data ?? []
   loading.value = false
 })
+
+async function deletePost(postId: string, title: string) {
+  if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+  // Delete related data first, then the post
+  await Promise.all([
+    supabase.from('post_tags').delete().eq('post_id', postId),
+    supabase.from('post_claps').delete().eq('post_id', postId),
+    supabase.from('comments').delete().eq('post_id', postId),
+  ])
+  const { error } = await supabase.from('posts').delete().eq('id', postId)
+  if (!error) posts.value = posts.value.filter(p => p.id !== postId)
+}
 </script>
 
 <template>
@@ -25,11 +38,14 @@ onMounted(async () => {
       <div class="w-6 h-6 border-2 border-vex-primary border-t-transparent rounded-full animate-spin"></div>
     </div>
     <div v-else-if="posts.length" class="space-y-2">
-      <router-link v-for="p in posts" :key="p.id" :to="`/dashboard/posts/${p.id}/edit`" class="flex items-center gap-3 p-4 rounded-xl border border-vex-border bg-vex-surface hover:border-vex-primary/50 transition-all group">
-        <span class="flex-1 text-white group-hover:text-vex-primary transition-colors">{{ p.title }}</span>
+      <div v-for="p in posts" :key="p.id" class="flex items-center gap-3 p-4 rounded-xl border border-vex-border bg-vex-surface hover:border-vex-primary/50 transition-all group">
+        <router-link :to="`/dashboard/posts/${p.id}/edit`" class="flex-1 text-white group-hover:text-vex-primary transition-colors">{{ p.title }}</router-link>
         <span :class="['text-xs px-2 py-0.5 rounded-full font-medium', p.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400']">{{ p.status }}</span>
         <span class="text-sm text-vex-text-muted">{{ p.published_at ? new Date(p.published_at).toLocaleDateString() : 'Draft' }}</span>
-      </router-link>
+        <button type="button" class="p-1.5 rounded-lg text-vex-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all cursor-pointer opacity-0 group-hover:opacity-100" title="Delete post" @click.prevent="deletePost(p.id, p.title)">
+          <Trash2 class="w-4 h-4" />
+        </button>
+      </div>
     </div>
     <div v-else class="text-center py-12">
       <div class="w-12 h-12 rounded-xl bg-vex-primary/10 flex items-center justify-center mx-auto mb-3">

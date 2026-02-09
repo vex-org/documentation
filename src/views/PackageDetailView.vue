@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { supabase } from '../supabase/client'
 
 const route = useRoute()
@@ -19,7 +20,8 @@ const latestVersion = computed(() => versions.value.find((v) => !v.yanked) ?? ve
 const readmeHtml = computed(() => {
   const v = latestVersion.value
   if (!v?.readme_text) return ''
-  return marked.parse(v.readme_text)
+  const raw = marked.parse(v.readme_text) as string
+  return DOMPurify.sanitize(raw)
 })
 const isOwner = computed(() => !!userId.value && !!pkg.value && pkg.value.owner_id === userId.value)
 
@@ -28,11 +30,17 @@ onMounted(async () => {
   userId.value = user?.id ?? null
   const { data: p } = await supabase.from('packages').select('id, name, description, repository_url, license, owner_id').eq('name', name.value).single()
   pkg.value = p as PkgRow | null
+  if (p) {
+    document.title = `${p.name} – Vex Packages`
+  }
   if (p?.id) {
-    const { data: v } = await supabase.from('versions').select('id, version, published_at, yanked, readme_text').eq('package_id', p.id).order('published_at', { ascending: false })
-    versions.value = (v ?? []) as VersionRow[]
-    const { data: sum } = await supabase.from('package_downloads').select('count').eq('package_id', p.id)
-    downloadCount.value = (sum ?? []).reduce((acc, row) => acc + Number(row.count), 0)
+    // Parallelize independent queries
+    const [vRes, dlRes] = await Promise.all([
+      supabase.from('versions').select('id, version, published_at, yanked, readme_text').eq('package_id', p.id).order('published_at', { ascending: false }),
+      supabase.from('package_downloads').select('count').eq('package_id', p.id),
+    ])
+    versions.value = (vRes.data ?? []) as VersionRow[]
+    downloadCount.value = (dlRes.data ?? []).reduce((acc, row) => acc + Number(row.count), 0)
   }
   loading.value = false
 })

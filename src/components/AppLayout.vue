@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { supabase } from '../supabase/client'
 
 const user = ref<{ id: string; email?: string } | null>(null)
 const mobileOpen = ref(false)
 const router = useRouter()
+const route = useRoute()
+
+// Close mobile nav on route change
+watch(() => route.fullPath, () => { mobileOpen.value = false })
 
 onMounted(async () => {
   const { data: { user: u } } = await supabase.auth.getUser()
@@ -23,6 +27,8 @@ async function logout() {
 
 <template>
   <div class="min-h-screen flex flex-col">
+    <!-- Skip to content -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-vex-primary focus:text-white focus:text-sm">Skip to content</a>
     <!-- Header -->
     <header class="sticky top-0 z-50 border-b border-vex-border bg-vex-bg/80 backdrop-blur-xl">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -45,7 +51,7 @@ async function logout() {
         </nav>
 
         <!-- Mobile toggle -->
-        <button type="button" class="md:hidden p-2 text-vex-text-muted hover:text-white" @click="mobileOpen = !mobileOpen">
+        <button type="button" aria-label="Toggle navigation menu" class="md:hidden p-2 text-vex-text-muted hover:text-white" @click="mobileOpen = !mobileOpen">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="!mobileOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +73,7 @@ async function logout() {
     </header>
 
     <!-- Main -->
-    <main class="flex-1">
+    <main id="main-content" class="flex-1">
       <slot />
     </main>
 
@@ -81,6 +87,7 @@ async function logout() {
           </div>
           <div class="flex items-center gap-6 text-sm">
             <a href="https://github.com/vex-org" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">GitHub</a>
+            <a href="https://discord.gg/vex" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">Discord</a>
             <a href="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Docs</a>
             <RouterLink to="/packages" class="text-vex-text-muted hover:text-white transition-colors">Packages</RouterLink>
             <RouterLink to="/blog" class="text-vex-text-muted hover:text-white transition-colors">Blog</RouterLink>

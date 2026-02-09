@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { supabase } from '../supabase/client'
 import CommentItem from '../components/CommentItem.vue'
 import {
@@ -57,7 +58,11 @@ const readingTime = computed(() => {
   return Math.max(1, Math.ceil(words / 200))
 })
 
-const bodyHtml = computed(() => post.value ? marked.parse(post.value.body_md) : '')
+const bodyHtml = computed(() => {
+  if (!post.value) return ''
+  const raw = marked.parse(post.value.body_md) as string
+  return DOMPurify.sanitize(raw)
+})
 const coverImageUrl = computed(() => {
   if (!post.value?.cover_image_path) return null
   return supabase.storage.from('blog-images').getPublicUrl(post.value.cover_image_path).data.publicUrl
@@ -84,23 +89,39 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
+// Close share menu on outside click
+function handleClickOutside(e: MouseEvent) {
+  if (showShareMenu.value && !(e.target as HTMLElement).closest('.share-menu-container')) {
+    showShareMenu.value = false
+  }
+}
 onMounted(async () => {
+  document.addEventListener('click', handleClickOutside)
   const { data: { user } } = await supabase.auth.getUser()
   userId.value = user?.id ?? null
   const { data: p } = await supabase.from('posts').select('id, title, body_md, published_at, author_id, cover_image_path, excerpt, author:profiles!author_id(display_name, username)').eq('slug', slug.value).eq('status', 'published').single()
   post.value = p as PostRow | null
+  if (p) {
+    // Update page title with actual post name
+    document.title = `${p.title} – Vex`
+  }
   if (p?.id) {
-    const { count } = await supabase.from('post_claps').select('*', { count: 'exact', head: true }).eq('post_id', p.id)
-    clapCount.value = count ?? 0
-    if (userId.value) {
-      const { data: myClap } = await supabase.from('post_claps').select('id').eq('post_id', p.id).eq('user_id', userId.value).maybeSingle()
-      clapped.value = !!myClap
-    }
-    const { data: c } = await supabase.from('comments').select('id, body, author_id, parent_id, created_at, author:profiles!author_id(display_name, username)').eq('post_id', p.id).order('created_at')
-    commentsFlat.value = (c ?? []) as unknown as CommentRow[]
+    // Parallelize independent queries
+    const [clapRes, commentRes, myClap] = await Promise.all([
+      supabase.from('post_claps').select('*', { count: 'exact', head: true }).eq('post_id', p.id),
+      supabase.from('comments').select('id, body, author_id, parent_id, created_at, author:profiles!author_id(display_name, username)').eq('post_id', p.id).order('created_at'),
+      userId.value ? supabase.from('post_claps').select('id').eq('post_id', p.id).eq('user_id', userId.value).maybeSingle() : Promise.resolve({ data: null }),
+    ])
+    clapCount.value = clapRes.count ?? 0
+    clapped.value = !!myClap.data
+    commentsFlat.value = (commentRes.data ?? []) as unknown as CommentRow[]
     commentTree.value = buildCommentTree(commentsFlat.value)
   }
   loading.value = false
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 async function toggleClap() {
@@ -183,7 +204,7 @@ function setReplyTo(id: string | null) { replyToId.value = id }
           <MessageSquare class="w-5 h-5" />
           <span class="text-xs font-medium">{{ commentTree.length }}</span>
         </a>
-        <div class="relative">
+        <div class="relative share-menu-container">
           <button type="button" class="p-2.5 rounded-xl border border-vex-border bg-vex-surface text-vex-text-muted hover:text-white hover:border-vex-primary/50 transition-all cursor-pointer" @click="showShareMenu = !showShareMenu">
             <Share2 class="w-5 h-5" />
           </button>

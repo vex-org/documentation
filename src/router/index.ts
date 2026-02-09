@@ -3,6 +3,10 @@ import { supabase } from '../supabase/client'
 
 const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    return { top: 0 }
+  },
   routes: [
     { path: '/', name: 'Home', component: () => import('../views/HomeView.vue'), meta: { title: 'Vex' } },
     { path: '/packages', name: 'Packages', component: () => import('../views/PackagesView.vue'), meta: { title: 'Packages' } },
@@ -27,6 +31,7 @@ const router = createRouter({
         { path: 'packages/:name/versions/new', name: 'VersionNew', component: () => import('../views/dashboard/VersionPublishView.vue'), meta: { title: 'Publish Version' } },
       ],
     },
+    { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('../views/NotFoundView.vue'), meta: { title: '404' } },
   ],
 })
 
