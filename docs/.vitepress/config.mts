@@ -117,6 +117,12 @@ export default defineConfig({
             { text: 'Testing', link: '/guide/tooling/testing' },
           ]
         },
+        {
+          text: 'Deployment',
+          items: [
+            { text: 'Vercel Web Analytics', link: '/guide/vercel-web-analytics' },
+          ]
+        },
       ],
       '/architecture/': [
         {
