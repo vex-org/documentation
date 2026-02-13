@@ -147,32 +147,30 @@ c.to_lowercase()     // 'a'
 c.to_uppercase()     // 'A'
 ```
 
-## String Type
+## String and str
 
-Vex has a single, powerful `string` type that handles all string operations:
+Vex provides two string types for different use cases:
+- `String`: An owned, growable, heap-allocated string (Omni-string).
+- `str`: A borrowed, non-owning string view (literal/view).
 
 ```vex
-// String literals
-let greeting: string = "Hello, World!"
-
-// String methods
-greeting.len()           // 13 (bytes)
-greeting.chars().count() // 13 (characters)
-greeting.is_empty()      // false
-greeting.contains("World") // true
-
-// String concatenation
-let name = "Vex"
-let message = "Hello, " + name + "!"  // "Hello, Vex!"
-
-// String interpolation (f-strings)
-let count = 42
-let formatted = f"Count is {count}"
+let s: str = "Hello"           // str literal
+let owned: String = s.to_string() // owned copy
 ```
 
-::: tip Simpler than Rust
-Vex has a single `string` type - no `String` vs `&str` distinction. Just use `string` everywhere!
+::: tip Omni-String System
+Vex's string system is highly optimized. `String` uses Small String Optimization (SSO) for short text and VUMM for zero-copy sharing of long text. See [Strings](../types/strings) for details.
 :::
+
+## Complex\<T\>
+
+The prelude provides `Complex<T>` for complex number arithmetic.
+
+```vex
+let c1 = Complex { real: 1.0, imag: 2.0 }
+let c2 = Complex { real: 3.0, imag: 4.0 }
+let sum = c1 + c2
+```
 
 ## Unit Type
 

@@ -29,7 +29,7 @@ Modules in `std` must be explicitly imported.
 Provides basic file and path operations.
 
 ```vex
-import * as fs from "std.fs"
+import * as fs from "fs"
 
 fn example(): i32 {
     // Path handling
@@ -54,7 +54,7 @@ fn example(): i32 {
 Comprehensive math constants and functions.
 
 ```vex
-import * as math from "std.math"
+import * as math from "math"
 
 let root = math.sqrt(16.0)
 let pi = math.PI
@@ -65,7 +65,7 @@ let pi = math.PI
 Time and duration utilities.
 
 ```vex
-import * as time from "std.time"
+import * as time from "time"
 
 let start = time.Instant.now()
 // ... do work

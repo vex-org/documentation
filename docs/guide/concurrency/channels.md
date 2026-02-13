@@ -6,11 +6,11 @@ Channels are Vex's primary mechanism for communication between goroutines. They 
 
 ```vex
 // Buffered channel with capacity
-let! ch: Channel<i64> = Channel(10)    // Buffer size 10
-let! ch: Channel<string> = Channel(1)  // Buffer size 1
+let! ch: Channel<i64> = Channel.new<i64>(10)    // Buffer size 10
+let! ch: Channel<string> = Channel.new<string>(1)  // Buffer size 1
 
 // Type is inferred from usage
-let! ch = Channel<Message>(100)
+let! ch = Channel<Message>() // Default capacity (16)
 ```
 
 ::: tip Buffer Size
@@ -55,20 +55,13 @@ fn main(): i32 {
 
 ## Non-blocking Operations
 
-### try_send and try_recv
+### tryRecv
 
-For non-blocking operations that return immediately:
+For non-blocking receive that returns immediately:
 
 ```vex
-// Non-blocking send - returns Result
-if ch.try_send(value).is_ok() {
-    println("Sent successfully")
-} else {
-    println("Channel full, would block")
-}
-
 // Non-blocking receive - returns Option
-if let Some(msg) = ch.try_recv() {
+if let Some(msg) = ch.tryRecv() {
     process(msg)
 } else {
     println("No message available")

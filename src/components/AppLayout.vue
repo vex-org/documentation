@@ -34,20 +34,20 @@ async function logout() {
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2 group">
           <img src="/vex-logo.svg" alt="Vex" class="w-8 h-8" />
-          <span class="text-xl font-bold text-white group-hover:text-vex-accent transition-colors">Vex</span>
+          <span class="text-xl font-bold text-white group-hover:text-vex-primary-light transition-colors">Vex</span>
         </RouterLink>
 
         <!-- Desktop nav -->
         <nav class="hidden md:flex items-center gap-1">
-          <a href="/docs/" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Docs</a>
-          <RouterLink to="/packages" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Packages</RouterLink>
-          <RouterLink to="/blog" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Blog</RouterLink>
+          <a href="/docs/" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Docs</a>
+          <RouterLink to="/packages" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Packages</RouterLink>
+          <RouterLink to="/blog" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Blog</RouterLink>
           <div class="w-px h-6 bg-vex-border mx-2"></div>
           <template v-if="user">
-            <RouterLink to="/dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all">Dashboard</RouterLink>
-            <button type="button" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-white/5 transition-all cursor-pointer" @click="logout">Logout</button>
+            <RouterLink to="/dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Dashboard</RouterLink>
+            <button type="button" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all cursor-pointer" @click="logout">Logout</button>
           </template>
-          <RouterLink v-else to="/login" class="px-4 py-2 rounded-lg text-sm font-medium bg-vex-primary hover:bg-vex-primary-light text-white transition-all">Sign in</RouterLink>
+          <RouterLink v-else to="/login" class="px-4 py-2 rounded-lg text-sm font-medium bg-vex-primary hover:bg-vex-primary-light text-vex-bg font-bold transition-all shadow-lg shadow-vex-primary/20">Sign in</RouterLink>
         </nav>
 
         <!-- Mobile toggle -->
@@ -61,12 +61,12 @@ async function logout() {
 
       <!-- Mobile nav -->
       <div v-if="mobileOpen" class="md:hidden border-t border-vex-border bg-vex-bg px-4 py-3 space-y-1">
-        <a href="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Docs</a>
-        <RouterLink to="/packages" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Packages</RouterLink>
-        <RouterLink to="/blog" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Blog</RouterLink>
+        <a href="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Docs</a>
+        <RouterLink to="/packages" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Packages</RouterLink>
+        <RouterLink to="/blog" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Blog</RouterLink>
         <template v-if="user">
-          <RouterLink to="/dashboard" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5" @click="mobileOpen = false">Dashboard</RouterLink>
-          <button type="button" class="block w-full text-left px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-white/5 cursor-pointer" @click="logout(); mobileOpen = false">Logout</button>
+          <RouterLink to="/dashboard" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Dashboard</RouterLink>
+          <button type="button" class="block w-full text-left px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 cursor-pointer" @click="logout(); mobileOpen = false">Logout</button>
         </template>
         <RouterLink v-else to="/login" class="block px-3 py-2 rounded-lg text-sm font-medium text-vex-primary" @click="mobileOpen = false">Sign in</RouterLink>
       </div>

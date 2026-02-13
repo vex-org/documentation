@@ -246,7 +246,7 @@ async fn fetch_and_process(urls: [string]) {
 ### Mutex (Mutual Exclusion)
 
 ```vex
-use std.sync.Mutex
+import { Mutex } from "sync"
 
 let counter = Box(Mutex.new(0))
 
@@ -265,7 +265,7 @@ go {
 ### RwLock (Read-Write Lock)
 
 ```vex
-use std.sync.RwLock
+import { RwLock } from "sync"
 
 let cache = Box(RwLock.new(HashMap.new()))
 
@@ -285,7 +285,7 @@ go {
 ### Atomic Types
 
 ```vex
-use std.sync.atomic.{AtomicI64, Ordering}
+import { AtomicI64, Ordering } from "sync"
 
 let counter = AtomicI64.new(0)
 

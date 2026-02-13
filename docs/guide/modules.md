@@ -7,7 +7,7 @@ Vex uses a modern `import`/`export` system inspired by Go and JavaScript, ensuri
 ### Namespace Import
 
 ```vex
-import * as io from "std.io"
+import * as io from "io"
 
 fn main(): i32 {
     io.println("Hello, World!")
@@ -18,7 +18,7 @@ fn main(): i32 {
 ### Named Imports
 
 ```vex
-import { sqrt, PI } from "std.math"
+import { sqrt, PI } from "math"
 
 fn main() {
     let result = sqrt(16.0)

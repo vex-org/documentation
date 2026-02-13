@@ -2,7 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '../supabase/client'
-import { PenLine } from 'lucide-vue-next'
+import { PenLine, Rss } from 'lucide-vue-next'
+import NewsletterComponent from '../components/NewsletterComponent.vue'
 
 const route = useRoute()
 interface AuthorRow { display_name: string | null; username: string | null }
@@ -36,23 +37,29 @@ function authorLabel(a: AuthorRow | AuthorRow[] | undefined | null): string {
 
 <template>
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-white mb-2">Blog</h1>
-      <p class="text-vex-text-muted">Updates, tutorials, and insights from the Vex team</p>
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-white mb-2">Blog</h1>
+        <p class="text-vex-text-muted">Updates, tutorials, and insights from the Vex team</p>
+      </div>
+      <a href="/feed.xml" target="_blank" class="inline-flex items-center gap-2 text-sm font-medium text-vex-text-muted hover:text-vex-primary transition-colors">
+        <Rss class="w-4 h-4" />
+        RSS Feed
+      </a>
     </div>
 
     <!-- Tag filters -->
     <div v-if="tags.length" class="flex flex-wrap gap-2 mb-8">
       <button
         type="button"
-        :class="['px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer', !selectedTag ? 'bg-vex-primary text-white' : 'border border-vex-border text-vex-text-muted hover:text-white hover:border-vex-primary/50']"
+        :class="['px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer', !selectedTag ? 'bg-vex-primary text-vex-bg shadow-lg shadow-vex-primary/20' : 'border border-vex-border text-vex-text-muted hover:text-vex-primary-light hover:border-vex-primary/50']"
         @click="setTag(null)"
       >All</button>
       <button
         v-for="tag in tags"
         :key="tag"
         type="button"
-        :class="['px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer', selectedTag === tag ? 'bg-vex-primary text-white' : 'border border-vex-border text-vex-text-muted hover:text-white hover:border-vex-primary/50']"
+        :class="['px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer', selectedTag === tag ? 'bg-vex-primary text-vex-bg shadow-lg shadow-vex-primary/20' : 'border border-vex-border text-vex-text-muted hover:text-vex-primary-light hover:border-vex-primary/50']"
         @click="setTag(tag)"
       >{{ tag }}</button>
     </div>
@@ -72,7 +79,7 @@ function authorLabel(a: AuthorRow | AuthorRow[] | undefined | null): string {
       >
         <div class="flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <h3 class="text-lg font-semibold text-white group-hover:text-vex-accent transition-colors mb-1">{{ post.title }}</h3>
+            <h3 class="text-lg font-semibold text-white group-hover:text-vex-primary-light transition-colors mb-1">{{ post.title }}</h3>
             <p v-if="post.excerpt" class="text-sm text-vex-text-muted line-clamp-2 mb-2">{{ post.excerpt }}</p>
             <div class="flex items-center gap-3 text-xs text-vex-text-muted">
               <time :datetime="post.published_at">{{ new Date(post.published_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) }}</time>
@@ -80,7 +87,7 @@ function authorLabel(a: AuthorRow | AuthorRow[] | undefined | null): string {
               <span>{{ authorLabel(post.author) }}</span>
             </div>
           </div>
-          <svg class="w-5 h-5 text-vex-text-muted group-hover:text-vex-accent transition-colors flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          <svg class="w-5 h-5 text-vex-text-muted group-hover:text-vex-primary-light transition-colors flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
         </div>
       </router-link>
     </div>
@@ -91,6 +98,11 @@ function authorLabel(a: AuthorRow | AuthorRow[] | undefined | null): string {
         <PenLine class="w-7 h-7 text-vex-text-muted" />
       </div>
       <p class="text-vex-text-muted">No posts yet. Check back soon!</p>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="mt-20">
+      <NewsletterComponent />
     </div>
   </div>
 </template>

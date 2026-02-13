@@ -99,7 +99,20 @@ enum Option<T> {
     Some(T),
     None
 }
+```
 
+#### Common Methods
+
+| Method | Description |
+|--------|-------------|
+| `isSome(): bool` | Returns `true` if the option is `Some`. |
+| `isNone(): bool` | Returns `true` if the option is `None`. |
+| `unwrap(): T` | Returns the value or panics if `None`. |
+| `unwrapOr(default: T): T` | Returns the value or the provided default. |
+| `map<U>(f: fn(T): U): Option<U>` | Transforms the inner value if it exists. |
+| `andThen<U>(f: fn(T): Option<U>): Option<U>` | Chains another optional operation (flatmap). |
+
+```vex
 fn find_item(id: i32): Option<string> {
     if id == 1 { return Some("Found") }
     return None
@@ -120,7 +133,21 @@ enum Result<T, E> {
     Ok(T),
     Err(E)
 }
+```
 
+#### Common Methods
+
+| Method | Description |
+|--------|-------------|
+| `isOk(): bool` | Returns `true` if the result is `Ok`. |
+| `isErr(): bool` | Returns `true` if the result is `Err`. |
+| `unwrap(): T` | Returns the `Ok` value or panics on `Err`. |
+| `unwrapOr(default: T): T` | Returns the `Ok` value or the provided default. |
+| `map<U>(f: fn(T): U): Result<U, E>` | Transforms the `Ok` value. |
+| `mapErr<F>(f: fn(E): F): Result<T, F>` | Transforms the `Err` value. |
+| `andThen<U>(f: fn(T): Result<U, E>): Result<U, E>` | Chains another fallible operation. |
+
+```vex
 fn divide(a: f64, b: f64): Result<f64, string> {
     if b == 0.0 { return Err("Division by zero") }
     return Ok(a / b)

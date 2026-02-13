@@ -1,20 +1,40 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
-  --color-vex-primary: #6d28d9;
-  --color-vex-primary-light: #7c3aed;
-  --color-vex-accent: #06b6d4;
-  --color-vex-bg: #0f0f23;
-  --color-vex-bg-card: #1a1a2e;
-  --color-vex-bg-card-hover: #222244;
-  --color-vex-surface: #16213e;
-  --color-vex-border: #2d2d52;
+  --color-vex-primary: #06b6d4;
+  --color-vex-primary-light: #22d3ee;
+  --color-vex-accent: #10b981;
+  --color-vex-bg: #0a0a0f;
+  --color-vex-bg-card: #111119;
+  --color-vex-bg-card-hover: #1a1a24;
+  --color-vex-surface: #111119;
+  --color-vex-border: rgba(6, 182, 212, 0.12);
   --color-vex-text: #e2e8f0;
   --color-vex-text-muted: #94a3b8;
-  --color-vex-surface-light: #1e2a4a;
+  --color-vex-surface-light: #1a1a24;
   --color-vex-success: #10b981;
   --color-vex-error: #ef4444;
   --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+@utility prose-vex {
+  @apply prose prose-invert max-w-none;
+  --tw-prose-headings: theme(--color-white);
+  --tw-prose-body: theme(--color-vex-text);
+  --tw-prose-links: theme(--color-vex-primary);
+  --tw-prose-bold: theme(--color-white);
+  --tw-prose-counters: theme(--color-vex-primary-light);
+  --tw-prose-bullets: theme(--color-vex-primary);
+  --tw-prose-hr: theme(--color-vex-border);
+  --tw-prose-quotes: theme(--color-vex-text-muted);
+  --tw-prose-quote-borders: theme(--color-vex-primary);
+  --tw-prose-captions: theme(--color-vex-text-muted);
+  --tw-prose-code: theme(--color-vex-primary-light);
+  --tw-prose-pre-code: theme(--color-vex-text);
+  --tw-prose-pre-bg: theme(--color-vex-surface);
+  --tw-prose-th-borders: theme(--color-vex-border);
+  --tw-prose-td-borders: theme(--color-vex-border);
 }
 
 body {
@@ -27,7 +47,19 @@ body {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { @apply bg-vex-bg; }
-::-webkit-scrollbar-thumb { @apply bg-vex-border rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-vex-primary; }
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-vex-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-vex-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-vex-primary;
+}

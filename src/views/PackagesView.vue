@@ -40,7 +40,7 @@ async function doSearch() {
           @keyup.enter="doSearch"
         />
       </div>
-      <button class="px-5 py-3 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-all cursor-pointer" @click="doSearch">Search</button>
+      <button class="px-5 py-3 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-vex-bg font-bold transition-all cursor-pointer" @click="doSearch">Search</button>
     </div>
 
     <!-- Loading -->
@@ -58,10 +58,10 @@ async function doSearch() {
       >
         <div class="flex items-start justify-between">
           <div>
-            <h3 class="text-base font-semibold text-white group-hover:text-vex-accent transition-colors font-mono">{{ pkg.name }}</h3>
+            <h3 class="text-base font-semibold text-white group-hover:text-vex-primary-light transition-colors font-mono">{{ pkg.name }}</h3>
             <p v-if="pkg.description" class="text-sm text-vex-text-muted mt-1">{{ pkg.description }}</p>
           </div>
-          <svg class="w-5 h-5 text-vex-text-muted group-hover:text-vex-accent transition-colors flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          <svg class="w-5 h-5 text-vex-text-muted group-hover:text-vex-primary-light transition-colors flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
         </div>
       </router-link>
     </div>

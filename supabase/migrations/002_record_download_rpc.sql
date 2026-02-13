@@ -21,6 +21,15 @@ begin
 end;
 $$;
 
--- Allow anon and authenticated to call (CLI or frontend copy). Consider rate limit in app later.
-grant execute on function public.record_package_download(text, text) to anon;
-grant execute on function public.record_package_download(text, text) to authenticated;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'versions'
+        AND column_name = 'readme_text'
+    ) THEN
+        ALTER TABLE versions ADD COLUMN readme_text TEXT;
+    END IF;
+END $$;

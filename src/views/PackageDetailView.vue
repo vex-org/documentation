@@ -96,7 +96,7 @@ async function yankVersion(versionId: string) {
       <!-- README -->
       <div v-if="readmeHtml" class="mb-8">
         <h2 class="text-lg font-semibold text-white mb-4">README</h2>
-        <div class="prose prose-invert max-w-none p-6 rounded-xl border border-vex-border bg-vex-bg-card [&_pre]:bg-vex-surface [&_pre]:rounded-lg [&_pre]:p-4 [&_code]:text-vex-accent [&_a]:text-vex-primary [&_h1]:text-xl [&_h2]:text-lg" v-html="readmeHtml" />
+        <div class="prose-vex p-6 rounded-xl border border-vex-border bg-vex-bg-card shadow-xl" v-html="readmeHtml" />
       </div>
 
       <!-- Versions -->

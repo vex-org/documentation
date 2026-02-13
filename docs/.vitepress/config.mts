@@ -51,6 +51,9 @@ export default defineConfig({
             { text: 'Contracts', link: '/guide/types/traits' },
             { text: 'Generics', link: '/guide/types/generics' },
             { text: 'Type Aliases', link: '/guide/types/aliases' },
+            { text: 'Vectors', link: '/guide/types/vec' },
+            { text: 'Maps & Sets', link: '/guide/types/map-set' },
+            { text: 'Strings', link: '/guide/types/strings' },
           ]
         },
         {
@@ -60,6 +63,12 @@ export default defineConfig({
             { text: 'Borrowing', link: '/guide/memory/borrowing' },
             { text: 'Automatic Lifetimes', link: '/guide/memory/lifetimes' },
             { text: 'VUMM', link: '/guide/memory/vumm' },
+            { text: 'Memory Safety Layers', link: '/guide/memory/safety' },
+            { text: 'Ptr<T>', link: '/guide/memory/ptr-t' },
+            { text: 'Span<T>', link: '/guide/memory/span-t' },
+            { text: 'Raw Buffer', link: '/guide/memory/rawbuf' },
+            { text: 'Box<T>', link: '/guide/memory/box' },
+
           ]
         },
         {

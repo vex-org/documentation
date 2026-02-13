@@ -58,7 +58,7 @@ const stats = [
             A modern systems language that combines Rust's safety, Go's simplicity, and automatic hardware optimization — CPU, GPU, and NPU.
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="/docs/guide/introduction" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-all shadow-lg shadow-vex-primary/25 hover:shadow-vex-primary/40">
+            <a href="/docs/guide/introduction" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-vex-primary to-vex-accent hover:from-vex-primary-light hover:to-vex-accent text-vex-bg font-bold transition-all shadow-lg shadow-vex-primary/25 hover:shadow-vex-primary/40">
               Get Started
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </a>
@@ -103,11 +103,11 @@ const stats = [
         <p class="text-vex-text-muted max-w-xl mx-auto">One language for all silicon. No CUDA, no Metal, no OpenCL — just Vex.</p>
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="f in features" :key="f.title" class="group p-6 rounded-xl border border-vex-border bg-vex-bg-card hover:bg-vex-bg-card-hover hover:border-vex-primary/30 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-vex-primary/10 flex items-center justify-center mb-3">
-            <component :is="f.icon" class="w-5 h-5 text-vex-primary" />
+        <div v-for="f in features" :key="f.title" class="group p-6 rounded-xl border border-vex-border bg-gradient-to-br from-vex-primary/5 to-vex-accent/5 backdrop-blur-xl hover:bg-vex-bg-card-hover hover:border-vex-primary/30 transition-all">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center mb-3">
+            <component :is="f.icon" class="w-5 h-5 text-vex-bg" />
           </div>
-          <h3 class="text-lg font-semibold text-white mb-2">{{ f.title }}</h3>
+          <h3 class="text-lg font-semibold text-white mb-2 group-hover:text-vex-primary-light transition-colors">{{ f.title }}</h3>
           <p class="text-sm text-vex-text-muted leading-relaxed">{{ f.desc }}</p>
         </div>
       </div>
