@@ -5,8 +5,10 @@ export class VexResult {
   private constructor();
   free(): void;
   [Symbol.dispose](): void;
+  readonly ast: string;
   readonly errors: string;
   readonly output: string;
+  readonly tokens: string;
 }
 
 export function run_vex(source: string): VexResult;
@@ -17,8 +19,10 @@ export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_vexresult_free: (a: number, b: number) => void;
   readonly run_vex: (a: number, b: number) => number;
+  readonly vexresult_ast: (a: number) => [number, number];
   readonly vexresult_errors: (a: number) => [number, number];
   readonly vexresult_output: (a: number) => [number, number];
+  readonly vexresult_tokens: (a: number) => [number, number];
   readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

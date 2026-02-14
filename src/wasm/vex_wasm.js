@@ -104,6 +104,21 @@ export class VexResult {
     /**
      * @returns {string}
      */
+    get ast() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.vexresult_ast(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @returns {string}
+     */
     get errors() {
         let deferred1_0;
         let deferred1_1;
@@ -124,6 +139,21 @@ export class VexResult {
         let deferred1_1;
         try {
             const ret = wasm.vexresult_output(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
+     * @returns {string}
+     */
+    get tokens() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.vexresult_tokens(this.__wbg_ptr);
             deferred1_0 = ret[0];
             deferred1_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);

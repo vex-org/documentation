@@ -158,10 +158,13 @@ fn main() {
 
 const code = ref(examples[0].code)
 const output = ref('')
+const tokens = ref('')
+const ast = ref('')
 const errors = ref('')
 const isRunning = ref(false)
 const wasmLoaded = ref(false)
 const activeExample = ref(0)
+const activeView = ref<'output' | 'ast' | 'tokens'>('output')
 
 // In a real scenario, we would import the WASM module here
 // import init, { run_vex } from '../wasm/vex_wasm'
@@ -176,6 +179,8 @@ async function runCode() {
   try {
     const result = run_vex(code.value)
     output.value = result.output
+    tokens.value = result.tokens
+    ast.value = result.ast
     errors.value = result.errors
   } catch (err: any) {
     output.value = `Execution Error: ${err.message}`
@@ -269,14 +274,62 @@ onMounted(async () => {
 
         <!-- Console -->
         <div class="flex flex-col rounded-2xl border border-vex-border bg-[#050508] overflow-hidden h-full">
-          <div class="flex items-center gap-2 px-4 py-2 border-b border-vex-border bg-vex-surface/50">
-            <Terminal class="w-4 h-4 text-vex-accent" />
-            <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Console</span>
+          <div class="flex items-center justify-between px-4 py-2 border-b border-vex-border bg-vex-surface/50">
+            <div class="flex items-center gap-2">
+              <Terminal class="w-4 h-4 text-vex-accent" />
+              <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Output</span>
+            </div>
+            <!-- View Selector -->
+            <div class="flex bg-white/5 p-1 rounded-lg">
+              <button 
+                @click="activeView = 'output'"
+                :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all', activeView === 'output' ? 'bg-vex-primary text-vex-bg shadow-sm' : 'text-vex-text-muted hover:text-white']"
+              >Console</button>
+              <button 
+                @click="activeView = 'ast'"
+                :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all', activeView === 'ast' ? 'bg-vex-primary text-vex-bg shadow-sm' : 'text-vex-text-muted hover:text-white']"
+              >AST</button>
+              <button 
+                @click="activeView = 'tokens'"
+                :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all', activeView === 'tokens' ? 'bg-vex-primary text-vex-bg shadow-sm' : 'text-vex-text-muted hover:text-white']"
+              >Tokens</button>
+            </div>
           </div>
           <div class="flex-1 p-6 font-mono text-sm overflow-auto">
-            <pre v-if="output" class="text-vex-text break-words whitespace-pre-wrap mb-4">{{ output }}</pre>
-            <pre v-if="errors" class="text-vex-error break-words whitespace-pre-wrap">{{ errors }}</pre>
-            <div v-if="!output && !errors" class="h-full flex flex-col items-center justify-center text-vex-text-muted opacity-50">
+            <!-- Output View -->
+            <div v-if="activeView === 'output'">
+              <pre v-if="output" class="text-vex-text break-words whitespace-pre-wrap mb-4">{{ output }}</pre>
+              <pre v-if="errors" class="p-4 rounded-xl bg-vex-error/10 border border-vex-error/20 text-vex-error break-words whitespace-pre-wrap">{{ errors }}</pre>
+            </div>
+            
+            <!-- AST View -->
+            <div v-if="activeView === 'ast'">
+              <pre v-if="ast" class="text-vex-primary-light break-words whitespace-pre-wrap text-[12px]">{{ ast }}</pre>
+              <div v-else class="h-full flex flex-col items-center justify-center text-vex-text-muted opacity-50 py-12">
+                <Code class="w-8 h-8 mb-2" />
+                <p>AST not available yet</p>
+              </div>
+            </div>
+
+            <!-- Tokens View -->
+            <div v-if="activeView === 'tokens'">
+              <div v-if="tokens" class="flex flex-wrap gap-2">
+                <span 
+                  v-for="(token, i) in tokens.split(' ')" 
+                  :key="i"
+                  v-show="token.trim() !== ''"
+                  class="px-2 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-vex-text-muted font-bold"
+                >
+                  {{ token }}
+                </span>
+              </div>
+              <div v-else class="h-full flex flex-col items-center justify-center text-vex-text-muted opacity-50 py-12">
+                <Sparkles class="w-8 h-8 mb-2" />
+                <p>Tokens not available yet</p>
+              </div>
+            </div>
+
+            <div v-if="!output && !errors && !ast && !tokens" class="h-full flex flex-col items-center justify-center text-vex-text-muted opacity-50">
               <Terminal class="w-12 h-12 mb-4" />
               <p>Ready to run</p>
             </div>
