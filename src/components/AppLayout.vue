@@ -42,6 +42,7 @@ async function logout() {
           <a href="/docs/" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Docs</a>
           <RouterLink to="/packages" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Packages</RouterLink>
           <RouterLink to="/blog" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Blog</RouterLink>
+          <RouterLink to="/playground" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Playground</RouterLink>
           <div class="w-px h-6 bg-vex-border mx-2"></div>
           <template v-if="user">
             <RouterLink to="/dashboard" class="px-3 py-2 rounded-lg text-sm font-medium text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 transition-all">Dashboard</RouterLink>
@@ -64,6 +65,7 @@ async function logout() {
         <a href="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Docs</a>
         <RouterLink to="/packages" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Packages</RouterLink>
         <RouterLink to="/blog" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Blog</RouterLink>
+        <RouterLink to="/playground" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Playground</RouterLink>
         <template v-if="user">
           <RouterLink to="/dashboard" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5" @click="mobileOpen = false">Dashboard</RouterLink>
           <button type="button" class="block w-full text-left px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-vex-primary-light hover:bg-white/5 cursor-pointer" @click="logout(); mobileOpen = false">Logout</button>
@@ -89,8 +91,9 @@ async function logout() {
             <a href="https://github.com/vex-org" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">GitHub</a>
             <a href="https://discord.gg/vex" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">Discord</a>
             <a href="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Docs</a>
-            <RouterLink to="/packages" class="text-vex-text-muted hover:text-white transition-colors">Packages</RouterLink>
-            <RouterLink to="/blog" class="text-vex-text-muted hover:text-white transition-colors">Blog</RouterLink>
+            <RouterLink to="/packages" class="text-sm font-medium text-vex-text-muted hover:text-vex-primary transition-colors">Packages</RouterLink>
+            <RouterLink to="/blog" class="text-sm font-medium text-vex-text-muted hover:text-vex-primary transition-colors">Blog</RouterLink>
+            <RouterLink to="/playground" class="text-sm font-medium text-vex-text-muted hover:text-vex-primary transition-colors">Playground</RouterLink>
           </div>
         </div>
       </div>

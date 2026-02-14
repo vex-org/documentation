@@ -1,0 +1,19 @@
+{
+  "name": "vex-wasm",
+  "type": "module",
+  "collaborators": [
+    "Vex Language Team"
+  ],
+  "description": "WebAssembly bridge for the Vex compiler",
+  "version": "0.1.0",
+  "files": [
+    "vex_wasm_bg.wasm",
+    "vex_wasm.js",
+    "vex_wasm.d.ts"
+  ],
+  "main": "vex_wasm.js",
+  "types": "vex_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

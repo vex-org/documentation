@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/packages/:name/v/:version', name: 'PackageVersion', component: () => import('../views/PackageDetailView.vue'), meta: { title: 'Package' } },
     { path: '/blog', name: 'Blog', component: () => import('../views/BlogView.vue'), meta: { title: 'Blog' } },
     { path: '/blog/:slug', name: 'Post', component: () => import('../views/PostView.vue'), meta: { title: 'Post' } },
+    { path: '/playground', name: 'Playground', component: () => import('../views/PlaygroundView.vue'), meta: { title: 'Playground' } },
     { path: '/login', name: 'Login', component: () => import('../views/LoginView.vue'), meta: { title: 'Sign In' } },
     { path: '/signup', redirect: '/login' },
     { path: '/auth/callback', name: 'AuthCallback', component: () => import('../views/AuthCallbackView.vue'), meta: { title: 'Signing in…' } },
