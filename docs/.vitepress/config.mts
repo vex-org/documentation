@@ -9,11 +9,15 @@ export default defineConfig({
     },
     html: false
   },
+  head:[
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
+  ],
   ignoreDeadLinks: true,
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/introduction' },
+      { text: 'References', link: '/references/' },
       { text: 'Reference', link: '/specs/01_Introduction_and_Overview' },
       { text: 'Architecture', link: '/architecture/' },
       { text: 'Packages', link: 'https://vex-lang.org/packages' },
@@ -132,6 +136,17 @@ export default defineConfig({
           text: 'Architecture',
           items: [
             { text: 'Overview', link: '/architecture/' },
+          ]
+        }
+      ],
+      '/references/': [
+        {
+          text: 'References',
+          items: [
+            { text: 'Overview', link: '/references/' },
+            { text: 'vex-cli Reference', link: '/references/vex-cli-reference' },
+            { text: 'vex-pm Reference', link: '/references/vex-pm-reference' },
+            { text: 'vex-pm Native FFI Pipeline', link: '/references/vex-pm-native-ffi' },
           ]
         }
       ],
