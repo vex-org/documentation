@@ -12,7 +12,7 @@ fn main(): i32 {
     assert(arr[4] == 5, "Array index 4");
     
     // Mutable array
-    let! mut_arr = [10, 20, 30];
+    let!_arr = [10, 20, 30];
     mut_arr[1] = 25;
     assert(mut_arr[1] == 25, "Mutable array");
     

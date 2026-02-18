@@ -21,7 +21,7 @@ fn main(): i32 {
     assert(p.y == 20, "Struct field y");
     
     // Mutable struct
-    let! mut_p = Point { x: 5, y: 15 };
+    let!_p = Point { x: 5, y: 15 };
     mut_p.x = 25;
     assert(mut_p.x == 25, "Mutable struct field");
     

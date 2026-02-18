@@ -13,8 +13,8 @@ fn main(): i32 {
     assert(x == 10, "Original variable unchanged");
 
     // Mutable capture (if supported)
-    // let mut counter = 0;
-    // let mut inc = || {
+    // let! counter = 0;
+    // let! inc = || {
     //     counter += 1;
     //     return counter;
     // };
