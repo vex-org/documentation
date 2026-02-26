@@ -40,7 +40,7 @@ const examples = [
     let b = [5.0, 6.0, 7.0, 8.0]
     
     // Explicit SIMD intrinsic
-    let result = #simd_add(a, b)
+    let result = <+ a+b
     
     $println(f"Result: {result}")
 }`

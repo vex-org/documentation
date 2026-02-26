@@ -164,6 +164,7 @@ export default defineConfig({
           items: [
             { text: 'Overview', link: '/references/' },
             { text: 'vex-cli Reference', link: '/references/vex-cli-reference' },
+            {text: 'vex-test Reference', link: '/references/vex-test-reference'},
             { text: 'vex-pm Reference', link: '/references/vex-pm-reference' },
             { text: 'vex-pm Native FFI Pipeline', link: '/references/vex-pm-native-ffi' },
           ]

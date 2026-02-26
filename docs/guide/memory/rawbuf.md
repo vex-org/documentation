@@ -27,9 +27,9 @@ fn main() {
     buf.storeU8(9, 105);           // 'i'
     
     // Read back
-    let magic = buf.loadU32(0);
-    let version = buf.loadU32(4);
-    let ch = buf.loadU8(8);
+    let magic = buf.load<u32>(0);
+    let version = buf.load<u32>(4);
+    let ch = buf.load<u8>(8);
     
     $println("magic: 0x{:X}, v{}, first byte: {}", magic, version, ch);
     
@@ -84,7 +84,7 @@ A common pattern in Vex internals — wrap a struct's data pointer:
 ```vex
 // Inside String implementation
 let header = RawBuf.of((self.data_or_ptr as i64 - 8) as ptr);
-let capacity = header.loadU32(0);
+let capacity = header.load<u32>(0);
 ```
 
 ## Pointer Arithmetic
@@ -133,11 +133,11 @@ All load methods take a **byte offset** from the base pointer.
 ```vex
 let buf = RawBuf.of(mem);
 
-let byte_val:  u8  = buf.loadU8(0);     // 1 byte
-let word_val:  u32 = buf.loadU32(4);     // 4 bytes
-let dword_val: u64 = buf.loadU64(8);     // 8 bytes
-let signed32:  i32 = buf.loadI32(16);    // 4 bytes (signed)
-let signed64:  i64 = buf.loadI64(24);    // 8 bytes (signed)
+let byte_val:  u8  = buf.load<u8>(0);     // 1 byte
+let word_val:  u32 = buf.load<u32>(4);     // 4 bytes
+let dword_val: u64 = buf.load<u64>(8);     // 8 bytes
+let signed32:  i32 = buf.load<i32>(16);    // 4 bytes (signed)
+let signed64:  i64 = buf.load<i64>(24);    // 8 bytes (signed)
 ```
 
 ### Generic Load
@@ -174,9 +174,9 @@ let! buf = RawBuf.of(mem);
 
 buf.storeU8(0, 0xFF);             // 1 byte
 buf.storeU32(4, 42);              // 4 bytes
-buf.storeU64(8, 0xDEADBEEF);     // 8 bytes
-buf.storeI32(16, -1);             // 4 bytes (signed)
-buf.storeI64(24, -9999);          // 8 bytes (signed)
+buf.store<u64>(8, 0xDEADBEEF);     // 8 bytes
+buf.store<i32>(16, -1);             // 4 bytes (signed)
+buf.store<i64>(24, -9999);          // 8 bytes (signed)
 ```
 
 ### Generic Store
@@ -250,10 +250,10 @@ buf.fill(0xFF, 64);    // fill with 0xFF
 fn parse_header(data: ptr): FileHeader {
     let buf = RawBuf.of(data);
     
-    let magic   = buf.loadU32(0);
-    let version = buf.loadU32(4);
-    let flags   = buf.loadU64(8);
-    let count   = buf.loadU32(16);
+    let magic   = buf.load<u32>(0);
+    let version = buf.load<u32>(4);
+    let flags   = buf.load<u64>(8);
+    let count   = buf.load<u32>(16);
     
     return FileHeader { magic, version, flags, count };
 }
@@ -301,8 +301,8 @@ fn alloc_with_header(size: i64): ptr {
     let mem = alloc(total);
     
     let! hdr = RawBuf.of(mem);
-    hdr.storeU64(0, size as u64);     // block size
-    hdr.storeU64(8, 0);               // flags / ref count
+    hdr.store<u64>(0, size as u64);     // block size
+    hdr.store<u64>(8, 0);               // flags / ref count
     
     // Return pointer past the header
     return hdr.at(16);
@@ -310,7 +310,7 @@ fn alloc_with_header(size: i64): ptr {
 
 fn get_block_size(payload: ptr): u64 {
     let hdr = RawBuf.of((payload as i64 - 16) as ptr);
-    return hdr.loadU64(0);
+    return hdr.load<u64>(0);
 }
 ```
 
@@ -352,11 +352,11 @@ fn get_block_size(payload: ptr): u64 {
 
 | Method | Description |
 |--------|-------------|
-| `.loadU8(off)` | Load `u8` at byte offset |
-| `.loadU32(off)` | Load `u32` at byte offset |
-| `.loadU64(off)` | Load `u64` at byte offset |
-| `.loadI32(off)` | Load `i32` at byte offset |
-| `.loadI64(off)` | Load `i64` at byte offset |
+| `.load<u8>(off)` | Load `u8` at byte offset |
+| `.load<u32>(off)` | Load `u32` at byte offset |
+| `.load<u64>(off)` | Load `u64` at byte offset |
+| `.load<i32>(off)` | Load `i32` at byte offset |
+| `.load<i64>(off)` | Load `i64` at byte offset |
 | `.load<T>(off)` | Load any type `T` at byte offset |
 | `.loadAt<T>(idx)` | Load `T` at index (stride = `sizeof(T)`) |
 
@@ -366,9 +366,9 @@ fn get_block_size(payload: ptr): u64 {
 |--------|-------------|
 | `.storeU8(off, val)` | Store `u8` at byte offset |
 | `.storeU32(off, val)` | Store `u32` at byte offset |
-| `.storeU64(off, val)` | Store `u64` at byte offset |
-| `.storeI32(off, val)` | Store `i32` at byte offset |
-| `.storeI64(off, val)` | Store `i64` at byte offset |
+| `.store<u64>(off, val)` | Store `u64` at byte offset |
+| `.store<i32>(off, val)` | Store `i32` at byte offset |
+| `.store<i64>(off, val)` | Store `i64` at byte offset |
 | `.store<T>(off, val)` | Store any type `T` at byte offset |
 | `.storeAt<T>(idx, val)` | Store `T` at index (stride = `sizeof(T)`) |
 
