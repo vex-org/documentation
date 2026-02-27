@@ -539,7 +539,7 @@ let result = sum_i64(1, 2, 3, 4, 5);  // Works! No explicit i64 suffix needed
 - ✅ Only ONE variadic parameter per function
 - ✅ Can combine with regular parameters (before variadic)
 - ✅ Variadic parameters can accept zero or more arguments
-- ✅ Full iteration and indexed access via Slice<T>
+- ✅ Full iteration and indexed access via `Slice<T>`
 - ⚠️ Default params + variadic requires named arguments (not yet supported)
 
 **Supported Types**:

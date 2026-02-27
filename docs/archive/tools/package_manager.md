@@ -972,5 +972,4 @@ Link with system libraries:
 
 **Previous**: [18_Raw_Pointers_and_FFI.md](./18_Raw_Pointers_and_FFI.md)
 
-**Maintained by**: Vex Language Team</content>
-<parameter name="filePath">/Users/mapletechnologies/Desktop/big_projects/vex_lang/Specifications/19_Package_Manager.md
+**Maintained by**: Vex Language Team

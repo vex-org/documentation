@@ -104,7 +104,7 @@
 
 - [x] **Comparison** (2 points)
 
-  - ==, !=, <, >, <=, >=
+  - `==`, `!=`, `<`, `>`, `<=`, `>=`
 
 - [x] **Logical** (2 points)
 
@@ -112,7 +112,7 @@
 
 - [x] **Bitwise** (2 points)
 
-  - &, |, ^, ~, <<, >>
+  - `&`, `|`, `^`, `~`, `<<`, `>>`
 
 - [ ] **Operator Overloading** (2 points)
   - Custom operator implementations
@@ -122,13 +122,13 @@
 
 - [ ] **Result Type** (5 points)
 
-  - Result<T, E> type
+  - `Result<T, E>` type
   - ? operator for propagation
   - map/and_then combinators
 
 - [ ] **Option Type** (5 points)
 
-  - Option<T> type
+  - `Option<T>` type
   - unwrap/expect
   - map/filter/and_then
 
@@ -172,8 +172,8 @@
   - Send/Sync traits
 
 - [ ] **Synchronization** (10 points)
-  - Mutex<T>
-  - RwLock<T>
+  - `Mutex<T>`
+  - `RwLock<T>`
   - Atomic operations
   - Channels (MPSC)
 
@@ -279,14 +279,14 @@
 
 ### 14. Collections [15 points]
 
-- [ ] **Vec<T>** (5 points)
+- [ ] **Vec&lt;T&gt;** (5 points)
 
   - Dynamic arrays
   - Push/pop operations
   - Capacity management
   - Iteration
 
-- [ ] **HashMap<K, V>** (5 points)
+- [ ] **HashMap&lt;K, V&gt;** (5 points)
 
   - Hash table implementation
   - Insert/get/remove

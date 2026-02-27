@@ -515,5 +515,4 @@ struct User with CRUD, APIEndpoints {
 
 **Previous**: [19_Package_Manager.md](./19_Package_Manager.md)
 
-**Maintained by**: Vex Language Team</content>
-<parameter name="filePath">/Users/mapletechnologies/Desktop/big_projects/vex_lang/Specifications/20_Policy_System.md
+**Maintained by**: Vex Language Team

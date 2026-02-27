@@ -268,17 +268,17 @@ vex test [OPTIONS] [PATTERN]
 |------|---------|-------------|
 | `[PATTERN]` | all tests | File or directory pattern |
 | `-v, --verbose` | off | Verbose output |
-| `--run <REGEX>` | — | Filter tests by name |
+| `--run &lt;REGEX&gt;` | — | Filter tests by name |
 | `--no-parallel` | off | Disable parallel execution |
-| `--timeout <SEC>` | 30 | Per-test timeout in seconds |
+| `--timeout &lt;SEC&gt;` | 30 | Per-test timeout in seconds |
 
 ### Benchmark Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--bench` | off | Run benchmarks only (skip tests) |
-| `--benchtime <DUR>` | `1s` | Target duration (`500ms`, `5s`, etc.) |
-| `--count <N>` | 1 | Repeat benchmarks N times |
+| `--benchtime &lt;DUR&gt;` | `1s` | Target duration (`500ms`, `5s`, etc.) |
+| `--count &lt;N&gt;` | 1 | Repeat benchmarks N times |
 | `--benchmem` | off | Show `B/op` and `allocs/op` |
 
 ### Behavior Flags
@@ -294,8 +294,8 @@ vex test [OPTIONS] [PATTERN]
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--coverage` | off | Generate coverage report |
-| `--coverprofile <FILE>` | — | Coverage output file |
-| `--covermode <MODE>` | `set` | Mode: `set`, `count`, or `atomic` |
+| `--coverprofile &lt;FILE&gt;` | — | Coverage output file |
+| `--covermode &lt;MODE&gt;` | `set` | Mode: `set`, `count`, or `atomic` |
 
 ---
 

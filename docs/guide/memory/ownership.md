@@ -192,7 +192,7 @@ let excerpt = Excerpt { text: first_sentence }
 
 ## Smart Pointers
 
-### Box<T> - Heap Allocation
+### Box&lt;T&gt; - Heap Allocation
 
 ```vex
 // Allocate on heap

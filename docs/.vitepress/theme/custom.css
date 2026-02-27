@@ -1,201 +1,179 @@
 /**
  * Vex Language - Custom Theme
- * Modern systems programming aesthetic: Electric cyan + Emerald accents
+ * Goal: serious language docs, less neon / glassmorphism.
  */
 
 :root {
-  /* Brand Colors - Electric Cyan to Emerald gradient */
-  --vp-c-brand-1: #06b6d4;  /* Cyan 500 */
-  --vp-c-brand-2: #22d3ee;  /* Cyan 400 */
-  --vp-c-brand-3: #67e8f9;  /* Cyan 300 */
-  --vp-c-brand-soft: rgba(6, 182, 212, 0.14);
-  
-  /* Accent - Emerald for contrast */
-  --vex-accent: #10b981;
-  --vex-accent-light: #34d399;
-  
-  /* Hero gradient */
-  --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(135deg, #06b6d4 0%, #10b981 50%, #a78bfa 100%);
-  
-  /* Button customization */
-  --vp-button-brand-bg: linear-gradient(135deg, #06b6d4, #10b981);
-  --vp-button-brand-hover-bg: linear-gradient(135deg, #22d3ee, #34d399);
-  --vp-button-brand-active-bg: linear-gradient(135deg, #0891b2, #059669);
-  
+  /* Brand: single cool blue, restrained */
+  --vp-c-brand-1: #3b82f6;
+  --vp-c-brand-2: #2563eb;
+  --vp-c-brand-3: #1d4ed8;
+  --vp-c-brand-soft: rgba(59, 130, 246, 0.12);
+
+  /* Hero title stays slightly special but not rainbow */
+  --vp-home-hero-name-color: #e5e7eb;
+  --vp-home-hero-name-background: none;
+
+  /* Buttons: solid, not gradient */
+  --vp-button-brand-bg: #2563eb;
+  --vp-button-brand-hover-bg: #1d4ed8;
+  --vp-button-brand-active-bg: #1e40af;
+
   /* Code blocks */
-  --vp-code-color: #e2e8f0;
-  --vp-code-bg: #0f172a;
-  --vp-code-block-bg: #0f172a;
-  
+  --vp-code-color: #e5e7eb;
+  --vp-code-bg: #020617;
+  --vp-code-block-bg: #020617;
+
   /* Sidebar */
   --vp-sidebar-bg-color: transparent;
 }
 
 .dark {
-  /* Dark mode brand adjustments */
-  --vp-c-brand-1: #22d3ee;
-  --vp-c-brand-2: #06b6d4;
-  --vp-c-brand-3: #0891b2;
-  --vp-c-brand-soft: rgba(34, 211, 238, 0.16);
-  
-  /* Dark background with subtle gradient */
-  --vp-c-bg: #0a0a0f;
-  --vp-c-bg-alt: #111119;
-  --vp-c-bg-soft: #1a1a24;
-  --vp-c-bg-mute: #232330;
-  
-  /* Text colors */
-  --vp-c-text-1: #e2e8f0;
-  --vp-c-text-2: #94a3b8;
-  --vp-c-text-3: #64748b;
-  
-  /* Dividers with cyan tint */
-  --vp-c-divider: rgba(6, 182, 212, 0.12);
-  --vp-c-divider-light: rgba(6, 182, 212, 0.08);
+  /* Dark background */
+  --vp-c-bg: #020617;
+  --vp-c-bg-alt: #020617;
+  --vp-c-bg-soft: #030712;
+  --vp-c-bg-mute: #020617;
+
+  /* Text */
+  --vp-c-text-1: #e5e7eb;
+  --vp-c-text-2: #9ca3af;
+  --vp-c-text-3: #6b7280;
+
+  /* Dividers */
+  --vp-c-divider: rgba(148, 163, 184, 0.25);
+  --vp-c-divider-light: rgba(148, 163, 184, 0.16);
 }
 
 /* ===== HERO SECTION ===== */
 .VPHero .name {
-  background: linear-gradient(135deg, #06b6d4 0%, #10b981 40%, #a78bfa 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #e5e7eb;
+  font-weight: 800;
 }
 
 .VPHero .text {
-  color: #f1f5f9 !important;
+  color: #e5e7eb !important;
 }
 
 .VPHero .tagline {
-  color: #94a3b8 !important;
+  color: #9ca3af !important;
 }
 
-/* Hero background glow */
+/* Remove big glowing background */
 .VPHero::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: -1;
+  content: none;
 }
 
 /* ===== FEATURE CARDS ===== */
 .VPFeature {
-  background: linear-gradient(145deg, rgba(6, 182, 212, 0.05), rgba(16, 185, 129, 0.03)) !important;
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(6, 182, 212, 0.15) !important;
-  border-radius: 16px !important;
-  transition: all 0.3s ease;
+  background: #020617 !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
 }
 
 .VPFeature:hover {
-  border-color: rgba(6, 182, 212, 0.4) !important;
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(6, 182, 212, 0.1);
+  border-color: rgba(59, 130, 246, 0.7) !important;
+  background-color: #02081a !important;
+  transform: none;
 }
 
 .dark .VPFeature {
-  background: linear-gradient(145deg, rgba(6, 182, 212, 0.08), rgba(16, 185, 129, 0.04)) !important;
+  background: #020617 !important;
 }
 
 .VPFeature .title {
-  color: #22d3ee !important;
+  color: #e5e7eb !important;
   font-weight: 600;
 }
 
 .VPFeature .details {
-  color: #94a3b8 !important;
+  color: #9ca3af !important;
 }
 
-/* Feature icon styling */
 .VPFeature .icon {
-  background: linear-gradient(135deg, #06b6d4, #10b981);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: #60a5fa;
+  -webkit-background-clip: initial;
+  background-clip: initial;
 }
 
 /* ===== BUTTONS ===== */
 .VPButton.brand {
-  background: linear-gradient(135deg, #06b6d4, #10b981) !important;
-  border: none !important;
-  color: #0f172a !important;
+  background: #2563eb !important;
+  border-radius: 6px !important;
+  border: 1px solid #1d4ed8 !important;
+  color: #f9fafb !important;
   font-weight: 600;
-  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
-  transition: all 0.3s ease;
+  box-shadow: none;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
 
 .VPButton.brand:hover {
-  background: linear-gradient(135deg, #22d3ee, #34d399) !important;
-  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.4);
-  transform: translateY(-2px);
+  background: #1d4ed8 !important;
+  border-color: #1e40af !important;
+  transform: none;
 }
 
 .VPButton.alt {
   background: transparent !important;
-  border: 1px solid rgba(6, 182, 212, 0.5) !important;
-  color: #22d3ee !important;
+  border-radius: 6px !important;
+  border: 1px solid rgba(148, 163, 184, 0.6) !important;
+  color: #e5e7eb !important;
 }
 
 .VPButton.alt:hover {
-  background: rgba(6, 182, 212, 0.1) !important;
-  border-color: #22d3ee !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  border-color: rgba(148, 163, 184, 0.9) !important;
 }
 
 /* ===== NAVIGATION ===== */
 .VPNav {
-  background: rgba(10, 10, 15, 0.8) !important;
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(6, 182, 212, 0.1) !important;
+  background: #020617 !important;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.9) !important;
 }
 
 .VPNavBarTitle .title {
-  color: #22d3ee !important;
-  font-weight: 700;
+  color: #e5e7eb !important;
+  font-weight: 600;
 }
 
-/* Nav links */
 .VPNavBarMenuLink:hover,
 .VPNavBarMenuLink.active {
-  color: #22d3ee !important;
+  color: #bfdbfe !important;
 }
 
 /* ===== SIDEBAR ===== */
 .VPSidebar {
-  background: linear-gradient(180deg, rgba(10, 10, 15, 0.95), rgba(10, 10, 15, 0.98)) !important;
-  border-right: 1px solid rgba(6, 182, 212, 0.08) !important;
+  background: #020617 !important;
+  border-right: 1px solid rgba(15, 23, 42, 1) !important;
 }
 
 .VPSidebarItem.level-0 > .item > .text {
-  color: #22d3ee !important;
+  color: #9ca3af !important;
   font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+  text-transform: none;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
 }
 
 .VPSidebarItem .link:hover .text,
 .VPSidebarItem.is-active > .item > .link > .text {
-  color: #22d3ee !important;
+  color: #e5e7eb !important;
 }
 
-/* Active indicator */
 .VPSidebarItem.is-active > .item {
-  background: linear-gradient(90deg, rgba(6, 182, 212, 0.1), transparent);
-  border-left: 2px solid #06b6d4;
+  background: rgba(15, 23, 42, 0.85);
+  border-left: 2px solid #2563eb;
 }
 
 /* ===== CONTENT ===== */
 h1, h2, h3, h4 {
-  background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #e5e7eb;
+  -webkit-text-fill-color: currentColor;
+  background: none;
 }
 
 h1 { font-weight: 800; }
@@ -204,52 +182,57 @@ h3, h4 { font-weight: 600; }
 
 /* Links */
 .vp-doc a {
-  color: #22d3ee;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(34, 211, 238, 0.3);
-  transition: all 0.2s ease;
+  color: #60a5fa;
+  text-decoration: underline;
+  text-decoration-color: rgba(96, 165, 250, 0.65);
+  text-underline-offset: 2px;
+  border-bottom: none;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
 
 .vp-doc a:hover {
-  color: #67e8f9;
-  border-bottom-color: #67e8f9;
+  color: #bfdbfe;
+  text-decoration-color: #bfdbfe;
 }
 
 /* ===== CODE BLOCKS ===== */
 .vp-doc div[class*='language-'] {
-  background: #0f172a !important;
-  border: 1px solid rgba(6, 182, 212, 0.15);
-  border-radius: 12px;
+  background: #020617 !important;
+  border: 1px solid rgba(15, 23, 42, 1);
+  border-radius: 6px;
 }
 
 .vp-doc div[class*='language-']::before {
-  color: #06b6d4 !important;
+  color: #9ca3af !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
 }
 
 /* Inline code */
 .vp-doc :not(pre) > code {
-  background: rgba(6, 182, 212, 0.1);
-  color: #22d3ee;
+  background: rgba(15, 23, 42, 1);
+  color: #e5e7eb;
   border-radius: 4px;
   padding: 2px 6px;
 }
 
 /* Code syntax highlighting adjustments */
-.vp-doc .token.keyword { color: #c084fc; }
-.vp-doc .token.function { color: #22d3ee; }
-.vp-doc .token.string { color: #34d399; }
-.vp-doc .token.number { color: #fbbf24; }
+.vp-doc .token.keyword { color: #c4b5fd; }
+.vp-doc .token.function { color: #bfdbfe; }
+.vp-doc .token.string { color: #4ade80; }
+.vp-doc .token.number { color: #facc15; }
 .vp-doc .token.comment { color: #64748b; }
-.vp-doc .token.operator { color: #f472b6; }
+.vp-doc .token.operator { color: #f9a8d4; }
 
 /* ===== SEARCH ===== */
 .DocSearch-Button {
-  background: rgba(6, 182, 212, 0.1) !important;
-  border: 1px solid rgba(6, 182, 212, 0.2) !important;
+  background: rgba(15, 23, 42, 1) !important;
+  border: 1px solid rgba(30, 64, 175, 0.8) !important;
 }
 
 .DocSearch-Button:hover {
-  border-color: rgba(6, 182, 212, 0.4) !important;
+  border-color: rgba(59, 130, 246, 1) !important;
 }
 
 /* ===== SCROLLBAR ===== */
@@ -259,36 +242,31 @@ h3, h4 { font-weight: 600; }
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0f;
+  background: #020617;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #06b6d4, #10b981);
+  background: #111827;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #22d3ee, #34d399);
+  background: #1f2937;
 }
 
 /* ===== TABLE OF CONTENTS ===== */
 .VPDocAside .outline-link:hover,
 .VPDocAside .outline-link.active {
-  color: #22d3ee !important;
+  color: #bfdbfe !important;
 }
 
 /* ===== FOOTER ===== */
 .VPFooter {
-  border-top: 1px solid rgba(6, 182, 212, 0.1) !important;
+  border-top: 1px solid rgba(15, 23, 42, 1) !important;
 }
 
-/* ===== ANIMATIONS ===== */
-@keyframes glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(6, 182, 212, 0.5); }
-}
-
+/* Remove glowing hero image animation */
 .VPHero .VPImage {
-  animation: glow 3s ease-in-out infinite;
+  animation: none;
 }
 
