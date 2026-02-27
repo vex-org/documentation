@@ -7,7 +7,33 @@ export default defineConfig({
     languageAlias:{
       "vex":"rust"
     },
-    html: false
+    html: true,
+    config(md) {
+      md.core.ruler.after('inline', 'emoji-to-iconify', (state) => {
+        state.tokens.forEach((blockToken) => {
+          if (blockToken.type !== 'inline') return
+          const children = blockToken.children
+          if (!children) return
+
+          children.forEach((token, idx) => {
+            if (token.type !== 'text') return
+            let text = token.content
+
+            const emojis = ['✅', '❌', '⚠️', '🔥', '💡', '🚀', '📌', '📎', '📚', '🧪']
+            if (!emojis.some((e) => text.includes(e))) return
+
+            emojis.forEach((e) => {
+              const re = new RegExp(e.replace(/([.*+?^${}()|[\]\\])/g, '\\$1'), 'g')
+              text = text.replace(re, `<EmojiIcon emoji="${e}" />`)
+            })
+
+            children[idx].type = 'html_inline'
+            children[idx].tag = ''
+            children[idx].content = text
+          })
+        })
+      })
+    },
   },
  head: [
     [
