@@ -135,6 +135,69 @@ fn main(): i32 {
     println("Hello, " + name + "!")
     return 0
 }`
+  },
+  {
+    name: 'SIMD Vectors',
+    icon: Zap,
+    code: `fn main(): i32 {
+    // Arrays auto-promote to SIMD Tensors
+    let a = [1.0, 2.0, 3.0, 4.0]
+    let b = [5.0, 6.0, 7.0, 8.0]
+
+    // Single SIMD instruction: vadd <4 x f64>
+    let c = a + b
+    println(c)
+
+    // Scalar broadcast: splat 2.0 then vmul
+    let scaled = a * 2.0
+    println(scaled)
+
+    // Horizontal reduction: sum all elements
+    let total = <+ a
+    println(total)
+    return 0
+}`
+  },
+  {
+    name: 'Concurrency',
+    icon: Cpu,
+    code: `fn main(): i32 {
+    let ch = Channel.new<i32>(4)
+
+    // Spawn goroutines that send values
+    for i in 0..4 {
+        let sender = ch
+        go {
+            sender.send(i * 10)
+        };
+    }
+
+    // Receive all values
+    let! sum = 0
+    for _ in 0..4 {
+        sum = sum + ch.recv()
+    }
+    println(sum)
+    return 0
+}`
+  },
+  {
+    name: 'Map & Set',
+    icon: Target,
+    code: `fn main(): i32 {
+    let! m = Map.new<string, i32>()
+    m.set("alice", 42)
+    m.set("bob", 7)
+    m.set("charlie", 99)
+
+    println(m.get("alice"))
+    println(m.len())
+    println(m.contains("bob"))
+
+    m.remove("bob")
+    println(m.len())
+    return 0
+}`
   }
 ]
 

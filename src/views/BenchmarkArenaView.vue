@@ -46,6 +46,35 @@ fn main(): i32 {
     return 0
 }`,
   },
+  {
+    name: 'SIMD Sum 1M',
+    code: `fn main(): i32 {
+    let! total: f64 = 0.0
+    for i in 0..250000 {
+        let chunk = [i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3]
+        total = total + (<+ chunk)
+    }
+    println(total)
+    return 0
+}`,
+  },
+  {
+    name: 'Array Math',
+    code: `fn dot(a: [f64; 4], b: [f64; 4]): f64 {
+    return <+ (a * b)
+}
+
+fn main(): i32 {
+    let! sum: f64 = 0.0
+    for i in 0..100000 {
+        let a = [1.0, 2.0, 3.0, 4.0]
+        let b = [5.0, 6.0, 7.0, 8.0]
+        sum = sum + dot(a, b)
+    }
+    println(sum)
+    return 0
+}`,
+  },
 ]
 
 const code = ref(examples[0].code)

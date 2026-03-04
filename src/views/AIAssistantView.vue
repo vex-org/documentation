@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, computed } from 'vue'
 import { Send, Bot, User, Code, Sparkles, Wrench, ArrowLeftRight } from 'lucide-vue-next'
 import { askAI } from '../api/vex'
+import { marked } from 'marked'
+
+marked.setOptions({ breaks: true, gfm: true })
+
+function renderMarkdown(text: string): string {
+  return marked.parse(text) as string
+}
 
 interface Message {
   role: 'user' | 'assistant'
@@ -113,7 +120,8 @@ function setMode(m: typeof mode.value) {
           <Bot class="w-4 h-4 text-vex-primary" />
         </div>
         <div :class="['max-w-[80%] rounded-2xl px-4 py-3 text-sm', msg.role === 'user' ? 'bg-vex-primary/15 text-white' : 'bg-white/5 text-vex-text']">
-          <pre class="whitespace-pre-wrap font-sans break-words">{{ msg.content }}</pre>
+          <div v-if="msg.role === 'assistant'" class="prose-vex prose-sm prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10 prose-pre:rounded-xl prose-code:before:content-none prose-code:after:content-none" v-html="renderMarkdown(msg.content)"></div>
+          <pre v-else class="whitespace-pre-wrap font-sans break-words">{{ msg.content }}</pre>
           <div v-if="msg.model" class="mt-2 text-[10px] text-vex-text-muted opacity-50">{{ msg.model }}</div>
         </div>
         <div v-if="msg.role === 'user'" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
