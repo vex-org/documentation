@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Play, Zap, Trophy, AlertTriangle, ChevronRight, Sparkles, Code, Clock, Cpu } from 'lucide-vue-next'
+import { Play, Zap, Trophy, AlertTriangle, ChevronRight, Sparkles, Code, Clock, Cpu, Settings } from 'lucide-vue-next'
 import { compareCode, type LangResult } from '../api/vex'
 
 const LANG_META: Record<string, { label: string; color: string; icon: string }> = {
@@ -84,6 +84,13 @@ const results = ref<Record<string, LangResult> | null>(null)
 const disclaimer = ref('')
 const errorMsg = ref('')
 const selectedLangs = ref(['go', 'rust', 'zig'])
+const optLevel = ref('O2')
+const optLevels = [
+  { value: 'O0', label: '-O0', desc: 'No optimization' },
+  { value: 'O1', label: '-O1', desc: 'Basic' },
+  { value: 'O2', label: '-O2', desc: 'Recommended' },
+  { value: 'O3', label: '-O3', desc: 'Aggressive' },
+]
 
 const sortedResults = computed(() => {
   if (!results.value) return []
@@ -127,7 +134,7 @@ async function runBenchmark() {
   disclaimer.value = ''
 
   try {
-    const res = await compareCode(code.value, selectedLangs.value)
+    const res = await compareCode(code.value, selectedLangs.value, optLevel.value)
     results.value = res.results
     disclaimer.value = res.ai_disclaimer
   } catch (err: any) {
@@ -202,6 +209,23 @@ async function runBenchmark() {
                 <svg v-if="selectedLangs.includes(lang)" class="w-full h-full text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
               </div>
             </button>
+          </div>
+        </div>
+
+        <!-- Optimization Level -->
+        <div class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden">
+          <div class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2">
+            <Settings class="w-4 h-4 text-vex-primary" />
+            <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Opt Level</span>
+          </div>
+          <div class="p-3 flex gap-2">
+            <button
+              v-for="o in optLevels"
+              :key="o.value"
+              @click="optLevel = o.value"
+              :title="o.desc"
+              :class="['flex-1 px-2 py-2 rounded-xl text-xs font-mono font-bold transition-all text-center', optLevel === o.value ? 'bg-vex-primary text-vex-bg' : 'bg-white/5 text-vex-text-muted hover:text-white']"
+            >{{ o.label }}</button>
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Play, Code, Terminal, Share2, Sparkles, BookOpen, ChevronRight, Zap, Target, Cpu, Wifi, WifiOff } from 'lucide-vue-next'
+import { Play, Code, Terminal, Share2, Sparkles, BookOpen, ChevronRight, Zap, Target, Cpu, Wifi, WifiOff, Settings } from 'lucide-vue-next'
 import { runCode as apiRunCode, emitIR, healthCheck } from '../api/vex'
 
 const examples = [
@@ -208,6 +208,13 @@ const isRunning = ref(false)
 const wasmLoaded = ref(false)
 const activeExample = ref(0)
 const activeView = ref<'output' | 'ir'>('output')
+const optLevel = ref('O2')
+const optLevels = [
+  { value: 'O0', label: '-O0', desc: 'No optimization' },
+  { value: 'O1', label: '-O1', desc: 'Basic' },
+  { value: 'O2', label: '-O2', desc: 'Recommended' },
+  { value: 'O3', label: '-O3', desc: 'Aggressive' },
+]
 const compileTime = ref(0)
 const runTime = ref(0)
 const userTime = ref(0)
@@ -231,7 +238,7 @@ async function runCode() {
   errors.value = ''
   
   try {
-    const result = await apiRunCode(code.value)
+    const result = await apiRunCode(code.value, optLevel.value)
     // Extract actual program output (filter compiler timing lines)
     const lines = result.stdout.split('\n')
     const programOutput = lines.filter(l => 
@@ -272,7 +279,7 @@ async function runCode() {
 async function fetchIR() {
   isLoadingIR.value = true
   try {
-    const result = await emitIR(code.value)
+    const result = await emitIR(code.value, optLevel.value)
     irOutput.value = result.ir
   } catch {
     irOutput.value = ''
@@ -316,6 +323,17 @@ onMounted(async () => {
       </div>
       
       <div class="flex items-center gap-3">
+        <!-- Opt Level -->
+        <div class="flex items-center gap-1 bg-white/5 rounded-lg p-1">
+          <Settings class="w-3.5 h-3.5 text-vex-text-muted ml-2" />
+          <button
+            v-for="o in optLevels"
+            :key="o.value"
+            @click="optLevel = o.value"
+            :title="o.desc"
+            :class="['px-2 py-1 rounded text-[11px] font-mono font-bold transition-all', optLevel === o.value ? 'bg-vex-primary text-vex-bg' : 'text-vex-text-muted hover:text-white']"
+          >{{ o.label }}</button>
+        </div>
         <button @click="shareCode" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-vex-border text-vex-text-muted hover:text-white transition-all cursor-pointer">
           <Share2 class="w-4 h-4" />
           {{ shareLabel }}

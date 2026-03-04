@@ -1,0 +1,58 @@
+import{_ as s,o as e,c as n,ag as p}from"./chunks/framework.BDReElpY.js";const u=JSON.parse('{"title":"Raw Pointers","description":"","frontmatter":{},"headers":[],"relativePath":"guide/advanced/pointers.md","filePath":"guide/advanced/pointers.md"}'),t={name:"guide/advanced/pointers.md"};function i(l,a,o,r,c,d){return e(),n("div",null,[...a[0]||(a[0]=[p(`<h1 id="raw-pointers" tabindex="-1">Raw Pointers <a class="header-anchor" href="#raw-pointers" aria-label="Permalink to &quot;Raw Pointers&quot;">​</a></h1><p>Vex provides first-class support for raw pointers to enable systems programming, hardware interaction, and foreign function interfaces (FFI). Unlike references (<code>&amp;T</code>), raw pointers enable manual memory management and are not subject to borrow checker rules.</p><div class="warning custom-block"><p class="custom-block-title">WARNING</p><p>Dereferencing raw pointers is always <strong>unsafe</strong> and must be performed within an <code>unsafe</code> block.</p></div><h2 id="pointer-types" tabindex="-1">Pointer Types <a class="header-anchor" href="#pointer-types" aria-label="Permalink to &quot;Pointer Types&quot;">​</a></h2><p>Vex distinguishes between immutable and mutable raw pointers:</p><table tabindex="0"><thead><tr><th>Type</th><th>Description</th><th>C Equivalent</th></tr></thead><tbody><tr><td><code>*T</code></td><td>Immutable raw pointer</td><td><code>const T*</code></td></tr><tr><td><code>*T!</code></td><td>Mutable raw pointer</td><td><code>T*</code></td></tr><tr><td><code>*void</code></td><td>Opaque/Void pointer</td><td><code>void*</code></td></tr></tbody></table><h2 id="creating-pointers" tabindex="-1">Creating Pointers <a class="header-anchor" href="#creating-pointers" aria-label="Permalink to &quot;Creating Pointers&quot;">​</a></h2><h3 id="from-references" tabindex="-1">From References <a class="header-anchor" href="#from-references" aria-label="Permalink to &quot;From References&quot;">​</a></h3><p>References can be cast to pointers. This operation is safe (creating the pointer), but using it is unsafe.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let x = 42</span></span>
+<span class="line"><span>let ptr_const: *i32 = &amp;x         // Cast implicit in assignment if types match? </span></span>
+<span class="line"><span>                                // Explicit cast: &amp;x as *i32</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let! mut_y = 100</span></span>
+<span class="line"><span>let ptr_mut: *i32! = &amp;mut_y!     // Cast to mutable pointer</span></span></code></pre></div><h3 id="from-addresses" tabindex="-1">From Addresses <a class="header-anchor" href="#from-addresses" aria-label="Permalink to &quot;From Addresses&quot;">​</a></h3><p>You can cast integer addresses to pointers. This is essential for memory-mapped I/O.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let addr: usize = 0xDEAD_BEEF</span></span>
+<span class="line"><span>let ptr = addr as *u32!          // Create pointer from strict address</span></span></code></pre></div><h3 id="type-casting" tabindex="-1">Type Casting <a class="header-anchor" href="#type-casting" aria-label="Permalink to &quot;Type Casting&quot;">​</a></h3><p>Pointers can be cast between types using <code>as</code>.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let ptr: *i32 = &amp;10</span></span>
+<span class="line"><span>let byte_ptr = ptr as *u8    // Reinterpret as byte pointer</span></span>
+<span class="line"><span>let void_ptr = ptr as *void  // Type erasure</span></span></code></pre></div><h2 id="operations" tabindex="-1">Operations <a class="header-anchor" href="#operations" aria-label="Permalink to &quot;Operations&quot;">​</a></h2><h3 id="dereferencing" tabindex="-1">Dereferencing <a class="header-anchor" href="#dereferencing" aria-label="Permalink to &quot;Dereferencing&quot;">​</a></h3><p>Accessing the memory pointed to by a raw pointer is <code>unsafe</code>.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let x = 10</span></span>
+<span class="line"><span>let ptr = &amp;x</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// READ</span></span>
+<span class="line"><span>let val = unsafe { *ptr }</span></span></code></pre></div><h3 id="writing" tabindex="-1">Writing <a class="header-anchor" href="#writing" aria-label="Permalink to &quot;Writing&quot;">​</a></h3><p>Writing requires a mutable pointer (<code>*T!</code>).</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let! x = 10</span></span>
+<span class="line"><span>let ptr = &amp;x! as *i32!</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// WRITE</span></span>
+<span class="line"><span>unsafe {</span></span>
+<span class="line"><span>    *ptr = 20</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span>$println(x) // 20</span></span></code></pre></div><h3 id="pointer-arithmetic" tabindex="-1">Pointer Arithmetic <a class="header-anchor" href="#pointer-arithmetic" aria-label="Permalink to &quot;Pointer Arithmetic&quot;">​</a></h3><p>Pointers in Vex support arithmetic operations <code>+</code> and <code>-</code>. Arithmetic is <strong>typed</strong> components are scaled by the size of the pointee type (similar to C/C++).</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let arr = [10, 20, 30]</span></span>
+<span class="line"><span>let ptr = &amp;arr[0] as *i32</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>unsafe {</span></span>
+<span class="line"><span>    // Advances by 1 * sizeof(i32) (4 bytes)</span></span>
+<span class="line"><span>    let next = ptr + 1  </span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // Reads arr[1] (20)</span></span>
+<span class="line"><span>    $println(*next)</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p>To perform untyped (byte-level) offsets, cast to <code>usize</code> or <code>*u8</code> first:</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>// Advance by exactly 1 byte</span></span>
+<span class="line"><span>let byte_next = (ptr as usize + 1) as *i32</span></span></code></pre></div><h3 id="comparisons" tabindex="-1">Comparisons <a class="header-anchor" href="#comparisons" aria-label="Permalink to &quot;Comparisons&quot;">​</a></h3><p>Pointers can be compared for equality (<code>==</code>, <code>!=</code>) or ordering (<code>&lt;</code>, <code>&gt;</code>, etc.).</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>if ptr != (0 as *i32) {</span></span>
+<span class="line"><span>    // Not null</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h2 id="multilevel-pointers" tabindex="-1">Multilevel Pointers <a class="header-anchor" href="#multilevel-pointers" aria-label="Permalink to &quot;Multilevel Pointers&quot;">​</a></h2><p>Pointers to pointers are supported. Spacing is recommended to avoid parsing ambiguity, though standard Vex parsers handle <code>**T</code> correctly.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let val = 10</span></span>
+<span class="line"><span>let p1: *i32 = &amp;val</span></span>
+<span class="line"><span>let p2: * *i32 = &amp;p1    // Pointer to pointer</span></span></code></pre></div><h2 id="null-pointers" tabindex="-1">Null Pointers <a class="header-anchor" href="#null-pointers" aria-label="Permalink to &quot;Null Pointers&quot;">​</a></h2><p>Vex uses <code>0</code> as the null value for pointers. There is no usage of a specific <code>null</code> keyword for pointer types in the current boolean logic.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let null_ptr = 0 as *void</span></span></code></pre></div><h2 id="example-ffi-usage" tabindex="-1">Example: FFI Usage <a class="header-anchor" href="#example-ffi-usage" aria-label="Permalink to &quot;Example: FFI Usage&quot;">​</a></h2><p>Common usage of pointers is interfacing with C libraries like <code>malloc</code>.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>extern &quot;C&quot; {</span></span>
+<span class="line"><span>    fn malloc(size: usize): *void</span></span>
+<span class="line"><span>    fn free(ptr: *void)</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>struct Point { x: i32, y: i32 }</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn main() {</span></span>
+<span class="line"><span>    unsafe {</span></span>
+<span class="line"><span>        // 1. Allocate raw memory</span></span>
+<span class="line"><span>        let void_ptr = malloc(8) // sizeof(Point)</span></span>
+<span class="line"><span>        </span></span>
+<span class="line"><span>        // 2. Cast to structured pointer</span></span>
+<span class="line"><span>        let ptr = void_ptr as *Point!</span></span>
+<span class="line"><span>        </span></span>
+<span class="line"><span>        // 3. Initialize field access</span></span>
+<span class="line"><span>        (*ptr).x = 100</span></span>
+<span class="line"><span>        (*ptr).y = 200</span></span>
+<span class="line"><span>        </span></span>
+<span class="line"><span>        $println(f&quot;Point at {ptr as usize}: {(*ptr).x}, {(*ptr).y}&quot;)</span></span>
+<span class="line"><span>        </span></span>
+<span class="line"><span>        // 4. Clean up</span></span>
+<span class="line"><span>        free(void_ptr)</span></span>
+<span class="line"><span>    }</span></span>
+<span class="line"><span>}</span></span></code></pre></div>`,40)])])}const m=s(t,[["render",i]]);export{u as __pageData,m as default};

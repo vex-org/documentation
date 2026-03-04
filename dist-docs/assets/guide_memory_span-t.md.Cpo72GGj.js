@@ -1,0 +1,125 @@
+import{_ as s,o as n,c as e,ag as t}from"./chunks/framework.BDReElpY.js";const u=JSON.parse('{"title":"Span<T> — Bounds-Checked Fat Pointer","description":"","frontmatter":{},"headers":[],"relativePath":"guide/memory/span-t.md","filePath":"guide/memory/span-t.md"}'),p={name:"guide/memory/span-t.md"};function l(i,a,o,c,d,r){return n(),e("div",null,[...a[0]||(a[0]=[t(`<h1 id="span-t-—-bounds-checked-fat-pointer" tabindex="-1">Span&lt;T&gt; — Bounds-Checked Fat Pointer <a class="header-anchor" href="#span-t-—-bounds-checked-fat-pointer" aria-label="Permalink to &quot;Span\\&lt;T\\&gt; — Bounds-Checked Fat Pointer&quot;">​</a></h1><p><code>Span&lt;T&gt;</code> is Vex&#39;s non-owning view over contiguous typed memory. It combines a data pointer with a length, enabling bounds-checked access and zero-copy slicing.</p><div class="tip custom-block"><p class="custom-block-title">Prelude Type</p><p><code>Span&lt;T&gt;</code> is a <strong>prelude type</strong> — available in all Vex programs without any <code>import</code>. Just use it directly.</p></div><h2 id="overview" tabindex="-1">Overview <a class="header-anchor" href="#overview" aria-label="Permalink to &quot;Overview&quot;">​</a></h2><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>fn main() {</span></span>
+<span class="line"><span>    let! nums = Vec.new&lt;i32&gt;();</span></span>
+<span class="line"><span>    nums.push(10); nums.push(20); nums.push(30); nums.push(40); nums.push(50);</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // Create a span view (zero-copy)</span></span>
+<span class="line"><span>    let view = Span.ofVec&lt;i32&gt;(nums.data as *i32, nums.len());</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // Bounds-checked access</span></span>
+<span class="line"><span>    match view.get(2) {</span></span>
+<span class="line"><span>        Some(val) =&gt; $println(&quot;Index 2: {}&quot;, val),   // 30</span></span>
+<span class="line"><span>        None =&gt; $println(&quot;out of bounds&quot;)</span></span>
+<span class="line"><span>    };</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // Zero-copy slicing</span></span>
+<span class="line"><span>    let middle = view.slice(1, 4);   // [20, 30, 40]</span></span>
+<span class="line"><span>    $println(&quot;Middle length: {}&quot;, middle.len());  // 3</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h2 id="struct-definition" tabindex="-1">Struct Definition <a class="header-anchor" href="#struct-definition" aria-label="Permalink to &quot;Struct Definition&quot;">​</a></h2><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>struct Span&lt;T&gt; {</span></span>
+<span class="line"><span>    data: *T,</span></span>
+<span class="line"><span>    length: usize</span></span>
+<span class="line"><span>}</span></span></code></pre></div><p><code>Span&lt;T&gt;</code> is a fat pointer — two fields on the stack. It does <strong>not own</strong> the underlying memory. The data source (Vec, Ptr, array) must outlive the span.</p><h2 id="creating-spans" tabindex="-1">Creating Spans <a class="header-anchor" href="#creating-spans" aria-label="Permalink to &quot;Creating Spans&quot;">​</a></h2><h3 id="from-vec" tabindex="-1">From Vec <a class="header-anchor" href="#from-vec" aria-label="Permalink to &quot;From Vec&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let! v = Vec.new&lt;i32&gt;();</span></span>
+<span class="line"><span>v.push(1); v.push(2); v.push(3);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span></code></pre></div><h3 id="from-ptr" tabindex="-1">From Ptr <a class="header-anchor" href="#from-ptr" aria-label="Permalink to &quot;From Ptr&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let! p = Ptr.allocN&lt;i32&gt;(5);</span></span>
+<span class="line"><span>p.writeAt(0, 10);</span></span>
+<span class="line"><span>p.writeAt(1, 20);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let s = Span.ofPtr&lt;i32&gt;(p.asRaw(), 5);</span></span></code></pre></div><h3 id="from-raw-pointer" tabindex="-1">From Raw Pointer <a class="header-anchor" href="#from-raw-pointer" aria-label="Permalink to &quot;From Raw Pointer&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = Span.of&lt;i32&gt;(rawPtr, length);</span></span></code></pre></div><h3 id="empty-span" tabindex="-1">Empty Span <a class="header-anchor" href="#empty-span" aria-label="Permalink to &quot;Empty Span&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let empty = Span.empty&lt;i32&gt;();</span></span>
+<span class="line"><span>empty.isEmpty();  // true</span></span>
+<span class="line"><span>empty.len();      // 0</span></span></code></pre></div><h2 id="element-access" tabindex="-1">Element Access <a class="header-anchor" href="#element-access" aria-label="Permalink to &quot;Element Access&quot;">​</a></h2><h3 id="bounds-checked-safe" tabindex="-1">Bounds-Checked (Safe) <a class="header-anchor" href="#bounds-checked-safe" aria-label="Permalink to &quot;Bounds-Checked (Safe)&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Returns Option&lt;T&gt;</span></span>
+<span class="line"><span>match s.get(0) {</span></span>
+<span class="line"><span>    Some(val) =&gt; $println(&quot;first: {}&quot;, val),</span></span>
+<span class="line"><span>    None =&gt; $println(&quot;empty!&quot;)</span></span>
+<span class="line"><span>};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Out of bounds → None (no panic)</span></span>
+<span class="line"><span>match s.get(999) {</span></span>
+<span class="line"><span>    Some(_) =&gt; $println(&quot;impossible&quot;),</span></span>
+<span class="line"><span>    None =&gt; $println(&quot;safely handled&quot;)</span></span>
+<span class="line"><span>};</span></span></code></pre></div><h3 id="unchecked-fast" tabindex="-1">Unchecked (Fast) <a class="header-anchor" href="#unchecked-fast" aria-label="Permalink to &quot;Unchecked (Fast)&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>// No bounds check — caller guarantees index &lt; len</span></span>
+<span class="line"><span>let val = s.getUnchecked(0);</span></span></code></pre></div><h3 id="first-last" tabindex="-1">First / Last <a class="header-anchor" href="#first-last" aria-label="Permalink to &quot;First / Last&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>match s.first() {</span></span>
+<span class="line"><span>    Some(val) =&gt; $println(&quot;first: {}&quot;, val),</span></span>
+<span class="line"><span>    None =&gt; $println(&quot;empty&quot;)</span></span>
+<span class="line"><span>};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>match s.last() {</span></span>
+<span class="line"><span>    Some(val) =&gt; $println(&quot;last: {}&quot;, val),</span></span>
+<span class="line"><span>    None =&gt; $println(&quot;empty&quot;)</span></span>
+<span class="line"><span>};</span></span></code></pre></div><h3 id="with-fallback" tabindex="-1">With Fallback <a class="header-anchor" href="#with-fallback" aria-label="Permalink to &quot;With Fallback&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let val = s.getOr(100, -1);  // returns -1 if index &gt;= length</span></span></code></pre></div><h3 id="index-operator" tabindex="-1">Index Operator <a class="header-anchor" href="#index-operator" aria-label="Permalink to &quot;Index Operator&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let val = s[2];  // equivalent to s.getUnchecked(2)</span></span></code></pre></div><h2 id="slicing-zero-copy" tabindex="-1">Slicing (Zero-Copy) <a class="header-anchor" href="#slicing-zero-copy" aria-label="Permalink to &quot;Slicing (Zero-Copy)&quot;">​</a></h2><p>All slicing operations return new <code>Span&lt;T&gt;</code> values that share the same underlying memory — no copies:</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span>
+<span class="line"><span>// v = [10, 20, 30, 40, 50]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Sub-range [start, end)</span></span>
+<span class="line"><span>let mid = s.slice(1, 4);     // [20, 30, 40]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// First N elements</span></span>
+<span class="line"><span>let head = s.take(3);         // [10, 20, 30]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Skip first N elements</span></span>
+<span class="line"><span>let tail = s.skip(2);         // [30, 40, 50]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Split into two halves at index → SpanPair&lt;T&gt;</span></span>
+<span class="line"><span>let pair = s.splitAt(3);</span></span>
+<span class="line"><span>let left = pair.first;    // [10, 20, 30]</span></span>
+<span class="line"><span>let right = pair.second;  // [40, 50]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Clamped — won&#39;t panic on out-of-range</span></span>
+<span class="line"><span>let safe = s.take(100);       // [10, 20, 30, 40, 50] (clamped to length)</span></span>
+<span class="line"><span>let empty = s.skip(100);      // [] (empty span)</span></span></code></pre></div><h2 id="search" tabindex="-1">Search <a class="header-anchor" href="#search" aria-label="Permalink to &quot;Search&quot;">​</a></h2><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Contains check</span></span>
+<span class="line"><span>if s.contains(30) {</span></span>
+<span class="line"><span>    $println(&quot;found 30!&quot;);</span></span>
+<span class="line"><span>};</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Index of first occurrence</span></span>
+<span class="line"><span>match s.indexOf(30) {</span></span>
+<span class="line"><span>    Some(idx) =&gt; $println(&quot;30 at index {}&quot;, idx),</span></span>
+<span class="line"><span>    None =&gt; $println(&quot;not found&quot;)</span></span>
+<span class="line"><span>};</span></span></code></pre></div><h3 id="higher-order-search" tabindex="-1">Higher-Order Search <a class="header-anchor" href="#higher-order-search" aria-label="Permalink to &quot;Higher-Order Search&quot;">​</a></h3><p>Find the first element matching a predicate:</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>fn is_even(x: i32): bool {</span></span>
+<span class="line"><span>    return x % 2 == 0;</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn main() {</span></span>
+<span class="line"><span>    let! v = Vec.new&lt;i32&gt;();</span></span>
+<span class="line"><span>    v.push(1); v.push(3); v.push(4); v.push(7);</span></span>
+<span class="line"><span>    let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    match s.find(is_even) {</span></span>
+<span class="line"><span>        Some(val) =&gt; $println(&quot;First even: {}&quot;, val),  // 4</span></span>
+<span class="line"><span>        None =&gt; $println(&quot;no even numbers&quot;)</span></span>
+<span class="line"><span>    };</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h2 id="comparison" tabindex="-1">Comparison <a class="header-anchor" href="#comparison" aria-label="Permalink to &quot;Comparison&quot;">​</a></h2><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s1 = Span.ofVec&lt;i32&gt;(v1.data as *i32, v1.len());</span></span>
+<span class="line"><span>let s2 = Span.ofVec&lt;i32&gt;(v2.data as *i32, v2.len());</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>if s1.equals(&amp;s2) {</span></span>
+<span class="line"><span>    $println(&quot;spans are equal&quot;);</span></span>
+<span class="line"><span>};</span></span></code></pre></div><h2 id="converting-to-vec" tabindex="-1">Converting to Vec <a class="header-anchor" href="#converting-to-vec" aria-label="Permalink to &quot;Converting to Vec&quot;">​</a></h2><p>Create an owned copy:</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span>
+<span class="line"><span>let sub = s.slice(1, 3);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>// Deep copy into a new Vec</span></span>
+<span class="line"><span>let! owned = sub.toVec();  </span></span>
+<span class="line"><span>// owned is an independent Vec&lt;i32&gt; = [20, 30]</span></span></code></pre></div><h2 id="iteration" tabindex="-1">Iteration <a class="header-anchor" href="#iteration" aria-label="Permalink to &quot;Iteration&quot;">​</a></h2><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let s = Span.ofVec&lt;i32&gt;(v.data as *i32, v.len());</span></span>
+<span class="line"><span>let! it = s.iter();</span></span>
+<span class="line"><span>let! sum = 0;</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>loop {</span></span>
+<span class="line"><span>    match it.next() {</span></span>
+<span class="line"><span>        Some(val) =&gt; { sum = sum + val; },</span></span>
+<span class="line"><span>        None =&gt; { break; }</span></span>
+<span class="line"><span>    };</span></span>
+<span class="line"><span>};</span></span>
+<span class="line"><span>$println(&quot;sum: {}&quot;, sum);</span></span></code></pre></div><h2 id="raw-access" tabindex="-1">Raw Access <a class="header-anchor" href="#raw-access" aria-label="Permalink to &quot;Raw Access&quot;">​</a></h2><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let rawPtr: *i32 = s.asPtr();     // underlying raw pointer</span></span>
+<span class="line"><span>let typed: Ptr&lt;i32&gt; = s.toPtr();   // convert to Ptr&lt;T&gt;</span></span></code></pre></div><h2 id="in-place-mutation" tabindex="-1">In-Place Mutation <a class="header-anchor" href="#in-place-mutation" aria-label="Permalink to &quot;In-Place Mutation&quot;">​</a></h2><p>Mutating spans require <code>let!</code> (mutable binding):</p><h3 id="fill" tabindex="-1">Fill <a class="header-anchor" href="#fill" aria-label="Permalink to &quot;Fill&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let! p = Ptr.allocN&lt;i32&gt;(5);</span></span>
+<span class="line"><span>let! span = Span.of&lt;i32&gt;(p.asRaw(), 5);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>span.fill(42);  // all 5 elements are now 42</span></span></code></pre></div><h3 id="copy-from-another-span" tabindex="-1">Copy From Another Span <a class="header-anchor" href="#copy-from-another-span" aria-label="Permalink to &quot;Copy From Another Span&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let src = Span.ofVec&lt;i32&gt;(srcVec.data as *i32, srcVec.len());</span></span>
+<span class="line"><span>let! dst = Span.of&lt;i32&gt;(dstPtr.asRaw(), 10);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>dst.copyFromSpan(&amp;src);  // copies min(dst.len, src.len) elements</span></span></code></pre></div><h3 id="reverse" tabindex="-1">Reverse <a class="header-anchor" href="#reverse" aria-label="Permalink to &quot;Reverse&quot;">​</a></h3><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let! p = Ptr.allocN&lt;i32&gt;(5);</span></span>
+<span class="line"><span>p.writeAt(0, 1); p.writeAt(1, 2); p.writeAt(2, 3);</span></span>
+<span class="line"><span>p.writeAt(3, 4); p.writeAt(4, 5);</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>let! span = Span.of&lt;i32&gt;(p.asRaw(), 5);</span></span>
+<span class="line"><span>span.reverse();  // [5, 4, 3, 2, 1]</span></span></code></pre></div><h2 id="method-reference" tabindex="-1">Method Reference <a class="header-anchor" href="#method-reference" aria-label="Permalink to &quot;Method Reference&quot;">​</a></h2><h3 id="constructors" tabindex="-1">Constructors <a class="header-anchor" href="#constructors" aria-label="Permalink to &quot;Constructors&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>Span.empty&lt;T&gt;()</code></td><td>Empty span</td></tr><tr><td><code>Span.of&lt;T&gt;(ptr, len)</code></td><td>From raw pointer + length</td></tr><tr><td><code>Span.ofVec&lt;T&gt;(data, len)</code></td><td>From Vec&#39;s data pointer + length</td></tr><tr><td><code>Span.ofPtr&lt;T&gt;(rawPtr, len)</code></td><td>From Ptr&#39;s raw pointer + length</td></tr></tbody></table><h3 id="properties" tabindex="-1">Properties <a class="header-anchor" href="#properties" aria-label="Permalink to &quot;Properties&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>.len()</code></td><td>Number of elements</td></tr><tr><td><code>.isEmpty()</code></td><td>Is length zero?</td></tr><tr><td><code>.isNull()</code></td><td>Is data pointer null?</td></tr></tbody></table><h3 id="element-access-1" tabindex="-1">Element Access <a class="header-anchor" href="#element-access-1" aria-label="Permalink to &quot;Element Access&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>.get(idx)</code></td><td>Bounds-checked → <code>Option&lt;T&gt;</code></td></tr><tr><td><code>.getUnchecked(idx)</code></td><td>No bounds check</td></tr><tr><td><code>.getOr(idx, fallback)</code></td><td>With default value</td></tr><tr><td><code>.first()</code></td><td>First element → <code>Option&lt;T&gt;</code></td></tr><tr><td><code>.last()</code></td><td>Last element → <code>Option&lt;T&gt;</code></td></tr><tr><td><code>.[idx]</code></td><td>Index operator (unchecked)</td></tr></tbody></table><h3 id="slicing" tabindex="-1">Slicing <a class="header-anchor" href="#slicing" aria-label="Permalink to &quot;Slicing&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>.slice(start, end)</code></td><td>Sub-span <code>[start, end)</code></td></tr><tr><td><code>.take(n)</code></td><td>First N elements</td></tr><tr><td><code>.skip(n)</code></td><td>Skip first N elements</td></tr><tr><td><code>.splitAt(idx)</code></td><td>Split into <code>SpanPair&lt;T&gt;</code> with <code>.first</code> and <code>.second</code></td></tr></tbody></table><h3 id="search-1" tabindex="-1">Search <a class="header-anchor" href="#search-1" aria-label="Permalink to &quot;Search&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>.contains(val)</code></td><td>Linear search</td></tr><tr><td><code>.indexOf(val)</code></td><td>Index of first match → <code>Option&lt;usize&gt;</code></td></tr><tr><td><code>.find(pred)</code></td><td>First match by predicate → <code>Option&lt;T&gt;</code></td></tr></tbody></table><h3 id="mutation-in-place" tabindex="-1">Mutation (In-Place) <a class="header-anchor" href="#mutation-in-place" aria-label="Permalink to &quot;Mutation (In-Place)&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>.fill(val)</code></td><td>Set all elements to val</td></tr><tr><td><code>.copyFromSpan(&amp;src)</code></td><td>Copy from another span</td></tr><tr><td><code>.reverse()</code></td><td>Reverse elements in-place</td></tr></tbody></table><h3 id="comparison-conversion" tabindex="-1">Comparison &amp; Conversion <a class="header-anchor" href="#comparison-conversion" aria-label="Permalink to &quot;Comparison &amp; Conversion&quot;">​</a></h3><table tabindex="0"><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>.equals(&amp;other)</code></td><td>Element-wise equality</td></tr><tr><td><code>.toVec()</code></td><td>Deep copy into new <code>Vec&lt;T&gt;</code></td></tr><tr><td><code>.asPtr()</code></td><td>Get raw <code>*T</code></td></tr><tr><td><code>.toPtr()</code></td><td>Convert to <code>Ptr&lt;T&gt;</code></td></tr><tr><td><code>.iter()</code></td><td>Iterator over elements</td></tr></tbody></table><h2 id="see-also" tabindex="-1">See Also <a class="header-anchor" href="#see-also" aria-label="Permalink to &quot;See Also&quot;">​</a></h2><ul><li><a href="./rawbuf">RawBuf</a> — Zero-cost byte-level memory accessor</li><li><a href="./ptr-t">Ptr&lt;T&gt;</a> — Generic typed pointer</li><li><a href="/docs/guide/advanced/pointers">Raw Pointers</a> — Legacy raw <code>*T</code> documentation</li><li><a href="./vumm">VUMM</a> — Automatic ownership with <code>Box&lt;T&gt;</code></li></ul>`,70)])])}const g=s(p,[["render",l]]);export{u as __pageData,g as default};

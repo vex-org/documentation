@@ -29,21 +29,21 @@ export interface AIRequest {
   mode?: 'explain' | 'translate' | 'fix'
 }
 
-export async function runCode(code: string): Promise<RunResult> {
+export async function runCode(code: string, optLevel = 'O2'): Promise<RunResult> {
   const res = await fetch(`${API_URL}/api/website/run`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, opt_level: optLevel }),
   })
   if (!res.ok) throw new Error(`Server error: ${res.status}`)
   return res.json()
 }
 
-export async function emitIR(code: string): Promise<IRResult> {
+export async function emitIR(code: string, optLevel = 'O2'): Promise<IRResult> {
   const res = await fetch(`${API_URL}/api/website/ir`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({ code, opt_level: optLevel }),
   })
   if (!res.ok) throw new Error(`Server error: ${res.status}`)
   return res.json()
@@ -86,11 +86,11 @@ export interface CompareResult {
   ai_disclaimer: string
 }
 
-export async function compareCode(code: string, langs: string[] = ['go', 'rust', 'zig']): Promise<CompareResult> {
+export async function compareCode(code: string, langs: string[] = ['go', 'rust', 'zig'], optLevel = 'O2'): Promise<CompareResult> {
   const res = await fetch(`${API_URL}/api/website/compare`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, langs }),
+    body: JSON.stringify({ code, langs, opt_level: optLevel }),
   })
   if (!res.ok) throw new Error(`Server error: ${res.status}`)
   return res.json()

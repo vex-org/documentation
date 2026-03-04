@@ -1,0 +1,31 @@
+import{_ as e,o as s,c as n,ag as p}from"./chunks/framework.BDReElpY.js";const d=JSON.parse('{"title":"Chapter 5: Ownership & Memory","description":"","frontmatter":{},"headers":[],"relativePath":"archive/guide/05_ownership.md","filePath":"archive/guide/05_ownership.md"}'),t={name:"archive/guide/05_ownership.md"};function l(o,a,i,r,c,h){return s(),n("div",null,[...a[0]||(a[0]=[p(`<h1 id="chapter-5-ownership-memory" tabindex="-1">Chapter 5: Ownership &amp; Memory <a class="header-anchor" href="#chapter-5-ownership-memory" aria-label="Permalink to &quot;Chapter 5: Ownership &amp; Memory&quot;">​</a></h1><p>Vex does not use a Garbage Collector (GC). Instead, it uses a <strong>Borrow Checker</strong> similar to Rust to ensure memory safety at compile time.</p><h2 id="_2-1-the-rules-of-ownership" tabindex="-1">2.1 The Rules of Ownership <a class="header-anchor" href="#_2-1-the-rules-of-ownership" aria-label="Permalink to &quot;2.1 The Rules of Ownership&quot;">​</a></h2><ol><li>Each value in Vex has a variable that&#39;s called its <strong>owner</strong>.</li><li>There can only be one owner at a time.</li><li>When the owner goes out of scope, the value will be dropped (freed).</li></ol><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>{</span></span>
+<span class="line"><span>    let s = &quot;hello&quot;; // s is valid from here</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // do stuff with s</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>} // s goes out of scope here, memory is freed</span></span></code></pre></div><h2 id="_2-2-borrowing" tabindex="-1">2.2 Borrowing <a class="header-anchor" href="#_2-2-borrowing" aria-label="Permalink to &quot;2.2 Borrowing&quot;">​</a></h2><p>You can pass references to values without transferring ownership. This is called <strong>borrowing</strong>.</p><h3 id="immutable-references-t" tabindex="-1">Immutable References (<code>&amp;T</code>) <a class="header-anchor" href="#immutable-references-t" aria-label="Permalink to &quot;Immutable References (\`&amp;T\`)&quot;">​</a></h3><p>You can have infinite immutable references to a value.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>fn print_len(s: &amp;string) {</span></span>
+<span class="line"><span>    $println(s.len());</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn main(): i32 {</span></span>
+<span class="line"><span>    let s1 = &quot;hello&quot;;</span></span>
+<span class="line"><span>    print_len(&amp;s1); // Lend s1 to print_len</span></span>
+<span class="line"><span>    print_len(&amp;s1); // Works again!</span></span>
+<span class="line"><span>    return 0;</span></span>
+<span class="line"><span>}</span></span></code></pre></div><h3 id="mutable-references-t" tabindex="-1">Mutable References (<code>&amp;T!</code>) <a class="header-anchor" href="#mutable-references-t" aria-label="Permalink to &quot;Mutable References (\`&amp;T!\`)&quot;">​</a></h3><p>You can have <strong>only one</strong> mutable reference at a time.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>fn append_world(s: &amp;string!) {</span></span>
+<span class="line"><span>    s.push_str(&quot; world&quot;);</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>fn main(): i32 {</span></span>
+<span class="line"><span>    let! s = &quot;hello&quot;;</span></span>
+<span class="line"><span>    append_world(&amp;s!); // Note: &amp;s! syntax</span></span>
+<span class="line"><span>    return 0;</span></span>
+<span class="line"><span>}</span></span></code></pre></div><blockquote><p><strong>The <code>!</code> Rule</strong>: Just like <code>let!</code>, mutable references use <code>&amp;T!</code> (read &quot;ref bang T&quot;) instead of <code>&amp;mut T</code>.</p></blockquote><h2 id="_2-3-the-no-aliasing-mutation-rule" tabindex="-1">2.3 The &quot;No Aliasing + Mutation&quot; Rule <a class="header-anchor" href="#_2-3-the-no-aliasing-mutation-rule" aria-label="Permalink to &quot;2.3 The &quot;No Aliasing + Mutation&quot; Rule&quot;">​</a></h2><p>You cannot have a mutable reference while you have other references (mutable or immutable).</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>let! x = 10;</span></span>
+<span class="line"><span>let r1 = &amp;x;</span></span>
+<span class="line"><span>let r2 = &amp;x;     // OK: Multiple immutable borrows</span></span>
+<span class="line"><span>// let r3 = &amp;x!;</span><span> // ERROR: Cannot borrow mutably while immutable borrows exist</span></span></code></pre></div><h2 id="_2-4-defer" tabindex="-1">2.4 Defer <a class="header-anchor" href="#_2-4-defer" aria-label="Permalink to &quot;2.4 Defer&quot;">​</a></h2><p>For manual resource management (like files), Vex uses the Go-style <code>defer</code> keyword.</p><div class="language-vex vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">vex</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span>fn process_file() {</span></span>
+<span class="line"><span>    let f = open(&quot;data.txt&quot;);</span></span>
+<span class="line"><span>    defer close(f); // Guaranteed to run when function exits</span></span>
+<span class="line"><span>    </span></span>
+<span class="line"><span>    // ... work with f ...</span></span>
+<span class="line"><span>}</span></span></code></pre></div>`,20)])])}const m=e(t,[["render",l]]);export{d as __pageData,m as default};
