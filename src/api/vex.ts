@@ -6,6 +6,10 @@ export interface RunResult {
   exit_code: number
   compile_time_ms: number
   run_time_ms: number
+  user_time_ms: number
+  sys_time_ms: number
+  memory_kb: number
+  binary_kb: number
 }
 
 export interface IRResult {
@@ -66,9 +70,14 @@ export async function healthCheck(): Promise<boolean> {
 
 export interface LangResult {
   time_ms: number
+  compile_time_ms: number
+  run_time_ms: number
+  user_time_ms: number
+  sys_time_ms: number
   binary_kb: number
   memory_kb: number
   code: string
+  stdout?: string
   error?: string
 }
 

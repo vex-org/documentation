@@ -146,6 +146,10 @@ const wasmLoaded = ref(false)
 const activeExample = ref(0)
 const activeView = ref<'output' | 'ir'>('output')
 const compileTime = ref(0)
+const runTime = ref(0)
+const userTime = ref(0)
+const sysTime = ref(0)
+const memoryKB = ref(0)
 const irOutput = ref('')
 const isLoadingIR = ref(false)
 const shareLabel = ref('Share')
@@ -170,9 +174,28 @@ async function runCode() {
     const programOutput = lines.filter(l => 
       !l.includes('Compile time:') && !l.includes('Running (JIT)') && !l.includes('Run time:') && l.trim() !== ''
     ).join('\n')
-    output.value = programOutput || '(no output)'
-    errors.value = result.stderr && !result.stderr.includes('Codegen:') ? result.stderr : ''
+    
+    // Filter informational messages from stderr, keep actual errors
+    const stderrFiltered = (result.stderr || '').split('\n').filter(l => {
+      const t = l.trim()
+      if (!t) return false
+      if (t.startsWith('Codegen:') || t.startsWith('Compiling') || t.startsWith('Linking')) return false
+      return true
+    }).join('\n')
+    
+    if (result.exit_code !== 0 && !programOutput) {
+      output.value = stderrFiltered || '(compilation error)'
+      errors.value = ''
+    } else {
+      output.value = programOutput || '(no output)'
+      errors.value = result.exit_code !== 0 ? stderrFiltered : ''
+    }
+    
     compileTime.value = result.compile_time_ms
+    runTime.value = result.run_time_ms
+    userTime.value = result.user_time_ms
+    sysTime.value = result.sys_time_ms
+    memoryKB.value = result.memory_kb
     // Also fetch IR in background
     fetchIR()
   } catch (err: any) {
@@ -309,7 +332,13 @@ onMounted(async () => {
             <!-- Output View -->
             <div v-if="activeView === 'output'">
               <pre v-if="output" class="text-vex-text break-words whitespace-pre-wrap mb-4">{{ output }}</pre>
-              <div v-if="compileTime > 0" class="text-[10px] text-vex-text-muted mb-2">Compiled in {{ compileTime.toFixed(1) }}ms</div>
+              <div v-if="compileTime > 0 || runTime > 0" class="flex flex-wrap gap-3 text-[10px] text-vex-text-muted mb-2 pb-2 border-b border-vex-border">
+                <span v-if="compileTime > 0" class="flex items-center gap-1">⚡ Compile: {{ compileTime.toFixed(1) }}ms</span>
+                <span v-if="runTime > 0" class="flex items-center gap-1">▶ Run: {{ runTime.toFixed(1) }}ms</span>
+                <span v-if="userTime > 0" class="flex items-center gap-1">👤 User: {{ userTime.toFixed(2) }}ms</span>
+                <span v-if="sysTime > 0" class="flex items-center gap-1">⚙️ Sys: {{ sysTime.toFixed(2) }}ms</span>
+                <span v-if="memoryKB > 0" class="flex items-center gap-1">💾 {{ memoryKB > 1024 ? (memoryKB / 1024).toFixed(1) + ' MB' : memoryKB + ' KB' }}</span>
+              </div>
               <pre v-if="errors" class="p-4 rounded-xl bg-vex-error/10 border border-vex-error/20 text-vex-error break-words whitespace-pre-wrap">{{ errors }}</pre>
             </div>
             

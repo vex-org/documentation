@@ -254,7 +254,15 @@ async function runBenchmark() {
                       <span class="text-[10px] font-bold text-black whitespace-nowrap">{{ r.time_ms.toFixed(1) }}ms</span>
                     </div>
                   </div>
-                  <div v-else class="text-xs text-red-400">{{ r.error }}</div>
+                  <div v-if="!r.error" class="flex flex-wrap gap-3 mt-1.5 text-[10px] text-vex-text-muted">
+                    <span v-if="r.compile_time_ms">⚡ Compile: {{ r.compile_time_ms.toFixed(1) }}ms</span>
+                    <span v-if="r.run_time_ms">▶ Run: {{ r.run_time_ms.toFixed(1) }}ms</span>
+                    <span v-if="r.user_time_ms">👤 User: {{ r.user_time_ms.toFixed(2) }}ms</span>
+                    <span v-if="r.sys_time_ms">⚙️ Sys: {{ r.sys_time_ms.toFixed(2) }}ms</span>
+                    <span v-if="r.memory_kb">💾 {{ r.memory_kb > 1024 ? (r.memory_kb / 1024).toFixed(1) + ' MB' : r.memory_kb + ' KB' }}</span>
+                    <span v-if="r.binary_kb">📦 {{ r.binary_kb > 1024 ? (r.binary_kb / 1024).toFixed(1) + ' MB' : r.binary_kb + ' KB' }}</span>
+                  </div>
+                  <div v-if="r.error" class="text-xs text-red-400">{{ r.error.length > 120 ? r.error.substring(0, 120) + '...' : r.error }}</div>
                 </div>
 
                 <!-- Trophy for winner -->
