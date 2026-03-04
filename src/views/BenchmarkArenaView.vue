@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Play, Zap, Trophy, AlertTriangle, ChevronRight, Sparkles, Code, Clock, Cpu, Settings } from 'lucide-vue-next'
-import { compareCode, type LangResult } from '../api/vex'
+import { Play, Trophy, AlertTriangle, ChevronRight, Sparkles, Code, Cpu, Settings, WandSparkles, FlaskConical } from 'lucide-vue-next'
+import { compareCode, comparePreset, type LangResult } from '../api/vex'
+import { benchmarks } from '../data/benchmarks'
 
 const LANG_META: Record<string, { label: string; color: string; icon: string }> = {
   vex: { label: 'Vex', color: '#00e5a0', icon: '⚡' },
@@ -10,79 +11,30 @@ const LANG_META: Record<string, { label: string; color: string; icon: string }> 
   zig: { label: 'Zig', color: '#F7A41D', icon: '⚙️' },
 }
 
-const examples = [
-  {
-    name: 'Fibonacci',
-    code: `fn fib(n: i32): i32 {
-    if n <= 1 { return n }
-    return fib(n - 1) + fib(n - 2)
-}
+// Tabs: "preset" or "custom"
+const activeTab = ref<'preset' | 'custom'>('preset')
 
-fn main(): i32 {
-    let result = fib(35)
-    println(result)
-    return 0
-}`,
-  },
-  {
-    name: 'Sum 1M',
-    code: `fn main(): i32 {
+// Preset state
+const activeExample = ref(0)
+const presetResults = ref<Record<string, LangResult> | null>(null)
+const presetRunning = ref(false)
+const presetError = ref('')
+
+// Custom state
+const customCode = ref(`fn main(): i32 {
     let! sum = 0
     for i in 0..1000000 {
         sum = sum + i
     }
     println(sum)
     return 0
-}`,
-  },
-  {
-    name: 'String Concat',
-    code: `fn main(): i32 {
-    let! s = ""
-    for i in 0..10000 {
-        s = s + "x"
-    }
-    println(s.len())
-    return 0
-}`,
-  },
-  {
-    name: 'SIMD Sum 1M',
-    code: `fn main(): i32 {
-    let! total: f64 = 0.0
-    for i in 0..250000 {
-        let chunk = [i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3]
-        total = total + (<+ chunk)
-    }
-    println(total)
-    return 0
-}`,
-  },
-  {
-    name: 'Array Math',
-    code: `fn dot(a: [f64; 4], b: [f64; 4]): f64 {
-    return <+ (a * b)
-}
+}`)
+const customResults = ref<Record<string, LangResult> | null>(null)
+const customRunning = ref(false)
+const customError = ref('')
+const customDisclaimer = ref('')
 
-fn main(): i32 {
-    let! sum: f64 = 0.0
-    for i in 0..100000 {
-        let a = [1.0, 2.0, 3.0, 4.0]
-        let b = [5.0, 6.0, 7.0, 8.0]
-        sum = sum + dot(a, b)
-    }
-    println(sum)
-    return 0
-}`,
-  },
-]
-
-const code = ref(examples[0].code)
-const activeExample = ref(0)
-const isRunning = ref(false)
-const results = ref<Record<string, LangResult> | null>(null)
-const disclaimer = ref('')
-const errorMsg = ref('')
+// Shared
 const selectedLangs = ref(['go', 'rust', 'zig'])
 const optLevel = ref('O2')
 const optLevels = [
@@ -91,6 +43,11 @@ const optLevels = [
   { value: 'O2', label: '-O2', desc: 'Recommended' },
   { value: 'O3', label: '-O3', desc: 'Aggressive' },
 ]
+
+// Current results based on active tab
+const results = computed(() => activeTab.value === 'preset' ? presetResults.value : customResults.value)
+const isRunning = computed(() => activeTab.value === 'preset' ? presetRunning.value : customRunning.value)
+const errorMsg = computed(() => activeTab.value === 'preset' ? presetError.value : customError.value)
 
 const sortedResults = computed(() => {
   if (!results.value) return []
@@ -115,9 +72,8 @@ const maxTime = computed(() => {
 
 function loadExample(index: number) {
   activeExample.value = index
-  code.value = examples[index].code
-  results.value = null
-  errorMsg.value = ''
+  presetResults.value = null
+  presetError.value = ''
 }
 
 function toggleLang(lang: string) {
@@ -126,35 +82,65 @@ function toggleLang(lang: string) {
   else selectedLangs.value.push(lang)
 }
 
-async function runBenchmark() {
-  if (isRunning.value || !code.value.trim()) return
-  isRunning.value = true
-  results.value = null
-  errorMsg.value = ''
-  disclaimer.value = ''
+// Run preset benchmark with pre-written code (no AI)
+async function runPreset() {
+  if (presetRunning.value) return
+  presetRunning.value = true
+  presetResults.value = null
+  presetError.value = ''
+
+  const ex = benchmarks[activeExample.value]
+  try {
+    const res = await comparePreset({
+      vex_code: ex.vex,
+      go_code: selectedLangs.value.includes('go') ? ex.go : '',
+      rust_code: selectedLangs.value.includes('rust') ? ex.rust : '',
+      zig_code: selectedLangs.value.includes('zig') ? ex.zig : '',
+      opt_level: optLevel.value,
+    })
+    presetResults.value = res.results
+  } catch (err: any) {
+    presetError.value = err.message
+  } finally {
+    presetRunning.value = false
+  }
+}
+
+// Run custom benchmark with AI translation
+async function runCustom() {
+  if (customRunning.value || !customCode.value.trim()) return
+  customRunning.value = true
+  customResults.value = null
+  customError.value = ''
+  customDisclaimer.value = ''
 
   try {
-    const res = await compareCode(code.value, selectedLangs.value, optLevel.value)
-    results.value = res.results
-    disclaimer.value = res.ai_disclaimer
+    const res = await compareCode(customCode.value, selectedLangs.value, optLevel.value)
+    customResults.value = res.results
+    customDisclaimer.value = res.ai_disclaimer
   } catch (err: any) {
-    errorMsg.value = err.message
+    customError.value = err.message
   } finally {
-    isRunning.value = false
+    customRunning.value = false
   }
+}
+
+function runBenchmark() {
+  if (activeTab.value === 'preset') runPreset()
+  else runCustom()
 }
 </script>
 
 <template>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-white flex items-center gap-2">
           <Trophy class="w-6 h-6 text-yellow-400" />
           Benchmark Arena
         </h1>
-        <p class="text-vex-text-muted text-sm mt-1">Write Vex code → AI translates to Go, Rust, Zig → All run in parallel</p>
+        <p class="text-vex-text-muted text-sm mt-1">Compare Vex against Go, Rust & Zig — fair benchmarks, real compilers</p>
       </div>
       <button
         @click="runBenchmark"
@@ -168,26 +154,61 @@ async function runBenchmark() {
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- Left: Examples + Lang selector -->
+      <!-- Left sidebar -->
       <div class="space-y-4">
-        <!-- Examples -->
+        <!-- Tab Switcher -->
         <div class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden">
+          <div class="p-2 flex gap-1">
+            <button
+              @click="activeTab = 'preset'"
+              :class="['flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                activeTab === 'preset' ? 'bg-yellow-500/15 text-yellow-400' : 'text-vex-text-muted hover:text-white hover:bg-white/5']"
+            >
+              <Sparkles class="w-4 h-4" />
+              Benchmarks
+            </button>
+            <button
+              @click="activeTab = 'custom'"
+              :class="['flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                activeTab === 'custom' ? 'bg-purple-500/15 text-purple-400' : 'text-vex-text-muted hover:text-white hover:bg-white/5']"
+            >
+              <FlaskConical class="w-4 h-4" />
+              Kendin Dene
+            </button>
+          </div>
+        </div>
+
+        <!-- Examples (preset tab) -->
+        <div v-if="activeTab === 'preset'" class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden">
           <div class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2">
             <Sparkles class="w-4 h-4 text-yellow-400" />
             <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Examples</span>
+            <span class="ml-auto text-[10px] text-vex-text-muted">{{ benchmarks.length }}</span>
           </div>
-          <div class="p-2">
+          <div class="p-2 max-h-[520px] overflow-y-auto">
             <button
-              v-for="(ex, i) in examples"
+              v-for="(ex, i) in benchmarks"
               :key="i"
               @click="loadExample(i)"
               :class="['w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left mb-1 group', activeExample === i ? 'bg-yellow-500/10 text-yellow-400' : 'text-vex-text-muted hover:bg-white/5 hover:text-white']"
             >
-              <Zap class="w-4 h-4 flex-shrink-0" />
-              <span class="truncate flex-1">{{ ex.name }}</span>
-              <ChevronRight :class="['w-3 h-3 transition-transform', activeExample === i ? 'translate-x-0' : '-translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0']" />
+              <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold" :class="activeExample === i ? 'bg-yellow-500/20 text-yellow-400' : 'bg-white/5 text-vex-text-muted'">{{ i + 1 }}</span>
+              <div class="flex-1 min-w-0">
+                <span class="truncate block">{{ ex.name }}</span>
+                <span class="text-[10px] text-vex-text-muted truncate block">{{ ex.description }}</span>
+              </div>
+              <ChevronRight :class="['w-3 h-3 transition-transform flex-shrink-0', activeExample === i ? 'translate-x-0' : '-translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0']" />
             </button>
           </div>
+        </div>
+
+        <!-- Custom mode info -->
+        <div v-if="activeTab === 'custom'" class="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <WandSparkles class="w-4 h-4 text-purple-400" />
+            <span class="text-sm font-medium text-purple-300">AI Translation</span>
+          </div>
+          <p class="text-xs text-vex-text-muted leading-relaxed">Write Vex code and AI will translate it to Go, Rust & Zig. All 4 versions run on real compilers for fair comparison.</p>
         </div>
 
         <!-- Language selector -->
@@ -230,22 +251,28 @@ async function runBenchmark() {
         </div>
       </div>
 
-      <!-- Code editor -->
+      <!-- Main content -->
       <div class="lg:col-span-3 flex flex-col gap-6">
-        <!-- Editor -->
+        <!-- Code editor -->
         <div class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden">
           <div class="flex items-center gap-2 px-4 py-2 border-b border-vex-border bg-vex-surface/50">
             <Code class="w-4 h-4 text-vex-primary" />
-            <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Vex Code</span>
-            <span class="ml-auto text-[10px] text-vex-text-muted">AI will translate to other languages</span>
+            <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">
+              {{ activeTab === 'preset' ? benchmarks[activeExample].name + ' — Vex Code' : 'Your Vex Code' }}
+            </span>
+            <span v-if="activeTab === 'preset'" class="ml-auto text-[10px] text-vex-text-muted">Pre-written code for all languages</span>
+            <span v-else class="ml-auto text-[10px] text-vex-text-muted">AI will translate to other languages</span>
           </div>
           <textarea
-            v-model="code"
+            v-if="activeTab === 'custom'"
+            v-model="customCode"
             class="w-full h-48 p-4 bg-transparent text-white font-mono text-sm resize-none focus:outline-none"
             spellcheck="false"
+            placeholder="Write your Vex code here..."
             @keydown.ctrl.enter="runBenchmark"
             @keydown.meta.enter="runBenchmark"
           ></textarea>
+          <pre v-else class="p-4 text-sm text-white font-mono whitespace-pre-wrap max-h-48 overflow-auto">{{ benchmarks[activeExample].vex }}</pre>
         </div>
 
         <!-- Loading animation -->
@@ -260,7 +287,9 @@ async function runBenchmark() {
               </div>
             </div>
           </div>
-          <p class="text-center text-sm text-vex-text-muted mt-4">AI is translating & running all languages in parallel...</p>
+          <p class="text-center text-sm text-vex-text-muted mt-4">
+            {{ activeTab === 'preset' ? 'Compiling &amp; running all languages in parallel...' : 'AI translating &amp; running all languages in parallel...' }}
+          </p>
         </div>
 
         <!-- Error -->
@@ -278,7 +307,8 @@ async function runBenchmark() {
             <div class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2">
               <Trophy class="w-4 h-4 text-yellow-400" />
               <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Results</span>
-              <span v-if="disclaimer" class="ml-auto text-[10px] text-vex-text-muted italic">{{ disclaimer }}</span>
+              <span v-if="customDisclaimer && activeTab === 'custom'" class="ml-auto text-[10px] text-vex-text-muted italic">{{ customDisclaimer }}</span>
+              <span v-if="activeTab === 'preset'" class="ml-auto text-[10px] text-vex-text-muted">Hand-written code · No AI translation</span>
             </div>
             <div class="p-4 space-y-3">
               <div
@@ -297,7 +327,7 @@ async function runBenchmark() {
                   <span class="text-sm font-medium text-white">{{ LANG_META[r.lang]?.label }}</span>
                 </div>
 
-                <!-- Bar -->
+                <!-- Bar + Metrics -->
                 <div class="flex-1">
                   <div v-if="!r.error" class="h-6 rounded-full overflow-hidden bg-white/5">
                     <div
@@ -310,8 +340,8 @@ async function runBenchmark() {
                   <div v-if="!r.error" class="flex flex-wrap gap-3 mt-1.5 text-[10px] text-vex-text-muted">
                     <span v-if="r.compile_time_ms">⚡ Compile: {{ r.compile_time_ms.toFixed(1) }}ms</span>
                     <span v-if="r.run_time_ms">▶ Run: {{ r.run_time_ms.toFixed(1) }}ms</span>
-                    <span v-if="r.user_time_ms">👤 User: {{ r.user_time_ms.toFixed(2) }}ms</span>
-                    <span v-if="r.sys_time_ms">⚙️ Sys: {{ r.sys_time_ms.toFixed(2) }}ms</span>
+                    <span>👤 User: {{ r.user_time_ms != null ? r.user_time_ms.toFixed(2) : '0.00' }}ms</span>
+                    <span>⚙️ Sys: {{ r.sys_time_ms != null ? r.sys_time_ms.toFixed(2) : '0.00' }}ms</span>
                     <span v-if="r.memory_kb">💾 {{ r.memory_kb > 1024 ? (r.memory_kb / 1024).toFixed(1) + ' MB' : r.memory_kb + ' KB' }}</span>
                     <span v-if="r.binary_kb">📦 {{ r.binary_kb > 1024 ? (r.binary_kb / 1024).toFixed(1) + ' MB' : r.binary_kb + ' KB' }}</span>
                   </div>
@@ -326,20 +356,23 @@ async function runBenchmark() {
             </div>
           </div>
 
-          <!-- Generated Code Tabs -->
+          <!-- Code Tabs -->
           <div class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden">
             <div class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2">
               <Code class="w-4 h-4 text-vex-primary" />
-              <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">AI-Generated Code</span>
+              <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">
+                {{ activeTab === 'preset' ? 'Source Code' : 'AI-Generated Code' }}
+              </span>
             </div>
             <div class="p-2">
               <details v-for="r in sortedResults.filter(x => x.code && x.lang !== 'vex')" :key="r.lang" class="mb-2">
                 <summary class="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer hover:bg-white/5 text-sm text-vex-text-muted">
                   <span class="text-lg">{{ LANG_META[r.lang]?.icon }}</span>
                   <span class="font-medium text-white">{{ LANG_META[r.lang]?.label }}</span>
+                  <span v-if="r.stdout" class="ml-2 text-[10px] text-vex-text-muted/70">stdout: {{ r.stdout.trim().substring(0, 40) }}</span>
                   <span class="ml-auto text-[10px] text-vex-text-muted">click to expand</span>
                 </summary>
-                <pre class="mx-3 mb-2 p-4 rounded-xl bg-black/30 text-[11px] text-vex-text overflow-auto font-mono whitespace-pre-wrap">{{ r.code }}</pre>
+                <pre class="mx-3 mb-2 p-4 rounded-xl bg-black/30 text-[11px] text-vex-text overflow-auto font-mono whitespace-pre-wrap max-h-64">{{ r.code }}</pre>
               </details>
             </div>
           </div>

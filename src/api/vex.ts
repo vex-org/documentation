@@ -95,3 +95,21 @@ export async function compareCode(code: string, langs: string[] = ['go', 'rust',
   if (!res.ok) throw new Error(`Server error: ${res.status}`)
   return res.json()
 }
+
+export interface PresetCompareRequest {
+  vex_code: string
+  go_code: string
+  rust_code: string
+  zig_code: string
+  opt_level?: string
+}
+
+export async function comparePreset(req: PresetCompareRequest): Promise<CompareResult> {
+  const res = await fetch(`${API_URL}/api/website/compare-preset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  })
+  if (!res.ok) throw new Error(`Server error: ${res.status}`)
+  return res.json()
+}

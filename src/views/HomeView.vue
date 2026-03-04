@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Zap, Shield, Brain, Gamepad2, RefreshCw, Package, ArrowRight, Terminal } from 'lucide-vue-next'
+import { Zap, Shield, Brain, Gamepad2, RefreshCw, Package, ArrowRight, Terminal, Download } from 'lucide-vue-next'
 import { markRaw, type Component } from 'vue'
 
 const features = [
@@ -66,6 +66,10 @@ const stats = [
               </router-link>
               <router-link to="/arena" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 font-medium transition-colors">
                 🏆 Arena
+              </router-link>
+              <router-link to="/download" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-vex-accent text-white hover:bg-vex-accent/90 font-medium transition-colors">
+                <Download class="w-4 h-4" />
+                Download
               </router-link>
             </div>
 
