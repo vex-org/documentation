@@ -1,7 +1,7 @@
 # Comparison Operators
 
 **Baseline Feature**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented  
 **Test:** `00_base_feats/04_comparison_ops.vx` (Hypothetical path, ensuring consistency)
 

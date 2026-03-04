@@ -1,7 +1,7 @@
 # Contracts (Interfaces)
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Contracts define shared behavior (polymorphism). They are equivalent to **Traits** in Rust or **Interfaces** in other languages.

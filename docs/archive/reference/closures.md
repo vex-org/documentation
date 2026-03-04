@@ -1,7 +1,7 @@
 # Closures and Lambda Expressions
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Closures are anonymous functions that can capture their environment. Vex closures are statically typed and zero-cost.

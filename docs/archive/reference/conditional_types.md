@@ -1,7 +1,7 @@
 # Conditional Types (TypeScript-inspired)
 
-**Status:** ✅ Implemented (v0.1.2)  
-**Version:** v0.1.2  
+**Status:** ✅ Implemented (v0.2.0)  
+**Version:** v0.2.0  
 **Last Updated:** November 11, 2025
 
 This document describes Vex's conditional type system, inspired by TypeScript's `T extends U ? X : Y` syntax for advanced type-level programming.
@@ -94,7 +94,7 @@ type B = IsString<i32>;     // false
 
 ## Use Cases
 
-### ✅ Currently Working (v0.1.2)
+### ✅ Currently Working (v0.2.0)
 
 **Basic conditional types with `infer` keyword:**
 

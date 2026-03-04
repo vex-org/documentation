@@ -1,6 +1,6 @@
 # Vex Language - Required Features for System Programming
 
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Purpose:** Comprehensive feature checklist for a production-ready systems programming language  
 **Test Coverage Target:** 100% of core features
 
@@ -425,7 +425,7 @@
 
 ---
 
-## 🎯 Current Vex Status (v0.1.2)
+## 🎯 Current Vex Status (v0.2.0)
 
 **Estimated Coverage:** ~120/400 points (30%)
 

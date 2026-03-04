@@ -1,7 +1,7 @@
 # Inline Assembly (`asm!`)
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** 🚧 In Development
 
 Vex provides inline assembly support for low-level hardware access with full borrow checker integration and compile-time target validation.

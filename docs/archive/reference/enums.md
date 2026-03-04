@@ -1,7 +1,7 @@
 # Enums
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Enums (Enumerations) allow a value to be one of several variants. Vex enums are **Algebraic Data Types**, meaning they can carry data.

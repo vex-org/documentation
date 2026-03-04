@@ -38,4 +38,4 @@ vex --version
 ```
 
 You should see something like:
-`vex-cli 0.1.2 (silicon-native) on darwin/arm64`
+`vex-cli 0.2.0 (silicon-native) on darwin/arm64`

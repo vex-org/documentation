@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { supabase } from '../supabase/client'
+import { useSEO, useSEOJsonLd } from '../composables/useSEO'
 import CommentItem from '../components/CommentItem.vue'
 import {
   Heart, Calendar, Clock, User, Share2, Twitter, LinkIcon,
@@ -102,8 +103,24 @@ onMounted(async () => {
   const { data: p } = await supabase.from('posts').select('id, title, body_md, published_at, author_id, cover_image_path, excerpt, author:profiles!author_id(display_name, username)').eq('slug', slug.value).eq('status', 'published').single()
   post.value = p as PostRow | null
   if (p) {
-    // Update page title with actual post name
-    document.title = `${p.title} – Vex`
+    const coverUrl = p.cover_image_path
+      ? supabase.storage.from('blog-images').getPublicUrl(p.cover_image_path).data.publicUrl
+      : undefined
+    useSEO({
+      title: p.title,
+      description: p.excerpt || p.body_md.slice(0, 155).replace(/\n/g, ' '),
+      image: coverUrl,
+      type: 'article',
+      article: { publishedTime: p.published_at },
+    })
+    useSEOJsonLd({
+      '@type': 'BlogPosting',
+      headline: p.title,
+      description: p.excerpt || p.body_md.slice(0, 155).replace(/\n/g, ' '),
+      datePublished: p.published_at,
+      ...(coverUrl ? { image: coverUrl } : {}),
+      publisher: { '@type': 'Organization', name: 'Vex Language' },
+    })
   }
   if (p?.id) {
     // Parallelize independent queries
@@ -159,10 +176,10 @@ function setReplyTo(id: string | null) { replyToId.value = id }
 
     <!-- Post content -->
     <article v-else-if="post" class="relative">
-      <!-- Cover Image — full bleed -->
-      <div v-if="coverImageUrl" class="relative w-full max-h-[480px] overflow-hidden">
+      <!-- Cover Image -->
+      <div v-if="coverImageUrl" class="relative w-full max-h-[420px] overflow-hidden">
         <img :src="coverImageUrl" :alt="post.title" class="w-full h-full object-cover" />
-        <div class="absolute inset-0 bg-gradient-to-t from-vex-bg via-vex-bg/50 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-vex-bg via-vex-bg/60 to-transparent"></div>
       </div>
 
       <!-- Header -->
@@ -178,7 +195,7 @@ function setReplyTo(id: string | null) { replyToId.value = id }
         <div class="flex flex-wrap items-center gap-4 text-sm text-vex-text-muted mb-8">
           <!-- Author -->
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white text-xs font-bold">
+            <div class="w-8 h-8 rounded-full bg-vex-surface-light flex items-center justify-center text-vex-text-muted text-xs font-bold">
               {{ authorInitial(post.author) }}
             </div>
             <span class="text-white font-medium">{{ authorLabel(post.author) }}</span>
@@ -217,7 +234,7 @@ function setReplyTo(id: string | null) { replyToId.value = id }
 
       <!-- Body -->
       <div class="max-w-3xl mx-auto px-4 sm:px-6">
-        <div class="prose prose-invert prose-lg max-w-none mb-12 text-vex-text leading-relaxed [&_pre]:bg-vex-bg-card [&_pre]:border [&_pre]:border-vex-border [&_pre]:rounded-xl [&_pre]:p-5 [&_pre]:overflow-x-auto [&_code]:text-vex-accent [&_code]:bg-vex-primary/5 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[0.9em] [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_a]:text-vex-primary [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-vex-accent [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-white [&_h1]:mt-12 [&_h1]:mb-4 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-white [&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-vex-border [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-white [&_h3]:mt-8 [&_h3]:mb-2 [&_p]:mb-4 [&_blockquote]:border-l-2 [&_blockquote]:border-vex-primary [&_blockquote]:bg-vex-bg-card [&_blockquote]:rounded-r-xl [&_blockquote]:py-3 [&_blockquote]:px-5 [&_blockquote]:italic [&_blockquote]:text-vex-text-muted [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1.5 [&_hr]:border-vex-border [&_hr]:my-8 [&_img]:rounded-xl [&_img]:my-6 [&_table]:border-collapse [&_th]:border [&_th]:border-vex-border [&_th]:px-4 [&_th]:py-2 [&_th]:bg-vex-bg-card [&_th]:text-white [&_td]:border [&_td]:border-vex-border [&_td]:px-4 [&_td]:py-2" v-html="bodyHtml" />
+        <div class="post-body mb-12" v-html="bodyHtml" />
 
         <!-- Mobile engagement bar -->
         <div class="flex lg:hidden items-center gap-3 mb-8 pb-6 border-b border-vex-border">
@@ -242,7 +259,7 @@ function setReplyTo(id: string | null) { replyToId.value = id }
 
         <!-- Author card -->
         <div v-if="post.author" class="flex items-center gap-4 p-5 rounded-2xl border border-vex-border bg-vex-bg-card mb-12">
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <div class="w-12 h-12 rounded-full bg-vex-surface-light flex items-center justify-center text-vex-text-muted font-bold text-lg shrink-0">
             {{ authorInitial(post.author) }}
           </div>
           <div>

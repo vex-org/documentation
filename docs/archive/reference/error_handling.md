@@ -1,7 +1,7 @@
 # Error Handling
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Vex treats errors as values using the `Result` and `Option` types, avoiding exceptions in favor of explicit control flow.

@@ -1,6 +1,6 @@
 # Vex Language - Introduction and Overview
 
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** Living Specification  
 **Last Updated:** November 2025
 
@@ -91,8 +91,8 @@ let c = a + b;  // Automatically vectorized!
 - **Compound Types**: Arrays, tuples, slices, references
 - **Collections**: `Map<K,V>`, `Set<T>`, `Vec<T>`, `Box<T>`, `Channel<T>`
 - **User-Defined Types**: Structs, enums, type aliases
-- **Advanced Types**: ✅ Union types `(T | U)` (v0.1.2), intersection types, conditional types
-- **Option/Result**: Builtin Some/None, Ok/Err constructors with `?` operator (v0.1.2)
+- **Advanced Types**: ✅ Union types `(T | U)` (v0.2.0), intersection types, conditional types
+- **Option/Result**: Builtin Some/None, Ok/Err constructors with `?` operator (v0.2.0)
 - **Policy System**: Metadata annotations with inheritance and composition
 - **Reflection**: typeof, type_id, is_int_type, is_float_type, is_pointer_type (runtime type information)
 
@@ -102,7 +102,7 @@ let c = a + b;  // Automatically vectorized!
   - ✅ Phase 1: Immutability checking
   - ✅ Phase 2: Move semantics
   - ✅ Phase 3: Borrow rules (1 mutable XOR N immutable references)
-  - ✅ Phase 4: Lifetime analysis (v0.1.2) - prevents dangling references
+  - ✅ Phase 4: Lifetime analysis (v0.2.0) - prevents dangling references
 - **No Garbage Collection**: Deterministic memory management
 - **Defer Statement**: Go-style resource cleanup (executes on function exit)
 - **Smart Pointers**: `Box<T>` (implemented), `Rc`, `Arc` (planned)
@@ -118,7 +118,7 @@ let c = a + b;  // Automatically vectorized!
 ### Pattern Matching
 
 - Exhaustive matching with `match` expressions
-- ✅ Struct destructuring `Point { x, y }` (v0.1.2)
+- ✅ Struct destructuring `Point { x, y }` (v0.2.0)
 - Enum variant matching with data extraction
 - Tuple and struct destructuring
 - OR patterns with SIMD optimization
@@ -337,11 +337,11 @@ Source (.vx) → AST → Borrow Check → LLVM IR → Object File (.o) → Execu
 - ✅ Policy system with metadata annotations and inheritance
 - ✅ Package manager (vex-pm) with dependency resolution
 - ✅ Code formatter (vex-formatter) with configurable rules
-- ✅ Error handling with Result/Option types and `?` operator (v0.1.2)
+- ✅ Error handling with Result/Option types and `?` operator (v0.2.0)
 - ✅ Foreign Function Interface (FFI) with raw pointers
-- ✅ Union types with tagged union implementation (v0.1.2)
-- ✅ Struct pattern matching and destructuring (v0.1.2)
-- ✅ Lifetime analysis Phase 4 - complete borrow checker (v0.1.2)
+- ✅ Union types with tagged union implementation (v0.2.0)
+- ✅ Struct pattern matching and destructuring (v0.2.0)
+- ✅ Lifetime analysis Phase 4 - complete borrow checker (v0.2.0)
 
 ### In Progress
 
@@ -473,7 +473,7 @@ This section documents features available in Rust and Go but not yet implemented
 | **Pattern Guards**                  | ✅ `Some(x) if x > 0`          | ✅ Complete            | Fully working                        |
 | **Range Patterns**                  | ✅ `1..=10`                    | ✅ Complete            | .. and ..= operators                 |
 | **Slice Patterns**                  | ✅ `[first, .., last]`         | ✅ Complete            | Rest patterns with `...rest`         |
-| **Tuple Indexing**                  | ✅ `point.0`                   | ✅ Complete (v0.1.2)   | Numeric field access implemented     |
+| **Tuple Indexing**                  | ✅ `point.0`                   | ✅ Complete (v0.2.0)   | Numeric field access implemented     |
 | **Impl Contract**                   | ✅ `fn f() -> impl Contract`   | ❌ Not implemented     | Return type flexibility              |
 | **Existential Types**               | ✅ `type Foo = impl Contract;` | ❌ Not implemented     | Advanced feature                     |
 | **GATs (Generic Associated Types)** | ✅ Stable                      | ❌ Not implemented     | Complex generics                     |
@@ -486,7 +486,7 @@ This section documents features available in Rust and Go but not yet implemented
 | **Iterators**              | ✅ Full Iterator contract      | ✅ Complete          | Basic iteration working                 |
 | **Option Type**            | ✅ `Option<T>`                 | ✅ Complete          | Some/None constructors                  |
 | **Result Type**            | ✅ `Result<T, E>`              | ✅ Complete          | Ok/Err constructors                     |
-| **Error Handling**         | ✅ `?` operator                | ✅ Complete (v0.1.2) | Result unwrapping with auto-propagation |
+| **Error Handling**         | ✅ `?` operator                | ✅ Complete (v0.2.0) | Result unwrapping with auto-propagation |
 | **String Slicing**         | ✅ `&str[0..5]`                | ❌ Not implemented   | String operations limited               |
 | **Format Macro**           | ✅ `format!()`                 | ✅ F-strings         | F-string interpolation working          |
 | **Testing Framework**      | ✅ Built-in testing            | ✅ Basic framework   | Builtin testing module                  |

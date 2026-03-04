@@ -1,7 +1,7 @@
 # Testing Infrastructure
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Vex includes a first-class testing framework inspired by Go (`vex test`).

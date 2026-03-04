@@ -1,7 +1,7 @@
 # Mutability and Borrowing Rules
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 This document details the exact rules enforced by the Vex Borrow Checker (Phases 1-4).

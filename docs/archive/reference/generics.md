@@ -389,7 +389,7 @@ fn compare_and_show<T: Comparable & Display>(a: T, b: T): i32 {
 
 **Syntax**: `T: Contract1 & Contract2 & ...`
 
-### Where Clauses ✅ COMPLETE (v0.1.2)
+### Where Clauses ✅ COMPLETE (v0.2.0)
 
 For complex constraints, use where clause for better readability:
 
@@ -784,7 +784,7 @@ fn create<T: Clone>(value: T): Container<T> {
 | Monomorphization    | Automatic           | ✅ Working | Zero runtime cost                 |
 | Generic Enums       | `enum E<T> { }`     | ✅ Working | `Option<T>`, `Result<T,E>`        |
 | Contract Bounds     | `<T: Contract>`     | ✅ Working | Constrained types                 |
-| Where Clauses       | `where T: Contract` | ✅ v0.1.2  | Complex constraints               |
+| Where Clauses       | `where T: Contract` | ✅ v0.2.0  | Complex constraints               |
 | Associated Types    | `type Item;`        | ✅ Working | Contract associated types working |
 | Higher-Kinded       | `F<T>`              | ❌ Future  | Generic over generics             |
 | Associated Types    | `type Item;`        | ✅ Working | Contract associated types working |

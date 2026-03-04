@@ -1,7 +1,7 @@
 # Built-in Items and Prelude
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 This document lists all types, functions, and items automatically available in every Vex program (Prelude).

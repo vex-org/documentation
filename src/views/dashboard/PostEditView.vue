@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '../../supabase/client'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
@@ -68,12 +68,15 @@ function setEditorContent(md: string) {
   editor.value.commands.setContent(html)
 }
 
-// Auto-generate slug from title
-watch(title, (val) => {
-  if (!isEdit.value && val) {
-    slug.value = val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  }
+const slugPreview = computed(() => {
+  if (!title.value) return ''
+  return title.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 })
+
+function generateSlug(): string {
+  const base = title.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  return `${base}-${Date.now().toString(16)}`
+}
 
 onMounted(async () => {
   if (!isEdit.value) return
@@ -139,8 +142,9 @@ async function save() {
     for (const tag of tags) await supabase.from('post_tags').insert({ post_id: id.value, tag })
     router.push('/dashboard/posts')
   } else {
+    const finalSlug = generateSlug()
     const { data: inserted, error: e } = await supabase.from('posts').insert({
-      author_id: user.id, title: title.value, slug: slug.value, body_md: bodyMd,
+      author_id: user.id, title: title.value, slug: finalSlug, body_md: bodyMd,
       excerpt: excerpt.value || null, status: status.value,
       published_at: status.value === 'published' ? new Date().toISOString() : null,
     }).select('id').single()
@@ -170,13 +174,14 @@ async function save() {
 
     <div class="space-y-4">
       <!-- Title -->
-      <input v-model="title" placeholder="Post title" class="w-full text-3xl font-bold bg-transparent text-white placeholder-vex-text-muted focus:outline-none border-none" />
+      <input v-model="title" placeholder="Post title" class="w-full text-3xl font-bold bg-transparent text-white placeholder-zinc-700 focus:outline-none border-none" />
+      <p v-if="slugPreview && !isEdit" class="text-[11px] text-zinc-600 font-mono -mt-2">/blog/{{ slugPreview }}-•••</p>
+      <p v-if="isEdit && slug" class="text-[11px] text-zinc-600 font-mono -mt-2">/blog/{{ slug }}</p>
 
       <!-- Meta row -->
       <div class="flex flex-wrap gap-3">
-        <input v-model="slug" placeholder="slug" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-vex-border bg-vex-surface text-sm text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary transition-all font-mono" />
-        <input v-model="excerpt" placeholder="Short description…" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-vex-border bg-vex-surface text-sm text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary transition-all" />
-        <input v-model="tagsStr" placeholder="Tags (comma-separated)" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-vex-border bg-vex-surface text-sm text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary transition-all" />
+        <input v-model="excerpt" placeholder="Short description…" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/50 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500/30 transition-all" />
+        <input v-model="tagsStr" placeholder="Tags (comma-separated)" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/50 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500/30 transition-all" />
       </div>
 
       <!-- Cover image -->

@@ -1,7 +1,7 @@
 # Raw Pointers and FFI
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Vex provides zero-cost interoperability with C and low-level memory access via `unsafe` blocks.

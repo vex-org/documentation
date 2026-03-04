@@ -212,7 +212,7 @@ match triple {
 
 ### Struct Destructuring
 
-**Status**: ✅ **COMPLETE** (v0.1.2)
+**Status**: ✅ **COMPLETE** (v0.2.0)
 
 Extract struct fields in pattern matching:
 
@@ -346,7 +346,7 @@ match arr {
 
 ### Enum Destructuring
 
-**Status**: ✅ **COMPLETE** (v0.1.2)
+**Status**: ✅ **COMPLETE** (v0.2.0)
 
 Data-carrying enums:
 
@@ -720,7 +720,7 @@ match error_code {
 | Enum         | `Red`, `Active`        | ✅ Working           | Enum variant (no :: syntax)  |
 | Or           | `1 \| 2 \| 3`          | ✅ Working           | Multiple patterns            |
 | Tuple        | `(x, y)`               | ✅ Working           | Destructure tuples           |
-| Struct       | `Point { x, y }`       | ✅ Complete (v0.1.2) | Destructure structs          |
+| Struct       | `Point { x, y }`       | ✅ Complete (v0.2.0) | Destructure structs          |
 | Array        | `[a, b, c]`            | ✅ Working           | Fixed-size arrays            |
 | Slice        | `[head, ...rest]`      | ✅ Working           | Rest patterns with `...`     |
 | Enum Data    | `Some(x)`, `None`      | ✅ Working           | Data-carrying enums working  |

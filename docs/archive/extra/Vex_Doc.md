@@ -67,7 +67,7 @@ When `vex doc` runs, Vex Compiler emits a JSON stream to `stdout`. This schema i
   "version": "1.0",
   "project": {
     "name": "vex-std",
-    "version": "0.1.2"
+    "version": "0.2.0"
   },
   "registry": {
     // Symbol Map (Critical for Linking)

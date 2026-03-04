@@ -1,7 +1,7 @@
 # Type System
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Vex features a static, strong, and structural type system with rich compile-time metaprogramming capabilities.

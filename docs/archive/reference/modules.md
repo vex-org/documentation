@@ -1,7 +1,7 @@
 # Modules and Imports
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Vex uses a file-based module system with explicit exports, inspired by JavaScript/TypeScript but with static resolution.

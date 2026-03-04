@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Zap, Shield, Brain, Gamepad2, RefreshCw, Package } from 'lucide-vue-next'
+import { Zap, Shield, Brain, Gamepad2, RefreshCw, Package, ArrowRight, Terminal } from 'lucide-vue-next'
 import { markRaw, type Component } from 'vue'
 
 const features = [
-  { icon: markRaw(Zap), title: 'Rust-Level Speed', desc: 'Zero-cost abstractions with LLVM 21 backend. 4ns per random number, competitive with native Rust.' },
-  { icon: markRaw(Shield), title: 'Memory Safe', desc: '4-phase Polonius borrow checker with automatic lifetimes. No GC, no leaks, no data races.' },
-  { icon: markRaw(Brain), title: 'Auto-Vectorization', desc: 'SIR (Silicon IR) generates optimal SIMD for AVX-512, ARM SVE/NEON, and RISC-V vectors automatically.' },
+  { icon: markRaw(Zap), title: 'Rust-Level Speed', desc: 'Zero-cost abstractions with LLVM 21 backend. Competitive with native Rust performance.' },
+  { icon: markRaw(Shield), title: 'Memory Safe', desc: 'Polonius borrow checker with automatic lifetimes. No GC, no leaks, no data races.' },
+  { icon: markRaw(Brain), title: 'Auto-Vectorization', desc: 'SIR generates optimal SIMD for AVX-512, ARM SVE/NEON, and RISC-V vectors automatically.' },
   { icon: markRaw(Gamepad2), title: 'GPU Offloading', desc: 'Write Vex, run on CUDA, Metal, Vulkan, ROCm, or WebGPU. 7 backends, zero boilerplate.' },
-  { icon: markRaw(RefreshCw), title: 'Go-Style Concurrency', desc: 'M:N scheduler with go {} blocks, async/await, and lock-free channels. Millions of tasks.' },
-  { icon: markRaw(Package), title: 'Batteries Included', desc: 'LSP, formatter, fuzzer, benchmarks, package manager, and VS Code extension — all built in.' },
+  { icon: markRaw(RefreshCw), title: 'Go-Style Concurrency', desc: 'M:N scheduler with go {} blocks, async/await, and lock-free channels.' },
+  { icon: markRaw(Package), title: 'Batteries Included', desc: 'LSP, formatter, package manager, and VS Code extension — all built in.' },
 ] as { icon: Component; title: string; desc: string }[]
 
 const codeExample = `fn main(): i32 {
@@ -16,13 +16,13 @@ const codeExample = `fn main(): i32 {
     for let i in 0..1000 {
         data.push(i * i);
     }
-    
+
     // Auto-vectorized by SIR
     let sum = <+ data;
-    
+
     // Fire-and-forget concurrency
     go { process(data); };
-    
+
     $println("Sum: ", sum);
     return 0;
 }`
@@ -38,59 +38,54 @@ const stats = [
 <template>
   <div>
     <!-- Hero -->
-    <section class="relative overflow-hidden">
-      <!-- Background gradient -->
-      <div class="absolute inset-0 bg-gradient-to-b from-vex-primary/10 via-transparent to-transparent pointer-events-none"></div>
-      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-vex-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-
-      <div class="relative max-w-6xl mx-auto px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-24">
-        <div class="text-center max-w-3xl mx-auto">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-vex-border text-sm text-vex-text-muted mb-6">
-            <span class="w-2 h-2 rounded-full bg-vex-success animate-pulse"></span>
-            v0.1.2 — Alpha
-          </div>
-          <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6">
-            <span class="text-white">Every Cycle.</span><br>
-            <span class="bg-gradient-to-r from-vex-primary to-vex-accent bg-clip-text text-transparent">Every Core.</span><br>
-            <span class="text-white">Every Time.</span>
-          </h1>
-          <p class="text-lg sm:text-xl text-vex-text-muted max-w-2xl mx-auto mb-8">
-            A modern systems language that combines Rust's safety, Go's simplicity, and automatic hardware optimization — CPU, GPU, and NPU.
-          </p>
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a href="/docs/guide/introduction" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-vex-primary to-vex-accent hover:from-vex-primary-light hover:to-vex-accent text-vex-bg font-bold transition-all shadow-lg shadow-vex-primary/25 hover:shadow-vex-primary/40">
-              Get Started
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-            </a>
-            <a href="https://github.com/vex-org" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-vex-border text-vex-text hover:bg-white/5 font-medium transition-all">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              GitHub
-            </a>
-          </div>
-        </div>
-
-        <!-- Code example -->
-        <div class="mt-16 max-w-2xl mx-auto">
-          <div class="rounded-xl border border-vex-border bg-vex-bg-card overflow-hidden shadow-2xl">
-            <div class="flex items-center gap-2 px-4 py-3 border-b border-vex-border">
-              <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-              <span class="ml-2 text-xs text-vex-text-muted font-mono">hello.vx</span>
+    <section class="relative overflow-hidden border-b border-vex-border">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-24">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <!-- Left: Text -->
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-vex-border bg-vex-surface text-sm text-vex-text-muted mb-6">
+              <span class="w-1.5 h-1.5 rounded-full bg-vex-success"></span>
+              v0.1.2 Alpha
             </div>
-            <pre class="p-4 text-sm leading-relaxed overflow-x-auto font-mono text-vex-text"><code>{{ codeExample }}</code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
+            <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-6 leading-[1.1]">
+              Every Cycle.<br>
+              Every Core.<br>
+              <span class="text-vex-primary">Every Time.</span>
+            </h1>
+            <p class="text-lg text-vex-text-muted max-w-lg mb-8 leading-relaxed">
+              A modern systems language combining Rust's safety, Go's simplicity, and automatic hardware optimization — CPU, GPU, and NPU.
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+              <a href="/docs/guide/introduction" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-colors">
+                Get Started
+                <ArrowRight class="w-4 h-4" />
+              </a>
+              <router-link to="/playground" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-vex-border text-vex-text hover:bg-vex-surface-light font-medium transition-colors">
+                <Terminal class="w-4 h-4" />
+                Playground
+              </router-link>
+            </div>
 
-    <!-- Stats -->
-    <section class="border-y border-vex-border bg-vex-surface/50">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
-          <div v-for="stat in stats" :key="stat.label" class="text-center">
-            <div class="text-3xl font-bold text-white">{{ stat.value }}</div>
-            <div class="text-sm text-vex-text-muted mt-1">{{ stat.label }}</div>
+            <!-- Inline stats -->
+            <div class="flex flex-wrap gap-6 mt-10 pt-8 border-t border-vex-border">
+              <div v-for="stat in stats" :key="stat.label">
+                <div class="text-xl font-bold text-white">{{ stat.value }}</div>
+                <div class="text-xs text-vex-text-muted mt-0.5">{{ stat.label }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Code -->
+          <div class="hidden lg:block">
+            <div class="rounded-xl border border-vex-border bg-vex-bg-card overflow-hidden">
+              <div class="flex items-center gap-2 px-4 py-3 border-b border-vex-border bg-vex-surface">
+                <div class="w-3 h-3 rounded-full bg-zinc-700"></div>
+                <div class="w-3 h-3 rounded-full bg-zinc-700"></div>
+                <div class="w-3 h-3 rounded-full bg-zinc-700"></div>
+                <span class="ml-2 text-xs text-vex-text-muted font-mono">hello.vx</span>
+              </div>
+              <pre class="p-5 text-sm leading-relaxed overflow-x-auto font-mono text-vex-text"><code>{{ codeExample }}</code></pre>
+            </div>
           </div>
         </div>
       </div>
@@ -98,16 +93,14 @@ const stats = [
 
     <!-- Features -->
     <section class="max-w-6xl mx-auto px-4 sm:px-6 py-20">
-      <div class="text-center mb-12">
-        <h2 class="text-3xl font-bold text-white mb-3">Why Vex?</h2>
-        <p class="text-vex-text-muted max-w-xl mx-auto">One language for all silicon. No CUDA, no Metal, no OpenCL — just Vex.</p>
+      <div class="text-center mb-14">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">Why Vex?</h2>
+        <p class="text-vex-text-muted max-w-lg mx-auto">One language for all silicon. No CUDA, no Metal, no OpenCL — just Vex.</p>
       </div>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="f in features" :key="f.title" class="group p-6 rounded-xl border border-vex-border bg-gradient-to-br from-vex-primary/5 to-vex-accent/5 backdrop-blur-xl hover:bg-vex-bg-card-hover hover:border-vex-primary/30 transition-all">
-          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-vex-primary to-vex-accent flex items-center justify-center mb-3">
-            <component :is="f.icon" class="w-5 h-5 text-vex-bg" />
-          </div>
-          <h3 class="text-lg font-semibold text-white mb-2 group-hover:text-vex-primary-light transition-colors">{{ f.title }}</h3>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-vex-border rounded-xl overflow-hidden border border-vex-border">
+        <div v-for="f in features" :key="f.title" class="p-6 bg-vex-bg hover:bg-vex-bg-card transition-colors">
+          <component :is="f.icon" class="w-5 h-5 text-vex-text-muted mb-4" />
+          <h3 class="text-base font-semibold text-white mb-2">{{ f.title }}</h3>
           <p class="text-sm text-vex-text-muted leading-relaxed">{{ f.desc }}</p>
         </div>
       </div>
@@ -116,11 +109,11 @@ const stats = [
     <!-- CTA -->
     <section class="border-t border-vex-border">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 py-20 text-center">
-        <h2 class="text-3xl font-bold text-white mb-4">Ready to saturate your hardware?</h2>
-        <p class="text-vex-text-muted mb-8 max-w-lg mx-auto">Join the community building the future of systems programming.</p>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Ready to saturate your hardware?</h2>
+        <p class="text-vex-text-muted mb-8 max-w-md mx-auto">Join the community building the future of systems programming.</p>
         <div class="flex items-center justify-center gap-3">
-          <a href="/docs/guide/installation" class="px-6 py-3 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-all">Install Vex</a>
-          <router-link to="/packages" class="px-6 py-3 rounded-xl border border-vex-border text-vex-text hover:bg-white/5 font-medium transition-all">Browse Packages</router-link>
+          <a href="/docs/guide/installation" class="px-5 py-2.5 rounded-lg bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-colors">Install Vex</a>
+          <router-link to="/packages" class="px-5 py-2.5 rounded-lg border border-vex-border text-vex-text hover:bg-vex-surface-light font-medium transition-colors">Browse Packages</router-link>
         </div>
       </div>
     </section>

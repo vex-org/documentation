@@ -1,7 +1,7 @@
 # Concurrency
 
 **Core Language Specification**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented
 
 Vex provides a hybrid concurrency model combining Go-style CSP (Communicating Sequential Processes) with Rust-style Async/Await.

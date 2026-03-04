@@ -60,13 +60,12 @@ export default defineConfig({
   ignoreDeadLinks: true,
   themeConfig: {
     nav: [
-      { text: 'Home', link: '/' },
       { text: 'Guide', link: '/guide/introduction' },
       { text: 'References', link: '/references/' },
       { text: 'Reference', link: '/specs/01_Introduction_and_Overview' },
       { text: 'Architecture', link: '/architecture/' },
-      { text: 'Packages', link: 'https://vex-lang.org/packages' },
-      { text: 'Blog', link: 'https://vex-lang.org/blog' }
+      { text: 'Packages', link: 'https://vex-lang.org/packages', target: '_self', rel: '' },
+      { text: 'Blog', link: 'https://vex-lang.org/blog', target: '_self', rel: '' }
     ],
 
     search: {

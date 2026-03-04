@@ -1,7 +1,7 @@
 # Bitwise Operators
 
 **Baseline Feature**  
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Status:** ✅ Implemented  
 **Test:** `00_base_feats/06_bitwise_ops.vx`
 

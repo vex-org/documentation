@@ -1,6 +1,6 @@
 # Baseline Features - Index
 
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Last Updated:** November 24, 2025
 
 This directory contains detailed documentation for Vex's baseline features - the fundamental building blocks that form the foundation of the language.
