@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Play, Code, Terminal, Share2, Sparkles, BookOpen, ChevronRight, Zap, Target, Cpu } from 'lucide-vue-next'
+import { Play, Code, Terminal, Share2, Sparkles, BookOpen, ChevronRight, Zap, Target, Cpu, Wifi, WifiOff } from 'lucide-vue-next'
 import { runCode as apiRunCode, emitIR, healthCheck } from '../api/vex'
 
 const examples = [
@@ -148,6 +148,15 @@ const activeView = ref<'output' | 'ir'>('output')
 const compileTime = ref(0)
 const irOutput = ref('')
 const isLoadingIR = ref(false)
+const shareLabel = ref('Share')
+
+function shareCode() {
+  const encoded = encodeURIComponent(code.value)
+  const url = `${window.location.origin}/playground?code=${encoded}`
+  navigator.clipboard.writeText(url)
+  shareLabel.value = 'Copied!'
+  setTimeout(() => { shareLabel.value = 'Share' }, 2000)
+}
 
 async function runCode() {
   isRunning.value = true
@@ -195,6 +204,13 @@ function loadExample(index: number) {
 
 onMounted(async () => {
   wasmLoaded.value = await healthCheck()
+  // Load shared code from URL
+  const params = new URLSearchParams(window.location.search)
+  const shared = params.get('code')
+  if (shared) {
+    code.value = shared
+    activeExample.value = -1
+  }
 })
 </script>
 
@@ -206,13 +222,17 @@ onMounted(async () => {
           <Sparkles class="w-6 h-6 text-vex-primary" />
           Playground
         </h1>
-        <p class="text-vex-text-muted text-sm">Experiment with Vex in your browser</p>
+        <p class="text-vex-text-muted text-sm flex items-center gap-2">
+          Experiment with Vex in your browser
+          <span v-if="wasmLoaded" class="inline-flex items-center gap-1 text-[10px] text-green-400"><Wifi class="w-3 h-3" /> Connected</span>
+          <span v-else class="inline-flex items-center gap-1 text-[10px] text-red-400"><WifiOff class="w-3 h-3" /> Offline</span>
+        </p>
       </div>
       
       <div class="flex items-center gap-3">
-        <button class="flex items-center gap-2 px-4 py-2 rounded-lg border border-vex-border text-vex-text-muted hover:text-white transition-all cursor-pointer">
+        <button @click="shareCode" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-vex-border text-vex-text-muted hover:text-white transition-all cursor-pointer">
           <Share2 class="w-4 h-4" />
-          Share
+          {{ shareLabel }}
         </button>
         <button 
           @click="runCode"
@@ -261,6 +281,8 @@ onMounted(async () => {
             v-model="code"
             class="flex-1 p-6 bg-transparent text-white font-mono text-sm resize-none focus:outline-none"
             spellcheck="false"
+            @keydown.ctrl.enter="runCode"
+            @keydown.meta.enter="runCode"
           ></textarea>
         </div>
 

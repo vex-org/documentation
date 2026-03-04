@@ -64,6 +64,9 @@ const stats = [
                 <Terminal class="w-4 h-4" />
                 Playground
               </router-link>
+              <router-link to="/arena" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 font-medium transition-colors">
+                🏆 Arena
+              </router-link>
             </div>
 
             <!-- Inline stats -->

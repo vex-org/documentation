@@ -63,3 +63,26 @@ export async function healthCheck(): Promise<boolean> {
     return false
   }
 }
+
+export interface LangResult {
+  time_ms: number
+  binary_kb: number
+  memory_kb: number
+  code: string
+  error?: string
+}
+
+export interface CompareResult {
+  results: Record<string, LangResult>
+  ai_disclaimer: string
+}
+
+export async function compareCode(code: string, langs: string[] = ['go', 'rust', 'zig']): Promise<CompareResult> {
+  const res = await fetch(`${API_URL}/api/website/compare`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, langs }),
+  })
+  if (!res.ok) throw new Error(`Server error: ${res.status}`)
+  return res.json()
+}
