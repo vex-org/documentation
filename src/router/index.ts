@@ -17,6 +17,7 @@ const router = createRouter({
     { path: '/projects', name: 'Projects', component: () => import('../views/ProjectsView.vue'), meta: { title: 'Projects', description: 'Community-driven Vex projects. Discover, contribute, and collaborate.' } },
     { path: '/projects/:slug', name: 'ProjectDetail', component: () => import('../views/ProjectDetailView.vue'), meta: { title: 'Project' } },
     { path: '/playground', name: 'Playground', component: () => import('../views/PlaygroundView.vue'), meta: { title: 'Playground', description: 'Try Vex in your browser. Write, compile, and run Vex code instantly.' } },
+    { path: '/ai', name: 'AI', component: () => import('../views/AIAssistantView.vue'), meta: { title: 'AI Assistant', description: 'Ask questions about Vex, explain code, translate, or fix errors with AI.' } },
     { path: '/login', name: 'Login', component: () => import('../views/LoginView.vue'), meta: { title: 'Sign In' } },
     { path: '/signup', redirect: '/login' },
     { path: '/auth/callback', name: 'AuthCallback', component: () => import('../views/AuthCallbackView.vue'), meta: { title: 'Signing in…' } },

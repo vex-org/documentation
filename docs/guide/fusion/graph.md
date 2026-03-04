@@ -6,7 +6,7 @@ Graph functions compile **entire function bodies** as optimized compute graphs. 
 
 ```vex
 // Add the `graph` keyword before your function name
-graph dot(a: [f32; N], b: [f32; N]): f32 {
+graph fn dot(a: [f32; N], b: [f32; N]): f32 {
     return <+ (a * b);
 }
 
@@ -21,7 +21,7 @@ fn main(): i32 {
 
 **What happens behind the scenes:**
 
-1. Compiler parses the entire `graph` body into a computation graph (SIR DAG)
+1. Compiler parses the entire `graph` body into a computation graph fn (SIR DAG)
 2. Fusion pass merges `a * b` + `<+` into a single fused operation
 3. Dispatch policy checks data size and hardware:
    - **100K floats on Apple M2** → Metal GPU compute kernel
@@ -46,7 +46,7 @@ fn slow_normalize(x: [f32; N]): [f32; N] {
 ### With `graph`
 
 ```vex
-graph normalize(x: [f32; N]): [f32; N] {
+graph fn normalize(x: [f32; N]): [f32; N] {
     let mean = <+ x / N;
     let centered = x - mean;
     let variance = <+ (centered * centered) / N;
@@ -62,7 +62,7 @@ Graph functions support all Vex array and tensor operations:
 
 ### Array Operations
 ```vex
-graph example(a: [f32; N], b: [f32; N]): [f32; N] {
+graph fn example(a: [f32; N], b: [f32; N]): [f32; N] {
     let sum = a + b;           // elementwise add
     let prod = a * b;          // elementwise multiply
     let scaled = a * 2.0;      // scalar broadcast
@@ -74,7 +74,7 @@ graph example(a: [f32; N], b: [f32; N]): [f32; N] {
 
 ### Matrix Operations
 ```vex
-graph matmul_chain(a: [f32; M, K], b: [f32; K, N], c: [f32; N, P]): [f32; M, P] {
+graph fn matmul_chain(a: [f32; M, K], b: [f32; K, N], c: [f32; N, P]): [f32; M, P] {
     let ab = a <*> b;          // matrix multiply
     return ab <*> c;           // chained matmul
 }
@@ -82,14 +82,14 @@ graph matmul_chain(a: [f32; M, K], b: [f32; K, N], c: [f32; N, P]): [f32; M, P] 
 
 ### Math Functions
 ```vex
-graph activation(x: [f32; N]): [f32; N] {
+graph fn activation(x: [f32; N]): [f32; N] {
     return exp(x) / (1.0 + exp(x));  // sigmoid, all fused
 }
 ```
 
 ### Control Flow
 ```vex
-graph relu(x: [f32; N]): [f32; N] {
+graph fn relu(x: [f32; N]): [f32; N] {
     if x > 0.0 {
         return x;
     } else {
@@ -97,7 +97,7 @@ graph relu(x: [f32; N]): [f32; N] {
     }
 }
 
-graph transformer(x: [f32; N], layers: [[f32; N, N]; 12]): [f32; N] {
+graph fn transformer(x: [f32; N], layers: [[f32; N, N]; 12]): [f32; N] {
     let! out = x;
     for i in 0..12 {       // compile-time unrolled
         out = out <*> layers[i];
@@ -108,10 +108,10 @@ graph transformer(x: [f32; N], layers: [[f32; N, N]; 12]): [f32; N] {
 
 ## Nested Graph Functions
 
-Graph functions can call other graph functions. The compiler **inlines** the callee's computation graph into the caller's, enabling cross-function fusion:
+Graph functions can call other graph fn functions. The compiler **inlines** the callee's computation graph fn into the caller's, enabling cross-function fusion:
 
 ```vex
-graph softmax(x: [f32; N]): [f32; N] {
+graph fn softmax(x: [f32; N]): [f32; N] {
     let max_val = >?| x;
     let shifted = x - max_val;
     let exp_vals = exp(shifted);
@@ -119,7 +119,7 @@ graph softmax(x: [f32; N]): [f32; N] {
     return exp_vals / sum_val;
 }
 
-graph attention(q: [f32; N], k: [f32; N], v: [f32; N]): [f32; N] {
+graph fn attention(q: [f32; N], k: [f32; N], v: [f32; N]): [f32; N] {
     let scores = q <*> k.T / sqrt(N);
     let weights = softmax(scores);  // ← inlined and fused!
     return weights <*> v;
@@ -150,10 +150,10 @@ VEX_FORCE_GPU=1 vex run app.vx     # Force GPU
 | Scope | Single expression | Entire function body |
 | Fusion | Expression-level | Cross-statement |
 | Control flow | No | if/else, for loops |
-| Nesting | No | Graph calls graph |
+| Nesting | No | Graph calls graph fn |
 | Use case | Quick one-liners | Complex algorithms |
 
-Both work together: inline fusion expressions inside graph functions get fused into the larger graph.
+Both work together: inline fusion expressions inside graph fn functions get fused into the larger graph.
 
 ## Debug
 

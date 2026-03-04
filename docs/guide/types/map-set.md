@@ -95,20 +95,7 @@ fn main() {
 | `remove(elem: T): bool` | Removes an element. Returns `true` if it was present. |
 | `clear()` | Removes all elements. |
 
----
 
-## OrderedMap\<K, V\>
-
-Specifically useful when insertion order must be preserved (e.g., for JSON serialization or maintaining a history). It has the same API as `Map<K, V>` but uses additional memory to track order.
-
-```vex
-let! om = OrderedMap.new<string, i32>();
-om.insert("first", 1);
-om.insert("second", 2);
-
-// Accessing by insertion index
-let val = om.getAtIndex(0); // Some(1)
-```
 
 ## Performance Characteristics
 

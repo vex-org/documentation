@@ -60,6 +60,7 @@ async function logout() {
           <RouterLink to="/blog" class="px-3 py-1.5 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-vex-surface-light transition-colors">Blog</RouterLink>
           <RouterLink to="/projects" class="px-3 py-1.5 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-vex-surface-light transition-colors">Projects</RouterLink>
           <RouterLink to="/playground" class="px-3 py-1.5 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-vex-surface-light transition-colors">Playground</RouterLink>
+          <RouterLink to="/ai" class="px-3 py-1.5 rounded-lg text-sm font-medium text-vex-text-muted hover:text-white hover:bg-vex-surface-light transition-colors flex items-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>AI</RouterLink>
           <div class="w-px h-5 bg-vex-border mx-1"></div>
           <!-- Search trigger -->
           <button type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light transition-colors cursor-pointer" @click="searchOpen = true">
@@ -91,6 +92,7 @@ async function logout() {
         <RouterLink to="/blog" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Blog</RouterLink>
         <RouterLink to="/projects" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Projects</RouterLink>
         <RouterLink to="/playground" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Playground</RouterLink>
+        <RouterLink to="/ai" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">AI Assistant</RouterLink>
         <template v-if="user">
           <RouterLink to="/dashboard" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Dashboard</RouterLink>
           <button type="button" class="block w-full text-left px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light cursor-pointer" @click="logout(); mobileOpen = false">Sign out</button>
@@ -119,6 +121,7 @@ async function logout() {
               <li><a href="/docs/guide/introduction" class="text-vex-text-muted hover:text-white transition-colors">Get Started</a></li>
               <li><a href="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Documentation</a></li>
               <li><RouterLink to="/playground" class="text-vex-text-muted hover:text-white transition-colors">Playground</RouterLink></li>
+              <li><RouterLink to="/ai" class="text-vex-text-muted hover:text-white transition-colors">AI Assistant</RouterLink></li>
             </ul>
           </div>
           <div>
