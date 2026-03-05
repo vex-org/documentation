@@ -44,7 +44,7 @@ data.push(2)
 // Multiple immutable borrows - OK
 let a = &data
 let b = &data
-println(f"{a.len()}, {b.len()}")
+print(f"{a.len()}, {b.len()}")
 
 // Mutable borrow - OK (immutable borrows no longer in use)
 let c = &data!
@@ -99,7 +99,7 @@ fn (self: &User) get_name(): &string {
 // Usage
 let user = User { name: "Alice", email: "alice@example.com" }
 let name = user.get_name()
-println(name)  // OK: user still valid
+print(name)  // OK: user still valid
 
 // Error case - would be caught at compile time
 fn bad_example(): &string {

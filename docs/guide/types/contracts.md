@@ -5,7 +5,7 @@ Contracts define shared behavior in Vex. They are similar to interfaces in Go or
 ::: tip Key Differences
 - Vex uses `contract` keyword, NOT `trait`.
 - Method signatures have NO `fn` prefix inside contracts.
-- **Contract methods are signatures only** - NO bodies or default implementations!
+- **Contract methods are signatures only** — NO bodies or default implementations!
 - Contracts can require **fields** with specific visibility.
 :::
 
@@ -22,6 +22,24 @@ contract Describable {
 }
 ```
 
+## Implementing Contracts
+
+Use the `impl` keyword on the struct definition:
+
+```vex
+contract Shape {
+    area(): f64;
+}
+
+struct Circle impl Shape {
+    radius: f64
+}
+
+fn (self: &Circle) area(): f64 {
+    return 3.14159 * self.radius * self.radius;
+}
+```
+
 ## Contract Fields
 
 Contracts can require implementing structs to have specific fields:
@@ -31,7 +49,7 @@ contract Entity {
     // Required fields
     id: u64
     name: string
-    
+
     // Methods
     validate(): bool;
     display(): string;
@@ -45,75 +63,173 @@ struct User impl Entity {
 }
 
 fn (self: &User) validate(): bool {
-    return self.id > 0
+    return self.id > 0;
 }
 ```
 
-## Implementing Contracts
+## Builtin Memory Contracts
 
-Use the `impl` keyword on the struct definition or receiver syntax:
+Vex has three special contracts that control how values are managed in memory. These are prefixed with `$` and live in the prelude — no import needed.
+
+### `$Copy` — Bitwise Copyable
+
+Types implementing `$Copy` are copied on assignment instead of moved:
 
 ```vex
-contract Shape {
-    area(): f64;
-}
+// All primitives are $Copy
+let x = 42;
+let y = x;     // x is COPIED, not moved
+print(x);      // ✅ Still valid
 
-struct Circle impl Shape {
-    radius: f64
-}
-
-fn (self: &Circle) area(): f64 {
-    return 3.14159 * self.radius * self.radius
-}
+// Non-$Copy types are MOVED
+let s = "hello";
+let t = s;     // s is MOVED to t
+// print(s);   // ❌ Error: use of moved value
 ```
 
-## Associated Types
+**Builtin $Copy types**: `bool`, `i8..i128`, `u8..u128`, `f32`, `f64`, `char`, `usize`, `isize`, `str`, `ptr`
 
-Types defined within contracts:
+::: warning
+`string` is **NOT** $Copy — it's heap-allocated and uses reference counting. Use `.clone()` for explicit deep copies.
+:::
+
+### `$Clone` — Deep Copy
+
+Types implementing `$Clone` can be explicitly deep-copied:
 
 ```vex
-contract Iterator {
-    type Item;
-    next()!: Option<Self.Item>;
+let s1 = "hello";
+let s2 = s1.clone();  // Deep copy
+print(s1);             // ✅ Still valid
+print(s2);             // ✅ Independent copy
+```
+
+When a type implements `$Clone`, the compiler automatically inserts `.clone()` calls where needed to resolve borrowing conflicts:
+
+```vex
+struct Config: $Clone {
+    public:
+    name: string,
+    value: i32,
 }
 
-struct Counter impl Iterator {
-    count: i32,
-    type Item = i32;
-}
-
-fn (self: &Counter!) next(): Option<i32> {
-    self.count = self.count + 1
-    return Some(self.count)
+fn (self: &Config) clone(): Config {
+    return Config { name: self.name.clone(), value: self.value };
 }
 ```
+
+### `$Drop` — Cleanup on Scope Exit
+
+Types implementing `$Drop` run cleanup code when they go out of scope (RAII pattern):
+
+```vex
+struct FileHandle: $Drop {
+    public:
+    fd: i32,
+    path: string,
+}
+
+fn (self: &FileHandle) drop() {
+    // Called automatically when FileHandle goes out of scope
+    print("Closing file: ");
+    print(self.path);
+    // close(self.fd)
+}
+
+fn main(): i32 {
+    let file = FileHandle { fd: 3, path: "/tmp/data.txt" };
+    // ... use file ...
+    return 0;
+}  // file.drop() called automatically here
+```
+
+::: tip Drop Order
+Variables are dropped in **reverse declaration order** (RAII). If you declare `a`, then `b`, then `c` — they drop as `c`, `b`, `a`.
+:::
+
+::: warning Drop and Borrows
+When a struct with `$Drop` holds references, the borrow checker ensures those references remain valid until the struct is dropped. This prevents use-after-free bugs in destructors.
+:::
 
 ## Operator Contracts
 
-Vex supports operator overloading through special contracts in the prelude (e.g., `$Add`, `$Eq`, `$Ord`):
+Vex supports operator overloading through special prelude contracts:
 
 ```vex
 struct Point impl $Add {
+    public:
     x: f64,
-    y: f64
+    y: f64,
 }
 
-fn (self: &Point) op+(other: Point): Point {
+fn (self: Point) op+(other: Point): Point {
     return Point {
         x: self.x + other.x,
-        y: self.y + other.y
-    }
+        y: self.y + other.y,
+    };
 }
+
+// Usage
+let a = Point { x: 1.0, y: 2.0 };
+let b = Point { x: 3.0, y: 4.0 };
+let c = a + b;  // Point { x: 4.0, y: 6.0 }
+```
+
+### Available Operator Contracts
+
+| Contract | Operator | Method |
+|----------|----------|--------|
+| `$Add` | `+` | `op+(rhs: Self): Self` |
+| `$Sub` | `-` | `op-(rhs: Self): Self` |
+| `$Mul` | `*` | `op*(rhs: Self): Self` |
+| `$Div` | `/` | `op/(rhs: Self): Self` |
+| `$Mod` | `%` | `op%(rhs: Self): Self` |
+| `$Eq` | `==` | `eq(other: &Self): bool` |
+| `$Ord` | `<` / `>` | `lt(other: &Self): bool` |
+| `$Index` | `[]` | `op[](index: usize): T` |
+
+### Display and Debug
+
+```vex
+struct Color: $Display, $Debug {
+    public:
+    r: u8, g: u8, b: u8,
+}
+
+fn (self: &Color) toString(): string {
+    return "rgb(" + self.r.toString() + "," + self.g.toString() + "," + self.b.toString() + ")";
+}
+
+fn (self: &Color) debug(): string {
+    return "Color{r:" + self.r.toString() + ",g:" + self.g.toString() + ",b:" + self.b.toString() + "}";
+}
+```
+
+## Contract Inheritance
+
+Contracts can extend other contracts:
+
+```vex
+contract Eq {
+    eq(self: &Self, other: &Self): bool;
+}
+
+contract Ord: Eq {
+    cmp(self: &Self, other: &Self): i32;
+}
+// Any type implementing Ord must also implement Eq
 ```
 
 ## Best Practices
 
-1. **Contracts are pure interfaces**: They define "what" a type can do, not "how".
-2. **Use associated types**: For generic behavior that depends on implementing types.
-3. **Prefer Prelude contracts**: Leverage built-in contracts like `$Display`, `$Index`, and `$Iterator`.
+1. **Contracts are pure interfaces** — they define "what" a type can do, not "how"
+2. **Implement `$Drop` for resource cleanup** — file handles, network connections, locks
+3. **Implement `$Clone` for deep copy support** — complex data structures
+4. **Leverage `$Copy` for simple types** — primitives and small value types
+5. **Use operator contracts** — make your types work with standard operators
 
 ## Next Steps
 
-- [Generics](/guide/types/generics) - Combining generics and contracts
-- [Error Handling](/guide/error-handling) - Contracts for error types
-- [Go-style Methods](/guide/basics/functions) - Receiver syntax details
+- [Generics](/guide/types/generics) — Combining generics and contracts
+- [Ownership](/guide/memory/ownership) — How contracts interact with ownership
+- [Borrowing](/guide/memory/borrowing) — Reference borrowing details

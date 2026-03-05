@@ -16,6 +16,7 @@ const router = createRouter({
     { path: '/blog/:slug', name: 'Post', component: () => import('../views/PostView.vue'), meta: { title: 'Post' } },
     { path: '/projects', name: 'Projects', component: () => import('../views/ProjectsView.vue'), meta: { title: 'Projects', description: 'Community-driven Vex projects. Discover, contribute, and collaborate.' } },
     { path: '/projects/:slug', name: 'ProjectDetail', component: () => import('../views/ProjectDetailView.vue'), meta: { title: 'Project' } },
+    { path: '/tour', name: 'Tour', component: () => import('../views/TourView.vue'), meta: { title: 'Tour of Vex', description: 'Learn Vex step by step with interactive examples. No installation required.' } },
     { path: '/playground', name: 'Playground', component: () => import('../views/PlaygroundView.vue'), meta: { title: 'Playground', description: 'Try Vex in your browser. Write, compile, and run Vex code instantly.' } },
     { path: '/ai', name: 'AI', component: () => import('../views/AIAssistantView.vue'), meta: { title: 'AI Assistant', description: 'Ask questions about Vex, explain code, translate, or fix errors with AI.' } },
     { path: '/arena', name: 'Arena', component: () => import('../views/BenchmarkArenaView.vue'), meta: { title: 'Benchmark Arena', description: 'Compare Vex performance against Go, Rust, and Zig with AI-generated translations.' } },
