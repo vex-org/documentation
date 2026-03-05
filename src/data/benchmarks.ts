@@ -402,7 +402,7 @@ pub fn main() !void {
     vex: `fn collatz_len(n: i64): i32 {
     let! x = n
     let! count = 0
-    for x > 1 {
+    while x > 1 {
         if x % 2 == 0 {
             x = x / 2
         } else {
