@@ -520,7 +520,7 @@ pub fn main() !void {
     vex: `fn binary_search(arr: &Vec<i32>, target: i32): i32 {
     let! lo = 0
     let! hi = arr.len() - 1
-    for lo <= hi {
+    while lo <= hi {
         let mid = lo + (hi - lo) / 2
         let val = arr.get(mid)
         if val == Some(target) { return mid }
