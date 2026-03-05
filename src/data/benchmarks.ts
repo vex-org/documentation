@@ -627,23 +627,23 @@ pub fn main() !void {
             let! fy: f64 = 0.0
             for j in 0..n {
                 if i != j {
-                    let dx = x.get(j).unwrap() - x.get(i).unwrap()
-                    let dy = y.get(j).unwrap() - y.get(i).unwrap()
+                    let dx = x.getUnchecked(j) - x.getUnchecked(i)
+                    let dy = y.getUnchecked(j) - y.getUnchecked(i)
                     let dist = (dx * dx + dy * dy + 0.01)
                     let force = 1.0 / dist
                     fx = fx + dx * force
                     fy = fy + dy * force
                 }
             }
-            vx.set(i, vx.get(i).unwrap() + fx * 0.001)
-            vy.set(i, vy.get(i).unwrap() + fy * 0.001)
+            vx.set(i, vx.getUnchecked(i) + fx * 0.001)
+            vy.set(i, vy.getUnchecked(i) + fy * 0.001)
         }
         for i in 0..n {
-            x.set(i, x.get(i).unwrap() + vx.get(i).unwrap())
-            y.set(i, y.get(i).unwrap() + vy.get(i).unwrap())
+            x.set(i, x.getUnchecked(i) + vx.getUnchecked(i))
+            y.set(i, y.getUnchecked(i) + vy.getUnchecked(i))
         }
     }
-    println(x.get(0).unwrap())
+    println(x.getUnchecked(0))
     return 0
 }`,
     go: `package main
