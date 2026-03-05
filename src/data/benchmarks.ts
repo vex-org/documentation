@@ -616,8 +616,8 @@ pub fn main() !void {
     let! vx = Vec.new<f64>()
     let! vy = Vec.new<f64>()
     for i in 0..n {
-        x.push(i * 1.0)
-        y.push(i * 0.5)
+        x.push(i as f64)
+        y.push(i as f64 * 0.5)
         vx.push(0.0)
         vy.push(0.0)
     }
