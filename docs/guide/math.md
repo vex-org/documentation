@@ -63,6 +63,7 @@ let clamped = Math.clamp(x, 0.0, 1.0);
 | `Math.sqrt(x)` | `f64 → f64` | Square root |
 | `Math.cbrt(x)` | `f64 → f64` | Cube root |
 | `Math.rsqrt(x)` | `f64 → f64` | 1/√x (reciprocal sqrt) |
+| `Math.copysign(x, y)` | `(f64, f64) → f64` | x with sign of y |
 
 ## Rounding
 
@@ -80,8 +81,11 @@ let clamped = Math.clamp(x, 0.0, 1.0);
 |----------|-----------|-------------|
 | `Math.min(a, b)` | `(numeric, numeric) → numeric` | Minimum of two values |
 | `Math.max(a, b)` | `(numeric, numeric) → numeric` | Maximum of two values |
+| `Math.fmax(a, b)` | `(f64, f64) → f64` | Float max (NaN-safe) |
+| `Math.fmin(a, b)` | `(f64, f64) → f64` | Float min (NaN-safe) |
 | `Math.clamp(x, lo, hi)` | `(numeric, numeric, numeric) → numeric` | Clamp x to [lo, hi] |
 | `Math.abs(x)` | `numeric → numeric` | Absolute value (int or float) |
+| `Math.fabs(x)` | `f64 → f64` | Float absolute value |
 | `Math.sign(x)` | `f64 → f64` | Returns -1, 0, or +1 |
 
 ## Activation Functions (ML)
@@ -101,6 +105,20 @@ let clamped = Math.clamp(x, 0.0, 1.0);
 | `Math.ctz(x)` | `int → int` | Count trailing zeros |
 | `Math.nextPowerOf2(x)` | `int → int` | Next power of 2 |
 | `Math.bswap(x)` | `int → int` | Byte-swap (endian reverse) |
+
+## Angle Conversion
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `Math.degrees(x)` | `f64 → f64` | Radians → degrees |
+| `Math.radians(x)` | `f64 → f64` | Degrees → radians |
+| `Math.degreesf(x)` | `f32 → f32` | Radians → degrees (f32) |
+| `Math.radiansf(x)` | `f32 → f32` | Degrees → radians (f32) |
+
+```vex
+let angle_deg = Math.degrees(Math.PI);   // 180.0
+let angle_rad = Math.radians(90.0);      // 1.5707...
+```
 
 ## Random Numbers
 
@@ -126,22 +144,51 @@ fn main(): i32 {
 | `Math.PI` | 3.14159265... | π |
 | `Math.E` | 2.71828182... | Euler's number |
 | `Math.TAU` | 6.28318530... | τ = 2π |
+| `Math.SQRT2` | 1.41421356... | √2 |
+| `Math.LN2` | 0.69314718... | ln(2) |
+| `Math.LN10` | 2.30258509... | ln(10) |
+| `Math.LOG2E` | 1.44269504... | log₂(e) |
+| `Math.LOG10E` | 0.43429448... | log₁₀(e) |
+| `Math.FRAC_PI_2` | 1.57079632... | π/2 |
+| `Math.FRAC_PI_4` | 0.78539816... | π/4 |
+| `Math.FRAC_1_SQRT2` | 0.70710678... | 1/√2 |
 | `Math.INF` | ∞ | Positive infinity |
 | `Math.NAN` | NaN | Not-a-Number |
 
 ```vex
 let area = Math.PI * radius * radius;
 let circumference = Math.TAU * radius;
+let diagonal = side * Math.SQRT2;
 ```
 
-## Type Promotion
+## f32 Variants
 
-All functions accept both `f32` and `f64`. Integer arguments are automatically promoted to float:
+Every f64 math function has an f32 counterpart with `f` suffix:
+
+| f64 | f32 | Description |
+|-----|-----|-------------|
+| `Math.sin(x)` | `Math.sinf(x)` | Sine |
+| `Math.cos(x)` | `Math.cosf(x)` | Cosine |
+| `Math.exp(x)` | `Math.expf(x)` | Exponential |
+| `Math.log(x)` | `Math.logf(x)` | Natural log |
+| `Math.sqrt(x)` | `Math.sqrtf(x)` | Square root |
+| `Math.floor(x)` | `Math.floorf(x)` | Floor |
+| `Math.ceil(x)` | `Math.ceilf(x)` | Ceiling |
+| `Math.round(x)` | `Math.roundf(x)` | Round |
+| `Math.trunc(x)` | `Math.truncf(x)` | Truncate |
+| `Math.abs(x)` | `Math.fabsf(x)` | Float abs |
+| `Math.exp2(x)` | `Math.exp2f(x)` | 2^x |
+| `Math.log2(x)` | `Math.log2f(x)` | Base-2 log |
+| `Math.log10(x)` | `Math.log10f(x)` | Base-10 log |
+| `Math.pow(a,b)` | `Math.powf(a,b)` | Power |
+| `Math.copysign(x,y)` | `Math.copysignf(x,y)` | Copy sign |
+| `Math.fmax(a,b)` | `Math.fmaxf(a,b)` | Float max |
+| `Math.fmin(a,b)` | `Math.fminf(a,b)` | Float min |
 
 ```vex
-let x = Math.sqrt(4);       // i32 → f64, returns 2.0
-let y = Math.sin(0.5f32);   // f32 → f32 variant used
-let z = Math.abs(-42);      // integer abs, stays i32
+// Use f32 variants for ML workloads
+let inv_rms = 1.0 as f32 / Math.sqrtf(mean_sq + eps);
+let activated = Math.expf(neg_x);
 ```
 
 ## LLVM Backend
@@ -149,10 +196,12 @@ let z = Math.abs(-42);      // integer abs, stays i32
 Every `Math.*` function maps to a single LLVM intrinsic or optimized libm call:
 
 ```
-Math.sin(x)   →  @llvm.sin.f64(x)        (1-2 cycles)
-Math.sqrt(x)  →  @llvm.sqrt.f64(x)       (1 cycle, HW)
-Math.abs(x)   →  @llvm.fabs.f64(x)       (1 cycle)
-Math.pow(a,b) →  @llvm.pow.f64(a, b)     (libm call)
+Math.sin(x)     →  @llvm.sin.f64(x)        (1-2 cycles)
+Math.sinf(x)    →  @llvm.sin.f32(x)        (1 cycle, HW)
+Math.sqrt(x)    →  @llvm.sqrt.f64(x)       (1 cycle, HW)
+Math.abs(x)     →  @llvm.fabs.f64(x)       (1 cycle)
+Math.degrees(x) →  fmul x, 57.2957...      (1 cycle, inline)
+Math.PI         →  const double 3.14159... (zero cost)
 ```
 
 ## Next Steps

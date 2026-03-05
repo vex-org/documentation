@@ -11,7 +11,11 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
   ],
-
+  markdown:{
+    languageAlias:{
+      "vex":"rust"
+    },
+  },
   themeConfig: {
     logo: '/vex-logo.svg',
     siteTitle: 'Vex Docs',
