@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Download, Terminal, Monitor, Apple, Cpu, CheckCircle, Copy, ExternalLink } from 'lucide-vue-next'
 
 const REPO = 'vex-org/releases'
@@ -13,25 +13,28 @@ interface PlatformInfo {
   arch: string
   os: string
   icon: typeof Monitor
-  file: (v: string) => string
+  suffix: string
 }
 
 const platforms: PlatformInfo[] = [
-  { id: 'linux-x86_64', name: 'Linux', arch: 'x86_64', os: 'Intel / AMD', icon: Monitor, file: (v) => `vex-${v}-linux-x86_64.tar.gz` },
-  { id: 'linux-aarch64', name: 'Linux', arch: 'aarch64', os: 'ARM64', icon: Cpu, file: (v) => `vex-${v}-linux-aarch64.tar.gz` },
-  { id: 'macos-arm64', name: 'macOS', arch: 'ARM64', os: 'Apple Silicon', icon: Apple, file: (v) => `vex-${v}-macos-arm64.tar.gz` },
+  { id: 'linux-x86_64', name: 'Linux', arch: 'x86_64', os: 'Intel / AMD', icon: Monitor, suffix: 'linux-x86_64' },
+  { id: 'linux-aarch64', name: 'Linux', arch: 'aarch64', os: 'ARM64', icon: Cpu, suffix: 'linux-aarch64' },
+  { id: 'macos-arm64', name: 'macOS', arch: 'ARM64', os: 'Apple Silicon', icon: Apple, suffix: 'macos-arm64' },
 ]
 
 const selectedPlatform = ref<Platform>('linux-x86_64')
-const latestVersion = ref('v0.2.0')
+const latestVersion = ref('latest')
 const copied = ref(false)
 
 const selectedInfo = computed(() => platforms.find(p => p.id === selectedPlatform.value)!)
 
+const fileName = computed(() => {
+  const v = latestVersion.value === 'latest' ? 'latest' : latestVersion.value
+  return `vex-${v}-${selectedInfo.value.suffix}.tar.gz`
+})
+
 const downloadUrl = computed(() => {
-  const v = latestVersion.value
-  const file = selectedInfo.value.file(v)
-  return `https://github.com/${REPO}/releases/download/${v}/${file}`
+  return `https://github.com/${REPO}/releases/latest/download/vex-${latestVersion.value}-${selectedInfo.value.suffix}.tar.gz`
 })
 
 const checksumUrl = computed(() => downloadUrl.value + '.sha256')
@@ -50,7 +53,19 @@ function detectPlatform() {
     selectedPlatform.value = ua.includes('aarch64') || ua.includes('arm') ? 'linux-aarch64' : 'linux-x86_64'
   }
 }
+
+async function fetchLatestVersion() {
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+    if (res.ok) {
+      const data = await res.json()
+      latestVersion.value = data.tag_name
+    }
+  } catch { /* keep 'latest' as fallback */ }
+}
+
 detectPlatform()
+onMounted(fetchLatestVersion)
 </script>
 
 <template>
@@ -126,7 +141,7 @@ detectPlatform()
                 {{ selectedInfo.name }} {{ selectedInfo.arch }}
                 <span class="text-vex-text-muted text-sm ml-2">({{ selectedInfo.os }})</span>
               </h3>
-              <p class="text-sm text-vex-text-muted mt-1 font-mono">{{ selectedInfo.file(latestVersion) }}</p>
+              <p class="text-sm text-vex-text-muted mt-1 font-mono">{{ fileName }}</p>
             </div>
             <div class="flex gap-3">
               <a
