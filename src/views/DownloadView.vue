@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Download, Terminal, Monitor, Apple, Cpu, CheckCircle, Copy, ExternalLink } from 'lucide-vue-next'
+import { Download, Terminal, Monitor, Apple, Cpu, CheckCircle, Copy, ExternalLink, Package } from 'lucide-vue-next'
 
 const REPO = 'vex-org/releases'
 const INSTALL_CMD = 'curl -fsSL https://raw.githubusercontent.com/vex-org/releases/main/install.sh | bash'
@@ -78,7 +78,7 @@ onMounted(fetchLatestVersion)
           {{ latestVersion }}
         </div>
         <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">Install Vex</h1>
-        <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">Install with a single command, start coding right away.</p>
+        <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">Complete toolchain in a single command — compiler, LSP, formatter, and more.</p>
       </div>
     </section>
 
@@ -103,7 +103,43 @@ onMounted(fetchLatestVersion)
             <Copy v-else class="w-4 h-4" />
           </button>
         </div>
-        <p class="mt-3 text-sm text-vex-text-muted">Supports Linux and macOS (Apple Silicon). Verifies SHA-256 checksum.</p>
+        <p class="mt-3 text-sm text-vex-text-muted">Installs the full Vex toolchain to <code class="text-white/80">~/.vex</code>. Supports Linux and macOS (Apple Silicon).</p>
+      </div>
+    </section>
+
+    <!-- What's Included -->
+    <section class="border-b border-vex-border">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+          <Package class="w-5 h-5 text-vex-accent" />
+          What's Included
+        </h2>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+            <code class="text-vex-accent text-sm">vex</code>
+            <p class="text-xs text-vex-text-muted mt-1">Compiler, JIT runner, test runner, benchmarks</p>
+          </div>
+          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+            <code class="text-vex-accent text-sm">vex-lsp</code>
+            <p class="text-xs text-vex-text-muted mt-1">Language server for VS Code, Neovim, etc.</p>
+          </div>
+          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+            <code class="text-vex-accent text-sm">vex-formatter</code>
+            <p class="text-xs text-vex-text-muted mt-1">Opinionated code formatter</p>
+          </div>
+          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+            <code class="text-vex-accent text-sm">vex-doc</code>
+            <p class="text-xs text-vex-text-muted mt-1">Documentation generator</p>
+          </div>
+          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+            <code class="text-vex-accent text-sm">vex-pm</code>
+            <p class="text-xs text-vex-text-muted mt-1">Package manager</p>
+          </div>
+          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+            <code class="text-vex-accent text-sm">lib/std</code>
+            <p class="text-xs text-vex-text-muted mt-1">Standard library + runtime</p>
+          </div>
+        </div>
       </div>
     </section>
 
