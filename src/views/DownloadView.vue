@@ -62,8 +62,8 @@ detectPlatform()
           <Download class="w-3.5 h-3.5" />
           {{ latestVersion }}
         </div>
-        <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">Vex'i Yükle</h1>
-        <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">Tek komutla yükle, hemen kodlamaya başla.</p>
+        <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">Install Vex</h1>
+        <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">Install with a single command, start coding right away.</p>
       </div>
     </section>
 
@@ -72,7 +72,7 @@ detectPlatform()
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
           <Terminal class="w-5 h-5 text-vex-accent" />
-          Hızlı Kurulum
+          Quick Install
         </h2>
         <div class="relative group">
           <div class="rounded-lg border border-vex-border bg-vex-surface/50 p-4 sm:p-5 font-mono text-sm sm:text-base text-vex-text-muted overflow-x-auto">
@@ -82,13 +82,13 @@ detectPlatform()
           <button
             @click="copyInstallCmd"
             class="absolute top-3 right-3 p-2 rounded-md border border-vex-border bg-vex-bg hover:bg-vex-surface text-vex-text-muted hover:text-white transition-colors"
-            :title="copied ? 'Kopyalandı!' : 'Kopyala'"
+            :title="copied ? 'Copied!' : 'Copy'"
           >
             <CheckCircle v-if="copied" class="w-4 h-4 text-vex-success" />
             <Copy v-else class="w-4 h-4" />
           </button>
         </div>
-        <p class="mt-3 text-sm text-vex-text-muted">Linux ve macOS (Apple Silicon) destekler. SHA-256 checksum doğrulaması yapar.</p>
+        <p class="mt-3 text-sm text-vex-text-muted">Supports Linux and macOS (Apple Silicon). Verifies SHA-256 checksum.</p>
       </div>
     </section>
 
@@ -97,7 +97,7 @@ detectPlatform()
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
           <Download class="w-5 h-5 text-vex-accent" />
-          Manuel İndirme
+          Manual Download
         </h2>
 
         <!-- Platform Tabs -->
@@ -140,7 +140,7 @@ detectPlatform()
                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-vex-accent text-white text-sm font-medium hover:bg-vex-accent/90 transition-colors"
               >
                 <Download class="w-4 h-4" />
-                İndir
+                Download
               </a>
             </div>
           </div>
@@ -154,7 +154,7 @@ detectPlatform()
             rel="noopener noreferrer"
             class="inline-flex items-center gap-1.5 text-sm text-vex-text-muted hover:text-vex-accent transition-colors"
           >
-            Tüm sürümler
+            All releases
             <ExternalLink class="w-3.5 h-3.5" />
           </a>
         </div>
@@ -164,15 +164,15 @@ detectPlatform()
     <!-- Post-Install -->
     <section class="border-b border-vex-border">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6">Kurulum Sonrası</h2>
+        <h2 class="text-xl font-semibold text-white mb-6">After Installation</h2>
         <div class="space-y-4">
           <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
-            <h3 class="text-sm font-medium text-vex-accent mb-2">Doğrula</h3>
+            <h3 class="text-sm font-medium text-vex-accent mb-2">Verify</h3>
             <code class="text-sm text-vex-text-muted font-mono">vex --version</code>
           </div>
           <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
-            <h3 class="text-sm font-medium text-vex-accent mb-2">İlk Program</h3>
-            <pre class="text-sm text-vex-text-muted font-mono overflow-x-auto"><span class="text-vex-text-muted/60">$</span> echo 'fn main(): i32 { print("Merhaba Vex!"); return 0; }' > hello.vx
+            <h3 class="text-sm font-medium text-vex-accent mb-2">First Program</h3>
+            <pre class="text-sm text-vex-text-muted font-mono overflow-x-auto"><span class="text-vex-text-muted/60">$</span> echo 'fn main(): i32 { print("Hello Vex!"); return 0; }' > hello.vx
 <span class="text-vex-text-muted/60">$</span> vex run hello.vx</pre>
           </div>
         </div>
@@ -182,7 +182,7 @@ detectPlatform()
     <!-- Requirements -->
     <section>
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6">Sistem Gereksinimleri</h2>
+        <h2 class="text-xl font-semibold text-white mb-6">System Requirements</h2>
         <div class="grid sm:grid-cols-2 gap-4">
           <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
             <div class="flex items-center gap-2 mb-3">
@@ -191,8 +191,8 @@ detectPlatform()
             </div>
             <ul class="space-y-1.5 text-sm text-vex-text-muted">
               <li>glibc 2.31+ (Ubuntu 20.04+, Fedora 32+)</li>
-              <li>clang veya gcc (linking için)</li>
-              <li>x86_64 veya aarch64 işlemci</li>
+              <li>clang or gcc (for linking)</li>
+              <li>x86_64 or aarch64 processor</li>
             </ul>
           </div>
           <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
