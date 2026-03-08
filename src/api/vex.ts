@@ -84,6 +84,7 @@ export interface LangResult {
 export interface CompareResult {
   results: Record<string, LangResult>
   ai_disclaimer: string
+  versions?: Record<string, string>
 }
 
 export async function compareCode(code: string, langs: string[] = ['go', 'rust', 'zig'], optLevel = 'O2'): Promise<CompareResult> {

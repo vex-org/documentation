@@ -37,6 +37,7 @@ const customDisclaimer = ref('')
 // Shared
 const selectedLangs = ref(['go', 'rust', 'zig'])
 const optLevel = ref('O2')
+const langVersions = ref<Record<string, string>>({})
 const optLevels = [
   { value: 'O0', label: '-O0', desc: 'No optimization' },
   { value: 'O1', label: '-O1', desc: 'Basic' },
@@ -99,6 +100,7 @@ async function runPreset() {
       opt_level: optLevel.value,
     })
     presetResults.value = res.results
+    if (res.versions) langVersions.value = res.versions
   } catch (err: any) {
     presetError.value = err.message
   } finally {
@@ -117,6 +119,7 @@ async function runCustom() {
   try {
     const res = await compareCode(customCode.value, selectedLangs.value, optLevel.value)
     customResults.value = res.results
+    if (res.versions) langVersions.value = res.versions
     customDisclaimer.value = res.ai_disclaimer
   } catch (err: any) {
     customError.value = err.message
@@ -322,9 +325,12 @@ function runBenchmark() {
                 </div>
 
                 <!-- Lang -->
-                <div class="flex items-center gap-2 w-24">
+                <div class="flex items-center gap-2 w-28">
                   <span class="text-lg">{{ LANG_META[r.lang]?.icon }}</span>
-                  <span class="text-sm font-medium text-white">{{ LANG_META[r.lang]?.label }}</span>
+                  <div class="flex flex-col">
+                    <span class="text-sm font-medium text-white">{{ LANG_META[r.lang]?.label }}</span>
+                    <span v-if="langVersions[r.lang]" class="text-[9px] text-vex-text-muted leading-tight">{{ langVersions[r.lang] }}</span>
+                  </div>
                 </div>
 
                 <!-- Bar + Metrics -->
