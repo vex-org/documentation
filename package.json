@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:docs": "vitepress dev docs --port 3333",
-    "build": "vue-tsc -b && vite build && vitepress build docs && mkdir -p dist/docs && cp -r dist-docs/* dist/docs/",
+    "build": "vue-tsc -b && vite build && vitepress build docs && mkdir -p dist/docs && cp -r dist-docs/* dist/docs/ && cp dist/index.html dist/404.html",
     "preview": "vite preview"
   },
   "dependencies": {
