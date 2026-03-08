@@ -3,8 +3,19 @@
   "outputDirectory": "dist",
   "installCommand": "bun install",
   "framework": null,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/docs/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/docs/:path*", "destination": "/docs/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/docs", "destination": "/docs/index.html" },
+    { "source": "/docs/:path((?!assets/).*)", "destination": "/docs/:path.html" },
+    { "source": "/((?!docs/).*)", "destination": "/index.html" }
   ]
 }

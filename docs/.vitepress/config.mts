@@ -3,6 +3,8 @@ export default defineConfig({
   title: "Vex Language",
   description: "Modern Systems Programming with Auto-Vectorization",
   base: '/docs/',
+  outDir: '../dist-docs',
+  cleanUrls: true,
   markdown:{
     languageAlias:{
       "vex":"rust"
