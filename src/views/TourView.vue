@@ -9,6 +9,7 @@ import {
 } from 'lucide-vue-next'
 import { tourLessons, tourSections, type TourLesson } from '../data/tourLessons'
 import { runCode as apiRunCode } from '../api/vex'
+import MonacoVexEditor from '../components/MonacoVexEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -348,13 +349,15 @@ onMounted(() => {
                 <div class="px-4 py-3 border-b border-vex-border bg-vex-surface/50">
                   <p class="text-sm text-vex-text">{{ lesson.challenge.prompt }}</p>
                 </div>
-                <textarea
-                  v-model="challengeCode"
-                  class="w-full p-4 bg-transparent text-white font-mono text-sm resize-none focus:outline-none min-h-[160px]"
-                  spellcheck="false"
-                  @keydown.ctrl.enter="runChallengeCode"
-                  @keydown.meta.enter="runChallengeCode"
-                />
+                <div class="h-64">
+                  <MonacoVexEditor
+                    v-model="challengeCode"
+                    class="h-full"
+                    :font-size="13"
+                    submit-on-mod-enter
+                    @submit="runChallengeCode"
+                  />
+                </div>
                 <div class="flex items-center gap-2 px-4 py-2 border-t border-vex-border">
                   <button
                     @click="runChallengeCode"
@@ -421,12 +424,11 @@ onMounted(() => {
                 </button>
               </div>
             </div>
-            <textarea
+            <MonacoVexEditor
               v-model="editedCode"
-              class="flex-1 p-4 bg-transparent text-white font-mono text-sm resize-none focus:outline-none"
-              spellcheck="false"
-              @keydown.ctrl.enter="runExample"
-              @keydown.meta.enter="runExample"
+              class="flex-1 min-h-0"
+              submit-on-mod-enter
+              @submit="runExample"
             />
           </div>
 
@@ -472,10 +474,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-textarea {
-  tab-size: 4;
-}
-
 /* Hide scrollbar for sidebar */
 aside::-webkit-scrollbar {
   width: 4px;

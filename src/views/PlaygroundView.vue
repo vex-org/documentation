@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { Play, Code, Terminal, Share2, Sparkles, BookOpen, ChevronRight, Zap, Target, Cpu, Wifi, WifiOff, Settings } from 'lucide-vue-next'
 import { runCode as apiRunCode, emitIR, healthCheck } from '../api/vex'
+import MonacoVexEditor from '../components/MonacoVexEditor.vue'
 
 const examples = [
   {
@@ -381,13 +382,12 @@ onMounted(async () => {
             <Code class="w-4 h-4 text-vex-primary" />
             <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Editor</span>
           </div>
-          <textarea 
+          <MonacoVexEditor
             v-model="code"
-            class="flex-1 p-6 bg-transparent text-white font-mono text-sm resize-none focus:outline-none"
-            spellcheck="false"
-            @keydown.ctrl.enter="runCode"
-            @keydown.meta.enter="runCode"
-          ></textarea>
+            class="flex-1 min-h-0"
+            submit-on-mod-enter
+            @submit="runCode"
+          />
         </div>
 
         <!-- Console -->
@@ -463,8 +463,3 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
-textarea {
-  tab-size: 4;
-}
-</style>

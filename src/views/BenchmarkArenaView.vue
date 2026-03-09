@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { Play, Trophy, AlertTriangle, ChevronRight, Sparkles, Code, Cpu, Settings, WandSparkles, FlaskConical } from 'lucide-vue-next'
 import { compareCode, comparePreset, type LangResult } from '../api/vex'
 import { benchmarks } from '../data/benchmarks'
+import MonacoVexEditor from '../components/MonacoVexEditor.vue'
 
 const LANG_META: Record<string, { label: string; color: string; icon: string }> = {
   vex: { label: 'Vex', color: '#00e5a0', icon: '⚡' },
@@ -266,15 +267,14 @@ function runBenchmark() {
             <span v-if="activeTab === 'preset'" class="ml-auto text-[10px] text-vex-text-muted">Pre-written code for all languages</span>
             <span v-else class="ml-auto text-[10px] text-vex-text-muted">AI will translate to other languages</span>
           </div>
-          <textarea
-            v-if="activeTab === 'custom'"
-            v-model="customCode"
-            class="w-full h-48 p-4 bg-transparent text-white font-mono text-sm resize-none focus:outline-none"
-            spellcheck="false"
-            placeholder="Write your Vex code here..."
-            @keydown.ctrl.enter="runBenchmark"
-            @keydown.meta.enter="runBenchmark"
-          ></textarea>
+          <div v-if="activeTab === 'custom'" class="h-48">
+            <MonacoVexEditor
+              v-model="customCode"
+              class="h-full"
+              submit-on-mod-enter
+              @submit="runBenchmark"
+            />
+          </div>
           <pre v-else class="p-4 text-sm text-white font-mono whitespace-pre-wrap max-h-48 overflow-auto">{{ benchmarks[activeExample].vex }}</pre>
         </div>
 

@@ -1,1 +1,0 @@
-import{_ as i,o as a,c as t,ag as n}from"./chunks/framework.BDReElpY.js";const c=JSON.parse('{"title":"std/url","description":"","frontmatter":{},"headers":[],"relativePath":"std/url.md","filePath":"std/url.md"}'),e={name:"std/url.md"};function l(h,s,r,p,o,d){return a(),t("div",null,[...s[0]||(s[0]=[n("",9)])])}const g=i(e,[["render",l]]);export{c as __pageData,g as default};

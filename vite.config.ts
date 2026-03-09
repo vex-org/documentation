@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url'
 import type { Plugin } from 'vite'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const repoRoot = join(__dirname, '..', '..')
 
 /** Serve pre-built VitePress docs from docs/.vitepress/dist during dev */
 function serveDocsPlugin(): Plugin {
@@ -36,14 +37,25 @@ function serveDocsPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [vue(), tailwindcss(), serveDocsPlugin()],
-  resolve: { alias: { '@': '/src' } },
-  server: { port: 3334 },
+  resolve: {
+    alias: {
+      '@': '/src',
+      '@vex-vscode': join(repoRoot, 'editors', 'vscode'),
+    },
+  },
+  server: {
+    port: 3334,
+    fs: {
+      allow: [repoRoot],
+    },
+  },
   build: {
     target: 'es2020',
     cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks: {
+          'monaco': ['monaco-editor', 'monaco-textmate', 'monaco-editor-textmate', 'vscode-oniguruma'],
           'vue-core': ['vue', 'vue-router'],
           'supabase': ['@supabase/supabase-js'],
           'markdown': ['marked', 'dompurify', 'turndown'],

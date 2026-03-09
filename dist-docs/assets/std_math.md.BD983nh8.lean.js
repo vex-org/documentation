@@ -1,0 +1,1 @@
+import{_ as s,o as a,c as e,ag as t}from"./chunks/framework.BDReElpY.js";const k=JSON.parse('{"title":"math","description":"","frontmatter":{},"headers":[],"relativePath":"std/math.md","filePath":"std/math.md"}'),n={name:"std/math.md"};function l(h,i,o,d,r,p){return a(),e("div",null,[...i[0]||(i[0]=[t("",11)])])}const g=s(n,[["render",l]]);export{k as __pageData,g as default};
