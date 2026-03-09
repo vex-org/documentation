@@ -45,7 +45,7 @@ const stats = [
           <div>
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-vex-border bg-vex-surface text-sm text-vex-text-muted mb-6">
               <span class="w-1.5 h-1.5 rounded-full bg-vex-success"></span>
-              v0.1.2 Alpha
+              v0.3.2 Alpha
             </div>
             <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-6 leading-[1.1]">
               Every Cycle.<br>
