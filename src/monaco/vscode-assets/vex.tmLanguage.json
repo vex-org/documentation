@@ -1,0 +1,628 @@
+{
+  "name": "Vex",
+  "scopeName": "source.vex",
+  "fileTypes": [
+    "vx",
+    "vxc"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#metadata"
+    },
+    {
+      "include": "#characters"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#struct-impl-declaration"
+    },
+    {
+      "include": "#contract-declaration"
+    },
+    {
+      "include": "#generic-type-params"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#functions"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#grad-scope"
+    },
+    {
+      "include": "#intrinsics"
+    },
+    {
+      "include": "#attributes"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.documentation.vex",
+          "match": "///.*$"
+        },
+        {
+          "name": "comment.line.double-slash.vex",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.documentation.vex",
+          "begin": "/\\*\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.block.vex",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.interpolated.vex",
+          "begin": "f\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.vex",
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u\\{[0-9A-Fa-f]+\\}|.)"
+            },
+            {
+              "name": "meta.interpolation.vex",
+              "begin": "\\{",
+              "end": "\\}",
+              "patterns": [
+                {
+                  "include": "$self"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.vex",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.vex",
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u\\{[0-9A-Fa-f]+\\}|.)"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.vex",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.vex",
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u\\{[0-9A-Fa-f]+\\}|.)"
+            }
+          ]
+        }
+      ]
+    },
+    "metadata": {
+      "patterns": [
+        {
+          "name": "string.quoted.backtick.vex",
+          "begin": "`",
+          "end": "`",
+          "patterns": [
+            {
+              "name": "meta.tag.metadata.vex",
+              "match": "([a-z_][a-z0-9_]*)\\s*:\\s*\"([^\"]*)\""
+            }
+          ]
+        }
+      ]
+    },
+    "characters": {
+      "name": "string.quoted.single.vex",
+      "match": "'([^'\\\\]|\\\\.)'",
+      "captures": {
+        "0": {
+          "name": "string.quoted.single.vex"
+        }
+      }
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.vex",
+          "match": "\\b0x[0-9A-Fa-f_]+\\b"
+        },
+        {
+          "name": "constant.numeric.binary.vex",
+          "match": "\\b0b[01_]+\\b"
+        },
+        {
+          "name": "constant.numeric.octal.vex",
+          "match": "\\b0o[0-7_]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.vex",
+          "match": "\\b[0-9][0-9_]*\\.[0-9][0-9_]*([eE][+-]?[0-9_]+)?(f16|f32|f64)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.vex",
+          "match": "\\b[0-9][0-9_]*(i8|i16|i32|i64|i128|u8|u16|u32|u64|u128)?\\b"
+        }
+      ]
+    },
+    "struct-impl-declaration": {
+      "patterns": [
+        {
+          "comment": "struct Name impl Contract1, Contract2 { ... }",
+          "name": "meta.struct.impl.vex",
+          "begin": "\\b(struct)\\s+([A-Z][A-Za-z0-9_]*)(?:\\s*(<)([^>]*)(>))?\\s+(impl)\\s+",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.declaration.struct.vex"
+            },
+            "2": {
+              "name": "entity.name.type.struct.vex"
+            },
+            "3": {
+              "name": "punctuation.definition.typeparameters.begin.vex"
+            },
+            "4": {
+              "patterns": [
+                {
+                  "include": "#types"
+                }
+              ]
+            },
+            "5": {
+              "name": "punctuation.definition.typeparameters.end.vex"
+            },
+            "6": {
+              "name": "keyword.declaration.impl.vex"
+            }
+          },
+          "end": "(?=\\{)",
+          "patterns": [
+            {
+              "match": "([A-Z][A-Za-z0-9_]*)",
+              "captures": {
+                "1": {
+                  "name": "entity.name.type.contract.vex"
+                }
+              }
+            },
+            {
+              "match": ",",
+              "name": "punctuation.separator.vex"
+            }
+          ]
+        }
+      ]
+    },
+    "contract-declaration": {
+      "patterns": [
+        {
+          "comment": "contract Name { method(): T; }",
+          "name": "meta.contract.vex",
+          "begin": "\\b(contract)\\s+([A-Z][A-Za-z0-9_]*)(?:\\s*(<)([^>]*)(>))?\\s*\\{",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.declaration.contract.vex"
+            },
+            "2": {
+              "name": "entity.name.type.contract.vex"
+            },
+            "3": {
+              "name": "punctuation.definition.typeparameters.begin.vex"
+            },
+            "4": {
+              "patterns": [
+                {
+                  "include": "#types"
+                }
+              ]
+            },
+            "5": {
+              "name": "punctuation.definition.typeparameters.end.vex"
+            }
+          },
+          "end": "\\}",
+          "patterns": [
+            {
+              "include": "#comments"
+            },
+            {
+              "include": "#contract-method"
+            },
+            {
+              "include": "#contract-associated-type"
+            }
+          ]
+        }
+      ]
+    },
+    "contract-method": {
+      "patterns": [
+        {
+          "comment": "Contract method: method_name(params): ReturnType;",
+          "name": "meta.contract.method.vex",
+          "match": "\\b([a-z_][a-z0-9_]*)\\s*\\(([^)]*)\\)\\s*(!)?\\s*(?::\\s*([^;{]+))?\\s*;",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.method.vex"
+            },
+            "2": {
+              "name": "variable.parameter.vex"
+            },
+            "3": {
+              "name": "keyword.operator.mutable.vex"
+            },
+            "4": {
+              "name": "entity.name.type.vex"
+            }
+          }
+        },
+        {
+          "comment": "Contract method with default implementation",
+          "name": "meta.contract.method.default.vex",
+          "begin": "\\b([a-z_][a-z0-9_]*)\\s*\\(([^)]*)\\)\\s*(!)?\\s*(?::\\s*([^{]+))?\\s*\\{",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.method.vex"
+            },
+            "2": {
+              "name": "variable.parameter.vex"
+            },
+            "3": {
+              "name": "keyword.operator.mutable.vex"
+            },
+            "4": {
+              "name": "entity.name.type.vex"
+            }
+          },
+          "end": "\\}",
+          "patterns": [
+            {
+              "include": "$self"
+            }
+          ]
+        }
+      ]
+    },
+    "contract-associated-type": {
+      "patterns": [
+        {
+          "comment": "type Item = T; or type Item;",
+          "match": "\\b(type)\\s+([A-Z][A-Za-z0-9_]*)\\s*(?:=\\s*([^;]+))?\\s*;",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.type.vex"
+            },
+            "2": {
+              "name": "entity.name.type.associated.vex"
+            },
+            "3": {
+              "name": "entity.name.type.vex"
+            }
+          }
+        }
+      ]
+    },
+    "generic-type-params": {
+      "patterns": [
+        {
+          "comment": "Generic type parameters: Type<Params> (nested-safe via begin/end)",
+          "name": "meta.generic.vex",
+          "begin": "\\b([A-Z][A-Za-z0-9_]*)\\s*(<)",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.type.vex"
+            },
+            "2": {
+              "name": "punctuation.definition.typeparameters.begin.vex"
+            }
+          },
+          "end": "(>)",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.typeparameters.end.vex"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#generic-type-params"
+            },
+            {
+              "include": "#comments"
+            },
+            {
+              "include": "#types"
+            },
+            {
+              "include": "#numbers"
+            }
+          ]
+        },
+        {
+          "comment": "Method turbofish: .method<Type>()",
+          "match": "\\.([a-z_][a-z0-9_]*)(<)([^>]*)(>)",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.vex"
+            },
+            "2": {
+              "name": "punctuation.definition.typeparameters.begin.vex"
+            },
+            "3": {
+              "patterns": [
+                {
+                  "include": "#types"
+                },
+                {
+                  "include": "#numbers"
+                }
+              ]
+            },
+            "4": {
+              "name": "punctuation.definition.typeparameters.end.vex"
+            }
+          }
+        },
+        {
+          "comment": "Function generic params: fn name<T>()",
+          "match": "\\b(fn)\\s+([a-z_][a-z0-9_]*)(<)([^>]*)(>)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.function.vex"
+            },
+            "2": {
+              "name": "entity.name.function.vex"
+            },
+            "3": {
+              "name": "punctuation.definition.typeparameters.begin.vex"
+            },
+            "4": {
+              "patterns": [
+                {
+                  "include": "#types"
+                },
+                {
+                  "include": "#numbers"
+                }
+              ]
+            },
+            "5": {
+              "name": "punctuation.definition.typeparameters.end.vex"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.vex",
+          "match": "\\b(if|else|elif|match|switch|case|default|for|while|loop|break|continue|return|defer|select|async|await|go|gpu|launch|spawn|yield|unsafe)\\b"
+        },
+        {
+          "name": "keyword.control.comptime.vex",
+          "match": "\\b(\\$for|\\$if|\\$typeof|\\$sizeof|\\$alignof|\\$typeof)\\b"
+        },
+        {
+          "comment": "Visibility section labels (C++ style)",
+          "name": "storage.modifier.visibility.vex",
+          "match": "\\b(private|readonly|public)\\s*:"
+        },
+        {
+          "comment": "Unsafe function declaration",
+          "name": "keyword.declaration.unsafe-function.vex",
+          "match": "\\b(fn!)\\b"
+        },
+        {
+          "comment": "Inline mutable method: fn method()!",
+          "name": "meta.function.mutable.vex",
+          "match": "\\b(fn)\\s+([a-z_][a-z0-9_]*)\\s*\\(([^)]*)\\)\\s*(!)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.function.vex"
+            },
+            "2": {
+              "name": "entity.name.function.vex"
+            },
+            "3": {
+              "name": "variable.parameter.vex"
+            },
+            "4": {
+              "name": "keyword.operator.mutable.vex"
+            }
+          }
+        },
+        {
+          "name": "keyword.declaration.vex",
+          "match": "\\b(fn|struct|enum|contract|impl|type|const|let!|let|policy|extern|extends)\\b"
+        },
+        {
+          "name": "storage.modifier.vex",
+          "match": "\\b(export|import|from|as|with)\\b"
+        },
+        {
+          "name": "keyword.other.vex",
+          "match": "\\b(in|where|Self|self|super)\\b"
+        },
+        {
+          "name": "constant.language.vex",
+          "match": "\\b(true|false|nil|None|Some|Ok|Err)\\b"
+        },
+        {
+          "name": "keyword.control.autograd.vex",
+          "match": "@\\{"
+        },
+        {
+          "name": "keyword.operator.mutable.vex",
+          "match": "(?<=[a-zA-Z0-9_\\)])!"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "support.type.primitive.vex",
+          "match": "\\b(i8|i16|i32|i64|i128|u8|u16|u32|u64|u128|f16|f32|f64|bool|string|byte|error|nil|usize|isize)\\b"
+        },
+        {
+          "comment": "Variadic parameter type: ...T",
+          "name": "meta.type.variadic.vex",
+          "match": "(\\.\\.\\.)(\\w+)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.variadic.vex"
+            },
+            "2": {
+              "name": "entity.name.type.vex"
+            }
+          }
+        },
+        {
+          "comment": "Associated type: Self.Item",
+          "name": "meta.type.associated.vex",
+          "match": "\\b(Self)\\s*\\.\\s*([A-Z][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.other.self.vex"
+            },
+            "2": {
+              "name": "entity.name.type.associated.vex"
+            }
+          }
+        },
+        {
+          "comment": "Mutable reference type: &Type!",
+          "name": "meta.type.mutable-reference.vex",
+          "match": "(&)([A-Za-z_][A-Za-z0-9_]*)(!)",
+          "captures": {
+            "1": {
+              "name": "keyword.operator.reference.vex"
+            },
+            "2": {
+              "name": "entity.name.type.vex"
+            },
+            "3": {
+              "name": "keyword.operator.mutable.vex"
+            }
+          }
+        },
+        {
+          "name": "entity.name.type.vex",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        },
+        {
+          "name": "storage.type.vex",
+          "match": "\\b(Vec|Box|Option|Result|Channel|Future|HashMap|Slice)\\b"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "comment": "Go-style external method: fn (self: &Type) method()",
+          "name": "meta.function.external-method.vex",
+          "match": "\\b(fn)\\s*\\(\\s*(self|\\w+)\\s*:\\s*(&)?([A-Za-z_][A-Za-z0-9_]*)(!)?\\s*\\)\\s*([a-z_][a-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.function.vex"
+            },
+            "2": {
+              "name": "variable.language.self.vex"
+            },
+            "3": {
+              "name": "keyword.operator.reference.vex"
+            },
+            "4": {
+              "name": "entity.name.type.vex"
+            },
+            "5": {
+              "name": "keyword.operator.mutable.vex"
+            },
+            "6": {
+              "name": "entity.name.function.method.vex"
+            }
+          }
+        },
+        {
+          "name": "entity.name.function.vex",
+          "match": "\\b([a-z_][a-z0-9_]*)\\s*(?:<[^>]*>)?\\s*(?=\\()"
+        },
+        {
+          "name": "entity.name.function.operator.vex",
+          "match": "\\b(op(?:\\+|\\-|\\*|/|%|\\^|&|\\||~|<<|>>|<|>|==|!=|<=|>=|\\?\\?)+)\\s*(?=\\()"
+        },
+        {
+          "name": "support.function.builtin.vex",
+          "match": "\\b(println|print|panic|assert|unreachable|alloc|free|realloc|sizeof|alignof|typeof|type_id|type_size|type_align|is_int_type|is_float_type|is_pointer_type|memcpy|memset|memcmp|memmove|strlen|strcmp|strcpy|strcat|strdup|utf8_valid|utf8_char_count|utf8_char_at|ctlz|cttz|ctpop|bswap|bitreverse|sadd_overflow|ssub_overflow|smul_overflow|assume|likely|unlikely|prefetch)\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.vex",
+          "match": "(!>|\\?|\\*\\*=|\\*\\*|\\.\\.=|\\.\\.|\\?\\?|<<<|>>>|<<=|>>=|<<|>>|<\\*>|<\\^>|<\\\\>|<\\+|\\<\\*|<&|<\\|>|<?\\||>?\\||<\\?|>\\?|><|\\*\\^|\\*\\+|\\+\\||\\-\\||\\*\\||###|##|#|@:|~:|\\+\\+|×|·|\\+=|\\-=|\\*=|\\/=|%=|&=|\\|=|\\^=|==|!=|<=|>=|&&|\\|\\||\\+|\\-|\\*|\\/|%|\\^|&|\\||~|<|>|=)"
+        },
+        {
+          "name": "keyword.operator.arrow.vex",
+          "match": "(->|=>)"
+        }
+      ]
+    },
+    "attributes": {
+      "patterns": [
+        {
+          "name": "meta.attribute.vex",
+          "begin": "@",
+          "end": "(?=\\s|\\(|\\[|\\{|;|,)",
+          "patterns": [
+            {
+              "name": "entity.name.function.attribute.vex",
+              "match": "[a-z_][a-z0-9_]*"
+            }
+          ]
+        }
+      ]
+    },
+    "intrinsics": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.intrinsic.vex",
+          "match": "\\$[a-z_][a-z0-9_]*"
+        }
+      ]
+    },
+    "grad-scope": {
+      "patterns": [
+        {
+          "name": "keyword.control.autograd.vex",
+          "match": "@\\{"
+        }
+      ]
+    }
+  }
+}

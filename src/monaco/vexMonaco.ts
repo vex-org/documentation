@@ -4,9 +4,9 @@ import { wireTmGrammars } from 'monaco-editor-textmate'
 import { loadWASM } from 'vscode-oniguruma'
 import onigWasmUrl from 'vscode-oniguruma/release/onig.wasm?url'
 
-import vexGrammar from '@vex-vscode/syntaxes/vex.tmLanguage.json'
-import vexTheme from '@vex-vscode/themes/vex-dark.json'
-import vexLanguageConfiguration from '@vex-vscode/language-configuration.json'
+import vexGrammar from './vscode-assets/vex.tmLanguage.json'
+import vexTheme from './vscode-assets/vex-dark.json'
+import vexLanguageConfiguration from './vscode-assets/language-configuration.json'
 
 const VEX_LANGUAGE_ID = 'vex'
 const VEX_SCOPE_NAME = 'source.vex'

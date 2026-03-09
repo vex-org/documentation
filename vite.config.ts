@@ -40,7 +40,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src',
-      '@vex-vscode': join(repoRoot, 'editors', 'vscode'),
     },
   },
   server: {
