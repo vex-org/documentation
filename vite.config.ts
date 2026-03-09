@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /** Serve pre-built VitePress docs from docs/.vitepress/dist during dev */
 function serveDocsPlugin(): Plugin {
-  const docsDistDir = join(__dirname, 'docs/.vitepress/dist')
+  const docsDistDir = join(__dirname, 'dist-docs')
   return {
     name: 'serve-vitepress-docs',
     configureServer: {

@@ -11,13 +11,13 @@ Comprehensive reference for the Vex test runner — test discovery, execution, b
 vex test
 
 # Run tests in a specific file
-vex test lib/std/rand/tests/rand.test.vx
+vex test lib/rand/tests/rand.test.vx
 
 # Run tests matching a pattern
-vex test lib/std/
+vex test lib/
 
 # Run benchmarks only
-vex test --bench lib/std/rand/tests/bench.test.vx
+vex test --bench lib/rand/tests/bench.test.vx
 
 # Run with all features
 vex test --failfast --benchmem --json
@@ -202,7 +202,7 @@ fn BenchmarkWithThroughput(b: &BenchCtx!) {
 
 ```bash
 # Run all benchmarks in a file
-vex test --bench lib/std/rand/tests/bench.test.vx
+vex test --bench lib/rand/tests/bench.test.vx
 
 # Custom duration (default: 1s)
 vex test --bench --benchtime 500ms file.test.vx
@@ -332,10 +332,10 @@ Status values: `pass`, `fail`, `timeout`, `compile_error`, `runtime_error`.
 ```
 vex test · 24 tests · 5 files
 
-  lib/std/rand/tests/rand.test.vx
+  lib/rand/tests/rand.test.vx
        1/24 ✓ test_seed          <1ms
        2/24 ✓ test_next_range    <1ms
-  lib/std/math/tests/math.test.vx
+  lib/math/tests/math.test.vx
        3/24 ✗ test_sqrt          <1ms
               assertion failed: test_sqrt
                 expected: 3
@@ -450,4 +450,4 @@ Tests are placed alongside source code. The runner automatically imports `testin
 ## Related References
 
 - [vex-cli Reference](./vex-cli-reference.md)
-- [TestCtx source](file:///lib/std/testing/src/core.vx)
+- [TestCtx source](file:///lib/testing/src/core.vx)

@@ -22,6 +22,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Guide', link: '/guide/introduction' },
+      { text: 'Standard Library', link: '/std/' },
       { text: 'Reference', link: '/references/' },
       { text: 'Playground', link: 'https://vex-lang.org/playground' },
       { text: 'Arena', link: 'https://vex-lang.org/arena' },
@@ -111,6 +112,14 @@ export default defineConfig({
             { text: 'Standard Library', link: '/guide/stdlib' },
             { text: 'GPU Programming', link: '/guide/gpu/' },
             { text: 'Math', link: '/guide/math' },
+            { text: 'IO', link: '/guide/io' },
+            { text: 'ML', link: '/guide/ml' },
+            { text: 'Net', link: '/guide/net' },
+            { text: 'HTTP', link: '/guide/http' },
+            { text: 'Inference', link: '/guide/inference' },
+            { text: 'Regex', link: '/guide/regex' },
+            { text: 'SemVer', link: '/guide/semver' },
+            { text: 'Serde', link: '/guide/serde' },
             { text: 'Crypto', link: '/guide/crypto' },
             { text: 'Bit Operations', link: '/guide/bit' },
             { text: 'Freestanding', link: '/guide/freestanding' },
@@ -136,6 +145,118 @@ export default defineConfig({
           text: 'Architecture',
           items: [
             { text: 'Overview', link: '/architecture/' },
+          ],
+        },
+      ],
+      '/std/': [
+        {
+          text: 'Standard Library',
+          items: [
+            { text: 'Overview', link: '/std/' },
+            { text: 'Bit', link: '/std/bit' },
+            { text: 'CLI', link: '/std/cli' },
+            {
+              text: 'Compress',
+              collapsed: true,
+              items: [
+                { text: 'Overview', link: '/std/compress/' },
+                { text: 'LZ4', link: '/std/compress/lz4' },
+                { text: 'Zstd', link: '/std/compress/zstd' },
+                { text: 'Gzip & Deflate', link: '/std/compress/gzip' },
+                { text: 'Brotli', link: '/std/compress/brotli' },
+              ]
+            },
+            { text: 'Context', link: '/std/context' },
+            {
+              text: 'Crypto',
+              collapsed: true,
+              items: [
+                { text: 'Overview', link: '/std/crypto/' },
+                { text: 'Hashing', link: '/std/crypto/hashing' },
+                { text: 'Encryption (AEAD)', link: '/std/crypto/encryption' },
+                { text: 'KDF & Signatures', link: '/std/crypto/kdf' },
+              ]
+            },
+            {
+              text: 'DB & ORM',
+              collapsed: true,
+              items: [
+                { text: 'Overview', link: '/std/db/' },
+                { text: 'Connection & Queries', link: '/std/db/connection' },
+                { text: 'ORM (Db<T>)', link: '/std/db/orm' },
+              ]
+            },
+            { text: 'Encoding', link: '/std/encoding' },
+            { text: 'Errors', link: '/std/errors' },
+            {
+              text: 'FS',
+              collapsed: true,
+              items: [
+                { text: 'Overview', link: '/std/fs/' },
+                { text: 'File I/O', link: '/std/fs/file' },
+                { text: 'Paths & Directories', link: '/std/fs/paths' },
+              ]
+            },
+            { text: 'Hash', link: '/std/hash' },
+            { 
+              text: 'HTTP & Fiber', 
+              collapsed: true,
+              items: [
+                { text: 'Overview', link: '/std/http/' },
+                { text: 'Core Server', link: '/std/http/server' },
+                { text: 'HTTP Client', link: '/std/http/client' },
+                { text: 'Fiber Framework', link: '/std/http/fiber' },
+                { text: 'WebSockets', link: '/std/http/ws' },
+                { text: 'HTTP/2', link: '/std/http/h2' },
+                { text: 'Middleware', link: '/std/http/middleware' },
+              ]
+            },
+            { text: 'Inference', link: '/std/inference' },
+            { text: 'IO', link: '/std/io' },
+            { text: 'Log', link: '/std/log' },
+            { text: 'Math', link: '/std/math' },
+            { text: 'Mem', link: '/std/mem' },
+            { text: 'ML', link: '/std/ml' },
+            { text: 'Net', link: '/std/net' },
+            { text: 'Rand', link: '/std/rand' },
+            {
+              text: 'Regex',
+              collapsed: true,
+              items: [
+                { text: 'Overview & Engine', link: '/std/regex/' },
+                { text: 'API Reference', link: '/std/regex/api' },
+                { text: 'Engine Internals', link: '/std/regex/internals' },
+              ]
+            },
+            { text: 'SemVer', link: '/std/semver' },
+            { 
+              text: 'Serde',
+              collapsed: true,
+              items: [
+                { text: 'Overview & Contracts', link: '/std/serde/' },
+                { text: 'JSON', link: '/std/serde/json' },
+                { text: 'TOML', link: '/std/serde/toml' },
+                { text: 'CSV', link: '/std/serde/csv' },
+                { text: 'MessagePack', link: '/std/serde/msgpack' },
+                { text: 'YAML', link: '/std/serde/yaml' },
+                { text: 'CBOR', link: '/std/serde/cbor' },
+              ]
+            },
+            { text: 'Sort', link: '/std/sort' },
+            { text: 'StrConv', link: '/std/strconv' },
+            { text: 'Strings', link: '/std/strings' },
+            { text: 'Sys', link: '/std/sys' },
+            { text: 'Testing', link: '/std/testing' },
+            {
+              text: 'Time',
+              collapsed: true,
+              items: [
+                { text: 'Overview', link: '/std/time/' },
+                { text: 'Time & Duration API', link: '/std/time/api' },
+              ]
+            },
+            { text: 'Unicode', link: '/std/unicode' },
+            { text: 'Url', link: '/std/url' },
           ],
         },
       ],

@@ -175,7 +175,7 @@ All `Crypto.*` functions require hardware support. The compiler automatically se
 | CRC-32C | SSE4.2 (2008+) | CRC32 (ARMv8.1+) | ✅ M1+ |
 | Secure RNG | RDRAND (2012+) | arc4random | ✅ Always |
 
-> **If hardware is not available**, the compiler will emit an error at compile time. Use the pure Vex implementations from `lib/std/crypto` as a portable fallback.
+> **If hardware is not available**, the compiler will emit an error at compile time. Use the pure Vex implementations from `lib/crypto` as a portable fallback.
 
 ## Next Steps
 

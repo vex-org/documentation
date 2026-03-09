@@ -63,11 +63,11 @@ pub fn main() !void {
   // 2. Sum 1M
   {
     name: 'Sum 1M',
-    description: 'Sum integers 0..1M — tests loop performance',
+    description: 'Sum integers 0..1M — tests loop auto-vectorization',
     vex: `fn main(): i32 {
     let! sum: i64 = 0
     for i in 0..1000000 {
-        sum = sum + i as i64
+        sum += i as i64
     }
     println(sum)
     return 0
@@ -106,11 +106,11 @@ pub fn main() !void {
   // 3. String Concat
   {
     name: 'String Concat',
-    description: 'Build a string by repeated concatenation — tests allocator',
+    description: 'Build string by concat — tests VexString COW allocator',
     vex: `fn main(): i32 {
     let! s = ""
-    for i in 0..10000 {
-        s = s + "x"
+    for _ in 0..10000 {
+        s += "x"   // VexString: COW + SSO + inline up to 15 bytes
     }
     println(s.len())
     return 0
@@ -148,17 +148,19 @@ pub fn main() !void {
   // 4. Array Dot Product
   {
     name: 'Dot Product',
-    description: 'SIMD-friendly dot product — tests vectorization',
-    vex: `fn dot(a: [f64; 4], b: [f64; 4]): f64 {
+    description: 'SIMD dot product — Vex compiles a * b to single VMUL + horizontal VADD',
+    vex: `// Vex: array * array → SIMD multiply, <+ → horizontal sum
+// Compiles to: vmulpd + vhaddpd (2 instructions!)
+fn dot(a: [f64; 4], b: [f64; 4]): f64 {
     return <+ (a * b)
 }
 
 fn main(): i32 {
+    let a = [1.0, 2.0, 3.0, 4.0]
+    let b = [5.0, 6.0, 7.0, 8.0]
     let! sum: f64 = 0.0
-    for i in 0..100000 {
-        let a = [1.0, 2.0, 3.0, 4.0]
-        let b = [5.0, 6.0, 7.0, 8.0]
-        sum = sum + dot(a, b)
+    for _ in 0..100000 {
+        sum += dot(a, b)
     }
     println(sum)
     return 0
@@ -219,23 +221,20 @@ pub fn main() !void {
   // 5. Sieve of Eratosthenes
   {
     name: 'Prime Sieve',
-    description: 'Sieve of Eratosthenes up to 100K — tests array access',
+    description: 'Sieve of Eratosthenes up to 100K — tests array access patterns',
     vex: `fn main(): i32 {
     let limit = 100000
-    let! sieve = Vec.new<bool>()
-    for _ in 0..limit {
-        sieve.push(true)
-    }
-    sieve.set(0, false)
-    sieve.set(1, false)
+    let! sieve = [true; limit]   // Fixed-size array, stack allocated
+    sieve[0] = false
+    sieve[1] = false
     let! count = 0
     for i in 2..limit {
-        if sieve.getUnchecked(i) {
-            count = count + 1
+        if sieve[i] {
+            count += 1
             let! j = i * i
             while j < limit {
-                sieve.set(j, false)
-                j = j + i
+                sieve[j] = false
+                j += i
             }
         }
     }
@@ -306,7 +305,7 @@ pub fn main() !void {
     description: '4×4 matrix multiply 100K times — tests compute density',
     vex: `fn main(): i32 {
     let! sum: f64 = 0.0
-    for iter in 0..100000 {
+    for _ in 0..100000 {
         let a = [1.0, 2.0, 3.0, 4.0,
                  5.0, 6.0, 7.0, 8.0,
                  9.0, 10.0, 11.0, 12.0,
@@ -320,12 +319,12 @@ pub fn main() !void {
             for j in 0..4 {
                 let! s: f64 = 0.0
                 for k in 0..4 {
-                    s = s + a[i * 4 + k] * b[k * 4 + j]
+                    s += a[i * 4 + k] * b[k * 4 + j]
                 }
                 c[i * 4 + j] = s
             }
         }
-        sum = sum + c[0]
+        sum += c[0]
     }
     println(sum)
     return 0
@@ -406,11 +405,11 @@ pub fn main() !void {
     let! count = 0
     while x > 1 {
         if x % 2 == 0 {
-            x = x / 2
+            x /= 2
         } else {
             x = 3 * x + 1
         }
-        count = count + 1
+        count += 1
     }
     return count
 }
@@ -543,7 +542,7 @@ fn main(): i32 {
     let! found = 0
     for i in 0..1000000 {
         let idx = binary_search(&arr, i % 10000)
-        if idx >= 0 { found = found + 1 }
+        if idx >= 0 { found += 1 }
     }
     println(found)
     return 0
@@ -634,10 +633,10 @@ pub fn main() !void {
                 if i != j {
                     let dx = x.getUnchecked(j) - x.getUnchecked(i)
                     let dy = y.getUnchecked(j) - y.getUnchecked(i)
-                    let dist = (dx * dx + dy * dy + 0.01)
+                    let dist = dx * dx + dy * dy + 0.01
                     let force = 1.0 / dist
-                    fx = fx + dx * force
-                    fy = fy + dy * force
+                    fx += dx * force
+                    fy += dy * force
                 }
             }
             vx.set(i, vx.getUnchecked(i) + fx * 0.001)
@@ -763,9 +762,9 @@ pub fn main() !void {
     vex: `fn main(): i32 {
     let! count = 0
     for i in 1..100001 {
-        if i % 15 == 0 { count = count + 3 }
-        else if i % 3 == 0 { count = count + 1 }
-        else if i % 5 == 0 { count = count + 2 }
+        if i % 15 == 0 { count += 3 }
+        elif i % 3 == 0 { count += 1 }
+        elif i % 5 == 0 { count += 2 }
     }
     println(count)
     return 0
@@ -818,12 +817,11 @@ pub fn main() !void {
   // 11. Sum of squares
   {
     name: 'Sum Squares',
-    description: 'Accumulate squares up to 1M — tests arithmetic throughput',
+    description: 'Accumulate squares up to 1M — tests FMA auto-vectorization',
     vex: `fn main(): i32 {
     let! total: i64 = 0
     for i in 0..1000000 {
-        let x = i as i64
-        total = total + x * x
+        total += (i as i64) * (i as i64)
     }
     println(total)
     return 0
@@ -870,7 +868,7 @@ pub fn main() !void {
     }
     let! running: i64 = 0
     for i in 0..n {
-        running = running + values.getUnchecked(i)
+        running += values.getUnchecked(i)
         values.set(i, running)
     }
     println(values.getUnchecked(n - 1))
@@ -926,9 +924,9 @@ pub fn main() !void {
     description: 'Generate 5M pseudo-random values — tests bitwise throughput',
     vex: `fn next_rng(state: u64): u64 {
     let! x = state
-    x = x ^ (x << 13)
-    x = x ^ (x >> 7)
-    x = x ^ (x << 17)
+    x ^= x << 13
+    x ^= x >> 7
+    x ^= x << 17
     return x
 }
 
@@ -937,7 +935,7 @@ fn main(): i32 {
     let! checksum: u64 = 0
     for _ in 0..5000000 {
         state = next_rng(state)
-        checksum = checksum ^ state
+        checksum ^= state
     }
     println(checksum)
     return 0
@@ -1005,16 +1003,12 @@ pub fn main() !void {
     name: 'Histogram 256',
     description: 'Build 256-bin histogram over 1M values — tests indexed updates',
     vex: `fn main(): i32 {
-    let bins = 256
-    let! hist = Vec.new<i32>()
-    for _ in 0..bins {
-        hist.push(0)
-    }
+    let! hist = [0i32; 256]    // Stack-allocated fixed array
     for i in 0..1000000 {
-        let idx = (i * 17 + 23) % bins
-        hist.set(idx, hist.getUnchecked(idx) + 1)
+        let idx = (i * 17 + 23) % 256
+        hist[idx] += 1
     }
-    println(hist.getUnchecked(0) + hist.getUnchecked(17) + hist.getUnchecked(42))
+    println(hist[0] + hist[17] + hist[42])
     return 0
 }`,
     go: `package main
@@ -1061,7 +1055,7 @@ pub fn main() !void {
 fn main(): i32 {
     let! acc: f64 = 0.0
     for i in 0..2000000 {
-        acc = acc + poly((i % 1000) as f64 * 0.001)
+        acc += poly((i % 1000) as f64 * 0.001)
     }
     println(acc)
     return 0
@@ -1112,28 +1106,24 @@ pub fn main() !void {
   {
     name: 'Mandelbrot Mini',
     description: '64×64 Mandelbrot sweep — tests floating-point branches',
-    vex: `fn iter(cx: f64, cy: f64): i32 {
-    let! x: f64 = 0.0
-    let! y: f64 = 0.0
-    let! it = 0
-    while it < 50 {
-        let x2 = x * x - y * y + cx
-        let y2 = 2.0 * x * y + cy
-        x = x2
-        y = y2
-        if x * x + y * y > 4.0 { return it }
-        it = it + 1
+    vex: `fn escape(cx: f64, cy: f64): i32 {
+    let! zr: f64 = 0.0
+    let! zi: f64 = 0.0
+    for it in 0..50 {
+        let zr2 = zr * zr - zi * zi + cx
+        zi = 2.0 * zr * zi + cy
+        zr = zr2
+        if zr * zr + zi * zi > 4.0 { return it }
     }
-    return it
+    return 50
 }
 
 fn main(): i32 {
     let! total = 0
     for py in 0..64 {
         for px in 0..64 {
-            let cx = px as f64 * 0.05 - 2.0
-            let cy = py as f64 * 0.05 - 1.6
-            total = total + iter(cx, cy)
+            total += escape(px as f64 * 0.05 - 2.0,
+                            py as f64 * 0.05 - 1.6)
         }
     }
     println(total)
@@ -1225,12 +1215,13 @@ pub fn main() !void {
   {
     name: 'Bit Count Sweep',
     description: 'Manual popcount over 1M values — tests integer bit-twiddling',
-    vex: `fn popcount(x0: u64): i32 {
+    vex: `// Fast manual popcount using Kernighan's algorithm
+fn popcount(x0: u64): i32 {
     let! x = x0
     let! count = 0
     while x != 0 {
-        x = x & (x - 1)
-        count = count + 1
+        x &= x - 1
+        count += 1
     }
     return count
 }
@@ -1238,7 +1229,7 @@ pub fn main() !void {
 fn main(): i32 {
     let! total = 0
     for i in 1..1000001 {
-        total = total + popcount((i as u64) * 2654435761)
+        total += popcount((i as u64) * 2654435761)
     }
     println(total)
     return 0
@@ -1319,7 +1310,7 @@ pub fn main() !void {
 fn main(): i32 {
     let! total: i64 = 0
     for i in 1..500001 {
-        total = total + gcd(i as i64 * 17, i as i64 * 29 + 1)
+        total += gcd(i as i64 * 17, i as i64 * 29 + 1)
     }
     println(total)
     return 0
@@ -1394,7 +1385,7 @@ fn main(): i32 {
     for i in 0..n {
         let x0 = i as f64 * h
         let x1 = (i + 1) as f64 * h
-        area = area + (f(x0) + f(x1)) * h * 0.5
+        area += (f(x0) + f(x1)) * h * 0.5
     }
     println(area)
     return 0
@@ -1466,7 +1457,7 @@ fn main(): i32 {
         state = next_rng(state)
         let y = (state % 1000000) as f64 / 1000000.0
         if x * x + y * y <= 1.0 {
-            inside = inside + 1
+            inside += 1
         }
     }
     println(inside)
@@ -1642,12 +1633,12 @@ pub fn main() !void {
     }
     let! rolling: i64 = 0
     for i in 0..window {
-        rolling = rolling + values.getUnchecked(i)
+        rolling += values.getUnchecked(i)
     }
     let! checksum: i64 = rolling
     for i in window..n {
-        rolling = rolling + values.getUnchecked(i) - values.getUnchecked(i - window)
-        checksum = checksum + rolling
+        rolling += values.getUnchecked(i) - values.getUnchecked(i - window)
+        checksum += rolling
     }
     println(checksum)
     return 0
@@ -1731,7 +1722,7 @@ pub fn main() !void {
             values.set(i, values.getUnchecked(best))
             values.set(best, tmp)
         }
-        checksum = checksum + values.getUnchecked(0) + values.getUnchecked(511)
+        checksum += values.getUnchecked(0) + values.getUnchecked(511)
     }
     println(checksum)
     return 0
@@ -1821,21 +1812,21 @@ pub fn main() !void {
         while ia < a.len() && ib < b.len() {
             if a.getUnchecked(ia) < b.getUnchecked(ib) {
                 merged.push(a.getUnchecked(ia))
-                ia = ia + 1
+                ia += 1
             } else {
                 merged.push(b.getUnchecked(ib))
-                ib = ib + 1
+                ib += 1
             }
         }
         while ia < a.len() {
             merged.push(a.getUnchecked(ia))
-            ia = ia + 1
+            ia += 1
         }
         while ib < b.len() {
             merged.push(b.getUnchecked(ib))
-            ib = ib + 1
+            ib += 1
         }
-        checksum = checksum + merged.getUnchecked(0) + merged.getUnchecked(merged.len() - 1)
+        checksum += merged.getUnchecked(0) + merged.getUnchecked(merged.len() - 1)
     }
     println(checksum)
     return 0
@@ -1944,7 +1935,7 @@ pub fn main() !void {
         tail = (tail + 1) % cap
         let value = buf.getUnchecked(head)
         head = (head + 1) % cap
-        checksum = checksum + value
+        checksum += value
     }
     println(checksum)
     return 0
@@ -2010,7 +2001,7 @@ pub fn main() !void {
     let! checksum: u64 = 0
     for _ in 0..5000000 {
         x = x * 1664525 + 1013904223
-        checksum = checksum + (x & 65535)
+        checksum += x & 65535
     }
     println(checksum)
     return 0
@@ -2057,18 +2048,18 @@ pub fn main() !void {
     description: 'All-pairs squared distances for 128 points — tests nested FP loops',
     vex: `fn main(): i32 {
     let n = 128
-    let! x = Vec.new<f64>()
-    let! y = Vec.new<f64>()
+    let! x = [0.0f64; n]
+    let! y = [0.0f64; n]
     for i in 0..n {
-        x.push(i as f64 * 0.25)
-        y.push(i as f64 * 0.5)
+        x[i] = i as f64 * 0.25
+        y[i] = i as f64 * 0.5
     }
     let! total: f64 = 0.0
     for i in 0..n {
         for j in 0..n {
-            let dx = x.getUnchecked(i) - x.getUnchecked(j)
-            let dy = y.getUnchecked(i) - y.getUnchecked(j)
-            total = total + dx * dx + dy * dy
+            let dx = x[i] - x[j]
+            let dy = y[i] - y[j]
+            total += dx * dx + dy * dy
         }
     }
     println(total)
@@ -2268,32 +2259,13 @@ pub fn main() !void {
   {
     name: 'Min/Max Reduce',
     description: 'Vex reduction-friendly min/max scan — tests aggregate operations',
-    vex: `fn lane_min(v: [f64; 4]): f64 {
-    let! best = v[0]
-    for i in 1..4 {
-        if v[i] < best {
-            best = v[i]
-        }
-    }
-    return best
-}
-
-fn lane_max(v: [f64; 4]): f64 {
-    let! best = v[0]
-    for i in 1..4 {
-        if v[i] > best {
-            best = v[i]
-        }
-    }
-    return best
-}
-
+    vex: `// Vex SIMD reduction operators: <?| (min), >?| (max)
 fn main(): i32 {
     let! acc: f64 = 0.0
     for i in 0..500000 {
         let base = i as f64 * 0.001
         let v = [base, base + 3.0, base - 2.0, base + 1.0]
-        acc = acc + lane_max(v) - lane_min(v)
+        acc += (>?| v) - (<?| v)   // Hardware SIMD min/max reduction
     }
     println(acc)
     return 0
