@@ -2,6 +2,7 @@
   "name": "vex-lang-org",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "bun@1.3.10",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,6 +24,7 @@
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "dompurify": "^3.3.1",
+    "entities": "7.0.1",
     "lowlight": "^3.3.0",
     "lucide-vue-next": "^0.563.0",
     "marked": "^15.0.0",
