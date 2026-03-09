@@ -11,3 +11,18 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+declare module '@vex-vscode/syntaxes/vex.tmLanguage.json' {
+  const value: Record<string, unknown>
+  export default value
+}
+
+declare module '@vex-vscode/themes/vex-dark.json' {
+  const value: Record<string, unknown>
+  export default value
+}
+
+declare module '@vex-vscode/language-configuration.json' {
+  const value: Record<string, unknown>
+  export default value
+}
