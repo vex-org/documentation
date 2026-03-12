@@ -49,7 +49,7 @@ cargo build --release
 ## Pre-built Binaries
 
 ::: info Coming Soon
-Pre-built binaries for all platforms will be available on the releases page after v0.3.2.
+Pre-built binaries for all platforms will be available on the releases page after v0.3.3.
 :::
 
 ## Editor/IDE Setup
