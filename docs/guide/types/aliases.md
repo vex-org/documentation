@@ -1,6 +1,15 @@
 # Type Aliases & Conditional Types
 
-Vex supports type aliases for creating readable type names and conditional types for compile-time type computation.
+Vex supports type aliases today, and it reserves a broader compile-time type algebra for the roadmap. In particular, **conditional types**, `infer`, and **mapped types** are planned Vex features, but should be treated as roadmap items unless explicitly marked as implemented in the compiler status docs.
+
+::: warning Roadmap Status
+The examples in the **Conditional Types**, `infer`, and **Mapped types** sections describe the intended Vex direction.
+
+- **Type aliases** and **generic aliases** are current language features.
+- **Conditional types / infer / mapped types / keyof-style transforms** are part of the roadmap.
+
+If you are writing production Vex code today, prefer plain aliases, generic aliases, contracts, associated types, and comptime facilities.
+:::
 
 ## Type Aliases
 
@@ -61,7 +70,7 @@ type Vec2<T> = (T, T)
 type Matrix<T> = [[T]]
 
 // Constrained generic alias
-type Numeric<T: Add + Mul> = T
+type Numeric<T: $Add + $Mul> = T
 
 // Usage
 let point: Vec2<f64> = (1.0, 2.0)
@@ -79,6 +88,8 @@ TypeScript-style conditional types for compile-time type computation:
 type IsString<T> = T extends string ? true : false
 type IsNumber<T> = T extends i32 | i64 | f32 | f64 ? true : false
 ```
+
+> Roadmap feature: syntax is planned, but full semantic support is still being completed.
 
 ### The `infer` Keyword
 
@@ -101,6 +112,8 @@ type ExtractErr<T> = T extends Result<infer V, infer E> ? E : never
 
 // ExtractErr<Result<i32, string>> → string
 ```
+
+> Roadmap feature: `infer`-based extraction is part of the intended compile-time type system.
 
 ### Conditional Type Examples
 
@@ -206,7 +219,7 @@ fn meters_to_km(m: Meters): Kilometers {
 type StringOrNumber = string | i32 | i64 | f64
 
 // Intersection-like (via contracts)
-type Printable = impl Display + Debug
+type Printable = struct: $Display + $Debug
 
 // Mapped types
 type Readonly<T> = {
@@ -215,12 +228,16 @@ type Readonly<T> = {
 
 type Partial<T> = {
     [K in keyof T]?: T[K]
+    // Or
+    // [K in keyof T]: Option<T[k]>
 }
 
 type Required<T> = {
-    [K in keyof T]-?: T[K]
+    [K in keyof T]: T[K]
 }
 ```
+
+> Roadmap feature: mapped-type style transforms are planned, not the baseline for current code.
 
 ## Best Practices
 

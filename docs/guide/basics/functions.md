@@ -127,6 +127,48 @@ fn print_it<T: $Display>(item: T) {
 }
 ```
 
+## Function Overloading
+
+Vex supports function overloading when functions share a name but have distinct parameter signatures.
+
+```vex
+fn add(a: i32, b: i32): i32 {
+    return a + b
+}
+
+fn add(a: f64, b: f64): f64 {
+    return a + b
+}
+
+let x = add(1, 2)
+let y = add(1.5, 2.5)
+```
+
+### Resolution Priority
+
+When multiple overloads are available, Vex currently prefers:
+
+1. **Exact type match**
+2. **Compatible numeric coercion**
+3. **More generic fallback**
+4. **Compile error** if the call is still ambiguous
+
+### Tested Scenarios
+
+| Scenario | Status | Notes |
+|----------|--------|-------|
+| Different primitive parameter types | ✅ | Covered by overload regression tests |
+| Different arity | ✅ | Covered by `num_args_001.vx` |
+| Imported overloaded functions | ✅ | Covered by `import_001.vx` |
+| Default-parameter overloads | ✅ | Covered by `default_001.vx` |
+| Variadic overloads | ✅ | Covered by `variadic_001.vx` |
+| Generic fallback vs specific overload | ✅ | Covered by `generic_specific_001.vx` |
+| Exhaustive generic + variadic + default-param combinations | ⚠️ Partial | Core cases are tested, but the full matrix is not yet exhaustive |
+
+::: warning Current Coverage Note
+Core function overloading is tested and usable today, including basic **generic fallback**, **variadic**, and **default-parameter** cases. However, the overload regression suite still does **not** exhaust every combination involving **generic functions**, **variadic functions**, and **default parameters** together.
+:::
+
 ## Multiple Return Values (Tuples)
 
 Vex uses tuples to return multiple values:

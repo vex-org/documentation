@@ -123,7 +123,7 @@ contract Display {
     toString(): string;
 }
 
-struct Point impl Display {
+struct Point: Display {
     x: f64,
     y: f64
 }

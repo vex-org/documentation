@@ -7,6 +7,8 @@ Contracts define shared behavior in Vex. They are similar to interfaces in Go or
 - Method signatures have NO `fn` prefix inside contracts.
 - **Contract methods are signatures only** — NO bodies or default implementations!
 - Contracts can require **fields** with specific visibility.
+- Contract implementation uses **colon syntax on the type**: `struct X: Contract`.
+- `impl Contract for X` syntax is **forbidden** in Vex.
 :::
 
 ## Defining Contracts
@@ -24,14 +26,14 @@ contract Describable {
 
 ## Implementing Contracts
 
-Use the `impl` keyword on the struct definition:
+In Vex, contracts are implemented directly on the type declaration with colon syntax:
 
 ```vex
 contract Shape {
     area(): f64;
 }
 
-struct Circle impl Shape {
+struct Circle: Shape {
     radius: f64
 }
 
@@ -39,6 +41,21 @@ fn (self: &Circle) area(): f64 {
     return 3.14159 * self.radius * self.radius;
 }
 ```
+
+::: warning Invalid Syntax
+Rust-style `impl Contract for Type` is not part of Vex.
+
+```vex
+// ❌ Invalid in Vex
+impl Shape for Circle {
+    area(): f64 {
+        return 0.0
+    }
+}
+```
+
+Use `struct Circle: Shape { ... }` and then define receiver methods normally.
+:::
 
 ## Contract Fields
 
@@ -55,7 +72,7 @@ contract Entity {
     display(): string;
 }
 
-struct User impl Entity {
+struct User: Entity {
     public:
     id: u64       // Required by contract
     name: string  // Required by contract
@@ -156,7 +173,7 @@ When a struct with `$Drop` holds references, the borrow checker ensures those re
 Vex supports operator overloading through special prelude contracts:
 
 ```vex
-struct Point impl $Add {
+struct Point: $Add {
     public:
     x: f64,
     y: f64,
@@ -184,9 +201,9 @@ let c = a + b;  // Point { x: 4.0, y: 6.0 }
 | `$Mul` | `*` | `op*(rhs: Self): Self` |
 | `$Div` | `/` | `op/(rhs: Self): Self` |
 | `$Mod` | `%` | `op%(rhs: Self): Self` |
-| `$Eq` | `==` | `eq(other: &Self): bool` |
-| `$Ord` | `<` / `>` | `lt(other: &Self): bool` |
-| `$Index` | `[]` | `op[](index: usize): T` |
+| `$Eq` | `==` / `!=` | `op==(rhs: Self): bool` |
+| `$Ord` | `<` / `>` / `<=` / `>=` | `op<(rhs: Self): bool` |
+| `$Index` | `[]` | `op[](index: Idx): Output` |
 
 ### Display and Debug
 

@@ -51,6 +51,10 @@ let bytes = 0xFF_FF_FF_FF
 let binary = 0b1111_0000_1111_0000
 ```
 
+::: warning Overload Resolution Note
+In normal variable inference, unsuffixed integer literals default to `i32`. In some current overload-resolution paths, an unconstrained integer literal may still prefer a wider integer overload unless a tighter expected type is provided. Use an explicit cast when you want to force a specific overload.
+:::
+
 ### Literals in Different Bases
 
 ```vex

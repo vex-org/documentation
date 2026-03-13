@@ -2,6 +2,10 @@
 
 Vex supports operator overloading through **contracts** and **operator methods**. This allows custom types to use natural operators like `+`, `-`, `*`, `==`, and `[]`.
 
+::: tip Current Status
+Operator overloading is implemented and exercised by repository regression tests, including cross-type operator cases and multi-RHS operator dispatch.
+:::
+
 ## Overview
 
 Operator overloading in Vex uses a contract-based system:
@@ -258,6 +262,30 @@ struct Vec3:ScalarMul {
 let v = Vec3 { x: 1.0, y: 2.0, z: 3.0 }
 let scaled = v.mul_scalar(2.5)
 ```
+
+## Current Implementation Notes
+
+- Operator overload resolution prefers **exact matches** before broader compatible numeric matches.
+- Multi-RHS overloads such as `Vec + Vec` and `Vec + i32` are supported and regression-tested.
+- Unconstrained integer literals can still behave differently inside overload resolution than a plain annotated variable would; if you need a specific overload, prefer an explicit cast such as `(10 as i32)`.
+
+### Tested Scenarios
+
+| Scenario | Status | Notes |
+|----------|--------|-------|
+| Same-type arithmetic operators | ✅ | Covered by operator regression tests |
+| Cross-type RHS operator dispatch | ✅ | Covered by `operator_default_rhs_001.vx` |
+| Exact-match numeric preference | ✅ | Covered by `numeric_exact_001.vx` |
+| Complex user-defined operator contracts | ✅ | Covered by `tests/07_contracts/operators/complex_arith_001.vx` |
+| Exhaustive generic/default/variadic interaction with operators | ⚠️ Partial | Operator core is stable, but the full interaction matrix is not yet exhaustive |
+
+::: warning Scope Note
+The operator overloading core is solid, but the repository does **not** yet claim exhaustive coverage for every overload interaction involving **generic constraints**, **variadics**, and **default parameters**.
+:::
+
+::: info Repository Maturity Note
+Overloading is in good shape, but the broader repository is still under active development. For example, `docs/specs/LANGUAGE_SPEC.md` still marks several contract-related features as partial, and `docs/planning/VEX_TYPE_SYSTEM_CONTRACT_PHASES.md` explicitly notes that generic bound solving remains partial.
+:::
 
 ## Implementing Multiple Contracts
 

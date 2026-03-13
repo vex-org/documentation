@@ -55,6 +55,57 @@ fn Point.origin(): Point {
 }
 ```
 
+## Method and Constructor Overloading
+
+Vex supports overloading for:
+
+- **Constructors**: `fn Type(...)`
+- **Static methods**: `fn Type.method(...)`
+- **Instance methods**: `fn (self: &Type) method(...)`
+
+```vex
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+fn Point(): Point {
+    return Point { x: 0.0, y: 0.0 }
+}
+
+fn Point(v: f64): Point {
+    return Point { x: v, y: v }
+}
+
+fn Point.new(x: f64, y: f64): Point {
+    return Point { x, y }
+}
+
+fn (self: &Point) distance(): f64 {
+    return (self.x * self.x + self.y * self.y).sqrt()
+}
+
+fn (self: &Point) distance(other: Point): f64 {
+    let dx = self.x - other.x
+    let dy = self.y - other.y
+    return (dx * dx + dy * dy).sqrt()
+}
+```
+
+### Practical Note
+
+The core constructor/static/instance overload paths are covered by regression tests and are ready for normal use. However, the broader space of overload interactions with **generic methods**, **variadic calls**, and **default parameters** is still not exhaustively covered by dedicated overload-focused tests.
+
+### Tested Scenarios
+
+| Scenario | Status | Notes |
+|----------|--------|-------|
+| Constructor overloading | ✅ | Covered by `constructor_001.vx` |
+| Static method overloading | ✅ | Covered by `static_001.vx` and `static_types_001.vx` |
+| Instance method overloading | ✅ | Covered by `instance_001.vx` |
+| Static vs instance same-name split | ✅ | Covered by `static_instance_name_001.vx` |
+| Generic/default/variadic method interactions | ⚠️ Partial | Normal overload paths are solid, but exhaustive cross-product coverage is still incomplete |
+
 ## Generic Methods
 
 Methods can be generic over one or more types:

@@ -75,12 +75,12 @@ fn process<T: $Display + $Clone>(item: T) {
 Contracts can define associated types that implementations must provide:
 
 ```vex
-contract Iterator {
+contract $Iterator {
     type Item;
     next()!: Option<Self.Item>;
 }
 
-struct Counter impl Iterator {
+struct Counter: $Iterator {
     count: i32,
     type Item = i32;
 }
@@ -90,6 +90,10 @@ fn (self: &Counter!) next(): Option<i32> {
     return Some(self.count)
 }
 ```
+
+::: tip Vex Style
+Associated types belong to the contract/type declaration model itself. You declare them on the `contract`, then bind them on the implementing `struct` using Vex's colon syntax.
+:::
 
 ## Const Generics
 
