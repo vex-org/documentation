@@ -14,18 +14,18 @@ if condition {
 
 // if-else
 if x > 0 {
-    println("Positive")
+    $println("Positive")
 } else {
-    println("Non-positive")
+    $println("Non-positive")
 }
 
 // if-elif-else chain
 if score >= 90 {
-    println("A")
+    $println("A")
 } elif score >= 80 {
-    println("B")
+    $println("B")
 } else {
-    println("F")
+    $println("F")
 }
 ```
 
@@ -50,7 +50,7 @@ let max = a > b ? a : b
 ```vex
 // if-let for Option/Result
 if let Some(value) = optional_value {
-    println(f"Got: {value}")
+    $println(f"Got: {value}")
 }
 
 if let Ok(data) = fetch_result {
@@ -84,8 +84,8 @@ match x {
 
 // Enum patterns
 match result {
-    Ok(value) => println(f"Success: {value}"),
-    Err(e) => println(f"Error: {e.msg}")
+    Ok(value) => $println(f"Success: {value}"),
+    Err(e) => $println(f"Error: {e.msg}")
 }
 
 // Tuple patterns
@@ -116,13 +116,13 @@ Iterate over collections and ranges:
 ```vex
 // Range iteration
 for i in 0..10 {
-    println(i)  // 0 to 9
+    $println(i)  // 0 to 9
 }
 
 // Collection iteration
 let numbers = [1, 2, 3]
 for num in numbers {
-    println(num)
+    $println(num)
 }
 ```
 
@@ -131,7 +131,7 @@ for num in numbers {
 ```vex
 let! count = 0
 while count < 10 {
-    println(count)
+    $println(count)
     count += 1
 }
 ```

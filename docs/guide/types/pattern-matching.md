@@ -10,9 +10,9 @@ The `match` expression compares a value against a series of patterns. It is exha
 let x = 1
 
 match x {
-    1 => println("One"),
-    2 => println("Two"),
-    _ => println("Something else")
+    1 => $println("One"),
+    2 => $println("Two"),
+    _ => $println("Something else")
 }
 ```
 
@@ -26,10 +26,10 @@ struct Point { x: i32, y: i32 }
 let p = Point { x: 0, y: 7 }
 
 match p {
-    Point { x: 0, y: 0 } => println("Origin"),
-    Point { x, y: 0 } => println(f"On x-axis at {x}"),
-    Point { x: 0, y } => println(f"On y-axis at {y}"),
-    Point { x, y } => println(f"At ({x}, {y})")
+    Point { x: 0, y: 0 } => $println("Origin"),
+    Point { x, y: 0 } => $println(f"On x-axis at {x}"),
+    Point { x: 0, y } => $println(f"On y-axis at {y}"),
+    Point { x, y } => $println(f"At ({x}, {y})")
 }
 ```
 
@@ -45,10 +45,10 @@ enum Message {
 
 fn process(msg: Message) {
     match msg {
-        Message.Quit => println("Quit"),
-        Message.Move { x, y } => println(f"Move to ({x}, {y})"),
-        Message.Write(text) => println(f"Text: {text}"),
-        Message.ChangeColor(r, g, b) => println(f"Color: {r}, {g}, {b}"),
+        Message.Quit => $println("Quit"),
+        Message.Move { x, y } => $println(f"Move to ({x}, {y})"),
+        Message.Write(text) => $println(f"Text: {text}"),
+        Message.ChangeColor(r, g, b) => $println(f"Color: {r}, {g}, {b}"),
     }
 }
 ```
@@ -59,9 +59,9 @@ fn process(msg: Message) {
 let pair = (0, -2)
 
 match pair {
-    (0, y) => println(f"Y axis: {y}"),
-    (x, 0) => println(f"X axis: {x}"),
-    (x, y) => println(f"Coords: {x}, {y}"),
+    (0, y) => $println(f"Y axis: {y}"),
+    (x, 0) => $println(f"X axis: {x}"),
+    (x, y) => $println(f"Coords: {x}, {y}"),
 }
 ```
 
@@ -75,9 +75,9 @@ Use `|` to match multiple patterns:
 let x = 1
 
 match x {
-    1 | 2 => println("One or Two"),
-    3 => println("Three"),
-    _ => println("Other")
+    1 | 2 => $println("One or Two"),
+    3 => $println("Three"),
+    _ => $println("Other")
 }
 ```
 
@@ -89,9 +89,9 @@ Match ranges of values (inclusive):
 let age = 15
 
 match age {
-    0..=12 => println("Child"),
-    13..=19 => println("Teenager"),
-    _ => println("Adult")
+    0..=12 => $println("Child"),
+    13..=19 => $println("Teenager"),
+    _ => $println("Adult")
 }
 ```
 
@@ -103,9 +103,9 @@ Add arbitrary boolean conditions to patterns using `if`:
 let pair = (2, 2)
 
 match pair {
-    (x, y) if x == y => println("Equal"),
-    (x, y) if x + y == 0 => println("Zero sum"),
-    _ => println("Other")
+    (x, y) if x == y => $println("Equal"),
+    (x, y) if x + y == 0 => $println("Zero sum"),
+    _ => $println("Other")
 }
 ```
 
@@ -117,8 +117,8 @@ Bind a value to a variable name while testing it against a pattern:
 let age = 15
 
 match age {
-    n @ 13..=19 => println(f"Teenager aged {n}"),
-    _ => println("Not a teenager")
+    n @ 13..=19 => $println(f"Teenager aged {n}"),
+    _ => $println("Not a teenager")
 }
 ```
 
@@ -139,12 +139,12 @@ let shape = Shape.Circle {
 
 match shape {
     Shape.Circle { center: Point { x: 0, y: 0 }, .. } => {
-        println("Circle at origin")
+        $println("Circle at origin")
     },
     Shape.Rectangle { top_left: Point { x, y }, .. } => {
-        println(f"Rect starts at {x}, {y}")
+        $println(f"Rect starts at {x}, {y}")
     },
-    _ => println("Other shape")
+    _ => $println("Other shape")
 }
 ```
 

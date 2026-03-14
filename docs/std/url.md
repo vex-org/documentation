@@ -1,25 +1,21 @@
 # url
 
-The `url` module provides a comprehensive and incredibly fast suite for parsing, building, and resolving Web URLs in Vex. Designed to adhere strictly to the WHATWG URL standard where sensible, it avoids string allocation pitfalls, parsing directly into structured states.
-
-## Zero-Allocation Philosophy
-
-`url` focuses on passing `Span<u8>` and slicing a single backing buffer.
-
-A standard `Url` struct maintains offsets (for scheme, username, password, host, port, path, query, and fragment) into a single unified buffer.
+The current URL type is `URL` (uppercase), with parsing via `URL.parse(...)` and public component fields.
 
 ## Usage
 
-```rust
-import { Url } from "url";
+```vex
+let parsed = URL.parse("https://vex-lang.org/docs/std?lang=tr#unicode")
 
-let parsed = Url.parse("https://vex-lang.org/docs/std?lang=tr#unicode");
-
-println(parsed.scheme());  // "https"
-println(parsed.host());    // "vex-lang.org"
-println(parsed.path());    // "/docs/std"
+$println(parsed.scheme)    // "https"
+$println(parsed.host)      // "vex-lang.org"
+$println(parsed.path)      // "/docs/std"
 ```
 
-## Performance Note
+## Current Surface
 
-Vex `url` beats many common C/Rust implementations by doing SIMD-assisted boundary checks and maintaining state via an internal `RawBuf`, skipping constant String copies for simple path concatenations.
+- `URL.parse(input: string): URL`
+- public fields: `scheme`, `userinfo`, `host`, `port`, `path`, `query`, `fragment`, `raw`, `valid`
+- methods such as `toString()`, `hostPort()`, `queryParam()`, `isSecure()`, `defaultPort()`, `effectivePort()`
+
+This page intentionally avoids undocumented accessor-style examples like `parsed.scheme()` that do not match the current exported type.

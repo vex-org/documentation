@@ -1,84 +1,27 @@
-# Serde — Serialization & Deserialization Framework
+# Serde — Serialization & Deserialization
 
-The `serde` module provides a unified, contract-driven serialization and deserialization system for Vex. Every supported format shares the same `Serializer` and `Deserializer` contracts, which means switching from JSON to TOML or MsgPack requires changing a single import.
+The current serde tree exposes format-specific parser/serializer types plus helper functions. The exact surface depends on the format module.
 
-## Supported Formats
+## JSON Surface
 
-| Format | Import | Use Case |
-|--------|--------|----------|
-| **JSON** | `serde/json` | Web APIs, config files, data interchange |
-| **TOML** | `serde/toml` | Configuration files (`vex.toml`, `Cargo.toml` style) |
-| **CSV** | `serde/csv` | Tabular data, spreadsheets, data pipelines |
-| **MessagePack** | `serde/msgpack` | Compact binary RPC, high-throughput messaging |
-| **YAML** | `serde/yaml` | Human-readable configs, CI/CD pipelines |
-| **CBOR** | `serde/cbor` | IoT, constrained environments, compact binary |
+Current JSON exports include:
 
-## Contract Architecture
+- `JsonSerializer`
+- `JsonParser`
+- `JsonValue`
+- `jsonParseDynamic`, `jsonParseDynamicSafe`
+- `jsonStringifyDynamic`, `jsonStringifyDynamicPretty`
 
-Instead of hardcoding parsers per struct, Vex defines two fundamental contracts that all formats implement:
+## Current Guidance
 
-```rust
-// Serializer — emit structured data
-contract Serializer {
-    serializeBool(v: bool)!;
-    serializeI64(v: i64)!;
-    serializeF64(v: f64)!;
-    serializeStr(v: string)!;
-    serializeNone()!;
-    serializeSeqStart(len: Option<usize>)!;
-    serializeSeqEnd()!;
-    serializeMapStart(len: Option<usize>)!;
-    serializeMapKey(key: str)!;
-    serializeMapEnd()!;
-    serializeStructStart(name: string, len: usize)!;
-    serializeStructEnd()!;
-}
+If you are documenting user code today, prefer format-module-specific APIs over a fictional universal `encode` / `decode` surface.
 
-// Deserializer — consume structured data
-contract Deserializer {
-    parseInt()!: i64;
-    parseFloat()!: f64;
-    parseBool()!: bool;
-    parseString()!: string;
-    skipValue()!;
-    enterObject()!: i64;
-    exitObject()!;
-    seekToKey(key: *u8)!: bool;
-}
+```vex
+// Example shape — consult the specific serde/json submodule page
+// for the exact helper you want to use.
 ```
 
-Any struct automatically satisfies `Serializable` and `Deserializable` when used with `serialize_any<T>` / `deserialize_any<T>`, thanks to Vex's compile-time struct introspection.
+## Notes
 
-## Quick Example
-
-```rust
-import { encode, decode } from "serde/json";
-
-struct Config {
-    host: string
-    port: i32
-    debug: bool
-}
-
-fn main() {
-    let cfg = Config { host: "0.0.0.0", port: 8080, debug: true };
-    
-    // Struct → JSON string
-    let json = encode<Config>(&cfg);
-    println(json);  // {"host":"0.0.0.0","port":8080,"debug":true}
-    
-    // JSON string → Struct
-    let! parsed = Config { };
-    decode<Config>(json, &parsed);
-    println("Port: {parsed.port}");  // Port: 8080
-}
-```
-
-## Performance
-
-All serde parsers operate on `RawBuf` and `Span<u8>`, skipping `String` allocations wherever possible. Benchmark highlights:
-
-- **CSV Decode**: 806,302 ops/s
-- **TOML Decode**: 1,029,232 ops/s
-- **JSON Encode**: Zero-copy struct field emission via compile-time offsets
-- **MsgPack**: Binary format—no text parsing overhead at all
+- The serde tree is real and substantial, but the surface varies by format module.
+- This index intentionally avoids promising a single `encode/decode` API that is not the current exported JSON surface.

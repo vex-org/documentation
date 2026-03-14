@@ -62,12 +62,16 @@ let Type123 = 50
 
 ```
 fn       let      let!     const    struct   enum     contract
-impl     if       else     elif     for      while    loop
+if       else     elif     for      while    loop
 match    return   break    continue defer    go       async
 await    import   export   from     as       type     where
 true     false    nil      self     unsafe   extern   public
 private  readonly
 ```
+
+::: warning `impl`
+`impl` is not part of the current user-facing Vex surface syntax. Older notes or experimental examples may still mention it, but stable examples should use `struct X: Contract` plus external receiver methods.
+:::
 
 ## Literals
 
@@ -79,6 +83,9 @@ let decimal = 42
 let hex = 0xFF
 let octal = 0o77
 let binary = 0b1010
+
+// Unsuffixed integer literals default to i64
+let default_int = 42
 
 // With type suffix
 let byte: u8 = 255u8
@@ -124,6 +131,18 @@ let no = false       // bool
 // For high-level code, use Option<T> instead.
 let nothing = nil    
 ```
+
+## Output Intrinsics
+
+For core language examples, prefer the builtin output intrinsics:
+
+```vex
+$print("hello")
+$println("world")
+$println(f"name = {name}")
+```
+
+Some library layers may expose helper wrappers like `println`, but `$print` / `$println` are the stable builtin forms used throughout compiler and stdlib tests.
 
 ### Array Literals
 

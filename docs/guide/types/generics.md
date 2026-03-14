@@ -66,7 +66,7 @@ fn sum_items<T: $Add>(a: T, b: T): T {
 // Multiple bounds using +
 fn process<T: $Display + $Clone>(item: T) {
     let copy = item.clone()
-    println(copy.toString())
+    $println(copy.toString())
 }
 ```
 
@@ -77,7 +77,7 @@ Contracts can define associated types that implementations must provide:
 ```vex
 contract $Iterator {
     type Item;
-    next()!: Option<Self.Item>;
+    fn next(): Option<Self.Item>;
 }
 
 struct Counter: $Iterator {

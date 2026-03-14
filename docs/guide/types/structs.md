@@ -116,7 +116,7 @@ Vex does **NOT** use `#[derive(...)]` or other attribute syntax. Use struct tags
 
 ## Implementing Contracts
 
-Use the `impl` keyword to declare that a struct implements one or more contracts:
+Attach contracts directly on the struct declaration with colon syntax:
 
 ```vex
 contract Display {
@@ -142,7 +142,7 @@ struct Color(u8, u8, u8)
 struct UserId(u64)
 
 let red = Color(255, 0, 0)
-println(f"R: {red.0}")
+$println(f"R: {red.0}")
 ```
 
 ## Best Practices

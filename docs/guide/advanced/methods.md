@@ -149,7 +149,7 @@ contract Display {
     toString(): string;
 }
 
-struct Point impl Display {
+struct Point: Display {
     x: f64, y: f64
 }
 
@@ -168,7 +168,7 @@ fn (self: &string) excited(): string {
     return self + "!!!"
 }
 
-println("Hello".excited()) // "Hello!!!"
+$println("Hello".excited()) // "Hello!!!"
 ```
 
 ## Best Practices

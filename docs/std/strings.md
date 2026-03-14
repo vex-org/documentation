@@ -1,23 +1,26 @@
 # strings
 
-The `strings` module provides an extension of utilities on top of the builtin `string` and `str` types. Because strings in Vex are UTF-8 validated fat-pointers (often maintaining 16-byte structure `[tagged_len:u32] [prefix:u32] [payload:u64]`), manipulating them effectively is critical for system performance.
+The current `strings` package is centered on **`StringBuilder`**.
 
-## Core Utilities
+## Exported Surface
 
-This module handles multi-byte, zero-cost slices of standard strings without forcing deep heap copies every step. 
+The main public export today is:
 
-```rust
-import { startsWith, endsWith, contains, split } from "strings";
-
-let haystack = "Hello, Hardware!";
-
-if startsWith(haystack, "Hello") {
-    println("Matches!");
-}
-
-let chunks = split(haystack, ", ");
+```vex
+import { StringBuilder } from "strings"
 ```
 
-## Buffer Builders and Concatenation
+## Builder Pattern
 
-Often the most expensive part of string operations is continuous re-allocation when concatenating `+`. While Vex's internal omni-string handles `VUMM` ownership, building up a long text dynamically should typically utilize a `StringBuilder` or manual byte writing into `RawBuf`. The `strings` package handles all these buffer-level manipulations safely.
+```vex
+let! b = StringBuilder.new()
+b.writeStr("Hello")
+b.writeStr(", ")
+b.writeStr("Vex")
+
+let result = b.toString()
+```
+
+## Important Note
+
+This page intentionally does **not** document free functions such as `startsWith`, `endsWith`, `contains`, or `split` from `strings`, because the current package export surface does not provide them as a simple top-level utility API.

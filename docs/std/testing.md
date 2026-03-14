@@ -1,41 +1,29 @@
 # testing — Test Framework
 
-Go-style testing framework with benchmarks and assertions.
+The current testing surface is built around exported testing helpers plus context objects such as `TestCtx` and `BenchCtx`.
 
-## Writing Tests
+## Test Files
 
-Test files end with `.test.vx` and test functions use the `test` naming convention:
+Test files typically use the `.test.vx` suffix and export test functions.
 
-```rust
-import { expect_eq, expect_ne, expect_true } from "testing";
+```vex
+import { assert } from "testing";
 
-test fn test_addition() {
-    expect_eq(2 + 2, 4);
-    expect_ne(2 + 2, 5);
-    expect_true(10 > 5);
-}
-
-test fn test_string_concatenation() {
-    let hello = "Hello, " + "Vex!";
-    expect_eq(hello, "Hello, Vex!");
+export fn test_addition(t: &TestCtx!) {
+    assert(2 + 2 == 4, "2 + 2 should equal 4");
 }
 ```
 
-## Benchmarks
+## Benchmark Shape
 
-```rust
-bench fn bench_sort(b: &Bench) {
-    let! arr = [5, 3, 8, 1, 9, 2, 7, 4, 6, 10];
-    b.run(fn() {
-        sort(&arr);
-    });
+```vex
+export fn bench_sort(b: &BenchCtx!) {
+    // benchmark body here
 }
 ```
 
-## Running Tests
+## Notes
 
-```bash
-vex test tests/basic.test.vx           # Run specific test file
-vex test tests/                        # Run all tests in directory
-./test_all.sh                          # Run entire test suite
-```
+- The current repository surface is **not** `test fn` / `bench fn` syntax.
+- Prefer the exported context-based API from `std/testing`.
+- Use `vex test <path>` for test files and `./test_all.sh` for the wider example sweep.

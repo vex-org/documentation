@@ -1,92 +1,56 @@
 # io — Core I/O Abstractions
 
-The `io` module defines the fundamental I/O contracts (`Reader`, `Writer`, `Seeker`, `Closer`) and provides stdio, streams, cursors, and utility functions.
+The `io` module defines the fundamental I/O contracts (`Reader`, `Writer`, `Seeker`, `Closer`) plus standard streams and helper utilities.
 
-## Contracts
+## Core Contracts
 
-Every I/O source in Vex implements one or more of these contracts:
+Current exported contracts use raw byte pointers plus lengths:
 
-```rust
-contract Reader     { read(buf: Span<u8>): Result<usize, IoError>; }
-contract Writer     { write(data: Span<u8>): Result<usize, IoError>; }
-contract Seeker     { seek(offset: i64, whence: SeekFrom): Result<i64, IoError>; }
-contract Closer     { close(): Result<(), IoError>; }
+```vex
+contract Reader {
+	read(self: &Self!, buf: &u8!, len: u64): Result<u64, IoError>;
+}
+
+contract Writer {
+	write(self: &Self!, data: &u8, len: u64): Result<u64, IoError>;
+	flush(self: &Self!): Result<(), IoError>;
+}
+
+contract Seeker {
+	seek(self: &Self!, pos: SeekFrom): Result<u64, IoError>;
+}
+
+contract Closer {
+	close(self: &Self!): Result<(), IoError>;
+}
 ```
 
-Compound contracts for convenience:
+## Standard I/O
 
-| Contract | Combines |
-|----------|----------|
-| `ReadWriter` | `Reader` + `Writer` |
-| `ReadSeeker` | `Reader` + `Seeker` |
-| `WriteSeeker` | `Writer` + `Seeker` |
-| `ReadWriteSeeker` | `Reader` + `Writer` + `Seeker` |
-| `ReadCloser` | `Reader` + `Closer` |
-| `WriteCloser` | `Writer` + `Closer` |
-| `ReadWriteCloser` | `Reader` + `Writer` + `Closer` |
+```vex
+let! out = stdout();
+let! err = stderr();
 
-## Standard I/O (`stdio`)
+$println("Hello, Vex!")
+eprintln("Error message")
 
-```rust
-import { stdin, stdout, stderr, print, println, readLine, prompt } from "io";
-
-println("Hello, Vex!");
-eprint("Warning!");
-eprintln("Error message");
-
-let line = readLine();
-let name = prompt("Enter name: ");
-
-// Typed output
-printInt(42);
-printFloat(3.14);
-printBool(true);
+match readLine() {
+	Ok(line) => $println(line),
+	Err(_) => $println("read failed")
+}
 ```
 
-## Streams (Buffered File I/O)
+## Helpers
 
-```rust
-import { Stream, openRead, openWrite, openAppend } from "io";
+- `stdin()` → `Stream`
+- `stdout()` → `Stream`
+- `stderr()` → `Stream`
+- `readLine()` → `Result<string, IoError>`
+- `prompt(message: string)` → `Result<string, IoError>`
+- `printInt`, `printFloat`, `printBool`
 
-let r = openRead("/etc/hosts");
-let w = openWrite("/tmp/output.txt");
-let a = openAppend("/var/log/app.log");
-```
+## Notes
 
-## Cursor (In-Memory I/O)
-
-An in-memory buffer implementing `Reader`/`Writer`/`Seeker`:
-
-```rust
-import { Cursor, newCursor, cursorFromBytes, cursorFromString } from "io";
-
-let c = cursorFromString("Hello, World!");
-// Read from cursor as if it were a file
-```
-
-## Utilities
-
-| Function | Description |
-|----------|-------------|
-| `copy(dst, src)` | Copy all bytes from Reader to Writer |
-| `copyN(dst, src, n)` | Copy at most N bytes |
-| `readAll(reader)` | Read entire Reader into `Vec<u8>` |
-| `readToString(reader)` | Read entire Reader into string |
-| `readFileToString(path)` | Read file path into string |
-| `discard(reader, n)` | Discard N bytes |
-| `limitReader(reader, n)` | Wrap Reader to read at most N bytes |
-
-## Error Types
-
-```rust
-import { IoError, IoErrorKind } from "io";
-
-// Constructors
-notFound(msg)         // File not found
-permissionDenied(msg) // Access denied
-unexpectedEof(msg)    // Premature end of input
-invalidInput(msg)     // Bad argument
-invalidData(msg)      // Corrupt data
-timedOut(msg)         // I/O timeout
-fromOsError(errno)    // From OS errno
-```
+- Current `Reader` / `Writer` contracts are pointer-and-length based, not `Span<u8>` based.
+- Prefer `readLine()` / `prompt()` for simple terminal input examples.
+- Use `stdout().flush()` when prompt text must appear before a blocking read.

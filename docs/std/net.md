@@ -1,36 +1,38 @@
 # net
 
-The `net` module provides core networking capabilities for Vex. Designed heavily around non-blocking event loops, all network I/O operations inherently integrate with Vex's goroutine-style `go { }` task scheduler, meaning scaling to tens of thousands of connections happens automatically.
+The current `net` TCP surface is blocking-style and built around `TcpListener` / `TcpStream` value types.
 
-## Core Abstractions
+## TCP Listener
 
-- `net.TcpListener`: Binds to a port and acts as a server listening socket.
-- `net.TcpStream`: A connected socket (client connection).
-- `net.UdpSocket`: Connectionless datagram networking.
+```vex
+let listener = TcpListener("127.0.0.1", 8080)
+if listener.fd < 0 {
+    $println("listen failed")
+}
 
-## Using `TcpListener`
+let stream = listener.accept()
+stream.close()
+listener.close()
+```
 
-Because Vex defaults to non-blocking structures integrated with `epoll/kqueue/io_uring`, you write imperative-looking sync code that actually awaits asynchronously under the hood.
+## TCP Stream
 
-```rust
-import { TcpListener } from "net";
-
-async fn main() {
-    let listener = TcpListener.bind("127.0.0.1:8080").unwrap();
-    println("Listening on port 8080...");
-
-    while true {
-        // This 'awaits' yieldingly without blocking the OS thread
-        let stream = await listener.accept().unwrap();
-        
-        // Spawn a lightweight task for each connection
-        go {
-            await handle_client(stream);
-        };
-    }
+```vex
+let stream = TcpStream("127.0.0.1", 8080)
+if stream.fd >= 0 {
+    stream.writeStr("hello")
+    stream.close()
 }
 ```
 
-## Buffer Management
+## Current Surface Notes
 
-To avoid massive garbage collector sweeps on high-throughput servers, `TcpStream.read` and `TcpStream.write` accept `Span<u8>`. You should always slice your pre-allocated `RawBuf` or `Vec` into these spans to handle chunked reading efficiently.
+- `TcpListener(ip, port)` constructs a listener.
+- `accept()` returns a `TcpStream`.
+- `TcpStream(ip, port)` constructs a connected stream.
+- `read(buf: *u8, len: i32): i64`
+- `write(data: *u8, len: i32): i64`
+- `writeStr(s: string): i64`
+- `close()` closes the socket.
+
+This page intentionally documents the current tested exported surface, not an aspirational async socket wrapper.

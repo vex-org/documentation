@@ -1,54 +1,32 @@
 # Paths & Directories (`fs/path`, `fs/dir`)
 
-## Path Manipulation
+## `Path`
 
-The `path` module provides cross-platform path operations without allocations where possible.
+Current `Path` is a value type with methods such as:
 
-```rust
-import { join, base, ext, dir, clean, isAbsolute } from "fs/path";
+- `join(...)`
+- `parent()`
+- `fileName()`
+- `extension()`
+- `stem()`
+- `exists()`
+- `isReadable()` / `isWritable()`
+- `isAbsolute()` / `isRelative()`
+- `isDir()` / `isFile()` / `isSymlink()`
+- `canonicalize()`
+- `withExtension(...)`
 
-join("/home/user", "docs", "file.txt")  // → "/home/user/docs/file.txt"
-base("/home/user/file.txt")             // → "file.txt"
-ext("archive.tar.gz")                   // → ".gz"
-dir("/home/user/file.txt")              // → "/home/user"
-clean("/a/b/../c/./d")                  // → "/a/c/d"
-isAbsolute("/etc/hosts")                // → true
-```
+## Directory Helpers
 
-## Directory Operations
+Current directory-facing helpers include:
 
-```rust
-import { readDir, mkdir, mkdirAll, removeDir, walk } from "fs/dir";
+- `readDir(path, &DirList!)`
+- `readDirVec(path)`
+- `readDirPage(path, offset, limit)`
+- `mkdirAll(path)`
+- `removeAll(path)`
+- `walkDir(...)`
 
-// List directory contents
-let entries = readDir("/home/user/projects").unwrap();
-for entry in entries {
-    println("{entry.name()} - {entry.isDir()}");
-}
+## Notes
 
-// Create directories
-mkdir("new_folder").unwrap();
-mkdirAll("deep/nested/path").unwrap();   // Creates parents
-
-// Remove directory (must be empty)
-removeDir("old_folder").unwrap();
-```
-
-## File Metadata (`stat`)
-
-```rust
-import { stat, FileInfo } from "fs";
-
-let info = stat("myfile.txt").unwrap();
-println("Size: {info.size()} bytes");
-println("Modified: {info.modTime()}");
-println("Is directory: {info.isDir()}");
-println("Is symlink: {info.isSymlink()}");
-```
-
-## Permissions
-
-```rust
-import { chmod, Permissions } from "fs";
-chmod("script.sh", Permissions.rwxr_xr_x());  // 755
-```
+This page intentionally avoids stale `unwrap()`-style examples and top-level function names that do not match the current exported surface.

@@ -49,7 +49,7 @@ cargo build --release
 ## Pre-built Binaries
 
 ::: info Coming Soon
-Pre-built binaries for all platforms will be available on the releases page after v0.3.3.
+Pre-built binaries for all platforms will be available on the releases page after v0.3.6.
 :::
 
 ## Editor/IDE Setup
@@ -97,7 +97,7 @@ Create a file `hello.vx`:
 
 ```vex
 fn main(): i32 {
-    println("Hello, Vex!");
+    $println("Hello, Vex!")
     return 0;
 }
 ```

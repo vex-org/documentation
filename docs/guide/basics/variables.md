@@ -27,7 +27,7 @@ let! counter = 0
 counter = counter + 1  // OK
 counter += 1           // OK
 
-let! buffer = Vec<u8>.new()
+let! buffer = Vec<u8>()
 buffer.push(42)        // OK - mutation allowed
 ```
 
@@ -58,7 +58,7 @@ Type annotations are optional when the type can be inferred:
 
 ```vex
 // Inferred types
-let x = 42          // i32 (default integer type)
+let x = 42          // i64 (default integer type)
 let y = 3.14        // f64 (default float type)
 let z = true        // bool
 let s = "hello"     // string
@@ -82,9 +82,9 @@ fn example() {
     let value = 10
     {
         let value = 20  // Shadows outer `value`
-        println(value)  // Prints: 20
+        $println(value)  // Prints: 20
     }
-    println(value)      // Prints: 10 (original)
+    $println(value)      // Prints: 10 (original)
 }
 ```
 
@@ -114,11 +114,15 @@ Variables can be declared without initialization and assigned later:
 
 ```vex
 let x: i32           // Declared but not initialized
-// println(x)        // ERROR: Use of uninitialized variable
+// $println(x)       // ERROR: Use of uninitialized variable
 
 x = 10               // Now initialized
-println(x)           // OK
+$println(x)          // OK
 ```
+
+::: tip Constructors
+Both `Vec<T>()` and `Vec.new<T>()` are used in real code. For simple examples, constructor-style calls like `Vec<u8>()` are often easier to read.
+:::
 
 The borrow checker ensures you never use an uninitialized variable.
 

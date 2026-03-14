@@ -16,12 +16,12 @@ fn function_name(param1: Type1, param2: Type2): ReturnType {
 ```vex
 // Function with no parameters and no return value
 fn greet() {
-    println("Hello, Vex!")
+    $println("Hello, Vex!")
 }
 
 // Function with parameters
 fn greet_user(name: string) {
-    println(f"Hello, {name}!")
+    $println(f"Hello, {name}!")
 }
 
 // Function with return value
@@ -60,7 +60,7 @@ Use `&T` for immutable references and `&T!` for mutable references:
 
 ```vex
 fn print_vec(data: &Vec<i32>) {
-    println(f"Vector length: {data.len()}")
+    $println(f"Vector length: {data.len()}")
 }
 
 fn append_sum(data: &Vec<i32>!) {
@@ -79,7 +79,7 @@ Vex supports default values for parameters:
 
 ```vex
 fn greet(name: string, greeting: string = "Hello") {
-    println(f"{greeting}, {name}!")
+    $println(f"{greeting}, {name}!")
 }
 
 fn main() {
@@ -123,7 +123,7 @@ Constrain generic types using contracts:
 
 ```vex
 fn print_it<T: $Display>(item: T) {
-    println(item.toString())
+    $println(item.toString())
 }
 ```
 

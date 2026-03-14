@@ -34,8 +34,8 @@ Vex provides a comprehensive set of primitive types for numeric, boolean, and ch
 ### Usage
 
 ```vex
-// Default integer type is i32
-let x = 42         // i32
+// Default integer type is i64
+let x = 42         // i64
 
 // Explicit type suffix
 let a = 42i8       // i8
@@ -52,7 +52,7 @@ let binary = 0b1111_0000_1111_0000
 ```
 
 ::: warning Overload Resolution Note
-In normal variable inference, unsuffixed integer literals default to `i32`. In some current overload-resolution paths, an unconstrained integer literal may still prefer a wider integer overload unless a tighter expected type is provided. Use an explicit cast when you want to force a specific overload.
+Unsuffixed integer literals default to `i64`. In overload-resolution paths, an unconstrained integer literal may still require an explicit cast when you want to force a narrower overload such as `i32`.
 :::
 
 ### Literals in Different Bases

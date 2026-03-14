@@ -22,7 +22,7 @@ The Vex Standard Library (`std`) provides a set of highly optimized, parallelism
 | **[`regex`](./regex.md)** | SIMD-Accelerated zero-copy regex engine compiling to bytecode NFAs. |
 | **[`semver`](./semver.md)** | Semantic Versioning definitions and query engines. |
 | **[`serde`](./serde.md)** | A powerful, zero-copy serialization/deserialization framework supporting JSON, TOML, CSV, and MessagePack formats. |
-| **[`strings`](./strings.md)** | Memory-safe, zero-cost string property lookups (startsWith, endsWith, split). |
+| **[`strings`](./strings.md)** | String building utilities centered on `StringBuilder`. |
 | **[`time`](./time.md)** | Instant OS monotonic hardware clocks without GC pauses. |
 | **[`unicode`](./unicode.md)** | Unicode character properties, case folding, and character matching. Powered by binary-searched precompiled tables. |
 | **[`url`](./url.md)** | Extremely fast, WHATWG-compliant URL parsing and encoding, designed to aggressively reduce small allocations. |

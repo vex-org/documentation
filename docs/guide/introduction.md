@@ -43,7 +43,7 @@ Vex can run without an OS. Custom allocators, raw syscalls, and bare-metal suppo
 
 ```vex
 fn main(): i32 {
-    print("Hello, Vex!");
+    $println("Hello, Vex!")
     return 0;
 }
 ```
@@ -64,14 +64,14 @@ fn vector_add(): [f32; 8] {
 ### Concurrency with Channels
 ```vex
 fn main(): i32 {
-    let ch = Channel<i32>.new();
+    let! ch = Channel.new<i32>(1)
     
     go {
         ch.send(42);
     };
     
-    let value = ch.recv();
-    println("Received: {}", value);
+    let value = <-ch;
+    $println("Received: {}", value);
     
     return 0;
 }
@@ -80,12 +80,12 @@ fn main(): i32 {
 ### Memory Safety
 ```vex
 fn safe_borrowing() {
-    let! data = Vec<i32>.new();
+    let! data = Vec.new<i32>();
     data.push(1);
     data.push(2);
     
     let ref1 = &data;      // Immutable borrow
-    println("{}", ref1[0]); // OK
+    $println("{}", ref1[0]); // OK
     
     let ref2 = &data!;     // ERROR: Cannot mutably borrow while immutably borrowed
 }

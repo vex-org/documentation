@@ -2,37 +2,25 @@
 
 The `fs` module provides a comprehensive suite for file system operations. It offers synchronous and async I/O, buffered readers/writers, directory traversal, path manipulation, file metadata, and permission management — all natively integrated with Vex's async runtime.
 
-## Module Map
+# fs — Overview
 
-| File | Purpose |
-|------|---------|
-| `file.vx` | Core `File` type — open, read, write, seek, close |
-| `bufio.vx` | `BufReader` and `BufWriter` for efficient I/O |
-| `dir.vx` | Directory operations — readDir, mkdir, walk |
-| `path.vx` | Path manipulation — join, base, ext, dir, clean |
-| `stat.vx` | File metadata — size, modification time, type |
-| `permissions.vx` | Unix permission bits (chmod-style) |
-| `sys.vx` | Low-level syscall wrappers |
-| `native.vxc` | FFI declarations for POSIX/Win32 |
+The current `fs` surface exports:
 
-## Quick Example
+- `Path`
+- `Permissions`
+- `File`, `openFile`, `createFile`, `openReadWrite`, `openAppend`, `tempFile`
+- one-shot helpers such as `readFile`, `writeFile`, `appendFile`, `copyFile`, `renameFile`, `removeFile`, `exists`, `mkdir`, `rmdir`, `cwd`, `chdir`, `chmod`
+- stat helpers such as `stat`, `lstat`, `fileSize`, `modTime`
+- directory helpers such as `readDir`, `readDirVec`, `readDirPage`, `mkdirAll`, `removeAll`, `walkDir`
 
-```rust
-import { File, readToString, writeToFile } from "fs";
+## Example
 
-fn main() {
-    // Read entire file
-    let content = readToString("config.toml").unwrap();
-    
-    // Write to file
-    writeToFile("output.txt", "Hello, FS!".asBytes()).unwrap();
-    
-    // Buffered streaming read
-    let file = File.open("huge_log.txt").unwrap();
-    let! buf = Vec.withCapacity<u8>(4096);
-    while let Ok(n) = file.read(buf.asMutSpan()) {
-        if n == 0 { break; }
-        // process chunk...
-    }
+```vex
+match readFile("config.toml") {
+    Ok(content) => $println(content),
+    Err(_) => $println("read failed")
 }
 ```
+
+This page intentionally avoids `unwrap()`-style examples and other Rust-leaning helper names that do not reflect the current Vex stdlib surface.
+    

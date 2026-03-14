@@ -4,8 +4,8 @@ Contracts define shared behavior in Vex. They are similar to interfaces in Go or
 
 ::: tip Key Differences
 - Vex uses `contract` keyword, NOT `trait`.
-- Method signatures have NO `fn` prefix inside contracts.
-- **Contract methods are signatures only** — NO bodies or default implementations!
+- Current tested contract examples use normal `fn`-style signatures.
+- Contract methods may be declarations or default methods depending on the contract.
 - Contracts can require **fields** with specific visibility.
 - Contract implementation uses **colon syntax on the type**: `struct X: Contract`.
 - `impl Contract for X` syntax is **forbidden** in Vex.
@@ -15,12 +15,12 @@ Contracts define shared behavior in Vex. They are similar to interfaces in Go or
 
 ```vex
 contract Printable {
-    print();                    // No 'fn' keyword!
+    fn print();
 }
 
 contract Describable {
-    describe(): string;
-    short_description(): string;
+    fn describe(): string;
+    fn short_description(): string;
 }
 ```
 
@@ -30,7 +30,7 @@ In Vex, contracts are implemented directly on the type declaration with colon sy
 
 ```vex
 contract Shape {
-    area(): f64;
+    fn area(): f64;
 }
 
 struct Circle: Shape {
@@ -48,7 +48,7 @@ Rust-style `impl Contract for Type` is not part of Vex.
 ```vex
 // ❌ Invalid in Vex
 impl Shape for Circle {
-    area(): f64 {
+    fn area(): f64 {
         return 0.0
     }
 }
@@ -68,8 +68,8 @@ contract Entity {
     name: string
 
     // Methods
-    validate(): bool;
-    display(): string;
+    fn validate(): bool;
+    fn display(): string;
 }
 
 struct User: Entity {
@@ -96,12 +96,12 @@ Types implementing `$Copy` are copied on assignment instead of moved:
 // All primitives are $Copy
 let x = 42;
 let y = x;     // x is COPIED, not moved
-print(x);      // ✅ Still valid
+$println(x);   // ✅ Still valid
 
 // Non-$Copy types are MOVED
 let s = "hello";
 let t = s;     // s is MOVED to t
-// print(s);   // ❌ Error: use of moved value
+// $println(s); // ❌ Error: use of moved value
 ```
 
 **Builtin $Copy types**: `bool`, `i8..i128`, `u8..u128`, `f32`, `f64`, `char`, `usize`, `isize`, `str`, `ptr`
@@ -148,8 +148,8 @@ struct FileHandle: $Drop {
 
 fn (self: &FileHandle) drop() {
     // Called automatically when FileHandle goes out of scope
-    print("Closing file: ");
-    print(self.path);
+    $print("Closing file: ");
+    $println(self.path);
     // close(self.fd)
 }
 
@@ -228,11 +228,11 @@ Contracts can extend other contracts:
 
 ```vex
 contract Eq {
-    eq(self: &Self, other: &Self): bool;
+    fn eq(other: &Self): bool;
 }
 
 contract Ord: Eq {
-    cmp(self: &Self, other: &Self): i32;
+    fn cmp(other: &Self): i32;
 }
 // Any type implementing Ord must also implement Eq
 ```
