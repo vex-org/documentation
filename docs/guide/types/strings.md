@@ -1,105 +1,114 @@
-# Strings and Literals — Text Manipulation
+# Strings
 
-Vex has a powerful, two-tier string system designed for both performance and safety. It distinguishes between **borrowed string views** (`str`) and **owned, heap-allocated strings** (`String`).
+Vex uses two string-facing types in normal code:
 
-::: tip Prelude Types
-Both `String` and `str` are **prelude types** — available in all Vex programs without any `import`.
-:::
+- `str`: a borrowed string view
+- `string`: an owned string value
 
-## str — Borrowed String View
+Both are available from the prelude. You do not need an `import`.
 
-`str` (also known as `VexStr`) is a light-weight, non-owning view of a UTF-8 string.
+## `str` vs `string`
 
--   **Fixed Size**: Always 16 bytes (pointer + length).
--   **No Allocation**: Points to memory owned by something else (literals, heap strings, stack buffers).
--   **Cheap to Copy**: Implements `$Copy`—passing it around is nearly instantaneous.
--   **Literals**: All string literals in Vex (e.g., `"hello"`) are of type `str`.
+Use `str` when you only need to read text. Use `string` when you need to return, store, concatenate, or otherwise own the result.
 
 ```vex
-let s: str = "Hello, Vex!"   // Literal is a 'str'
-let part = s[0..5]          // Slicing returns a new 'str' view ("Hello")
+fn greet(name: str): string {
+	return "Hello, " + name;
+}
+
+fn main(): i32 {
+	let label: str = "vex";
+	let message: string = greet(label);
+	println(message);
+	return 0;
+}
 ```
 
-## String — Owned Omni-String
+In current Vex docs, prefer the lowercase spelling `string`. Some older tests in the repository still use `String` while naming is being normalized.
 
-`String` (also known as `VexString`) is Vex’s growable, heap-allocated string type. It features the **Omni-String** design, optimized for density and speed.
+## Literals and cheap reads
 
--   **SSO (Small String Optimization)**: Strings up to 12 bytes are stored directly in the struct, avoiding heap allocation entirely.
--   **Reference Counting**: Large strings use VUMM for zero-copy cloning and sharing.
--   **C Compatibility**: Heap strings are null-terminated, making them 100% C ABI compatible.
--   **Prefix-based Sorting**: Stores the first 4 bytes (Big-Endian) in the struct for ultra-fast comparison and sorting without cache misses.
+String literals are the easiest way to produce text:
 
 ```vex
-let! owned = "Hello".to_string();  // Promote 'str' to 'String'
-owned.append(" World");            // Growably append
+let site = "vex.dev";
+let prefix = "https://";
+let full = prefix + site;
 ```
 
-## Common Operations
+Common read-only operations are available directly on string values used throughout the repo:
 
-### Conversion
+```vex
+let url = "https://example.com/api/v1/users";
 
-| Operation | Description |
-|-----------|-------------|
-| `"literal".to_string()` | Converts a borrowed `str` to an owned `String` (allocates). |
-| `owned.as_ptr()` | Returns a standard C-string pointer (`ptr`). |
-| `owned.cstr()` | Alias for `as_ptr()`. |
+let ok_prefix = url.starts_with("https://");
+let ok_suffix = url.ends_with("users");
+let has_api = url.contains("/api/");
+let idx = url.indexOf("example");
+```
+
+## Conversions and formatting
+
+Vex code typically converts non-string values with `.toString()`:
+
+```vex
+let count = 42;
+let line = "count=" + count.toString();
+println(line);
+```
+
+That pattern is used broadly in the examples and standard library tests.
+
+## Common operations
 
 ### Concatenation
 
-Use the `+` operator or `append()` method.
+The `+` operator is the most common way to build new owned strings:
 
 ```vex
-let s3 = str1 + str2;     // Returns a new String
-owned.append(str_view);   // In-place mutation (if unique)
+let part1 = "Hello, ";
+let part2 = "World!";
+let combined = part1 + part2;
 ```
 
-### Slicing
-
-Slicing always returns a `str` view, regardless of whether the source is a `String` or another `str`.
+### Search
 
 ```vex
-let view = owned[start..end];
+let haystack = "Lorem ipsum dolor sit amet";
+
+let found = haystack.contains("amet");
+let pos = haystack.indexOf("ipsum");
 ```
 
-### Searching and Filtering
+### Trimming and case conversion
 
-| Method | Description |
-|--------|-------------|
-| `len()` | Returns the length in bytes. |
-| `is_empty()` | Returns `true` if length is 0. |
-| `starts_with(prefix)` | Returns `true` if it starts with the prefix. |
-| `ends_with(suffix)` | Returns `true` if it ends with the suffix. |
-| `contains(needle)` | SIMD-accelerated substring search. |
-| `indexOf(needle)` | Returns the byte offset of the match. |
+```vex
+let padded = "    hello world    ";
+let trimmed = padded.trim();
+let upper = trimmed.toUpper();
+let lower = upper.toLower();
+```
 
-### Case Conversion
+### Repeat
 
-| Method | Description |
-|--------|-------------|
-| `toUpper()` | Returns a new `String` in UPPERCASE. |
-| `toLower()` | Returns a new `String` in lowercase. |
+```vex
+let token: string = "ab";
+let repeated = token.repeat(4);
+```
 
-### Trimming
+## Ownership guidance
 
-Trimming is **zero-copy** — it returns a new `str` view pointing into the original data.
+- Accept `str` in APIs that only inspect text.
+- Return `string` when you create a fresh value.
+- Use concatenation and `.toString()` for straightforward text building.
+- Reach for template literals when you need multi-line structured output.
 
-| Method | Description |
-|--------|-------------|
-| `trimStart()` | Removes leading whitespace. |
-| `trimEnd()` | Removes trailing whitespace. |
-| `trim()` | Removes both leading and trailing whitespace. |
+## Internal model
 
-## Advanced String Internals
+Vex's owned `string` uses the compact omni-string layout described in the language internals. The important user-facing fact is simpler: short strings stay cheap, and the language keeps common string operations ergonomic.
 
-Vex strings use a 16-byte layout:
-1.  **Tagged Length (4 bytes)**: Contains length and flags (Large, ASCII, VUMM tag).
-2.  **Prefix (4 bytes)**: First 4 bytes of data for fast sorting.
-3.  **Payload (8 bytes)**: Inline data (if SSO) or heap pointer.
+## See also
 
-This density allows 4 strings to fit in a single CPU cache line, making Vex exceptionally fast at path-heavy tasks like routing or JSON parsing.
-
-## See Also
-
--   [Vec\<T\>](./vec) — Dynamic collections
--   [Enums](./enums) — String-based variants
--   [FFI](../ffi) — Passing strings to C
+- [Template Literals](../basics/template-literals)
+- [`Vec<T>`](./vec)
+- [FFI](../ffi)

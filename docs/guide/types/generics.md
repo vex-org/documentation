@@ -1,23 +1,35 @@
 # Generics
 
-Generics allow you to write flexible, reusable code that works with any type. Vex's generics are monomorphized at compile time, ensuring zero runtime cost.
+Generics let one function, struct, or contract work across many concrete types. In Vex, generic code is monomorphized, so the generated code is specialized per concrete use.
 
-## Generic Functions
+## Generic functions
+
+The most common pattern is a reusable function with one or more type parameters:
 
 ```vex
-// Generic function with type parameter T
-fn identity<T>(value: T): T {
-    return value
+fn identity<T>(x: T): T {
+    return x;
 }
 
-fn main(): i32 {
-    let x = identity(42)        // T = i32
-    let y = identity("hello")   // T = string
-    return 0
+fn pair_first<A, B>(a: A, b: B): A {
+    return a;
 }
 ```
 
-## Generic Structs
+You can call generic functions with inference:
+
+```vex
+let a = identity(42);
+let b = identity("hello");
+```
+
+Or with explicit type arguments when clarity matters:
+
+```vex
+let first = pair_first<i32, i64>(10, 20);
+```
+
+## Generic structs
 
 ```vex
 struct Container<T> {
@@ -25,16 +37,18 @@ struct Container<T> {
     value: T,
 }
 
-struct KeyValue<K, V> {
+struct Pair<T, U> {
     public:
-    key: K,
-    value: V,
+    left: T,
+    right: U,
 }
 ```
 
-## Generic Methods
+This is the standard way to build reusable collections, wrappers, and data-model helpers.
 
-Define methods on generic structs using receiver syntax:
+## Generic methods
+
+Generic types use normal receiver syntax for methods:
 
 ```vex
 struct Wrapper<T> {
@@ -42,83 +56,92 @@ struct Wrapper<T> {
     value: T,
 }
 
-// Immutable borrow receiver
-fn (self: &Wrapper<T>) get_value(): &T {
-    return &self.value
+fn (self: &Wrapper<T>) get(): &T {
+    return &self.value;
 }
 
-// Mutable borrow receiver
-fn (self: &Wrapper<T>!) set_value(new_val: T) {
-    self.value = new_val
+fn (self: &Wrapper<T>!) set(new_value: T) {
+    self.value = new_value;
 }
 ```
 
-## Contract Bounds
+## Contract bounds
 
-Constrain generic types using contracts to ensure they support specific operations:
+Bounds let you say what operations a type parameter must support.
 
 ```vex
-// T must implement the $Add contract (from prelude)
-fn sum_items<T: $Add>(a: T, b: T): T {
-    return a + b
+contract Stringify {
+    toString(): string;
 }
 
-// Multiple bounds using +
-fn process<T: $Display + $Clone>(item: T) {
-    let copy = item.clone()
-    $println(copy.toString())
+fn print_item<T: Stringify>(item: T) {
+    let s = item.toString();
+    $println(s);
 }
 ```
 
-## Associated Types
+Use bounds when a function depends on behavior, not on one exact type.
 
-Contracts can define associated types that implementations must provide:
+## Default type parameters
+
+Contracts can provide defaults for type parameters. A common pattern is `Self`:
 
 ```vex
-contract $Iterator {
+contract Add<Rhs = Self> {
+    op+(other: Rhs): Self;
+}
+```
+
+That lets one contract cover both `Vector + Vector` and specialized cases like `Vector + i32`.
+
+## Associated types
+
+Vex also supports associated types on contracts:
+
+```vex
+contract Iterator {
     type Item;
-    fn next(): Option<Self.Item>;
+    next(): Option<Self.Item>;
 }
 
-struct Counter: $Iterator {
-    count: i32,
+struct Counter: $Drop {
     type Item = i32;
+    count: i32,
 }
 
 fn (self: &Counter!) next(): Option<i32> {
-    self.count += 1
-    return Some(self.count)
+    self.count = self.count + 1;
+    return Some(self.count);
 }
 ```
 
-::: tip Vex Style
-Associated types belong to the contract/type declaration model itself. You declare them on the `contract`, then bind them on the implementing `struct` using Vex's colon syntax.
-:::
+Associated types help keep APIs readable when one logical output type belongs to the contract itself.
 
-## Const Generics
+## Const generics
 
-Generic over constant values known at compile time:
+Use const generics when part of the type is a compile-time value:
 
 ```vex
-struct FixedBuffer<const N: usize> {
-    data: [u8; N],
+struct Matrix<T, const N: usize, const M: usize> {
+    public:
 }
 
-fn FixedBuffer.new<const N: usize>(): FixedBuffer<N> {
-    return FixedBuffer { data: [0; N] }
+fn get_size<const SIZE: usize>(): i32 {
+    return 42;
 }
-
-let buffer = FixedBuffer.new<1024>()
 ```
 
-## Best Practices
+This is useful for fixed-size math structures, static buffers, and shape-encoded APIs.
 
-1. **Use meaningful names**: `T` is standard for a single type, but `K, V` or names like `Elem` can improve clarity.
-2. **Prefer contract bounds**: Explicitly state requirements for better compiler errors and type safety.
-3. **Keep it simple**: Don't over-nest generics; if a signature becomes unreadable, consider using a type alias.
+## Practical guidance
 
-## Next Steps
+- Keep type parameter lists short and purposeful.
+- Add bounds only where operations actually require them.
+- Prefer inference for callers, explicit type arguments for docs and tricky code.
+- Use const generics when the size or shape is part of correctness.
 
-- [Contracts](/guide/types/contracts) - Defining shared behavior
-- [Structs](/guide/types/structs) - Data structure definitions
-- [Enums](/guide/types/enums) - Sum types and Option/Result
+## See also
+
+- [Contracts](./contracts)
+- [Structs](./structs)
+- [Enums](./enums)

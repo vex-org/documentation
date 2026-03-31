@@ -1,77 +1,99 @@
-# Box\<T\> — Single Ownership Heap Pointer
+# `Box<T>`
 
-`Box<T>` is Vex's primary smart pointer for heap allocation. It provides **single ownership** of the data it points to and automatically cleans up memory when it goes out of scope.
+`Box<T>` is Vex's owning heap pointer for one value. It lives in the prelude, so you can use it without an import.
 
-::: tip Prelude Type
-`Box<T>` is a **prelude type** — available in all Vex programs without any `import`.
-:::
+## When to use it
 
-## Overview
+Reach for `Box<T>` when:
 
-A `Box` allows you to store data on the heap rather than the stack. This is useful for:
-
-1.  **Large data structures**: Moving a `Box` only copies a pointer, not the entire data.
-2.  **Recursive types**: Enums or structs that contain themselves.
-3.  **Ownership transfer**: Passing data between functions without deep copying.
+- a value should live on the heap
+- moving the wrapper should stay cheap
+- a recursive type needs an indirection point
+- ownership should remain explicit
 
 ```vex
-fn main() {
-    // Allocate an integer on the heap
-    let b = Box.new(42);
-    
-    // Automatic cleanup happens when 'b' goes out of scope
+fn main(): i32 {
+    let b: Box<i32> = Box.new(42);
+    $println(b.get());
+    return 0;
 }
 ```
 
-## VUMM Integration
+## Constructors
 
-`Box<T>` is fully integrated with **VUMM (Unified Memory Management)**. It follows the RAII (Resource Acquisition Is Initialization) pattern:
+Both constructor forms are present in the current prelude:
 
--   **Allocation**: Happens via `Box.new(value)`.
--   **Cleanup**: The `drop()` method is called automatically by the compiler when the `Box` is no longer reachable. If `T` implements `$Drop`, its destructor is also called.
+```vex
+let a = Box.new<i32>(42);
+let b = Box<i32>(99);
+```
 
-## Recursive Types
+Use whichever style matches the surrounding codebase.
 
-Recursive types must be "boxed" because their size cannot be determined at compile time otherwise.
+## Common methods
+
+The current `Box<T>` prelude surface includes:
+
+| Method           | Purpose                                                       |
+| ---------------- | ------------------------------------------------------------- |
+| `get()`          | Copy or move the contained value out by value where supported |
+| `getRef()`       | Borrow the contained value immutably                          |
+| `getRefOpt()`    | Borrow immutably if the internal pointer is valid             |
+| `getRefMut()`    | Borrow the contained value mutably                            |
+| `getRefMutOpt()` | Borrow mutably if the internal pointer is valid               |
+| `set(value)`     | Replace the contained value                                   |
+| `take()`         | Consume the box and return the owned value                    |
+| `tryTake()`      | Conditional `take()` returning `Option<T>`                    |
+| `swap(other)`    | Swap contents with another box                                |
+| `asPtr()`        | Expose the raw pointer                                        |
+| `isValid()`      | Check for a non-null internal pointer                         |
+
+Example:
+
+```vex
+fn bump(value: &Box<i32>!) {
+    let current = value.get();
+    value.set(current + 1);
+}
+```
+
+In normal code, prefer `getRef()` or `getRefMut()` when you want a borrow and `take()` only when you intentionally want to consume ownership.
+
+## Recursive types
+
+`Box<T>` is the usual way to make recursive layouts finite:
 
 ```vex
 enum List<T> {
     Cons(T, Box<List<T>>),
-    Nil
-}
-
-fn main() {
-    let list = List.Cons(1, Box.new(List.Cons(2, Box.new(List.Nil))));
+    Nil,
 }
 ```
 
-## API Reference
+## Drop behavior
 
-### Constructors
+`Box<T>` participates in normal Vex drop semantics. When a box goes out of scope, the contained value is dropped and the heap allocation is released.
 
-| Method | Description |
-|--------|-------------|
-| `Box.new(value: T)` | Allocates heap memory and moves `value` into it. |
+That makes it a good fit for simple RAII-style ownership without dropping down to raw pointers.
 
-### Instance Methods
+## Unsafe edges
 
-| Method | Description |
-|--------|-------------|
-| `drop()` | Manually triggers cleanup (rarely needed, usually automatic). |
+The prelude also exposes low-level escape hatches:
 
-## Memory Layout
+- `Box.fromRaw<T>(rawPtr)`
+- `intoRaw()`
 
-A `Box<T>` is represented as a single machine-word pointer to the heap allocation.
+Use them only when you are deliberately crossing ownership boundaries, such as FFI or runtime internals.
 
-```
-Stack          Heap
-+-------+      +-------+
-| Box b | ---> | Value | (T)
-+-------+      +-------+
-```
+## Notes
 
-## See Also
+- `Box<T>` is implemented as a builtin-like pointer wrapper in the prelude.
+- The current user-facing API is source-backed by `box.vxc`; this page documents that concrete surface rather than assuming implicit auto-deref behavior.
+- If you only need typed memory access, prefer [`Ptr<T>`](./ptr-t).
+- If you need growable collections, prefer [`Vec<T>`](../types/vec).
 
--   [VUMM](./vumm) — Vex's memory architecture
--   [Ownership](./ownership) — Ownership and borrowing
--   [Ptr\<T\>](./ptr-t) — Low-level typed pointers
+## See also
+
+- [Ownership](./ownership)
+- [VUMM](./vumm)
+- [`Ptr<T>`](./ptr-t)

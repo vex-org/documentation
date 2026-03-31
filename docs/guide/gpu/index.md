@@ -1,223 +1,91 @@
 # GPU & Compute with SIR
 
-Vex provides GPU/compute programming through **Silicon IR (SIR)** - an intermediate representation designed for heterogeneous computing. SIR compiles to SPIR-V, WGSL, Metal Shading Language, and optimized SIMD code.
+SIR is Vex's heterogeneous compute layer. It is the part of the compiler/runtime stack that can lower tensor-style work to SIMD and, where available, GPU-oriented backends.
 
-::: tip Key Insight
-Vex has **NO attributes** like `@silicon` or `#[...]`. GPU/compute is handled **automatically** by the SIR compiler when you use array operations. The compiler detects vectorizable patterns and generates optimal code for CPU (SIMD) or GPU backends.
-:::
+This page is intentionally conservative: today, the most reliable path is still CPU/SIMD. GPU backends exist, but they do not all have equally mature runtime execution.
 
-## Overview
+## What to use today
 
-The SIR pipeline works automatically:
+- Use normal array math and the [SIMD guide](../simd/) for the main production-ready fast path.
+- Use `graph fn`, `Tensor<T>`, and related APIs when you want to work directly with SIR-style compute graphs.
+- Treat non-SIMD GPU execution as evolving, not universally production-ready.
 
-```
-Vex Code → HIR → SIR Graph → Optimization → Backend Code
-                                              ├─ LLVM IR (CPU/SIMD)
-                                              ├─ SPIR-V (Vulkan)
-                                              ├─ WGSL (WebGPU)
-                                              └─ MSL (Metal)
-```
+## Minimal SIR example
 
-## Operator Quick Reference
-
-| Category | Operators | Example |
-|----------|-----------|---------|
-| **Arithmetic** | `+` `-` `*` `/` `%` `**` | `a + b`, `a ** 2` |
-| **Min/Max** | `<?` `>?` `><` | `a <? b`, `a >< (lo, hi)` |
-| **Saturating** | `+\|` `-\|` `*\|` | `pixels +\| 50` |
-| **Bitwise** | `&` `\|` `^` `~` `<<` `>>` | `a & b`, `a << 2` |
-| **Rotation** | `<<<` `>>>` | `x <<< 3` (crypto) |
-| **Comparison** | `==` `!=` `<` `<=` `>` `>=` | `a > 0` (returns mask) |
-| **Reduction** | `\+` `\*` `\<` `\>` `\&` `\\|` | `\+ data` (sum) |
-| **Matrix** | `<*>` `·` `×` `'` | `a <*> b`, `matrix'` |
-| **Pipeline** | `\|>` | `data \|> normalize \|> process` |
-
-## Array Operations
-
-SIR operates on Vex's built-in array types with **element-wise operators**:
+The current repo already contains examples like this:
 
 ```vex
-// Static arrays - size known at compile time
-let a: [f32; 1024] = [0.0; 1024]
-
-// Dynamic arrays
-let b: [f32] = [1.0, 2.0, 3.0, 4.0]
-
-// Array operations - NO loops needed!
-fn vector_add(a: [f32], b: [f32]): [f32] {
-    return a + b  // Element-wise addition, auto-vectorized
-}
-
-fn vector_scale(a: [f32], scale: f32): [f32] {
-    return a * scale  // Scalar broadcasting
+graph fn dynamic_even_gather(data: Span<f32>): Tensor<f32> {
+    let t: Tensor<f32> = data;
+    let total = data.len() as f64;
+    let even_indices = Tensor.arange<i64>(0.0, total, 2.0);
+    return t.gather(even_indices);
 }
 ```
 
-## Element-wise Operators
+This is the clearest signal that you are on the graph/SIR path rather than only writing ordinary scalar code.
 
-SIR supports rich element-wise operations directly on arrays:
+## Conceptual pipeline
 
-```vex
-let a = [1.0, 2.0, 3.0, 4.0]
-let b = [0.5, 1.0, 1.5, 2.0]
-
-// Arithmetic - works on entire arrays!
-let c = a + b        // [1.5, 3.0, 4.5, 6.0]
-let d = a * b        // [0.5, 2.0, 4.5, 8.0]
-let e = a ** 2       // [1.0, 4.0, 9.0, 16.0]  (power)
-
-// Min/Max operators
-let f = a <? b       // Element-wise min: [0.5, 1.0, 1.5, 2.0]
-let g = a >? b       // Element-wise max: [1.0, 2.0, 3.0, 4.0]
-let h = a >< (0.5, 3.0)  // Clamp: [1.0, 2.0, 3.0, 3.0]
-
-// Math functions apply element-wise
-let i = $sin(a)      // [0.84, 0.91, 0.14, -0.76]
-let j = $sqrt(a)     // [1.0, 1.41, 1.73, 2.0]
-let k = $exp(a)      // [2.72, 7.39, 20.09, 54.60]
-
-// Comparisons return masks
-let mask = a > 2.0   // [false, false, true, true]
+```
+Vex source
+  -> HIR
+  -> SIR graph
+  -> optimization and fusion
+  -> backend codegen
+  -> runtime dispatch or fallback
 ```
 
-## Reduction Operators
+Backends in the tree include SIMD, Metal, CUDA, ROCm, SPIR-V, and WGSL-oriented code generation.
 
-Reduce entire arrays to single values with prefix operators:
+## Current maturity snapshot
 
-```vex
-let data = [1.0, 2.0, 3.0, 4.0, 5.0]
+The repo's backend roadmap currently points to this practical picture:
 
-// Reduction operators (prefix syntax)
-let sum = \+ data     // 15.0 (sum reduction)
-let prod = \* data    // 120.0 (product)
-let max = \> data     // 5.0 (max reduction)
-let min = \< data     // 1.0 (min reduction)
-let all = \& mask     // Logical AND reduction
-let any = \| mask     // Logical OR reduction
+| Backend  | Practical status                                                            |
+| -------- | --------------------------------------------------------------------------- |
+| `SIMD`   | Most mature and the safest fast path today                                  |
+| `Metal`  | Real codegen exists, runtime execution is only solid in some configurations |
+| `CUDA`   | Codegen exists, runtime dispatch is still incomplete                        |
+| `ROCm`   | Separate HIP-oriented backend exists, runtime dispatch is still incomplete  |
+| `SPIR-V` | Important intermediate target, full Vulkan runtime path is not finished     |
+| `WGSL`   | Generation exists, but correctness and runtime coverage still need caution  |
 
-// With axis for multi-dimensional
-let matrix = [[1, 2], [3, 4]]
-let row_sums = \+ matrix, axis: 1   // [3, 7]
-let col_sums = \+ matrix, axis: 0   // [4, 6]
-```
+If you need dependable behavior now, assume CPU/SIMD first and treat GPU execution as opt-in validation territory.
 
-## Linear Algebra Operators
+## What SIR is good at
 
-Matrix operations with dedicated operators:
+SIR is the right abstraction for:
 
-```vex
-let a = [[1, 2], [3, 4]]
-let b = [[5, 6], [7, 8]]
+- tensor and graph-style transforms
+- gather/scatter patterns
+- backend-specific optimization and fusion
+- routing the same high-level compute description across multiple targets
 
-// Matrix multiply
-let c = a <*> b       // [[19, 22], [43, 50]]
+## What not to assume
 
-// Transpose
-let t = a'            // [[1, 3], [2, 4]]
+Do not assume that every SIR-capable program:
 
-// Dot product
-let v1 = [1.0, 2.0, 3.0]
-let v2 = [4.0, 5.0, 6.0]
-let dot = v1 · v2     // 32.0
+- will run on a real GPU on every machine
+- will avoid fallback paths
+- will have parity across Metal, CUDA, SPIR-V, and WGSL today
+- will beat the SIMD path for every workload
 
-// Cross product (3D vectors)
-let cross = v1 × v2   // [-3.0, 6.0, -3.0]
-```
+Those are explicit areas still being hardened in the compiler and runtime.
 
-## Bitwise Operators
+## Practical guidance
 
-Full bitwise support on integer arrays:
+1. Start with a correct CPU/SIMD version.
+2. Introduce `graph fn` and `Tensor` only where the dataflow really fits.
+3. Validate results on the backend you care about instead of assuming parity.
+4. Treat Metal on macOS as the most realistic current GPU target.
+5. Use docs in the architecture section when you need backend-level caveats.
 
-```vex
-let a: [u8] = [0xFF, 0x0F, 0xF0, 0xAA]
-let b: [u8] = [0x0F, 0xFF, 0x0F, 0x55]
+## Related docs
 
-let and = a & b       // [0x0F, 0x0F, 0x00, 0x00]
-let or = a | b        // [0xFF, 0xFF, 0xFF, 0xFF]
-let xor = a ^ b       // [0xF0, 0xF0, 0xFF, 0xFF]
-let not = ~a          // [0x00, 0xF0, 0x0F, 0x55]
-
-// Shifts
-let shl = a << 2      // Shift left
-let shr = a >> 2      // Shift right
-
-// Rotations (for crypto)
-let rotl = a <<< 3    // Rotate left
-let rotr = a >>> 3    // Rotate right
-```
-
-## Saturating Arithmetic
-
-For overflow-safe operations (audio, image processing):
-
-```vex
-let pixels: [u8] = [200, 250, 100, 50]
-let adjust: u8 = 60
-
-// Saturating operators (clamp instead of wrap)
-let brighter = pixels +| adjust   // [255, 255, 160, 110]
-let darker = pixels -| adjust     // [140, 190, 40, 0]
-let scaled = pixels *| 2          // [255, 255, 200, 100]
-```
-
-## Pipeline Operator
-
-Chain operations elegantly:
-
-```vex
-fn process_signal(data: [f32]): f32 {
-    return data
-        |> fn(x) { x - \+ x / x.len() as f32 } // Subtract mean
-        |> fn(x) { x ** 2 }                    // Square
-        |> \+                                  // Sum
-        |> fn(x) { $sqrt(x) }                  // Root = std deviation
-}
-
-// Equivalent to:
-fn process_signal_verbose(data: [f32]): f32 {
-    let mean = \+ data / data.len() as f32
-    let centered = data - mean
-    let squared = centered ** 2
-    let sum = \+ squared
-    return $sqrt(sum)
-}
-```
-
-## SIR Graph Architecture
-
-SIR represents computation as a DAG (Directed Acyclic Graph):
-
-| Node Type | Description | Example |
-|-----------|-------------|---------|
-| `Input` | Array/tensor placeholders | `let a = input([1024])` |
-| `Map` | Element-wise ops (Add, Mul, Sin...) | `a + b`, `$sin(a)` |
-| `MatMul` | Matrix multiplication | `a <*> b` |
-| `Reduce` | Reductions (Sum, Max, Mean) | `\+ data` |
-| `Output` | Graph outputs | `return result` |
-
-## Data Types (DType)
-
-SIR supports these data types:
-
-| Category | Types | Notes |
-|----------|-------|-------|
-| **Signed Int** | `i8`, `i16`, `i32`, `i64` | Bitwise & arithmetic |
-| **Unsigned Int** | `u8`, `u16`, `u32`, `u64` | Also for bitwise |
-| **Float** | `f16`, `f32`, `f64` | Math functions |
-| **Bool** | `bool` | Comparison results |
-| **Quantized** | `int4`, `fp4`, `e4m3`, `e5m2` | ML inference |
-
-## JIT Compilation
-
-SIR uses Just-In-Time compilation:
-
-1. **Graph Construction**: Code builds a SirGraph
-2. **Optimization Passes**:
-   - **Fusion**: Merges adjacent element-wise ops
-   - **Dead Code Elimination**: Removes unused nodes
-   - **Layout Optimization**: Reorders for hardware
-3. **Kernel Generation**: Backend-specific code
-4. **Execution**: Dispatch to hardware
+- [SIMD and Auto-Vectorization](../simd/)
+- [Tensor and Mask Types](../simd/tensor-mask)
+- [SIR and Backends](/architecture/sir-and-backends)
 
 ```vex
 // This simple code:
@@ -232,14 +100,15 @@ fn compute(a: [f32], b: [f32]): [f32] {
 ```
 
 ## Backend Selection
- 
+
 Vex **automatically** selects the best backend (CPU SIMD, Metal, Vulkan, etc.) based on the operation size and available hardware.
- 
+
 You do **not** need to import or configure backends manually. The compiler and runtime handle this transparently.
 
 ### Automatic GPU Offloading
 
 The SIR compiler automatically dispatches to GPU when:
+
 - Array operations exceed 4096 elements
 - Matrix multiplications with output > 64x64
 - Large reduction operations
@@ -278,13 +147,13 @@ VEX_VERBOSE=1 vex run program.vx
 
 Vex's SIR compiler automatically targets the appropriate API for your platform:
 
-| Platform | Backend | Requirement |
-|----------|---------|-------------|
-| **macOS** | `Metal` | macOS 10.13+ (Apple Silicon recommended) |
-| **Linux** | `Vulkan` | Vulkan 1.2+ driver |
-| **Windows** | `Vulkan` | Vulkan 1.2+ driver |
-| **Web** | `WebGPU` | Modern browser (Chrome/Edge/Firefox) |
-| **Fallback** | `LLVM-SIMD` | Any CPU (if GPU unavailable) |
+| Platform     | Backend     | Requirement                              |
+| ------------ | ----------- | ---------------------------------------- |
+| **macOS**    | `Metal`     | macOS 10.13+ (Apple Silicon recommended) |
+| **Linux**    | `Vulkan`    | Vulkan 1.2+ driver                       |
+| **Windows**  | `Vulkan`    | Vulkan 1.2+ driver                       |
+| **Web**      | `WebGPU`    | Modern browser (Chrome/Edge/Firefox)     |
+| **Fallback** | `LLVM-SIMD` | Any CPU (if GPU unavailable)             |
 
 For intrinsics supported on GPU, see the [Standard Intrinsics](/guide/simd#standard-intrinsics) table in the SIMD guide.
 
@@ -405,9 +274,9 @@ fn cross_entropy(pred: [f32], target: [f32]): f32 {
 }
 
 // Full forward pass - fuses into optimized kernels
-fn mlp_forward(x: [[f32]], w1: [[f32]], b1: [f32], 
+fn mlp_forward(x: [[f32]], w1: [[f32]], b1: [f32],
                w2: [[f32]], b2: [f32]): [[f32]] {
-    return x 
+    return x
         |> fn(h) { h <*> w1 + b1 }    // Linear 1
         |> fn(h) { h >? 0.0 }          // ReLU
         |> fn(h) { h <*> w2 + b2 }    // Linear 2
@@ -426,13 +295,13 @@ fn gravity_accel(
     let dx = pos[:, None, :] - pos[None, :, :]  // N x N x 3
     let dist_sq = \+ dx ** 2, axis: 2           // N x N
     let inv_dist3 = 1.0 / (dist_sq * $sqrt(dist_sq) + 1e-9)
-    
+
     // a = G * m * dx / r^3
     return \+ masses[None, :, None] * dx * inv_dist3[:, :, None], axis: 1
 }
 
 // Velocity Verlet integration
-fn integrate(pos: [[f32; 3]], vel: [[f32; 3]], 
+fn integrate(pos: [[f32; 3]], vel: [[f32; 3]],
              accel: [[f32; 3]], dt: f32): ([[f32; 3]], [[f32; 3]]) {
     let new_pos = pos + vel * dt + 0.5 * accel * dt ** 2
     let new_accel = gravity_accel(new_pos, masses)
@@ -457,11 +326,11 @@ fn sha256_round(a: u32, b: u32, c: u32, d: u32,
     let s1 = (e >>> 6) ^ (e >>> 11) ^ (e >>> 25)
     let ch = (e & f) ^ (~e & g)
     let temp1 = h +| s1 +| ch +| k +| w
-    
+
     let s0 = (a >>> 2) ^ (a >>> 13) ^ (a >>> 22)
     let maj = (a & b) ^ (a & c) ^ (b & c)
     let temp2 = s0 +| maj
-    
+
     return (temp1 +| temp2, a, b, c, d +| temp1, e, f, g)
 }
 ```

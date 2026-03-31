@@ -9,14 +9,14 @@ Structs in Vex are pure data types that group related values together. Unlike ma
 ```vex
 struct Point {
     x: f64,
-    y: f64
+    y: f64,
 }
 
 struct User {
     id: u64,
     name: string,
     email: string,
-    active: bool
+    active: bool,
 }
 ```
 
@@ -41,61 +41,74 @@ When variable names match field names:
 fn create_user(name: string, email: string): User {
     let id = 123
     return User {
-        id,        // Same as id: id
+        id,
         name,
         email,
-        active: true
+        active: true,
     }
 }
 ```
 
-## Field Visibility (Section-Based)
+## Field visibility and export
 
-Vex uses **section-based** visibility labels instead of per-field keywords:
+Vex separates two concerns:
+
+- `export` controls whether the struct itself is visible outside the module
+- `private:`, `readonly:`, and `public:` control field visibility inside the struct
+
+Section-based field visibility is the current model:
 
 ```vex
 export struct Account {
     private:
     internal_id: i64,
-    
+
     readonly:
     balance: f64,
-    
+
     public:
-    name: string
+    name: string,
 }
 ```
 
-| Label | Access Level |
-|-------|--------------|
-| `private:` | Module-only (Default) |
+| Label       | Access Level                            |
+| ----------- | --------------------------------------- |
+| `private:`  | Module-only (Default)                   |
 | `readonly:` | Publicly readable, Module-only writable |
-| `public:` | Fully accessible |
+| `public:`   | Fully accessible                        |
+
+If no section label is present, fields default to `private:`.
 
 ## Go-Style Methods
 
-Methods are defined **outside** the struct using receiver syntax:
+Methods are defined outside the struct using receiver syntax:
 
 ```vex
 struct Point {
     x: f64,
-    y: f64
+    y: f64,
 }
 
-// Static method (Associated function)
+// Associated function
 fn Point.new(x: f64, y: f64): Point {
     return Point { x, y }
 }
 
-// Instance method (Immutable)
 fn (self: &Point) length(): f64 {
     return (self.x * self.x + self.y * self.y).sqrt()
 }
 
-// Instance method (Mutable)
 fn (self: &Point!) translate(dx: f64, dy: f64) {
     self.x += dx
     self.y += dy
+}
+```
+
+If a method should be available across modules, export the function itself:
+
+```vex
+export fn (self: &Point) length(): f64 {
+    return (self.x * self.x + self.y * self.y).sqrt()
 }
 ```
 
@@ -114,24 +127,27 @@ struct User {
 Vex does **NOT** use `#[derive(...)]` or other attribute syntax. Use struct tags or implement contracts manually.
 :::
 
-## Implementing Contracts
+## Contracts on structs
 
-Attach contracts directly on the struct declaration with colon syntax:
+Attach contracts directly on the struct declaration with colon syntax.
 
 ```vex
-contract Display {
-    toString(): string;
+contract Area {
+    area(): f64;
 }
 
-struct Point: Display {
-    x: f64,
-    y: f64
+struct Rect: Area {
+    public:
+    width: f64,
+    height: f64,
 }
 
-fn (self: &Point) toString(): string {
-    return f"({self.x}, {self.y})"
+fn (self: &Rect) area(): f64 {
+    return self.width * self.height
 }
 ```
+
+Builtin contracts from the prelude commonly start with `$`, such as `$Display`, `$Clone`, and `$Drop`.
 
 ## Tuple Structs
 
@@ -142,14 +158,14 @@ struct Color(u8, u8, u8)
 struct UserId(u64)
 
 let red = Color(255, 0, 0)
-$println(f"R: {red.0}")
 ```
 
-## Best Practices
+## Guidance
 
-1. **Use section-based visibility**: Group relative fields under `private:`, `readonly:`, or `public:`.
-2. **Prefer Go-style methods**: Keep data and logic separate for better modularity.
-3. **Use Struct Tags**: For all cross-cutting concerns like JSON serialization or DB mapping.
+- Use `export struct` only when the type itself is part of the module surface.
+- Use visibility sections to group fields intentionally instead of repeating per-field modifiers.
+- Keep structs data-focused and put behavior in receiver methods.
+- Use tags when tooling or serializers need field metadata.
 
 ## Next Steps
 

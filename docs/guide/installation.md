@@ -1,21 +1,21 @@
 # Installation & Setup
 
-## System Requirements
+## Toolchain Requirements
 
 ### Supported Platforms
 
-| Platform | Architecture | Status |
-|----------|--------------|--------|
-| Linux | x86_64, aarch64 | ✅ Full Support |
-| macOS | x86_64, Apple Silicon | ✅ Full Support |
-| Windows | x86_64 | ✅ Full Support |
-| FreeBSD | x86_64 | ✅ Full Support |
+| Platform | Architecture          | Status          |
+| -------- | --------------------- | --------------- |
+| Linux    | x86_64, aarch64       | ✅ Full Support |
+| macOS    | x86_64, Apple Silicon | ✅ Full Support |
+| Windows  | x86_64                | ✅ Full Support |
+| FreeBSD  | x86_64                | ✅ Full Support |
 
 ### Dependencies
 
-- **LLVM 18+** - Backend code generation
-- **Clang** - C runtime compilation
-- **Rust 1.75+** - Building from source (temporary, until self-hosted)
+- **LLVM 21.1.8** - backend code generation used by the main toolchain
+- **Clang / platform C toolchain** - runtime and native linking support
+- **Rust toolchain** - required to build the compiler and tools from source today
 
 ## Building from Source
 
@@ -29,28 +29,27 @@ cd vex_lang
 ### 2. Build the Compiler
 
 ```bash
-# Debug build (faster compilation)
+# Debug build
 cargo build
 
-# Release build (optimized)
+# Release build
 cargo build --release
 ```
 
 ### 3. Verify Installation
 
 ```bash
-# Check version
+# Compiler binary
 ~/.cargo/target/debug/vex --version
 
-# Run a test program
+# Run a sample program
 ~/.cargo/target/debug/vex run examples/hello.vx
+
+# Run the repo test suite
+./test_all.sh
 ```
 
-## Pre-built Binaries
-
-::: info Coming Soon
-Pre-built binaries for all platforms will be available on the releases page after v0.3.6.
-:::
+The debug binary path above is the canonical development path used throughout the repository.
 
 ## Editor/IDE Setup
 
@@ -71,13 +70,13 @@ For other editors that support LSP:
 # Build the LSP server
 cargo build --release -p vex-lsp
 
-# The binary is at:
+# Binary path
 ~/.cargo/target/release/vex-lsp
 ```
 
 Configure your editor to use `vex-lsp` as the language server for `.vx` files.
 
-## Project Structure
+## Typical Workspace Layout
 
 A typical Vex project looks like:
 
@@ -105,26 +104,22 @@ fn main(): i32 {
 Run it:
 
 ```bash
-vex run hello.vx
+~/.cargo/target/debug/vex run hello.vx
 ```
 
-## Build Commands
+## Common Commands
 
-| Command | Description |
-|---------|-------------|
-| `vex run <file>` | Compile and run |
-| `vex build <file>` | Compile to binary |
-| `vex check <file>` | Type-check without compiling |
-| `vex fmt <file>` | Format source code |
-| `vex doc <file>` | Generate documentation |
+| Command              | Description            |
+| -------------------- | ---------------------- |
+| `vex run <file>`     | Compile and run        |
+| `vex compile <file>` | Compile and link       |
+| `vex test`           | Discover and run tests |
 
-## Environment Variables
+## Useful Development Notes
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `VEX_HOME` | Vex installation directory | `~/.vex` |
-| `VEX_TARGET` | Default compilation target | Host platform |
-| `VEX_OPT_LEVEL` | Optimization level (0-3) | `2` |
+- `vex run` may use JIT or no-JIT execution depending on runtime/native-linking constraints.
+- `vex compile` is the right entry point when you want persistent artifacts or LLVM output.
+- Examples in this repository often use `~/.cargo/target/debug/vex` directly during compiler development.
 
 ## Troubleshooting
 
@@ -132,27 +127,26 @@ vex run hello.vx
 
 ```bash
 # macOS
-brew install llvm@18
-export LLVM_SYS_180_PREFIX=$(brew --prefix llvm@18)
+brew install llvm
 
 # Ubuntu/Debian
-sudo apt install llvm-18-dev libclang-18-dev
+sudo apt install llvm-dev libclang-dev
 
 # Fedora
-sudo dnf install llvm18-devel clang18-devel
+sudo dnf install llvm-devel clang-devel
 ```
 
 ### Linker Errors
 
-Ensure you have a compatible linker:
+LLD is recommended when available.
 
 ```bash
-# Use LLD for faster linking (recommended)
-cargo install cargo-binutils
-rustup component add llvm-tools-preview
+# macOS
+brew install lld
 ```
 
 ## Next Steps
 
 - [Syntax Overview](/guide/basics/syntax) - Learn Vex syntax
-- [Your First Project](/guide/basics/first-project) - Create a complete project
+- [Functions](/guide/basics/functions) - Understand declarations and receivers
+- [Testing](/guide/tooling/testing) - Learn the test runner

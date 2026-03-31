@@ -1,104 +1,128 @@
 # Modules and Imports
 
-Vex uses a modern `import`/`export` system inspired by Go and JavaScript, ensuring clear module boundaries and explicit dependency management.
+Vex uses explicit `import` and `export` forms. Files act as modules, and public API is declared rather than implied.
 
-## Import Syntax
+## Import Forms
 
-### Namespace Import
-
-```vex
-import * as io from "io"
-
-fn main(): i32 {
-    io.println("Hello, World!")
-    return 0
-}
-```
-
-### Named Imports
+### Named imports
 
 ```vex
-import { sqrt, PI } from "math"
-
-fn main() {
-    let result = sqrt(16.0)
-    println(f"PI is {PI}")
-}
+import { App } from "cli/app";
+import { Command } from "cli/command";
 ```
 
-## Export Syntax
+This is the most direct form when you only need a few symbols.
 
-Everything in a module is **private** by default. Use the `export` keyword to expose items to other modules.
-
-### Exporting Functions and Structs
+### Namespace imports
 
 ```vex
-// Public function
-export fn calculate(x: i32): i32 {
-    return x * 2
-}
-
-// Public struct
-export struct User {
-    public:
-    name: string
-}
-
-// Private helper (not visible outside)
-fn internal_aid() { }
+import * as style from "cli/style";
 ```
 
-### Exporting Methods
+Namespace imports are useful when the imported module has many entry points and you want calls to stay visibly grouped.
 
-Methods associated with an exported struct are also typically exported:
+### Relative imports
 
 ```vex
-export struct Counter {
-    public:
-    count: i64
+import { User } from "./user.vx";
+```
+
+Relative paths are common inside package internals and library layout code.
+
+## Export Forms
+
+Everything is private unless exported.
+
+### Exporting declarations
+
+```vex
+export struct Logger {
+    level: i32,
 }
 
-export fn (self: &Counter!) increment() {
-    self.count += 1
+export fn newLogger(level: i32): Logger {
+    return Logger { level };
 }
 ```
 
-## File-Based Modules
+### Exporting methods
 
-Each `.vx` file is automatically treated as a module. The file path relative to the project root or standard library determines the import path.
-
+```vex
+export fn (self: &Logger) getLevel(): i32 {
+    return self.level;
+}
 ```
+
+### Re-exporting
+
+Re-exports are heavily used to build facade modules:
+
+```vex
+export { Regex, Match, test } from "./regex.vx";
+export { pid, ppid, exit } from "./process.vx";
+```
+
+This pattern is common in package `lib.vx` files that gather several internal modules into one public surface.
+
+## File-Based Module Model
+
+Each `.vx` file acts as a module.
+
+```text
 src/
-├── main.vx          # Root module
-└── utils.vx         # imported as "./utils"
+  main.vx
+  user.vx
+  service/
+    auth.vx
 ```
 
-## Re-exporting
+Typical imports then look like:
 
-Modules can act as a gateway by re-exporting items from other modules:
+- package-style: `import { App } from "cli/app";`
+- relative: `import { User } from "./user.vx";`
+
+## Public API Design
+
+Keep implementation details private and export only the surface another module should rely on.
+
+Good candidates for export:
+
+- stable structs and enums
+- constructors and factory functions
+- high-level helper functions
+- facade re-exports from a package root
+
+Less ideal candidates:
+
+- internal helpers
+- temporary glue functions
+- implementation-specific wiring code
+
+## Common Patterns
+
+### Package facade
 
 ```vex
-// models/mod.vx
-export { User } from "./user"
-export { Post } from "./post"
+export { File } from "./file.vx";
+export { readFile, writeFile } from "./convenience.vx";
 ```
 
-## Comparison with Other Languages
+### Mixed import style
 
-| Feature | Vex | Rust | Go |
-|---------|-----|------|-----|
-| Import | `import { x } from "m"` | `use m.x` | `import "m"` |
-| Export | `export fn f()` | `pub fn f()` | `func F()` |
-| Namespace | `import * as m` | `use m` | `import m "m"` |
+```vex
+import { App, Command } from "cli/app";
+import * as style from "cli/style";
+```
 
-## Best Practices
+## Guidelines
 
-1. **Export sparingly**: Keep your module's internal implementation details private.
-2. **Prefer named imports**: It makes dependencies explicit and easier to track.
-3. **Use Namespace Imports for large modules**: For modules like `std.math`, importing as a namespace (`math.sqrt`) improves readability.
+1. Prefer named imports for a narrow dependency surface.
+2. Use namespace imports when the module name adds clarity at each call site.
+3. Re-export from one facade file when you want consumers to have a stable entry point.
+4. Keep internal file layout flexible by exporting a clean public package surface.
 
 ## Next Steps
 
-- [Standard Library](/guide/stdlib) - Available modules
-- [FFI](/guide/ffi) - Importing C functions
-- [Project Configuration](/guide/basics/first-project) - Setting up `vex.json`
+- [Standard Library Overview](/guide/stdlib)
+- [FFI](/guide/ffi)
+- [Functions](/guide/basics/functions)

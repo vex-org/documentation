@@ -1,331 +1,117 @@
 # SIMD and Auto-Vectorization
 
-Vex automatically vectorizes array operations. There are **NO custom SIMD types** like `f32x4` - write clean, readable code and the compiler optimizes automatically.
+Vex has two related, but different, SIMD stories:
 
-> **Deep Dive:** For implementation details, see:
-> - [Tensor and Mask Types](./tensor-mask) - Internal SIMD type system (static & dynamic)
-> - [SIR Optimization Pipeline](./sir-pipeline) - How the compiler optimizes
+- small fixed-size arrays can be lowered directly to LLVM vector instructions
+- tensor and graph workloads can flow through SIR, which has its own SIMD backend
 
-## Overview
+The important constraint is that SIMD is not a blanket guarantee for every array expression. Some patterns inline cleanly, some lower to loop kernels, and some belong on the `graph fn` and `Tensor<T>` path instead.
 
-SIMD (Single Instruction, Multiple Data) processes multiple elements with single instructions:
+See also:
 
-```
-Scalar:           SIMD (4-wide):
-a + b = c         [a₀,a₁,a₂,a₃] + [b₀,b₁,b₂,b₃] = [c₀,c₁,c₂,c₃]
-1 op              1 op (but 4 results!)
-```
+- [Tensor and Mask Types](./tensor-mask)
+- [SIR Optimization Pipeline](./sir-pipeline)
 
-Vex supports two modes:
-- **Static Tensors** (`Tensor<T, N>`) - Compile-time size, register-optimized
-- **Dynamic Tensors** (`Tensor<T>`) - Runtime size, ideal for ML and variable data
+## The practical model
 
-## Automatic Vectorization
-
-Write operations directly on arrays - the compiler handles the rest:
+Use ordinary arrays when you want straightforward element-wise code:
 
 ```vex
-// Element-wise operations (NO loops needed!)
-fn vector_add(a: [f32], b: [f32]): [f32] {
-    return a + b  // Automatically vectorized
-}
-
-fn scale_array(data: [f32; 1024], factor: f32): [f32; 1024] {
-    return data * factor  // Scalar broadcasting
-}
-
-fn process(data: [f64]): f64 {
-    return $sqrt(\+ data ** 2)  // Sum of squares → sqrt
-}
-```
-
-### What Gets Vectorized
-
-The compiler automatically vectorizes:
-
-- **Element-wise ops**: `+`, `-`, `*`, `/`, `%`, `**`
-- **Comparisons**: `==`, `!=`, `<`, `>`, `<=`, `>=` (return masks)
-- **Math functions**: `$sqrt`, `$abs`, `$sin`, `$cos`, `$exp`, `$log`
-- **Reductions**: `\+` (sum), `\*` (product), `\<` (min), `\>` (max)
-- **Fused ops**: multiply-add via FMA
-
-## SIMD Operators
-
-Vex provides special operators optimized for SIMD:
-
-### Reduction Operators
-
-```vex
-let arr = [1, 2, 3, 4, 5]
-
-// Reduction operators (prefix syntax)
-let sum = \+ arr         // 15 (sum)
-let prod = \* arr        // 120 (product)
-let min_val = \< arr     // 1 (min)
-let max_val = \> arr     // 5 (max)
-
-// Boolean reductions
-let all_positive = \& (arr > 0)   // true (AND)
-let any_even = \| (arr % 2 == 0)  // true (OR)
-```
-
-### Element-wise Min/Max
-
-```vex
-let a = [1, 5, 3, 8]
-let b = [2, 3, 6, 4]
-
-let mins = a <? b        // [1, 3, 3, 4] (element-wise min)
-let maxs = a >? b        // [2, 5, 6, 8] (element-wise max)
-let clamped = a >< (2, 6)  // [2, 5, 3, 6] (clamp to range)
-```
-
-### Fused Multiply-Add
-
-```vex
-let a = [1.0, 2.0, 3.0, 4.0]
-let b = [2.0, 2.0, 2.0, 2.0]
-let c = [1.0, 1.0, 1.0, 1.0]
-
-// FMA: a * b + c in single operation (more accurate!)
-let result = a * b + c   // Compiler auto-fuses to FMA
-```
-
-### Saturating Arithmetic
-
-```vex
-let pixels: [u8; 4] = [250, 200, 100, 50]
-
-// Saturating add (clamps at max value, no overflow!)
-let brighter = pixels +| 60   // [255, 255, 160, 110]
-
-// Saturating subtract (clamps at 0)
-let darker = pixels -| 100    // [150, 100, 0, 0]
-```
-
-### Rotate Operations
-
-```vex
-let x: [u32] = [0x80000001, 0x00000001]
-
-// Rotate left
-let rotl = x <<< 1    // [0x00000003, 0x00000002]
-
-// Rotate right
-let rotr = x >>> 1    // [0xC0000000, 0x80000000]
-```
-
-## Working with Arrays
-
-### Fixed-Size Arrays
-
-```vex
-// Compiler knows size → optimal vectorization
-fn dot_product(a: [f64; 256], b: [f64; 256]): f64 {
-    return \+ a * b   // Sum of element-wise products
-}
-
-fn distance(a: [f32; 3], b: [f32; 3]): f32 {
-    return $sqrt(\+ (a - b) ** 2)
-}
-```
-
-### Dynamic Arrays
-
-```vex
-// Dynamic arrays also auto-vectorized
-fn normalize(v: [f32]): [f32] {
-    let mag = $sqrt(\+ v ** 2)
-    return v / mag
-}
-
-fn cosine_similarity(a: [f32], b: [f32]): f32 {
-    let dot = \+ a * b
-    let norm_a = $sqrt(\+ a ** 2)
-    let norm_b = $sqrt(\+ b ** 2)
-    return dot / (norm_a * norm_b)
-}
-```
-
-## Practical Examples
-
-### Vector Operations
-
-```vex
-fn add_vectors(a: [f32], b: [f32]): [f32] {
+fn add4(a: [i32; 4], b: [i32; 4]): [i32; 4] {
     return a + b
 }
 
-fn lerp(a: [f32], b: [f32], t: f32): [f32] {
-    return a * (1.0 - t) + b * t
-}
-
-fn cross_product(a: [f32; 3], b: [f32; 3]): [f32; 3] {
-    return a × b  // Cross product operator
+fn dot8(a: [f32; 8], b: [f32; 8]): f32 {
+    return \+ (a * b)
 }
 ```
 
-### Finding Extremes
+For small static arrays, the compiler can lower these operations to direct vector IR. The current inline threshold in the SIMD backend is 64 bytes with a power-of-two element count.
+
+When data is dynamic, graph-shaped, or needs tensor-specific routing, use the `graph fn` and `Tensor<T>` path instead:
 
 ```vex
-fn find_max(data: [f32]): f32 {
-    return \> data
-}
-
-fn find_min_max(data: [f32]): (f32, f32) {
-    return (\< data, \> data)
-}
-
-fn argmax(data: [f32]): i32 {
-    // ArgMax reduction
-    return $argmax(data)
+graph fn normalize(x: Tensor<f32>): Tensor<f32> {
+    let mag = Math.sqrt(x * x)
+    return x / mag
 }
 ```
 
-### Matrix Operations
+## What is solid today
+
+The currently well-grounded pieces are:
+
+- inline SIMD for small static arrays in compiler codegen
+- vector comparisons and reductions for qualifying fixed-size arrays
+- SIR SIMD backends for tensor and graph workloads
+- mask operations in SIR such as `any`, `all`, `countBits`, `firstSet`, and `select`
+
+## What should be read conservatively
+
+Treat these areas as advanced or still moving:
+
+- generic tensor arithmetic like `Tensor<T> * Tensor<T>` across arbitrary `T`
+- automatic coercion stories between `Span<T>` and `Tensor<T>` at every call boundary
+- assuming every dynamic array expression will become a single SIMD instruction
+- assuming every matrix or signal-processing operator is equally mature on every backend
+
+## Small-array path
+
+For fixed-size arrays, these patterns are the safest ones to expect the compiler to optimize well:
+
+- element-wise arithmetic such as `+`, `-`, `*`, `/`
+- comparisons such as `==`, `!=`, `<`, `>`
+- reductions such as `\+`, `\*`, `\<`, `\>`
+
+Example:
 
 ```vex
-// Matrix multiply with operator
-fn matmul(a: [[f64; 4]; 4], b: [[f64; 4]; 4]): [[f64; 4]; 4] {
-    return a <*> b
-}
-
-// Transpose
-fn transpose(m: [[f64; 4]; 4]): [[f64; 4]; 4] {
-    return m'
-}
-
-// Matrix-vector multiply
-fn transform(m: [[f32; 4]; 4], v: [f32; 4]): [f32; 4] {
-    return m <*> v
+fn energy4(x: [f32; 4]): f32 {
+    return \+ (x * x)
 }
 ```
 
-### Image Processing
+This is the part of the SIMD story backed by `crates/vex-compiler/src/codegen_hir/expr/simd_small`.
 
-```vex
-fn brighten(pixels: [u8], amount: u8): [u8] {
-    return pixels +| amount  // Saturating add
-}
+## Tensor and graph path
 
-fn invert(pixels: [u8]): [u8] {
-    return 255 - pixels
-}
+When code is naturally tensor-oriented, prefer `graph fn` plus concrete tensor types such as `Tensor<f32>`.
 
-fn blend(a: [u8], b: [u8], alpha: f32): [u8] {
-    return (a as [f32] * (1.0 - alpha) + b as [f32] * alpha) as [u8]
-}
+That path lowers through SIR and then routes to CPU SIMD, GPU, or other backends based on shape and backend support. It is more powerful than the small-array fast path, but it is also where current limitations show up first.
 
-fn grayscale(r: [u8], g: [u8], b: [u8]): [u8] {
-    return (r * 0.299 + g * 0.587 + b * 0.114) as [u8]
-}
-```
+## Choosing the right abstraction
 
-### Signal Processing
+Use fixed arrays when:
 
-```vex
-fn normalize_signal(signal: [f32]): [f32] {
-    let min = \< signal
-    let max = \> signal
-    return (signal - min) / (max - min)
-}
+- the shape is small and known at compile time
+- the code is mostly arithmetic, comparison, or reduction
+- you want predictable LLVM-level vectorization
 
-fn energy(signal: [f32]): f32 {
-    return \+ signal ** 2
-}
+Use `Tensor<T>` and `graph fn` when:
 
-fn rms(signal: [f32]): f32 {
-    return $sqrt(\+ signal ** 2 / #signal)
-}
-```
+- the data shape is dynamic
+- the computation is already graph-like
+- you want SIR routing and backend dispatch
 
-## Compilation Flags
+## Verification
 
-Enable SIMD optimizations:
+When SIMD behavior matters, inspect the generated LLVM or backend output instead of assuming fusion happened:
 
 ```bash
-# Auto-detect best SIMD for current CPU
-vex compile --simd file.vx
-
-# Specify optimization level
-vex compile -O 3 file.vx
-
-# Target specific architecture (for distribution)
-vex compile --target-cpu=x86-64-v3 file.vx  # AVX2
-vex compile --target-cpu=x86-64-v4 file.vx  # AVX-512
+vex compile --emit-llvm file.vx
 ```
 
-## Supported CPU Architectures
-
-Vex's SIMD backend (LLVM-based) supports modern vector extensions out of the box:
-
-| Architecture | Extensions | Note |
-|--------------|------------|------|
-| **Apple Silicon** | `NEON` | M1, M2, M3 families (ARM64) |
-| **ARM64** | `NEON`, `SVE` | Modern servers, mobile |
-| **x86-64 v4** | `AVX-512` | High-performance server/workstation |
-| **x86-64 v3** | `AVX2`, `FMA` | Most modern desktops (Zen, Haswell+) |
-| **x86-64 v2** | `SSE4.2` | Legacy fallback |
-| **WebAssembly** | `SIMD128` | Web browsers |
-
-## Standard Intrinsics
-
-These intrinsics are hardware-accelerated on both CPU (SIMD) and GPU:
-
-### Math & Analysis
-| Intrinsic | Description | Example |
-|-----------|-------------|---------|
-| `$sqrt(x)` | Square root | `$sqrt([4, 9])` → `[2, 3]` |
-| `$abs(x)` | Absolute value | `$abs([-5, 5])` → `[5, 5]` |
-| `$sin(x)`, `$cos(x)` | Trigonometry | `$sin(angle)` |
-| `$exp(x)`, `$log(x)` | Exp/Log | `$log(val)` |
-| `$pow(b, e)` | Power | `$pow(2, 3)` → `8` |
-| `$round(x)` | Rounding | `$round(1.6)` → `2.0` |
-| `$floor(x)`, `$ceil(x)` | Floor/Ceil | `$floor(1.6)` → `1.0` |
-
-### Array & Matrix
-| Intrinsic | Description | Example |
-|-----------|-------------|---------|
-| `$sum(x)` | Sum elements | `$sum([1,2,3])` → `6` |
-| `$prod(x)` | Product | `$prod([2,3])` → `6` |
-| `$min(x)`, `$max(x)` | Min/Max val | `$max([1,5])` → `5` |
-| `$argmax(x)` | Index of max | `$argmax([1,5,2])` → `1` |
-| `$zeros(shape)` | Zero tensor | `$zeros([2,2])` |
-| `$ones(shape)` | Inputs 1s | `$ones([4])` |
-| `$eye(n)` | Identity matrix | `$eye(3)` |
-| `$conv(d, k)` | Convolution | `$conv(img, kernel)` |
-| `$fft(x)` | Fast Fourier | `$fft(audio)` |
-
-
-## Best Practices
-
-1. **Use operators directly** - No loops needed for element-wise ops
-2. **Use reduction operators** - `\+`, `\<`, `\>` are SIMD-optimized
-3. **Prefer fixed-size arrays** - Known sizes enable better optimization
-4. **Let fusion happen** - Don't split operations unnecessarily
-
-```vex
-// ✅ Excellent: Direct operators
-fn sum(data: [f64]): f64 {
-    return \+ data
-}
-
-fn dot_product(a: [f64], b: [f64]): f64 {
-    return \+ a * b
-}
-
-fn normalize(v: [f64]): [f64] {
-    return v / $sqrt(\+ v ** 2)
-}
+Good signs for the small-array path are direct vector operations and vector reductions. For graph and tensor code, the more relevant check is whether the code lowered into the expected SIR/backend route.
 
 // ❌ Avoid: Manual loops when operators work
 fn sum_bad(data: [f64]): f64 {
-    let! total = 0.0
-    for x in data {
-        total = total + x  // Unnecessary!
-    }
-    return total
+let! total = 0.0
+for x in data {
+total = total + x // Unnecessary!
 }
+return total
+}
+
 ```
 
 ## SIMD Operator Reference
@@ -353,3 +139,4 @@ fn sum_bad(data: [f64]): f64 {
 - [GPU Programming](/guide/gpu) - Massively parallel compute
 - [FFI](/guide/ffi) - Integrating with native libraries
 - [Memory Management](/guide/memory/ownership) - Efficient data handling
+```

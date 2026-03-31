@@ -1,332 +1,201 @@
 # Compile-Time Evaluation
 
-Vex provides powerful compile-time evaluation capabilities through **comptime intrinsics**. These are evaluated during compilation, producing zero runtime overhead.
+Vex currently splits comptime features into two groups:
 
-## Overview
+- `#name(...)` style compile-time functions and queries
+- `$if`, `$elif`, `$else`, `$for`, `$while`, and `$const` compile-time control-flow forms
 
-Comptime intrinsics in Vex start with the `$` prefix and are evaluated at compile time. They enable:
+That distinction matters. Earlier docs blurred `#` and `$`; the current compiler does not.
 
-- **Type introspection** - Query type properties
-- **Reflection** - Inspect struct/enum fields and variants
-- **Compile-time arithmetic** - Evaluate constants
-- **Conditional compilation** - Type-based code generation
+## Prefix Model
 
-## Type Introspection
+Use this rule of thumb:
 
-### Size and Alignment
+- Prefer `#...` for reflection, diagnostics, embedding, compile-time math, and bit helpers
+- Use `$if`, `$for`, `$while`, and `$const` for compile-time branching and expansion
+- Layout helpers accept both historical `$sizeof` and `#sizeof` style spellings, plus the same pattern for alignment
 
-```vex
-// Get size of a type in bytes
-let size = #sizeof<i64>()     // 8
-let size = $sizeOf<MyStruct>()  // Struct size
-
-// Get alignment of a type
-let align = #alignof<f64>()   // 8
-let align = $alignOf<Vec<i32>>()  // Pointer alignment
-```
-
-### Type Name
+## Layout and Reflection
 
 ```vex
-// Get type name as string
-let name = #typeName<i32>()           // "i32"
-let name = #typename<Vec<string>>()   // "Vec<string>"
+let size_a = #sizeof<i64>()
+let size_b = $sizeof<i64>()
+
+let align_a = #alignof<f64>()
+let align_b = $alignof<f64>()
+
+let ty_name = $typeName<Vec<i32>>()
+let field_count = #fieldCount<User>()
+let variant_count = #variantCount<Result<i32, string>>()
 ```
 
-## Type Predicates
+The compiler also supports field and variant reflection helpers such as:
 
-Query type characteristics at compile time:
+- `#fieldNames<T>()`
+- `#hasField<T>(name)`
+- `#fieldType<T>(name)`
+- `#fieldTag<T>(field, key)`
+- `#hasFieldTag<T>(field, key)`
+- `#fieldTags<T>(field)`
+- `#variantNames<E>()`
+- `#hasVariant<E>(name)`
+- `#variantDiscriminant<E>(name)`
+- `#variantHasPayload<E>(name)`
+- `#variantPayload<E>(name)`
 
-```vex
-// Check type categories
-#isStruct<MyStruct>()      // true
-#isEnum<Option<T>>()       // true
-#isPrimitive<i32>()        // true
+## `#typeInfo<T>()`
 
-// Numeric type checks
-#isInteger<i64>()          // true
-#isFloat<f32>()            // true
-#isSigned<i32>()           // true (vs unsigned)
-
-// Compound types
-#isPointer<*i32>()         // true
-#isArray<[i32; 4]>()       // true
-#isTuple<(i32, string)>()  // true
-$isSlice<Slice<i32>>()     // true
-
-// Special types
-$isOption<Option<i32>>()   // true
-$isResult<Result<T, E>>()  // true
-#isReference<&T>()         // true
-#isFunction<fn(i32): i32>() // true
-#isGeneric<T>()            // true for type params
-
-// Contract checks
-#isCopy<i32>()             // true
-#needsDrop<Vec<i32>>()     // true
-```
-
-## Struct Reflection
-
-Inspect struct fields at compile time:
+`#typeInfo<T>()` is the current structured reflection entry point.
 
 ```vex
 struct User {
-    id: i64 `json:"user_id" db:"primary_key"`,
-    name: string `json:"name"`,
-    active: bool
+    id: i32 `json:"user_id" db:"primary_key"`,
+    name: string `json:"username"`,
 }
 
-// Field count
-let count = #fieldCount<User>()    // 3
+fn dump_user_fields(u: User) {
+    $for f in #typeInfo<User>().fields {
+        $println("field: ", f.name, " type: ", f.type_name)
 
-// Field names (comma-separated string)
-let names = #fieldNames<User>()    // "id,name,active"
-
-// Check if field exists
-let has = #hasField<User>("id")    // true
-let has = #hasField<User>("email") // false
-
-// Get field type name
-let ty = #fieldType<User>("id")    // "i64"
-let ty = #fieldType<User>("name")  // "string"
-
-// Get field offset in bytes
-let off = #offsetOf<User>("name")  // Offset of name field
-
-// Field tags (Go-style backtick metadata)
-let tag = #fieldTag<User>("id", "json")     // "user_id"
-let tag = #fieldTag<User>("id", "db")       // "primary_key"
-let has = #hasFieldTag<User>("id", "json")  // true
-let tags = #fieldTags<User>("id")           // "json:user_id,db:primary_key"
-```
-
-## Enum Reflection
-
-Inspect enum variants:
-
-```vex
-enum Status {
-    Active,
-    Pending,
-    Closed(string)
-}
-
-// Variant count
-let count = #variantCount<Status>()     // 3
-
-// Variant names
-let names = #variantNames<Status>()     // "Active,Pending,Closed"
-
-// Check variant existence
-let has = #hasVariant<Status>("Active") // true
-
-// Get variant discriminant
-let disc = #variantDiscriminant<Status>("Pending")  // 1
-
-// Check if variant has payload
-let has = #variantHasPayload<Status>("Closed")  // true
-let has = #variantHasPayload<Status>("Active")  // false
-
-// Get variant payload type
-let payload = #variantPayload<Status>("Closed")  // "string"
-```
-
-## Type Comparison
-
-```vex
-// Check if two types are the same
-#sameType<i32, i32>()              // true
-#sameType<i32, i64>()              // false
-#sameType<Vec<i32>, Vec<i32>>()    // true
-
-// Check if type implements a contract
-#implements<MyStruct, Display>()   // true/false
-```
-
-## Compile-Time Arithmetic
-
-Evaluate arithmetic at compile time:
-
-```vex
-// Power
-let val = #constPow(2, 10)    // 1024
-
-// Min/Max
-let min = #constMin(5, 3)     // 3
-let max = #constMax(5, 3)     // 5
-let min = $min(a, b)          // shorthand
-
-// Clamp
-let val = #constClamp(15, 0, 10)  // 10
-let val = $clamp(x, lo, hi)       // shorthand
-
-// Absolute value
-let abs = #constAbs(-42)      // 42
-let abs = $abs(x)             // shorthand
-
-// Logarithm (base 2)
-let log = #constLog2(256)     // 8
-let log = $log2(n)            // shorthand
-
-// Square root (integer)
-let sqrt = #constSqrt(144)    // 12
-
-// GCD/LCM
-let gcd = #constGcd(12, 8)    // 4
-let gcd = $gcd(a, b)          // shorthand
-let lcm = #constLcm(4, 6)     // 12
-let lcm = $lcm(a, b)          // shorthand
-```
-
-## Bit Operations
-
-```vex
-// Check if power of 2
-#isPowerOf2(16)       // true
-#isPowerOfTwo(15)     // false
-
-// Next power of 2
-#nextPowerOf2(5)      // 8
-#nextPow2(100)        // 128
-
-// Bit count (popcount)
-#bitCount(0b1010101)  // 4
-#popcount(255)        // 8
-
-// Leading/trailing zeros
-#leadingZeros(16)     // depends on bit width
-#clz(0x80)            // count leading zeros
-#trailingZeros(16)    // 4
-#ctz(0x80)            // count trailing zeros
-```
-
-## Default Values
-
-```vex
-// Create default value for type
-let val = #default<i32>()        // 0
-let val = #default<string>()     // ""
-let val = #default<Vec<i32>>()   // empty vec
-
-// Check if type has default
-#hasDefault<i32>()               // true
-
-// Create zeroed value (all bits zero)
-let val = #zeroed<MyStruct>()    // All fields zeroed
-```
-
-## Compile-Time Evaluation
-
-```vex
-// Force compile-time evaluation
-let val = #constEval(2 + 2)           // 4 at compile time
-let val = #eval(some_const_expr)      // Evaluate expression
-```
-
-## Debug Intrinsics
-
-```vex
-// Print type info during compilation
-#debugType<MyComplexType>()  // Prints type info to stderr
-```
-
-## Compile-Time Diagnostics
-
-```vex
-// Static assertion (fails compilation if false)
-#staticAssert(#sizeof<i32>() == 4, "i32 must be 4 bytes")
-#staticAssert(#hasField<User>("id"), "User must have id field")
-
-// Emit compile error
-#compileError("This code path should not be reached")
-
-// Emit compile warning
-#warning("This API is deprecated")
-```
-
-## Practical Examples
-
-### Type-Safe Serialization
-
-```vex
-fn to_json<T>(obj: &T): string {
-    let! result = "{"
-    let! first = true
-    
-    $for field in #fieldNames<T>().split(",") {
-        let json_key = #fieldTag<T>(field, "json")
-        
-        if json_key != "" {
-            if !first { result = result + ", " }
-            first = false
-            
-            let value = $fieldGet(obj, field)
-            result = result + "\"" + json_key + "\": "
-            
-            $if #fieldType<T>(field) == "string" {
-                result = result + "\"" + value + "\""
-            }
-            $if #fieldType<T>(field) == "i32" {
-                result = result + #stringify(value)
-            }
+        $for t in f.tags {
+            $println("  tag ", t.key, " = ", t.value)
         }
+
+        let value = #getField(u, f)
+        $println("  value = ", value)
     }
-    
-    return result + "}"
 }
 ```
 
-### Generic Buffer with Alignment
+Inside a `$for f in #typeInfo<T>().fields` loop, the current compiler also supports `#setField`:
 
 ```vex
-struct AlignedBuffer<T> {
-    data: *T,
-    len: i64
-}
+fn rewrite_all_fields() {
+    let! p = Point { x: 1, y: 2 }
 
-fn new_buffer<T>(count: i64): AlignedBuffer<T> {
-    let size = #sizeof<T>() * count
-    let align = #alignof<T>()
-    
-    #staticAssert(#isPrimitive<T>() || #isCopy<T>(), 
-                  "Buffer only supports Copy types")
-    
-    return AlignedBuffer {
-        data: aligned_alloc(align, size),
-        len: count
+    $for f in #typeInfo<Point>().fields {
+        #setField(p, f, 99)
     }
 }
 ```
 
-### Enum Visitor Pattern
+## Compile-Time Control Flow
+
+The parser and codegen currently support all of the following forms:
 
 ```vex
-fn visit_all<E, F>(visitor: F) {
-    let variants = #variantNames<E>()
-    
-    $for name in variants.split(",") {
-        $if #variantHasPayload<E>(name) {
-            // Skip variants with payloads
-            continue
-        }
-        
-        let disc = #variantDiscriminant<E>(name)
-        visitor(name, disc)
-    }
+$if #fieldCount<User>() > 0 {
+    #warning("User has fields")
+} $elif #fieldCount<User>() == 0 {
+    #warning("User is empty")
+} $else {
+    #compileError("unreachable comptime branch")
+}
+
+$for f in #typeInfo<User>().fields {
+    $println(f.name)
+}
+
+$while condition {
+    break
+}
+
+let value = $const {
+    2 + 2
 }
 ```
 
-## Best Practices
+`$while` is part of the language surface today even though older docs barely mentioned it.
 
-1. **Use for type safety** - Validate assumptions at compile time
-2. **Zero overhead** - All intrinsics evaluate at compile time
-3. **Static assertions** - Catch errors early with `#staticAssert`
-4. **Avoid runtime reflection** - Prefer comptime intrinsics
-5. **Document constraints** - Use `#compileError` for clear messages
+## Diagnostics and Embedding
 
-## Related Topics
+```vex
+#staticAssert(#fieldCount<User>() == 2, "User shape changed")
+#warning("legacy path still compiled")
+#debugExpr(5 + 3)
 
-- [Generics](/guide/types/generics) - Generic programming
-- [Contracts](/guide/types/contracts) - Type constraints
-- [Builtins](/guide/advanced/builtins) - Runtime intrinsics
+let home = #env("HOME")
+let config = #includeStr("config.json")
+let raw = #includeBytes("blob.bin")
+let source = #stringify(User { id: 1, name: "A" })
+let ident = #concatIdents(foo, bar)
+```
+
+The primary diagnostics and meta helpers currently documented by the compiler are:
+
+- `#staticAssert`
+- `#compileError`
+- `#warning`
+- `#debugExpr`
+- `#env`
+- `#includeStr`
+- `#includeBytes`
+- `#concat`
+- `#stringify`
+- `#concatIdents`
+
+## Compile-Time Math and Bit Operations
+
+The current implementation accepts both canonical names and several compatibility aliases.
+
+```vex
+let pow = #constPow(2, 10)
+let abs = #abs(-42)
+let min = #min(3, 5)
+let max = #max(3, 5)
+let clamp = #clamp(15, 0, 10)
+let sqrt = #constSqrt(144)
+let gcd = #gcd(48, 18)
+let lcm = #lcm(4, 6)
+
+let log2 = #log2(256)
+let next = #nextPowerOf2(5)
+let pop = #bitCount(0b1010101)
+let clz = #leadingZeros(16)
+let ctz = #trailingZeros(16)
+let swapped = #bswap(0x12345678)
+```
+
+Accepted aliases in the current compiler include:
+
+- `#constAbs` for `#abs`
+- `#constMin` for `#min`
+- `#constMax` for `#max`
+- `#constClamp` for `#clamp`
+- `#constLog2` for `#log2`
+- `#nextPow2` for `#nextPowerOf2`
+- `#popcount` for `#bitCount`
+- `#clz` for `#leadingZeros`
+- `#ctz` for `#trailingZeros`
+- `#reverseBytes` for `#bswap`
+
+## Forcing Evaluation
+
+```vex
+let a = #eval(10 + 20)
+let b = #constEval(50 + 50)
+```
+
+`#eval` evaluates a comptime-capable expression. `#constEval` is the strict form and produces an error when the expression cannot be folded at compile time.
+
+## Defaults and Zeroed Values
+
+```vex
+let default_i32 = #default<i32>()
+let zeroed_user = #zeroed<User>()
+```
+
+These helpers exist today and are useful in low-level or generated code, but they should still be used with the same care you would apply to raw initialization elsewhere in the language.
+
+## Practical Guidance
+
+1. Prefer `#typeInfo<T>()` when you need structured field iteration instead of parsing `#fieldNames<T>()` strings yourself.
+2. Prefer `#staticAssert` over comment-based assumptions.
+3. Treat compatibility aliases as compatibility aliases; document the primary spelling you actually want other code to use.
+4. Keep `$for` and `$if` bodies simple. They are easiest to reason about when they expand straightforward source.
+
+## Related
+
+- [Builtins](/guide/advanced/builtins)
+- [Policies](/guide/types/policies)
+- [Generics](/guide/types/generics)

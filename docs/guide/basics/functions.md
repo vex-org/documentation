@@ -38,6 +38,7 @@ fn multiply(a: i32, b: i32): i32 {
 ## Parameters
 
 ### Immutable by Default
+
 Parameters are immutable by default. You cannot modify them within the function body:
 
 ```vex
@@ -47,6 +48,7 @@ fn process(value: i32) {
 ```
 
 ### Mutable Parameters
+
 To make a parameter mutable, use the `!` suffix:
 
 ```vex
@@ -56,6 +58,7 @@ fn increment(value!: i32) {
 ```
 
 ### References
+
 Use `&T` for immutable references and `&T!` for mutable references:
 
 ```vex
@@ -155,14 +158,14 @@ When multiple overloads are available, Vex currently prefers:
 
 ### Tested Scenarios
 
-| Scenario | Status | Notes |
-|----------|--------|-------|
-| Different primitive parameter types | ✅ | Covered by overload regression tests |
-| Different arity | ✅ | Covered by `num_args_001.vx` |
-| Imported overloaded functions | ✅ | Covered by `import_001.vx` |
-| Default-parameter overloads | ✅ | Covered by `default_001.vx` |
-| Variadic overloads | ✅ | Covered by `variadic_001.vx` |
-| Generic fallback vs specific overload | ✅ | Covered by `generic_specific_001.vx` |
+| Scenario                                                   | Status     | Notes                                                            |
+| ---------------------------------------------------------- | ---------- | ---------------------------------------------------------------- |
+| Different primitive parameter types                        | ✅         | Covered by overload regression tests                             |
+| Different arity                                            | ✅         | Covered by `num_args_001.vx`                                     |
+| Imported overloaded functions                              | ✅         | Covered by `import_001.vx`                                       |
+| Default-parameter overloads                                | ✅         | Covered by `default_001.vx`                                      |
+| Variadic overloads                                         | ✅         | Covered by `variadic_001.vx`                                     |
+| Generic fallback vs specific overload                      | ✅         | Covered by `generic_specific_001.vx`                             |
 | Exhaustive generic + variadic + default-param combinations | ⚠️ Partial | Core cases are tested, but the full matrix is not yet exhaustive |
 
 ::: warning Current Coverage Note
@@ -222,17 +225,35 @@ let multiply = |a: i32, b: i32|: i32 {
 
 ## Async Functions
 
-Declare async functions with the `async` keyword:
+Vex supports real `async fn` declarations and prefix `await`.
 
 ```vex
-async fn fetch_data(url: string): Result<string, error> {
-    // ... implementation
+async fn fetch_number(): i32 {
+    return 42
 }
 
-async fn main() {
-    let result = await fetch_data("https://vex-lang.org")
+async fn sum_once(): i32 {
+    let value = await fetch_number()
+    return value + 1
+}
+
+async fn main(): i32 {
+    let total = await sum_once()
+    $println(total)
+    return 0
 }
 ```
+
+Current repo tests and examples cover:
+
+- `async fn` with explicit return types
+- prefix `await` inside async functions
+- `async fn main(): i32`
+- rejection of `await` inside ordinary sync functions
+
+`await` is not a general-purpose operator for sync code. In normal code it must be used in an async context. For spawned concurrent tasks, channels, and `go {}` interplay, see the dedicated concurrency docs.
+
+See also: [Async/Await](/guide/concurrency/async) and [Channels](/guide/concurrency/channels).
 
 ## Best Practices
 

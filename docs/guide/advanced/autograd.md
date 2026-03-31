@@ -1,269 +1,116 @@
-# Automatic Differentiation (Autograd)
+# Automatic Differentiation
 
-Vex provides **built-in automatic differentiation** for machine learning, physics simulations, and scientific computing. No external libraries needed!
+Vex currently exposes forward-mode automatic differentiation through an autograd block and four intrinsic helpers:
 
-::: tip What is Autograd?
-Autograd automatically computes gradients (derivatives) of your functions. This is essential for:
-- Training neural networks (backpropagation)
-- Physics simulations (sensitivity analysis)
-- Optimization problems (gradient descent)
-:::
+- `@param(expr)` seeds a value with gradient `1`
+- `@val(dual)` reads the primal value
+- `@grad(dual)` reads the tangent
+- `@detach(dual)` clears gradient tracking
 
-## The `@{ }` Block
+The `@{ ... }` block is still part of the language surface. It evaluates the block and returns the final autograd value.
 
-The autograd block `@{ ... }` creates a **differentiable scope**. Inside this scope, operations on "parameters" are tracked to compute gradients.
+## Core Example
 
 ```vex
 fn main(): i32 {
-    let x = 3.0
-    
-    // Autograd block - computes value AND gradient
     let result = @{
-        let p = $param(x)      // Mark x as a parameter
-        p * p + 2.0 * p + 1.0  // f(x) = x² + 2x + 1
+        let x = @param(3.0)
+        x * x + 2.0 * x + 1.0
     }
-    
-    // Extract results
-    let value = $val(result)    // f(3) = 9 + 6 + 1 = 16
-    let gradient = $grad(result) // f'(x) = 2x + 2, f'(3) = 8
-    
-    $println(f"f(3) = {value}")      // 16.0
-    $println(f"f'(3) = {gradient}")  // 8.0
-    
+
+    $println("value = ", @val(result))
+    $println("grad = ", @grad(result))
     return 0
 }
 ```
 
-## Autograd Intrinsics
+For the example above, the primal value is `16` and the gradient is `8`.
 
-| Intrinsic | Description |
-|-----------|-------------|
-| `$param(x)` | Mark variable `x` as a tracked parameter |
-| `$val(res)` | Extract the computed value (primal) |
-| `$grad(res)` | Extract the gradient (derivative) |
-| `$detach(x)` | Stop gradient tracking (for inference) |
+## Direct Intrinsic Use
 
-## Supported Operations
-
-### Arithmetic Operations
-
-All basic arithmetic is autograd-aware:
-
-```vex
-let result = @{
-    let x = $param(a)
-    let y = $param(b)
-    
-    x + y      // ∂/∂x = 1, ∂/∂y = 1
-    x - y      // ∂/∂x = 1, ∂/∂y = -1
-    x * y      // ∂/∂x = y, ∂/∂y = x
-    x / y      // ∂/∂x = 1/y, ∂/∂y = -x/y²
-    x ^ n      // ∂/∂x = n·x^(n-1) (power rule)
-}
-```
-
-### Math Functions
-
-Built-in math functions support automatic differentiation:
-
-```vex
-let trig_result = @{
-    let x = $param(angle)
-    $sin(x)    // ∂/∂x = cos(x)
-}
-
-let exp_result = @{
-    let x = $param(val)
-    $exp(x)    // ∂/∂x = exp(x)
-}
-
-let log_result = @{
-    let x = $param(val)
-    $log(x)    // ∂/∂x = 1/x
-}
-
-let sqrt_result = @{
-    let x = $param(val)
-    $sqrt(x)   // ∂/∂x = 1/(2√x)
-}
-
-let pow_result = @{
-    let x = $param(base)
-    $pow(x, 3.0)  // ∂/∂x = 3x²
-}
-```
-
-### Complete Example: Trigonometric Derivatives
+You can also use the intrinsics directly without wrapping everything in a larger block:
 
 ```vex
 fn main(): i32 {
-    let x = 3.0
-    
-    // g(x) = sin(x)
-    // g'(x) = cos(x)
-    let trig_res = @{
-        let p = $param(x)
-        $sin(p)
-    }
-    
-    $println(f"sin({x}) = {$val(trig_res)}")    // ~0.14112
-    $println(f"cos({x}) = {$grad(trig_res)}")   // ~-0.98999
-    
+    let x = @param(2.0)
+    let y = Math.sin(x)
+
+    $println("sin(2.0) = ", @val(y))
+    $println("d/dx sin(2.0) = ", @grad(y))
     return 0
 }
 ```
 
-### Advanced Math Example
+Current examples and compiler paths use the `Math.*` namespace for trig and transcendental functions rather than `$sin`, `$cos`, `$exp`, or `$log`.
+
+## Supported Pattern Today
+
+The implementation is forward-mode dual-number AD.
+
+```vex
+let x = @param(2.0)
+let y = @param(3.0)
+let z = x * y
+
+$println("value = ", @val(z))
+$println("grad = ", @grad(z))
+```
+
+When more than one input is seeded with `@param`, the current surface returns the directional derivative along the seeded tangent vector. In the example above, `@grad(z)` is `5`, not a pair of separate partial derivatives.
+
+If you need separate partials, run separate passes and seed one input at a time.
+
+## Detaching Values
+
+`@detach` preserves the value and clears the gradient component.
 
 ```vex
 fn main(): i32 {
-    let x = 3.0
-    
-    // f(x) = √x + log(x) + exp(x)
-    // f'(x) = 1/(2√x) + 1/x + exp(x)
-    let result = @{
-        let p = $param(x)
-        $sqrt(p) + $log(p) + $exp(p)
-    }
-    
-    // At x = 3:
-    // val ≈ 1.732 + 1.099 + 20.086 ≈ 22.916
-    // grad ≈ 0.289 + 0.333 + 20.086 ≈ 20.707
-    $println(f"f(3) = {$val(result)}")
-    $println(f"f'(3) = {$grad(result)}")
-    
+    let x = @param(3.0)
+    let frozen = @detach(x)
+
+    $println("value = ", @val(frozen))
+    $println("grad = ", @grad(frozen))
     return 0
 }
 ```
 
-## How It Works
+## Math Functions
 
-Vex implements **Forward-Mode Automatic Differentiation** using **Dual Numbers**.
-
-### Dual Numbers
-
-Each tracked value becomes a dual number: $v + \varepsilon d$ where:
-- $v$ is the primal value
-- $d$ is the derivative (tangent)
-- $\varepsilon^2 = 0$ (infinitesimal)
-
-### Chain Rule
-
-Operations automatically propagate derivatives using the chain rule:
-
-$$\frac{d}{dx}f(g(x)) = f'(g(x)) \cdot g'(x)$$
-
-### Compiler Optimization
-
-The Vex compiler (SIR) can:
-- Fuse autograd operations with computation loops
-- Eliminate memory overhead of computation graphs
-- Generate optimized gradient code at compile time
-
-## Machine Learning Example
-
-### Linear Regression
+The current examples and compiler support autograd through ordinary arithmetic plus the math namespace.
 
 ```vex
-fn train_step(x: f64, y_true: f64, w: f64, b: f64, lr: f64): (f64, f64) {
-    // Forward pass with gradient tracking
-    let loss_result = @{
-        let weight = $param(w)
-        let bias = $param(b)
-        
-        // Prediction: y = wx + b
-        let y_pred = weight * x + bias
-        
-        // MSE Loss: (y_pred - y_true)²
-        let loss = (y_pred - y_true) * (y_pred - y_true)
-        loss
-    }
-    
-    let loss = $val(loss_result)
-    let grad_w = $grad(loss_result)  // ∂loss/∂w
-    let grad_b = $grad(loss_result)  // ∂loss/∂b (second param)
-    
-    // Gradient descent update
-    let new_w = w - lr * grad_w
-    let new_b = b - lr * grad_b
-    
-    return (new_w, new_b)
-}
-```
-
-### Neural Network Layer
-
-```vex
-fn linear_layer(input: [f64], weights: [[f64]], bias: [f64]): @Dual {
-    @{
-        let w = $param(weights)
-        let b = $param(bias)
-        
-        // Matrix multiplication + bias
-        (input <*> w) + b
-    }
-}
-
-fn relu(x: @Dual): @Dual {
-    @{
-        let p = $param(x)
-        if $val(p) > 0.0 { p } else { 0.0 }
-    }
-}
-```
-
-## Stopping Gradients
-
-Use `$detach` to stop gradient propagation:
-
-```vex
-fn inference(x: f64, w: f64): f64 {
-    // During inference, we don't need gradients
+fn main(): i32 {
     let result = @{
-        let weight = $detach(w)  // No gradient tracking
-        let input = $param(x)
-        input * weight
+        let x = @param(4.0)
+        Math.sqrt(x) + Math.log(x) + Math.exp(x)
     }
-    return $val(result)
+
+    $println("value = ", @val(result))
+    $println("grad = ", @grad(result))
+    return 0
 }
 ```
 
-## Comparison with Other Languages
+Common working paths in the current tree include:
 
-| Feature | Vex | PyTorch | JAX | Julia |
-|---------|-----|---------|-----|-------|
-| Syntax | `@{ $param(x) }` | `requires_grad=True` | `grad(fn)` | `gradient(fn)` |
-| Mode | Forward | Reverse | Both | Both |
-| Built-in | ✅ | Library | Library | Library |
-| Compile-time | ✅ | ❌ | ✅ (JIT) | ✅ (JIT) |
+- `Math.sin`
+- `Math.cos`
+- `Math.exp`
+- `Math.log`
+- `Math.sqrt`
 
-## Best Practices
+## What To Rely On
 
-1. **Mark only needed parameters** - Don't `$param` constants
-2. **Use `$detach` for inference** - Saves computation
-3. **Keep autograd blocks focused** - One computation per block
-4. **Extract gradients immediately** - Before the result goes out of scope
+Use this page as the current contract for non-stdlib autograd syntax:
 
-```vex
-// ✅ Good: Clear, focused autograd block
-let result = @{
-    let w = $param(weights)
-    compute_loss(input, w, target)
-}
-let grad = $grad(result)
+- Prefer `@param`, `@val`, `@grad`, and `@detach`
+- Treat `$param`, `$val`, `$grad`, and `$detach` as legacy aliases, not the documented primary form
+- Use `Math.*` calls for differentiable math operations
+- Keep autograd scopes small and explicit so the seeded derivative path is obvious
 
-// ❌ Avoid: Too much in one block
-let result = @{
-    let w = $param(weights)
-    let preprocessed = preprocess(input)  // Could be outside
-    let normalized = normalize(preprocessed)  // Could be outside
-    compute_loss(normalized, w, target)
-}
-```
+## Related
 
-## Next Steps
-
-- [GPU Computing](/guide/gpu/) - GPU-accelerated autograd
-- [SIMD](/guide/simd/) - Vectorized operations
-- [Comptime](/guide/advanced/comptime) - Compile-time computation
-
+- [SIMD](/guide/simd/)
+- [GPU Programming](/guide/gpu/)
+- [Builtins](/guide/advanced/builtins)

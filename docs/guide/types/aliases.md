@@ -39,7 +39,8 @@ type Triple<T, U, V> = (T, U, V)
 
 ```vex
 type UserId = u64
-type UserMap = HashMap<UserId, User>
+type Score = f64
+type UserMap = Map<UserId, User>
 
 struct User {
     id: UserId,
@@ -54,7 +55,7 @@ fn get_user(users: &UserMap, id: UserId): Option<&User> {
 fn main(): i32 {
     let id: UserId = 12345
     let score: Score = 98.5
-    
+
     $println(f"User {id} has score {score}")
     return 0
 }
@@ -64,8 +65,8 @@ fn main(): i32 {
 
 ```vex
 // Alias with type parameters
-type Result<T> = Result<T, Error>
-type AsyncResult<T> = Future<Result<T>>
+type ApiResult<T> = Result<T, string>
+type Table<K, V> = Map<K, V>
 type Vec2<T> = (T, T)
 type Matrix<T> = [[T]]
 
@@ -73,6 +74,7 @@ type Matrix<T> = [[T]]
 type Numeric<T: $Add + $Mul> = T
 
 // Usage
+let! users: Table<UserId, User> = Map.new<UserId, User>()
 let point: Vec2<f64> = (1.0, 2.0)
 let matrix: Matrix<i32> = [[1, 2], [3, 4]]
 ```
@@ -169,21 +171,21 @@ contract Iterator {
 contract Container {
     type Item;
     type Iter: Iterator;
-    
+
     iter(): Self.Iter;
     len(): usize;
 }
 
 struct IntVec:Container {
     data: [i32],
-    
+
     type Item = i32;
     type Iter = IntVecIter;
-    
+
     fn iter(): IntVecIter {
         IntVecIter { vec: self, index: 0 }
     }
-    
+
     fn len(): usize {
         self.data.len()
     }
@@ -258,13 +260,13 @@ type ApiResult<T> = Result<T, ApiError>
 type Unwrap<T> = T extends Option<infer U> ? U : T
 
 // ⚠️ Avoid: Overly complex
-type ComplexType<T, U, V> = 
-    T extends Option<infer A> 
-        ? A extends Result<infer B, infer C> 
-            ? U extends [infer D] 
-                ? (B, C, D, V) 
-                : never 
-            : never 
+type ComplexType<T, U, V> =
+    T extends Option<infer A>
+        ? A extends Result<infer B, infer C>
+            ? U extends [infer D]
+                ? (B, C, D, V)
+                : never
+            : never
         : never
 ```
 
@@ -273,4 +275,3 @@ type ComplexType<T, U, V> =
 - [Generics](/guide/types/generics) - Generic type parameters
 - [Contracts](/guide/types/contracts) - Interfaces and bounds
 - [Comptime](/guide/advanced/comptime) - Compile-time computation
-

@@ -1,92 +1,85 @@
-# Ownership Model
+# Ownership and Borrowing
 
-Vex's ownership system ensures memory safety without garbage collection. Every value has a single owner, and when the owner goes out of scope, the value is automatically cleaned up.
+Vex is move-first. Values have an owner, moves transfer that ownership, and borrows let code inspect or mutate data without taking it over.
 
-## Core Principles
+## The default rule: moves
 
-### 1. Every Value Has One Owner
-
-```vex
-let s = "hello";    // s owns the string
-let t = s;          // Ownership moves to t
-// print(s);        // ❌ ERROR: s no longer owns the string
-print(t);           // ✅ OK: t is the owner
-```
-
-### 2. Ownership Can Be Transferred (Moved)
+Assignment and argument passing move non-`$Copy` values unless you borrow them.
 
 ```vex
-fn take_ownership(s: string) {
-    print(s);
-}  // s is dropped here
+let data = Vec.new<i32>();
+let other = data;
+// data.len();  // moved
 
-let my_string = "hello";
-take_ownership(my_string);      // Ownership moved to function
-// print(my_string);            // ❌ ERROR: my_string no longer valid
-```
-
-### 3. Values Are Dropped When Owner Goes Out of Scope
-
-```vex
-fn example() {
-    let s = "hello";
-    // ... use s ...
-}  // s goes out of scope, memory is freed
-```
-
-Types implementing `$Drop` run custom cleanup code at this point.
-
-## Move Semantics
-
-By default, assignment and function calls **move** ownership:
-
-```vex
-// Move on assignment
-let a = Vec.new<i32>();
-let b = a;              // a is moved to b
-// a.push(1);           // ❌ ERROR: use of moved value
-
-// Move on function call
 fn consume(v: Vec<i32>) {
-    // v is owned here
+    $println(v.len());
 }
 
-let data = Vec.new<i32>();
-consume(data);          // data is moved
-// data.len();          // ❌ ERROR: use of moved value
+let more = Vec.new<i32>();
+consume(more);
+// more.len();  // moved
 ```
 
-### `$Copy` Types
+That is the core rule to keep in mind for `Vec`, `Box`, `string`, maps, sets, and most user-defined structs.
 
-Simple types that implement `$Copy` are copied instead of moved:
+## `$Copy` values
+
+Some values copy instead of move.
+
+Typical examples:
+
+- integer types
+- floating-point types
+- `bool`
+- `char`
+- `str`
+- raw pointer values like `ptr`
 
 ```vex
 let x: i32 = 5;
-let y = x;          // x is COPIED, not moved
-print(x);           // ✅ OK: x is still valid
-
-// $Copy types include:
-// - All integer types (i8, i16, i32, i64, u8, u16, u32, u64, etc.)
-// - All floating point types (f32, f64)
-// - bool, char
-// - str (borrowed string view)
-// - Tuples and fixed-size arrays of $Copy types
+let y = x;
+$println(x);
+$println(y);
 ```
 
-### `$Clone` — Explicit Deep Copy
+For larger or owning values, assume move semantics unless the type explicitly behaves as `$Copy`.
 
-Non-`$Copy` types can be explicitly cloned:
+## Borrowing with references
+
+Borrowing avoids transfer of ownership.
+
+### Immutable borrow: `&T`
 
 ```vex
-let s1 = "hello";
-let s2 = s1.clone();    // Deep copy
-print(s1);              // ✅ OK: s1 is still valid
-print(s2);              // ✅ OK: s2 is a separate copy
+fn show_len(s: &string) {
+    $println(s.len());
+}
+
+let msg: string = "hello";
+show_len(&msg);
+show_len(&msg);
+$println(msg);
 ```
 
-## Partial Moves
+### Mutable borrow: `&T!`
 
-Vex supports moving individual fields out of a struct:
+Mutable borrows require a mutable binding on the owner side.
+
+```vex
+fn append_item(v: &Vec<i32>!) {
+    v.push(42);
+}
+
+let! values = Vec.new<i32>();
+append_item(&values!);
+$println(values.len());
+```
+
+The usual rule applies: many immutable borrows or one mutable borrow, but not both at the same time.
+
+## Partial moves and field access
+
+Moving one field of a struct does not mean every field becomes unusable. Copy fields can remain readable.
 
 ```vex
 struct Pair {
@@ -96,55 +89,14 @@ struct Pair {
 }
 
 let p = Pair { name: "Alice", age: 30 };
-let n = p.name;     // Move only p.name
-print(p.age);       // ✅ OK: p.age (i32 — $Copy) is still valid
-// print(p.name);   // ❌ ERROR: p.name has been moved
+let name = p.name;
+$println(p.age);
+// $println(p.name);
 ```
 
-## Borrowing
+## Lifetimes are mostly inferred
 
-Instead of transferring ownership, you can **borrow** a reference:
-
-### Immutable References (`&T`)
-
-Multiple immutable references are allowed:
-
-```vex
-fn print_length(s: &string) {
-    print(s.len());
-}  // s (the reference) goes out of scope, but doesn't drop the data
-
-let my_string = "hello";
-print_length(&my_string);    // Borrow immutably
-print_length(&my_string);    // Can borrow again
-print(my_string);            // Still valid — we never gave up ownership
-```
-
-### Mutable References (`&T!`)
-
-Only one mutable reference at a time:
-
-```vex
-fn append_item(v: &Vec<i32>!) {
-    v.push(42);
-}
-
-let! numbers = Vec.new<i32>();
-append_item(&numbers!);
-print(numbers.len());   // 1
-```
-
-### Borrowing Rules
-
-1. **At any time, you can have either:**
-   - Any number of immutable references (`&T`)
-   - OR exactly one mutable reference (`&T!`)
-
-2. **References must always be valid** — no dangling references
-
-## Lifetimes
-
-Vex automatically infers lifetimes — no explicit annotations needed:
+Vex aims to infer reference lifetimes instead of making users write annotations.
 
 ```vex
 fn longest(x: &string, y: &string): &string {
@@ -153,62 +105,46 @@ fn longest(x: &string, y: &string): &string {
     }
     return y;
 }
-
-// The compiler understands that the returned reference
-// borrows from both x and y automatically
-let s1 = "short";
-let s2 = "much longer";
-let result = longest(&s1, &s2);
-print(result);  // "much longer"
 ```
 
-## Smart Pointers
+The main mental model is simple: returned references must still point at data that outlives the use site.
 
-### Box&lt;T&gt; — Heap Allocation
+## Heap ownership with `Box`
+
+Use `Box` when the value should live on the heap or when a recursive type needs an indirection point.
 
 ```vex
-// Allocate on heap
 let boxed = Box.new(42);
-print(boxed);  // 42
-
-// Useful for recursive types
-enum List {
-    Cons(i32, Box<List>),
-    Nil,
-}
-
-let list = List.Cons(1, Box.new(List.Cons(2, Box.new(List.Nil))));
+$println(boxed.get());
 ```
 
-### VUMM (Unified Memory Model)
+`Box` still participates in the same ownership model. It is an owning value, not a special escape hatch from borrowing rules.
 
-Vex automatically chooses the right `Box` strategy:
+## Views over memory
 
-```vex
-// Compiler determines optimal strategy
-let data = Box.new(expensive_data);
+Not every API should take ownership.
 
-// Internally becomes one of:
-// - Unique: Single owner, zero overhead
-// - SharedRc: Multiple owners, single thread
-// - AtomicArc: Multiple owners, multi-thread
-```
+- use `&T` or `&T!` for ordinary borrows
+- use `Span<T>` for non-owning contiguous views
+- use `Ptr<T>` and `RawBuf` for low-level memory work
 
-::: tip
-You write `Box.new(value)` and the compiler picks the best strategy. No `Rc`, `Arc`, or `RefCell` needed — VUMM handles it all.
-:::
+That separation keeps high-level code safe and low-level code explicit.
 
-## Best Practices
+## How VUMM fits in
 
-1. **Prefer borrowing over ownership transfer** — more flexible
-2. **Use immutable references by default** — more concurrent access
-3. **Clone explicitly when needed** — clear intent with `.clone()`
-4. **Let the compiler infer lifetimes** — zero annotations required
-5. **Use `Box<T>` for shared ownership** — VUMM picks the right strategy
+VUMM is the compiler/runtime strategy behind `Box`, not a second ownership model you manually write every day. In user code, you still write `Box.new(value)` or `Box(value)`. The compiler can lower that to different internal ownership strategies as needed.
 
-## Next Steps
+## Practical guidance
 
-- [Borrowing Deep Dive](/guide/memory/borrowing) — Advanced borrowing patterns
-- [Automatic Lifetimes](/guide/memory/lifetimes) — How Vex tracks references
-- [VUMM](/guide/memory/vumm) — Automatic memory strategy selection
-- [Contracts](/guide/types/contracts) — $Drop, $Copy, $Clone and operator contracts
+1. Borrow first, move only when ownership transfer is intended.
+2. Use immutable borrows by default.
+3. Make mutation explicit with `let!` and `&value!`.
+4. Treat `Box` as an owning heap value, not as a substitute for borrowing.
+5. Keep raw memory work isolated behind `Ptr<T>`, `Span<T>`, and `RawBuf`.
+
+## See also
+
+- [Borrowing](./borrowing)
+- [Lifetimes](./lifetimes)
+- [VUMM](./vumm)
+- [Contracts](../types/contracts)

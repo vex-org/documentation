@@ -119,6 +119,16 @@ let greeting = f"Hello, {name}!"
 let multi = "Line 1
 Line 2
 Line 3"
+
+// Compile-Time Template Engine (Backticks)
+// Zero-overhead static string rendering with {{ expression }}
+let active = true
+let template = `
+    <div>
+        <h2>Welcome, {{ name }}!</h2>
+        <p>Status: {{ active ? "Online" : "Offline" }}</p>
+    </div>
+`
 ```
 
 ### Boolean and Nil

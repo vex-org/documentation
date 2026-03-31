@@ -1,121 +1,121 @@
-# Maps and Sets — Key-Value Collections
+# Maps and Sets
 
-Vex provides high-performance associative collections in the prelude: `Map<K, V>` for key-value pairs and `Set<T>` for unique elements. Both are based on **Swiss Tables**, an advanced hash map design that provides exceptional speed and memory efficiency.
+Vex ships prelude associative collections backed by a Swiss-table style hash map implementation. The current builtin surface lives in the compiler prelude and is available without imports.
 
 ::: tip Prelude Types
-`Map<K, V>` and `Set<T>` are **prelude types** — available in all Vex programs without any `import`.
+`Map<K, V>` and `Set<T>` are prelude types. This page documents the currently verified builtin API surface, not every experimental wrapper that may exist elsewhere in the repo.
 :::
 
-## Map\<K, V\>
+## `Map<K, V>`
 
-A `Map` (often called a hash map or dictionary) stores pairs of keys and values. Keys must be unique and must implement the `$Eq` and `.hash()` contracts.
+`Map<K, V>` stores unique keys with associated values using open addressing, control bytes, and quadratic probing.
 
-### Basic Usage
+### Constructors
 
 ```vex
-fn main() {
-    // Create an empty map
-    let! scores = Map.new<string, i32>();
-    
-    // Insert values
-    scores.insert("Alice", 100);
-    scores["Bob"] = 200;            // Index assignment operator
-    
-    // Retrieve values
-    match scores.get("Alice") {
-        Some(score) => $println("Alice scored: {}", score),
-        None => $println("Not found")
-    }
-    
-    // Check for existence
-    if scores.contains("Charlie") {
-        $println("Charlie is playing");
-    }
+let! scores = Map.new<string, i32>();
+let! fastPath = Map.withCap<string, i32>(1024);
+```
+
+`Map.withCap` is the current capacity constructor exposed by the prelude implementation.
+
+### Basic usage
+
+```vex
+let! scores = Map.new<string, i32>();
+
+scores.insert("alice", 100);
+scores.insert("bob", 200);
+
+match scores.getOwned(&"alice") {
+    Some(score) => {
+        $println(score);
+    },
+    None => {
+        $println("missing");
+    },
+};
+
+if scores.contains(&"bob") {
+    $println("bob exists");
 }
 ```
 
-### Core Operations
+### Lookup model
 
-| Method | Description |
-|--------|-------------|
-| `insert(key: K, value: V): bool` | Inserts or updates a pair. Returns `true` if it's a new key. |
-| `get(key: &K): Option<V>` | Returns a copy of the value if it exists. |
-| `getRef(key: &K): Option<&V>` | Returns a reference to the value in the map. |
-| `remove(key: &K): Option<V>` | Removes and returns the value associated with the key. |
-| `contains(key: &K): bool` | Returns `true` if the key exists in the map. |
-| `clear()` | Removes all key-value pairs. |
+- `get(&key)` returns `Option<&V>` for zero-copy access.
+- `getOwned(&key)` returns `Option<V>` when `V: $Clone`.
+- `map[key]` is a read-only index shorthand for `get`, so it also returns `Option<&V>`.
+- Updates are done with `insert`, not with `map[key] = value` in the documented prelude surface.
 
-### Index Operators
+### Core operations
 
-Maps support convenient index syntax for reading and writing:
+| Method                             | Return       | Notes                                |
+| ---------------------------------- | ------------ | ------------------------------------ |
+| `Map.new<K, V>()`                  | `Map<K, V>`  | Empty map                            |
+| `Map.withCap<K, V>(capacity: u64)` | `Map<K, V>`  | Preallocate buckets                  |
+| `insert(key: K, value: V)`         | `bool`       | `true` if the key was new            |
+| `get(key: &K)`                     | `Option<&V>` | Borrowed lookup                      |
+| `getOwned(key: &K)`                | `Option<V>`  | Cloned lookup when `V: $Clone`       |
+| `getOr(key: &K, fallback: &V)`     | `&V`         | Borrowed fallback lookup             |
+| `getOrInsert(key: K, default: V)`  | `&V!`        | Insert-on-miss                       |
+| `contains(key: &K)`                | `bool`       | Membership check                     |
+| `remove(key: &K)`                  | `Option<V>`  | Removes and returns the stored value |
+| `len()`                            | `u64`        | Element count                        |
+| `isEmpty()`                        | `bool`       | Empty check                          |
+| `clear()`                          | `()`         | Drops all entries                    |
+| `keys()`                           | `Vec<K>`     | Clones keys when `K: $Clone`         |
+| `values()`                         | `Vec<V>`     | Clones values when `V: $Clone`       |
 
-```vex
-let val = map[key];      // Returns Option<&V>
-map[key] = new_val;      // Internally calls insert()
-```
+## `Set<T>`
 
-### Capacity Hints
+`Set<T>` is the unique-element companion to `Map`. In the current prelude it is implemented as a thin wrapper around `Map<T, u8>`.
 
-Pre-allocating capacity can improve performance for large maps:
-
-```vex
-let! large_map = Map.withCapacity<i32, string>(1000);
-```
-
----
-
-## Set\<T\>
-
-A `Set` is a collection that stores unique elements. It is implemented as a wrapper around `Map<T, u8>`, providing similar performance characteristics.
-
-### Basic Usage
+### Basic usage
 
 ```vex
-fn main() {
-    let! tags = Set.new<string>();
-    
-    tags.insert("vex");
-    tags.insert("programming");
-    tags.insert("vex");         // Duplicate - ignored
-    
-    if tags.contains("vex") {
-        $println("Found!");
-    }
-    
-    tags.remove("programming");
+let! tags = Set.new<string>();
+
+tags.insert("vex");
+tags.insert("compiler");
+tags.insert("vex");
+
+if tags.contains("vex") {
+    $println("present");
 }
+
+let removed = tags.remove("compiler");
 ```
 
-### Core Operations
+### Core operations
 
-| Method | Description |
-|--------|-------------|
-| `insert(elem: T): bool` | Adds an element. Returns `true` if it was not already present. |
-| `contains(elem: T): bool` | Returns `true` if the element exists in the set. |
-| `remove(elem: T): bool` | Removes an element. Returns `true` if it was present. |
-| `clear()` | Removes all elements. |
+| Method              | Return   | Notes                                   |
+| ------------------- | -------- | --------------------------------------- |
+| `Set.new<T>()`      | `Set<T>` | Empty set                               |
+| `insert(elem: T)`   | `bool`   | `true` when the element was newly added |
+| `contains(elem: T)` | `bool`   | Membership check                        |
+| `remove(elem: T)`   | `bool`   | `true` if an element was removed        |
+| `len()`             | `usize`  | Element count                           |
+| `isEmpty()`         | `bool`   | Empty check                             |
+| `clear()`           | `()`     | Removes all elements                    |
 
+## Key requirements
 
+Map keys and set elements must support hashing and equality because the builtin implementation computes hashes with `key.hash()` and checks key equality during probing.
 
-## Performance Characteristics
+In practice, builtin scalar types and `string` are the common key types used across the repo.
 
-Vex collections use **quadratic probing** and **SIMD-friendly control bytes** (Swiss Tables) to achieve:
+## Performance model
 
--   **O(1) Average Case**: Insertion, deletion, and lookup.
--   **High Load Factor**: Maps remain efficient even at 87.5% capacity.
--   **Cache Efficiency**: Control bytes and data slots are optimized for modern CPU caches.
+The current prelude implementation is designed around Swiss-table techniques:
 
-## Requirements for Keys
-
-To be used as a key in a `Map` or an element in a `Set`, a type must implement:
-
-1.  **Equality (`$Eq`)**: To compare keys during lookup.
-2.  **Hashing**: A `.hash(): u64` method.
-
-Most built-in types (`i32`, `f64`, `string`, etc.) implement these by default.
+- Open addressing with quadratic probing
+- SIMD-friendly control bytes
+- A target load factor of `7/8` before growth
+- Separate control and entry storage for better cache behavior
 
 ## See Also
 
--   [Vec\<T\>](./vec) — Ordered dynamic array
--   [Enums](./enums) — Using `Option` for missing keys
--   [Operator Overloading](./operators) — How `op[]` works
+- [./vec](./vec)
+- [./enums](./enums)
+- [./contracts](./contracts)

@@ -1,65 +1,172 @@
-# Builtin Functions
+# Builtins and Intrinsics
 
-Vex provides a set of builtin functions and intrinsics that are always available without explicit imports. 
+Vex does not expose a tiny builtin surface anymore. The current compiler ships a broader always-available set of helpers covering:
 
-## Core IO
+- runtime I/O and debugging
+- panic and development traps
+- low-level memory access
+- timing helpers
+- compile-time reflection and diagnostics
+- autograd intrinsics
 
-```vex
-// Variadic printing
-println("Hello", "World", 42)
-print("No", "newline")
-```
+Some builtins also keep compatibility aliases for older spellings. This page documents the current surface you can actually rely on.
 
-## Guard and Assertions
+## Prefix Families
 
-```vex
-// Runtime assertion
-assert(x > 0)
+In the current implementation, builtin names fall into three practical groups:
 
-// Mark unreachable paths (panics in debug, UB in release)
-unreachable()
+- `@...` for autograd helpers
+- `$...` for runtime helpers plus a few long-lived layout and shape intrinsics
+- `#...` for compile-time helpers
 
-// Placeholder for missing implementation
-todo("implement this")
-```
-
-## Memory & Type Info
-
-Intrinsics starting with `#` are evaluated at compile time.
+## Runtime I/O and Debugging
 
 ```vex
-let size = #sizeof<i64>()       // 8
-let align = #alignof<f64>()     // 8
-let name = #typename<i32>()     // "i32"
+$print("partial line")
+$println("done")
+$eprint("warning: ")
+$eprintln("bad state")
+
+let rendered = $format("{0}:{1}", host, port)
+let value = $dbg(rendered)
 ```
 
-## Compile-Time Strings
+The current builtin surface includes:
+
+- `$print`
+- `$println`
+- `$eprint`
+- `$eprintln`
+- `$format`
+- `$dbg`
+
+## Runtime Traps and Development Helpers
 
 ```vex
-// Concatenation
-let msg = #concat("Hello, ", name)
-
-// Inclusion
-let config = #includeStr("config.json")
-let data = #includeBytes("image.png")
+$panic("fatal error")
+$todo("finish this branch")
+$unreachable()
+$assertEq(left, right)
 ```
 
-## Explicit Drop
+Use these intentionally:
 
-Vex handles memory automatically (RAII), but you can manually trigger cleanup:
+- `$panic` aborts execution
+- `$todo` marks unfinished runtime paths
+- `$unreachable` promises the path is impossible
+- `$assertEq` is a runtime equality assertion with structured failure output
+
+## Memory and Low-Level Helpers
 
 ```vex
 $drop(resource)
+
+let value = $load(ptr)
+$store(ptr_mut, value)
+
+let slice = $ptrToSlice(raw_ptr, len)
 ```
 
-## Best Practices
+These helpers exist, but they are not the first choice for ordinary application code.
 
-1. **Prefer RAII**: Trust the compiler's automatic cleanup instead of manual `$drop`.
-2. **Use `todo()` during development**: Keeps the compiler happy while you outline logic.
-3. **Leverage `#sizeof` for FFI**: Always use it when interfacing with C to ensure portable layouts.
+- Prefer `Ptr<T>`, `Span<T>`, and `RawBuf` over raw pointer helpers
+- Treat `$load`, `$store`, and `$ptrToSlice` as unsafe building blocks
+- Use `$drop` only when early destruction materially improves correctness or clarity
 
-## Next Steps
+## Timing
 
-- [Comptime](/guide/advanced/comptime) - Full compile-time reflection
-- [Unsafe](/guide/advanced/unsafe) - Low-level low-level operations
-- [FFI](/guide/ffi) - Interfacing with other languages
+```vex
+let start = $monotonicNow()
+work()
+let end = $monotonicNow()
+```
+
+Both `$monotonicNow()` and `$now()` resolve to the same timing helper in the current compiler surface.
+
+## Layout, Shape, and Reflection
+
+The implementation currently supports a mixed surface here.
+
+```vex
+let size_a = #sizeof<i64>()
+let size_b = $sizeof<i64>()
+
+let align_a = #alignof<f64>()
+let align_b = $alignof<f64>()
+
+let ty_name = $typeName<Vec<i32>>()
+let len = $len(v)
+let rank = $rank(tensor)
+let shape = $shape(tensor)
+```
+
+Current reflection helpers also include:
+
+- `#typeInfo<T>()`
+- `#getField(value, field)`
+- `#setField(target, field, value)`
+- `#fieldCount<T>()`
+- `#variantCount<E>()`
+
+If you are doing serious compile-time work, move from this page to [Comptime](/guide/advanced/comptime).
+
+## Compile-Time Diagnostics and Embedding
+
+```vex
+#staticAssert(#fieldCount<User>() > 0, "User must stay non-empty")
+#warning("legacy path compiled")
+
+let home = #env("HOME")
+let text = #includeStr("banner.txt")
+let bytes = #includeBytes("blob.bin")
+let expr = #debugExpr(5 + 3)
+let joined = #concat("hello", " ", "vex")
+let name = #concatIdents(foo, bar)
+```
+
+Useful helpers in this group:
+
+- `#staticAssert`
+- `#compileError`
+- `#warning`
+- `#debugExpr`
+- `#env`
+- `#includeStr`
+- `#includeBytes`
+- `#concat`
+- `#stringify`
+- `#concatIdents`
+
+## Autograd Builtins
+
+Autograd uses `@...` as the primary syntax today:
+
+```vex
+let x = @param(2.0)
+let y = Math.sin(x)
+
+$println(@val(y))
+$println(@grad(y))
+```
+
+Use these primary forms:
+
+- `@param`
+- `@val`
+- `@grad`
+- `@detach`
+
+Legacy `$param` and related spellings still normalize in parts of the compiler, but they should not be the documented form.
+
+## Guidance
+
+1. Prefer ordinary language constructs first and reach for builtins only when they make intent sharper.
+2. Prefer `Ptr<T>`, `Span<T>`, and `RawBuf` over `$load`, `$store`, and `$ptrToSlice` when the higher-level wrappers fit.
+3. Keep `$dbg` and `$todo` temporary.
+4. Prefer `#...` spellings for most compile-time helpers even if older aliases still parse.
+
+## Related
+
+- [Comptime](/guide/advanced/comptime)
+- [Assembly](/guide/advanced/assembly)
+- [Unsafe](/guide/advanced/unsafe)

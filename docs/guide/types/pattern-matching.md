@@ -1,155 +1,158 @@
 # Pattern Matching
 
-Pattern matching is one of Vex's most powerful features, allowing you to destructure complex data types and execute code based on their shape.
+Vex has a real `match` pipeline in the parser, HIR lowering, borrow checker, and codegen. The most exercised paths today are literal and wildcard matches, bindings, tuple and nested tuple destructuring, enum payload patterns, range patterns, guards, and `|` or-patterns.
 
-## The `match` Expression
+## `match` is an expression
 
-The `match` expression compares a value against a series of patterns. It is exhaustive, meaning you must handle every possible case.
+`match` returns a value, so it works naturally in assignments and returns.
 
 ```vex
-let x = 1
+let x = 5;
 
-match x {
-    1 => $println("One"),
-    2 => $println("Two"),
-    _ => $println("Something else")
+let label = match x {
+    0 => "zero",
+    1 | 2 => "small",
+    _ => "other",
+};
+```
+
+## Common pattern forms
+
+### Wildcards and bindings
+
+```vex
+let value = 42;
+
+let result = match value {
+    0 => 0,
+    n => n * 2,
+};
+```
+
+### Tuples and nested tuples
+
+Tuple destructuring is one of the best-covered pattern forms in the current test suite.
+
+```vex
+let pair = (0, -2);
+
+let axis = match pair {
+    (0, y) => y,
+    (x, 0) => x,
+    (x, y) => x + y,
+};
+
+let nested = ((1, 2), 3);
+
+let total = match nested {
+    ((a, b), c) => a + b + c,
+};
+```
+
+### Enums and payload extraction
+
+Enum payload binding is implemented and covered by both source tests and borrow-checker tests.
+
+```vex
+fn unwrapOrZero(opt: Option<i32>): i32 {
+    return match opt {
+        Some(v) => v,
+        None => 0,
+    };
+}
+
+fn describe(res: Result<i32, i32>): i32 {
+    return match res {
+        Ok(v) => v,
+        Err(code) => code,
+    };
 }
 ```
 
-## Destructuring
+### Struct patterns
 
-### Structs
+Shorthand struct destructuring such as `Point { x, y }` is supported and used in repo examples.
 
 ```vex
-struct Point { x: i32, y: i32 }
+struct Point {
+    public:
+    x: f32,
+    y: f32,
+}
 
-let p = Point { x: 0, y: 7 }
-
-match p {
-    Point { x: 0, y: 0 } => $println("Origin"),
-    Point { x, y: 0 } => $println(f"On x-axis at {x}"),
-    Point { x: 0, y } => $println(f"On y-axis at {y}"),
-    Point { x, y } => $println(f"At ({x}, {y})")
+fn distanceSquared(p: Point): f32 {
+    return match p {
+        Point { x, y } => x * x + y * y,
+    };
 }
 ```
 
-### Enums
+### Fixed-size array and slice-style patterns
 
 ```vex
-enum Message {
-    Quit,
-    Move { x: i32, y: i32 },
-    Write(string),
-    ChangeColor(i32, i32, i32),
-}
+let values = [1, 2, 3];
 
-fn process(msg: Message) {
-    match msg {
-        Message.Quit => $println("Quit"),
-        Message.Move { x, y } => $println(f"Move to ({x}, {y})"),
-        Message.Write(text) => $println(f"Text: {text}"),
-        Message.ChangeColor(r, g, b) => $println(f"Color: {r}, {g}, {b}"),
-    }
-}
+match values {
+    [a, b, c] => {
+        $println(a);
+        $println(b);
+        $println(c);
+    },
+    _ => {
+        $println("unexpected shape");
+    },
+};
 ```
 
-### Tuples
+## Ranges, guards, and or-patterns
+
+### Or-patterns
 
 ```vex
-let pair = (0, -2)
+let x = 2;
 
-match pair {
-    (0, y) => $println(f"Y axis: {y}"),
-    (x, 0) => $println(f"X axis: {x}"),
-    (x, y) => $println(f"Coords: {x}, {y}"),
-}
+let kind = match x {
+    1 | 2 => "small",
+    3 => "three",
+    _ => "other",
+};
 ```
 
-## Advanced Patterns
+### Range patterns
 
-### Multiple Patterns
-
-Use `|` to match multiple patterns:
+Both exclusive `a..b` and inclusive `a..=b` range patterns are parsed and used in repo examples.
 
 ```vex
-let x = 1
+let n = 9;
 
-match x {
-    1 | 2 => $println("One or Two"),
-    3 => $println("Three"),
-    _ => $println("Other")
-}
-```
-
-### Ranges
-
-Match ranges of values (inclusive):
-
-```vex
-let age = 15
-
-match age {
-    0..=12 => $println("Child"),
-    13..=19 => $println("Teenager"),
-    _ => $println("Adult")
-}
+let digits = match n {
+    0..10 => "single digit",
+    10..=99 => "two digits",
+    _ => "large",
+};
 ```
 
 ### Guards
 
-Add arbitrary boolean conditions to patterns using `if`:
+Guards add a second condition after the pattern.
 
 ```vex
-let pair = (2, 2)
+let x = 5;
 
-match pair {
-    (x, y) if x == y => $println("Equal"),
-    (x, y) if x + y == 0 => $println("Zero sum"),
-    _ => $println("Other")
-}
+let selected = match x {
+    n if n > 3 => n,
+    _ => 0,
+};
 ```
 
-### Binding (`@`)
+## Current documented surface
 
-Bind a value to a variable name while testing it against a pattern:
-
-```vex
-let age = 15
-
-match age {
-    n @ 13..=19 => $println(f"Teenager aged {n}"),
-    _ => $println("Not a teenager")
-}
-```
-
-## Deeply Nested Patterns
-
-You can match nested structures:
-
-```vex
-enum Shape {
-    Circle { center: Point, radius: i32 },
-    Rectangle { top_left: Point, bottom_right: Point }
-}
-
-let shape = Shape.Circle { 
-    center: Point { x: 0, y: 0 }, 
-    radius: 10 
-}
-
-match shape {
-    Shape.Circle { center: Point { x: 0, y: 0 }, .. } => {
-        $println("Circle at origin")
-    },
-    Shape.Rectangle { top_left: Point { x, y }, .. } => {
-        $println(f"Rect starts at {x}, {y}")
-    },
-    _ => $println("Other shape")
-}
-```
+- Safe to rely on today: wildcard patterns, bindings, tuple destructuring, nested tuple patterns, enum variant payload binding, range patterns, guards, fixed-size array patterns, and `|` or-patterns.
+- Struct destructuring with shorthand field bindings like `Point { x, y }` is also in active use.
+- More elaborate struct-field rebinding forms such as `Point { x: px, y: py }` exist in parser and example coverage, but the shorthand form is the most battle-tested shape to document as the baseline.
 
 ## Best Practices
 
-1.  **Exhaustiveness**: Always handle all cases. Use `_` wildcard only when necessary.
-2.  **Clarity**: Use guards for complex logic instead of convoluted patterns.
-3.  **Destructuring**: Use destructuring to extract values directly in the match arm.
+1. Prefer `match` when you need exhaustive branching and value extraction in one place.
+2. Use guards for extra conditions instead of encoding too much logic into the pattern itself.
+3. Treat tuple, enum, and shorthand struct patterns as the most stable core surface when writing portable examples and docs.

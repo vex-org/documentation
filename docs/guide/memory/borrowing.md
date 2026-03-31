@@ -1,6 +1,10 @@
 # Borrowing
 
-Borrowing allows you to reference data without taking ownership. This enables efficient data sharing while maintaining memory safety.
+Borrowing lets code reference data without taking ownership. In the current compiler, this is enforced by a real NLL borrow checker rather than being only an aspirational language rule.
+
+::: tip Current Status
+The borrow checker and NLL pipeline are implemented in `crates/vex-hir/src/borrow_check/nll/` and are covered by a large targeted test suite. A recent targeted run of `cargo test -p vex-hir borrow_check::nll` passed with 288 tests and 1 ignored parser-related test.
+:::
 
 ## Reference Types
 
@@ -36,6 +40,7 @@ print(data.len());  // 3
 ### Rule 1: One Mutable OR Many Immutable
 
 At any point, you can have either:
+
 - **One** mutable reference (`&T!`), OR
 - **Any number** of immutable references (`&T`)
 
@@ -73,7 +78,7 @@ fn good(): i32 {
 
 ## Non-Lexical Lifetimes (NLL)
 
-Vex uses NLL — borrows end at their **last use**, not at the end of the scope:
+Vex uses NLL-style reasoning: borrows end at their last relevant use rather than always extending to the textual end of the scope.
 
 ```vex
 let! data = Vec.new<i32>();
@@ -85,6 +90,8 @@ print(r.len());   // Last use of r — borrow ends here
 let r2 = &data!;  // ✅ OK: no conflict because r is no longer used
 r2.push(2);
 ```
+
+This behavior is backed by both unit tests and source-file harness tests such as the `nll_borrow_ends_at_last_use` regression.
 
 ## Partial Moves
 
@@ -128,7 +135,7 @@ print(rx);
 
 ## Cross-Function Lifetime
 
-When a function returns a reference (`&T`), the compiler automatically tracks that the returned reference borrows from the arguments:
+When a function returns a reference (`&T`), the compiler tracks that the returned reference is derived from an input borrow instead of treating it as a fresh owned value.
 
 ```vex
 struct Data {
@@ -146,11 +153,14 @@ print(r);                // ✅ OK: d is still alive
 ```
 
 ::: warning
-No lifetime annotations needed! The compiler uses **elision rules** to determine which parameters the return value borrows from:
+No explicit lifetime annotations are required in source syntax. The compiler currently applies automatic lifetime reasoning and conservative elision-style rules for common cases:
+
 1. If there's one `&T` parameter → return borrows from it
 2. If there's a `&self` receiver → return borrows from self
 3. Multiple `&T` parameters → return borrows from all (conservative)
-:::
+   :::
+
+The important point is that this is not only a design goal: return-reference cases are part of the current NLL test matrix.
 
 ## Method Receivers (Go-style)
 
@@ -192,12 +202,29 @@ fn modify(data: &Vec<i32>!) {
 }
 ```
 
+## Concurrency boundary
+
+Borrowing rules become stricter at detached concurrency boundaries.
+
+In particular, references are not allowed to escape into `go {}` blocks when that would create a dangling reference or a race-prone capture.
+
+```vex
+let! x: i32 = 42;
+let r = &x!;
+
+go {
+    $println("{}", r);  // rejected by the current borrow checker
+};
+```
+
+This is already covered by dedicated NLL tests for go-block capture safety.
+
 ## Best Practices
 
 1. **Prefer borrowing over cloning** — use `&T` to pass large structures
 2. **Use the smallest scope for mutable borrows** — NLL helps, but clarity is king
 3. **Prefer immutable when possible** — default to `&T`, only use `&T!` for mutation
-4. **Trust the compiler** — if it compiles, references are safe
+4. **Treat borrow-check success as local evidence** — the borrow checker is real and substantial, but broader ownership and runtime hardening work still exists elsewhere in the project
 
 ## Next Steps
 

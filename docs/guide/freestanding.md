@@ -5,12 +5,14 @@ Vex supports freestanding compilation for bare-metal environments, operating sys
 ## What is Freestanding?
 
 Freestanding mode compiles Vex code without:
+
 - Standard library (`std`)
 - Operating system
 - Dynamic memory allocation (by default)
 - Runtime support
 
 This enables:
+
 - OS kernels and Bootloaders
 - Embedded firmware
 - UEFI applications
@@ -84,7 +86,7 @@ struct UART {
 fn (self: &UART) write_byte(byte: u8) {
     let addr = self.base + 0x00
     let ptr = addr as *u8!
-    
+
     unsafe {
         // Direct pointer write
         *ptr = byte
@@ -96,11 +98,11 @@ fn (self: &UART) write_byte(byte: u8) {
 
 ```vex
 fn read_cr3(): u64 {
-    let value: u64
+    let! value: u64 = 0
     unsafe {
         asm!(
-            "mov {}, cr3",
-            out(reg) value
+            "mov $0, 0",
+            $asmOut("=r", value)
         )
     }
     return value
@@ -122,7 +124,7 @@ struct VgaWriter {
 fn (self: &VgaWriter!) write_byte(byte: u8) {
     let pos = self.row * 80 + self.column
     let ptr = (VGA_BUFFER + pos * 2) as *u16!
-    
+
     unsafe {
         // Direct write to VGA memory
         *ptr = (self.color as u16) << 8 | byte as u16

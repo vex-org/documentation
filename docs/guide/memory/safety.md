@@ -22,12 +22,12 @@ Vex provides a layered approach to memory management — from raw hardware acces
 
 ### Quick Decision Guide
 
-| You need... | Use | Safety | Overhead |
-|-------------|-----|--------|----------|
-| Heap allocation with auto cleanup | `Box<T>` | Full | Zero (VUMM) |
-| View into array/buffer with bounds checks | `Span<T>` | High | ~1 branch per access |
-| Typed pointer arithmetic | `Ptr<T>` | Medium | Zero |
-| FFI / hardware / memory-mapped I/O | `*T` | Manual | Zero |
+| You need...                               | Use       | Safety | Overhead             |
+| ----------------------------------------- | --------- | ------ | -------------------- |
+| Heap allocation with auto cleanup         | `Box<T>`  | Full   | Zero (VUMM)          |
+| View into array/buffer with bounds checks | `Span<T>` | High   | ~1 branch per access |
+| Typed pointer arithmetic                  | `Ptr<T>`  | Medium | Zero                 |
+| FFI / hardware / memory-mapped I/O        | `*T`      | Manual | Zero                 |
 
 ---
 
@@ -37,7 +37,7 @@ The escape hatch. Required for FFI and hardware interaction. Everything is manua
 
 ```vex
 extern "C" {
-    fn mmap(addr: *void, len: u64, prot: i32, flags: i32, 
+    fn mmap(addr: *void, len: u64, prot: i32, flags: i32,
             fd: i32, offset: i64): *void;
     fn munmap(addr: *void, len: u64): i32;
 }
@@ -51,6 +51,7 @@ fn mapHardwareRegister(): *u32! {
 ```
 
 **When to use:**
+
 - FFI with C libraries
 - Memory-mapped I/O
 - Inline assembly
@@ -76,24 +77,27 @@ fn fillBuffer(buf: Ptr<i32>, count: usize, value: i32) {
 fn main() {
     let! p = Ptr.allocN<i32>(100);
     fillBuffer(p, 100, 42);
-    
+
     let val = p.add(50).read();    // 42
     p.free();
 }
 ```
 
 **When to use:**
+
 - Custom allocators
-- Data structure internals (Vec, HashMap backing storage)
+- Data structure internals (Vec, Map backing storage)
 - Performance-critical pointer arithmetic
 - When you need pointer control but want type safety
 
 **Guarantees:**
+
 - Type-safe reads/writes (no `as *T` casts)
 - Element-level arithmetic (not byte-level)
 - Null checking via `.isNull()`
 
 **Not guaranteed:**
+
 - No bounds checking
 - No automatic deallocation
 - No lifetime tracking
@@ -118,15 +122,15 @@ fn sum(data: Span<i32>): i32 {
 }
 
 fn main() {
-    let! v = Vec<i32>.new();
+    let! v = Vec.new<i32>();
     v.push(10);
     v.push(20);
     v.push(30);
-    
-    let span = Span.ofVec<i32>(v.data as *i32, v.len());
-    
+
+    let span = v.asSpan();
+
     $println(sum(span));       // 60
-    
+
     // Sub-span — zero allocation
     let first2 = span.take(2);
     $println(sum(first2));     // 30
@@ -134,11 +138,13 @@ fn main() {
 ```
 
 **When to use:**
+
 - Function parameters that accept "a slice of data"
 - Array views without copying
 - Buffer processing
 
 **Guarantees:**
+
 - Bounds checking on `.get()` (returns `Option<T>`)
 - Known length via `.len()`
 - Sub-slicing without allocation (`.slice()`, `.take()`, `.skip()`)
@@ -146,6 +152,7 @@ fn main() {
 - Search via `.contains()`, `.indexOf()`
 
 **Not guaranteed:**
+
 - No ownership (doesn't free memory)
 - No lifetime enforcement (can dangle if source is freed)
 
@@ -153,28 +160,29 @@ fn main() {
 
 ## Layer 3: Box\<T\> — Owned Heap Value
 
-Fully managed by VUMM. You never think about deallocation:
+At the user level, `Box<T>` is the owning heap-value surface. In ordinary code you use it as the managed heap layer rather than handling raw frees yourself.
 
 ```vex
-fn createNode(value: i32): Box<Node> {
-    return Box(Node { value: value, next: null });
+fn createValue(value: i32): Box<i32> {
+    return Box.new<i32>(value);
 }
 
 fn main() {
-    let node = createNode(42);
-    $println(node.value);
-    // node automatically freed at scope exit
-    // VUMM chose Unique — zero overhead
+    let boxed = createValue(42);
+    $println(boxed.get());
+    // boxed is cleaned up at scope exit
 }
 ```
 
 **When to use:**
+
 - Any heap allocation
 - Shared data (VUMM auto-selects Rc/Arc)
 - Trees, graphs, linked structures
 - "I just want a heap value"
 
 **Guarantees:**
+
 - Automatic deallocation
 - Correct sharing (Unique/SharedRc/AtomicArc auto-selected)
 - Zero runtime branching (monomorphized)
@@ -189,19 +197,19 @@ Layers compose naturally. Higher layers use lower layers internally:
 ```vex
 fn processVec(v: Vec<i32>) {
     // Create Span from Vec data
-    let view = Span.ofVec<i32>(v.data as *i32, v.len());
-    
+    let view = v.asSpan();
+
     // Bounds-checked access
     match view.get(0) {
         Some(first) => $println(first),
         None => $println("Empty!"),
     }
-    
-    // Search 
+
+    // Search
     if view.contains(42) {
         $println("Found 42!");
     }
-    
+
     // Iterator
     let! iter = view.iter();
     loop {
@@ -230,33 +238,33 @@ Box<T> ───────→ Ptr<T> ───────→ Span<T>         
       Ptr.of()        .toPtr()
 ```
 
-| From | To | Method | Allocates? |
-|------|----|--------|------------|
-| `*T` | `Ptr<T>` | `Ptr.of<T>(p)` | No |
-| `*T` | `Ptr<T>` | `Ptr<T>(p)` | No |
-| `Ptr<T>` | `*T` | `p.asRaw()` | No |
-| `Ptr<T>` | `*void` | `p.asOpaque()` | No |
-| `Ptr<T>` | `Span<T>` | `Span.ofPtr<T>(p.asRaw(), len)` | No |
-| `Span<T>` | `Ptr<T>` | `span.toPtr()` | No |
-| `Span<T>` | `Vec<T>` | `span.toVec()` | Yes |
-| Any | `Box<T>` | `Box(val)` | Yes |
-| `Box<T>` | `&T` | Auto-deref | No |
+| From      | To        | Method                          | Allocates? |
+| --------- | --------- | ------------------------------- | ---------- |
+| `*T`      | `Ptr<T>`  | `Ptr.of<T>(p)`                  | No         |
+| `*T`      | `Ptr<T>`  | `Ptr<T>(p)`                     | No         |
+| `Ptr<T>`  | `*T`      | `p.asRaw()`                     | No         |
+| `Ptr<T>`  | `*void`   | `p.asOpaque()`                  | No         |
+| `Ptr<T>`  | `Span<T>` | `Span.ofPtr<T>(p.asRaw(), len)` | No         |
+| `Span<T>` | `Ptr<T>`  | `span.toPtr()`                  | No         |
+| `Span<T>` | `Vec<T>`  | `span.toVec()`                  | Yes        |
+| Any       | `Box<T>`  | `Box(val)`                      | Yes        |
+| `Box<T>`  | `&T`      | `box.getRef()`                  | No         |
 
 ---
 
 ## Safety Comparison
 
-| Property | `*T` | `Ptr<T>` | `Span<T>` | `Box<T>` |
-|----------|------|----------|-----------|----------|
-| Typed | Partial | Yes | Yes | Yes |
-| Generic | No | Yes | Yes | Yes |
-| Null-safe | No | `.isNull()` | Always valid | Always valid |
-| Bounds-checked | No | No | `.get()` | N/A |
-| Auto-free | No | No | No | Yes |
-| Move semantics | No | No | No | Yes |
-| Thread-safe | Manual | Manual | Manual | VUMM auto |
-| Zero overhead | Yes | Yes | ~Yes | Yes (VUMM) |
-| FFI compatible | Native | `.toRaw()` | `.ptr.toRaw()` | No |
+| Property              | `*T`    | `Ptr<T>`                 | `Span<T>`              | `Box<T>`                  |
+| --------------------- | ------- | ------------------------ | ---------------------- | ------------------------- |
+| Typed                 | Partial | Yes                      | Yes                    | Yes                       |
+| Generic               | No      | Yes                      | Yes                    | Yes                       |
+| Null-safe             | No      | `.isNull()`              | Check with `.isNull()` | Check with `.isValid()`   |
+| Bounds-checked        | No      | No                       | `.get()`               | N/A                       |
+| Auto-free             | No      | No                       | No                     | Yes                       |
+| Move semantics        | No      | No                       | No                     | Yes                       |
+| Thread-safe           | Manual  | Manual                   | Manual                 | Ownership-managed surface |
+| Zero overhead         | Yes     | Yes                      | ~Yes                   | Heap-owning abstraction   |
+| FFI-compatible access | Native  | `asRaw()` / `asOpaque()` | `asPtr()`              | `asPtr()`                 |
 
 ---
 
@@ -269,7 +277,7 @@ Box<T> ───────→ Ptr<T> ───────→ Span<T>         
 let data = Box(MyStruct { ... });
 
 // ✅ Use Span for bounded views
-let span = Span.ofVec<i32>(v.data as *i32, v.len());
+let span = v.asSpan();
 
 // ✅ Use Ptr only for allocator/container internals
 struct MyVec<T> { data: Ptr<T>, ... }
@@ -332,4 +340,3 @@ fn readSensor(addr: usize): *i32 {
 - [Ownership Model](./ownership) — Move semantics and ownership rules
 - [Borrowing](./borrowing) — Reference rules
 - [Raw Pointers](/guide/advanced/pointers) — Legacy documentation
-
