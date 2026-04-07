@@ -41,6 +41,24 @@ fn (self: &Point) toString(): string {
 
 Rust-style `impl Contract for Type` is not Vex syntax.
 
+## Implicit Receivers and Mutability
+
+You never explicitly declare `self: &Self` inside a contract definition. Vex is inherently instance-oriented, meaning every contract method definition automatically implies a receiver.
+
+* `convert(val: T): U;` defines a method taking an **Immutable Reference** (`self: &Self`).
+* `convert(val: T)!: U;` defines a method taking a **Mutable Reference** (`self: &Self!`). The `!` indicates state mutation.
+
+```vex
+contract Incrementable {
+    // Immutable read method
+    count(): i32;
+    // Mutable write method (note the '!' after parameters)
+    increment()!;
+}
+```
+
+If you accidentally write `self: &Self` inside a contract (e.g. `convert(self: &Self)`), the compiler will emit a warning correcting this habit.
+
 ## Generic contracts and defaults
 
 Contracts can take type parameters, including defaults such as `Self`.

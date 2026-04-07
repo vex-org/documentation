@@ -56,6 +56,7 @@ export default defineConfig({
             { text: "Primitives", link: "/guide/types/primitives" },
             { text: "Structs", link: "/guide/types/structs" },
             { text: "Enums", link: "/guide/types/enums" },
+            { text: "Unions", link: "/guide/types/unions" },
             { text: "Pattern Matching", link: "/guide/types/pattern-matching" },
             { text: "Generics", link: "/guide/types/generics" },
             { text: "Contracts", link: "/guide/types/contracts" },
