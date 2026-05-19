@@ -34,7 +34,7 @@ const fileName = computed(() => {
 })
 
 const downloadUrl = computed(() => {
-  return `https://github.com/${REPO}/releases/latest/download/vex-${latestVersion.value}-${selectedInfo.value.suffix}.tar.gz`
+  return `https://github.com/${REPO}/releases/download/${latestVersion.value}/vex-${latestVersion.value}-${selectedInfo.value.suffix}.tar.gz`
 })
 
 const checksumUrl = computed(() => downloadUrl.value + '.sha256')
@@ -56,10 +56,10 @@ function detectPlatform() {
 
 async function fetchLatestVersion() {
   try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+    const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=1`)
     if (res.ok) {
       const data = await res.json()
-      latestVersion.value = data.tag_name
+      if (Array.isArray(data) && data.length > 0) latestVersion.value = data[0].tag_name
     }
   } catch { /* keep 'latest' as fallback */ }
 }
