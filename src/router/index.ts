@@ -51,6 +51,20 @@ router.beforeEach(async (to, _from, next) => {
     const full = title === 'Vex' ? 'Vex – Modern Systems Programming Language' : `${title} – Vex`
     document.title = full
   }
+
+  // Update <meta name="description"> per route
+  const desc = to.meta.description as string | undefined
+  const descEl = document.querySelector('meta[name="description"]')
+  if (descEl) {
+    descEl.setAttribute('content', desc ?? 'Vex – Modern parallelism-first systems programming language.')
+  }
+
+  // Update <link rel="canonical"> per route
+  const canonEl = document.querySelector('link[rel="canonical"]')
+  if (canonEl) {
+    canonEl.setAttribute('href', `https://vex-lang.org${to.path}`)
+  }
+
   if (to.meta.requiresAuth) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return next({ name: 'Login', query: { redirect: to.fullPath } })
