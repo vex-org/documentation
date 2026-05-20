@@ -654,7 +654,7 @@ function runBenchmark() {
                   class="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer hover:bg-white/5 text-sm text-vex-text-muted"
                 >
                   <img :src="LANG_META[r.lang]?.logo" :alt="LANG_META[r.lang]?.label" class="w-5 h-5 object-contain" />
-                  <span class="font-medium text-white">{{}
+                  <span class="font-medium text-white">{{
                     LANG_META[r.lang]?.label
                   }}</span>
                   <span
