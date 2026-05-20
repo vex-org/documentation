@@ -59,12 +59,30 @@ export async function askAI(req: AIRequest): Promise<AIResult> {
   return res.json()
 }
 
+export interface HealthResult {
+  status: string
+  arch: string
+  os: string
+  uptime: number
+  compilers: Record<string, string>
+}
+
 export async function healthCheck(): Promise<boolean> {
   try {
     const res = await fetch(`${API_URL}/api/website/health`)
     return res.ok
   } catch {
     return false
+  }
+}
+
+export async function getHealth(): Promise<HealthResult | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/website/health`)
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
   }
 }
 
