@@ -1,96 +1,155 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { Download, Terminal, Monitor, Apple, Cpu, CheckCircle, Copy, ExternalLink, Package } from 'lucide-vue-next'
+import { ref, computed, onMounted } from "vue";
+import {
+  Download,
+  Terminal,
+  Monitor,
+  Apple,
+  Cpu,
+  CheckCircle,
+  Copy,
+  ExternalLink,
+  Package,
+} from "lucide-vue-next";
 
-const REPO = 'vex-org/releases'
-const INSTALL_CMD = 'curl -fsSL https://raw.githubusercontent.com/vex-org/releases/main/install.sh | bash'
+const REPO = "vex-org/releases";
+const INSTALL_CMD =
+  "curl -fsSL https://raw.githubusercontent.com/vex-org/releases/main/install.sh | bash";
 
-type Platform = 'linux-x86_64' | 'linux-aarch64' | 'macos-arm64'
+type Platform = "linux-x86_64" | "linux-aarch64" | "macos-arm64";
 
 interface PlatformInfo {
-  id: Platform
-  name: string
-  arch: string
-  os: string
-  icon: typeof Monitor
-  suffix: string
+  id: Platform;
+  name: string;
+  arch: string;
+  os: string;
+  icon: typeof Monitor;
+  suffix: string;
 }
 
 const platforms: PlatformInfo[] = [
-  { id: 'linux-x86_64', name: 'Linux', arch: 'x86_64', os: 'Intel / AMD', icon: Monitor, suffix: 'linux-x86_64' },
-  { id: 'linux-aarch64', name: 'Linux', arch: 'aarch64', os: 'ARM64', icon: Cpu, suffix: 'linux-aarch64' },
-  { id: 'macos-arm64', name: 'macOS', arch: 'ARM64', os: 'Apple Silicon', icon: Apple, suffix: 'macos-arm64' },
-]
+  {
+    id: "linux-x86_64",
+    name: "Linux",
+    arch: "x86_64",
+    os: "Intel / AMD",
+    icon: Monitor,
+    suffix: "linux-x86_64",
+  },
+  {
+    id: "linux-aarch64",
+    name: "Linux",
+    arch: "aarch64",
+    os: "ARM64",
+    icon: Cpu,
+    suffix: "linux-aarch64",
+  },
+  {
+    id: "macos-arm64",
+    name: "macOS",
+    arch: "ARM64",
+    os: "Apple Silicon",
+    icon: Apple,
+    suffix: "macos-arm64",
+  },
+];
 
-const selectedPlatform = ref<Platform>('linux-x86_64')
-const latestVersion = ref('latest')
-const copied = ref(false)
+const selectedPlatform = ref<Platform>("linux-x86_64");
+const latestVersion = ref("latest");
+const copied = ref(false);
 
-const selectedInfo = computed(() => platforms.find(p => p.id === selectedPlatform.value)!)
+const selectedInfo = computed(
+  () => platforms.find((p) => p.id === selectedPlatform.value)!,
+);
 
 const fileName = computed(() => {
-  const v = latestVersion.value === 'latest' ? 'latest' : latestVersion.value
-  return `vex-${v}-${selectedInfo.value.suffix}.tar.gz`
-})
+  const v = latestVersion.value === "latest" ? "latest" : latestVersion.value;
+  return `vex-${v}-${selectedInfo.value.suffix}.tar.gz`;
+});
 
 const downloadUrl = computed(() => {
-  return `https://github.com/${REPO}/releases/download/${latestVersion.value}/vex-${latestVersion.value}-${selectedInfo.value.suffix}.tar.gz`
-})
+  return `https://github.com/${REPO}/releases/download/${latestVersion.value}/vex-${latestVersion.value}-${selectedInfo.value.suffix}.tar.gz`;
+});
 
-const checksumUrl = computed(() => downloadUrl.value + '.sha256')
+const checksumUrl = computed(() => downloadUrl.value + ".sha256");
 
 function copyInstallCmd() {
-  navigator.clipboard.writeText(INSTALL_CMD)
-  copied.value = true
-  setTimeout(() => { copied.value = false }, 2000)
+  navigator.clipboard.writeText(INSTALL_CMD);
+  copied.value = true;
+  setTimeout(() => {
+    copied.value = false;
+  }, 2000);
 }
 
 function detectPlatform() {
-  const ua = navigator.userAgent.toLowerCase()
-  if (ua.includes('mac')) {
-    selectedPlatform.value = 'macos-arm64'
-  } else if (ua.includes('linux')) {
-    selectedPlatform.value = ua.includes('aarch64') || ua.includes('arm') ? 'linux-aarch64' : 'linux-x86_64'
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("mac")) {
+    selectedPlatform.value = "macos-arm64";
+  } else if (ua.includes("linux")) {
+    selectedPlatform.value =
+      ua.includes("aarch64") || ua.includes("arm")
+        ? "linux-aarch64"
+        : "linux-x86_64";
   }
 }
 
 async function fetchLatestVersion() {
   try {
-    const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=1`)
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO}/releases?per_page=1`,
+    );
     if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) latestVersion.value = data[0].tag_name
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0)
+        latestVersion.value = data[0].tag_name;
     }
-  } catch { /* keep 'latest' as fallback */ }
+  } catch {
+    /* keep 'latest' as fallback */
+  }
 }
 
-detectPlatform()
-onMounted(fetchLatestVersion)
+detectPlatform();
+onMounted(fetchLatestVersion);
 </script>
 
 <template>
   <div>
     <!-- Hero -->
     <section class="border-b border-vex-border">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-vex-border bg-vex-surface text-sm text-vex-text-muted mb-6">
+      <div
+        class="max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center"
+      >
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-vex-border bg-vex-surface text-sm text-vex-text-muted mb-6"
+        >
           <Download class="w-3.5 h-3.5" />
           {{ latestVersion }}
         </div>
-        <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">Install Vex</h1>
-        <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">Complete toolchain in a single command — compiler, LSP, formatter, and more.</p>
+        <h1
+          class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4"
+        >
+          Install Vex
+        </h1>
+        <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">
+          Complete toolchain in a single command — compiler, LSP, formatter, and
+          more.
+        </p>
       </div>
     </section>
 
     <!-- Quick Install -->
     <section class="border-b border-vex-border">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+        <h2
+          class="text-xl font-semibold text-white mb-6 flex items-center gap-2"
+        >
           <Terminal class="w-5 h-5 text-vex-accent" />
           Quick Install
         </h2>
         <div class="relative group">
-          <div class="rounded-lg border border-vex-border bg-vex-surface/50 p-4 sm:p-5 font-mono text-sm sm:text-base text-vex-text-muted overflow-x-auto">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/50 p-4 sm:p-5 font-mono text-sm sm:text-base text-vex-text-muted overflow-x-auto"
+          >
             <span class="text-vex-text-muted/60 select-none">$ </span>
             <span class="text-white">{{ INSTALL_CMD }}</span>
           </div>
@@ -103,41 +162,69 @@ onMounted(fetchLatestVersion)
             <Copy v-else class="w-4 h-4" />
           </button>
         </div>
-        <p class="mt-3 text-sm text-vex-text-muted">Installs the full Vex toolchain to <code class="text-white/80">~/.vex</code>. Supports Linux and macOS (Apple Silicon).</p>
+        <p class="mt-3 text-sm text-vex-text-muted">
+          Installs the full Vex toolchain to
+          <code class="text-white/80">~/.vex</code>. Supports Linux and macOS
+          (Apple Silicon).
+        </p>
       </div>
     </section>
 
     <!-- What's Included -->
     <section class="border-b border-vex-border">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+        <h2
+          class="text-xl font-semibold text-white mb-6 flex items-center gap-2"
+        >
           <Package class="w-5 h-5 text-vex-accent" />
           What's Included
         </h2>
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-4"
+          >
             <code class="text-vex-accent text-sm">vex</code>
-            <p class="text-xs text-vex-text-muted mt-1">Compiler, JIT runner, test runner, benchmarks</p>
+            <p class="text-xs text-vex-text-muted mt-1">
+              Compiler, JIT runner, test runner, benchmarks
+            </p>
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-4"
+          >
             <code class="text-vex-accent text-sm">vex-lsp</code>
-            <p class="text-xs text-vex-text-muted mt-1">Language server for VS Code, Neovim, etc.</p>
+            <p class="text-xs text-vex-text-muted mt-1">
+              Language server for VS Code, Neovim, etc.
+            </p>
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-4"
+          >
             <code class="text-vex-accent text-sm">vex-formatter</code>
-            <p class="text-xs text-vex-text-muted mt-1">Opinionated code formatter</p>
+            <p class="text-xs text-vex-text-muted mt-1">
+              Opinionated code formatter
+            </p>
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-4"
+          >
             <code class="text-vex-accent text-sm">vex-doc</code>
-            <p class="text-xs text-vex-text-muted mt-1">Documentation generator</p>
+            <p class="text-xs text-vex-text-muted mt-1">
+              Documentation generator
+            </p>
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-4"
+          >
             <code class="text-vex-accent text-sm">vex-pm</code>
             <p class="text-xs text-vex-text-muted mt-1">Package manager</p>
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-4">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-4"
+          >
             <code class="text-vex-accent text-sm">lib/std</code>
-            <p class="text-xs text-vex-text-muted mt-1">Standard library + runtime</p>
+            <p class="text-xs text-vex-text-muted mt-1">
+              Standard library + runtime
+            </p>
           </div>
         </div>
       </div>
@@ -146,7 +233,9 @@ onMounted(fetchLatestVersion)
     <!-- Manual Download -->
     <section class="border-b border-vex-border">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+        <h2
+          class="text-xl font-semibold text-white mb-6 flex items-center gap-2"
+        >
           <Download class="w-5 h-5 text-vex-accent" />
           Manual Download
         </h2>
@@ -161,7 +250,7 @@ onMounted(fetchLatestVersion)
               'flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors',
               selectedPlatform === p.id
                 ? 'border-vex-accent bg-vex-accent/10 text-vex-accent'
-                : 'border-vex-border bg-vex-surface/30 text-vex-text-muted hover:text-white hover:border-vex-border-hover'
+                : 'border-vex-border bg-vex-surface/30 text-vex-text-muted hover:text-white hover:border-vex-border-hover',
             ]"
           >
             <component :is="p.icon" class="w-4 h-4" />
@@ -175,9 +264,13 @@ onMounted(fetchLatestVersion)
             <div>
               <h3 class="text-lg font-medium text-white">
                 {{ selectedInfo.name }} {{ selectedInfo.arch }}
-                <span class="text-vex-text-muted text-sm ml-2">({{ selectedInfo.os }})</span>
+                <span class="text-vex-text-muted text-sm ml-2"
+                  >({{ selectedInfo.os }})</span
+                >
               </h3>
-              <p class="text-sm text-vex-text-muted mt-1 font-mono">{{ fileName }}</p>
+              <p class="text-sm text-vex-text-muted mt-1 font-mono">
+                {{ fileName }}
+              </p>
             </div>
             <div class="flex gap-3">
               <a
@@ -215,15 +308,27 @@ onMounted(fetchLatestVersion)
     <!-- Post-Install -->
     <section class="border-b border-vex-border">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6">After Installation</h2>
+        <h2 class="text-xl font-semibold text-white mb-6">
+          After Installation
+        </h2>
         <div class="space-y-4">
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-5"
+          >
             <h3 class="text-sm font-medium text-vex-accent mb-2">Verify</h3>
-            <code class="text-sm text-vex-text-muted font-mono">vex --version</code>
+            <code class="text-sm text-vex-text-muted font-mono"
+              >vex --version</code
+            >
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
-            <h3 class="text-sm font-medium text-vex-accent mb-2">First Program</h3>
-            <pre class="text-sm text-vex-text-muted font-mono overflow-x-auto"><span class="text-vex-text-muted/60">$</span> echo 'fn main(): i32 { print("Hello Vex!"); return 0; }' > hello.vx
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-5"
+          >
+            <h3 class="text-sm font-medium text-vex-accent mb-2">
+              First Program
+            </h3>
+            <pre
+              class="text-sm text-vex-text-muted font-mono overflow-x-auto"
+            ><span class="text-vex-text-muted/60">$</span> echo 'fn main(): i32 { print("Hello Vex!"); return 0; }' > hello.vx
 <span class="text-vex-text-muted/60">$</span> vex run hello.vx</pre>
           </div>
         </div>
@@ -233,9 +338,13 @@ onMounted(fetchLatestVersion)
     <!-- Requirements -->
     <section>
       <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 class="text-xl font-semibold text-white mb-6">System Requirements</h2>
+        <h2 class="text-xl font-semibold text-white mb-6">
+          System Requirements
+        </h2>
         <div class="grid sm:grid-cols-2 gap-4">
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-5"
+          >
             <div class="flex items-center gap-2 mb-3">
               <Monitor class="w-4 h-4 text-vex-accent" />
               <h3 class="text-sm font-medium text-white">Linux</h3>
@@ -246,7 +355,9 @@ onMounted(fetchLatestVersion)
               <li>x86_64 or aarch64 processor</li>
             </ul>
           </div>
-          <div class="rounded-lg border border-vex-border bg-vex-surface/30 p-5">
+          <div
+            class="rounded-lg border border-vex-border bg-vex-surface/30 p-5"
+          >
             <div class="flex items-center gap-2 mb-3">
               <Apple class="w-4 h-4 text-vex-accent" />
               <h3 class="text-sm font-medium text-white">macOS</h3>
