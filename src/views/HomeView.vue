@@ -13,7 +13,7 @@ import {
 import { markRaw, ref, onMounted, type Component } from "vue";
 import { getHealth } from "@/api/vex";
 
-const vexVersion = ref<string>("v0.4.0-rc.14");
+const vexVersion = ref<string>("v0.4.0-rc.21");
 
 onMounted(async () => {
   const health = await getHealth();
