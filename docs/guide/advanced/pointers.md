@@ -107,6 +107,18 @@ In Vex, prefer:
 
 That keeps pointer math explicit, typed where possible, and aligned with the compiler/runtime model used across the prelude.
 
+---
+
+## Low-Level Compiler Intrinsics
+
+For runtime development or high-performance libraries, the compiler provides direct low-level intrinsics that bypass higher-level abstractions:
+
+* **`#offset_ptr_idx(base: ptr, index: i64 [, stride: i64]) -> ptr`**
+  Computes a raw byte offset from a base pointer. If `stride` is specified, the offset is computed as `index * stride` bytes.
+* **`#ptr_write(ptr: ptr, value: T) -> ()`**
+  Writes `value` directly to the address pointed to by `ptr` using the natural alignment of `T`. If `value` was bound to a local variable, it is marked as moved and its stack memory is zeroed out to enforce memory safety.
+
+
 ## Null pointers
 
 For raw pointer values, null is typically written with `0 as *T` or `0 as ptr`.

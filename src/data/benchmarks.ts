@@ -1,28 +1,28 @@
 export interface BenchmarkExample {
-  name: string
-  description: string
-  vex: string
-  go: string
-  rust: string
-  zig: string
+    name: string
+    description: string
+    vex: string
+    go: string
+    rust: string
+    zig: string
 }
 
 export const benchmarks: BenchmarkExample[] = [
-  // 1. Fibonacci (recursive)
-  {
-    name: 'Fibonacci',
-    description: 'Recursive fibonacci — tests function call overhead',
-    vex: `fn fib(n: i32): i32 {
+    // 1. Fibonacci (recursive)
+    {
+        name: 'Fibonacci',
+        description: 'Recursive fibonacci — tests function call overhead',
+        vex: `fn fib(n: i32): i32 {
     if n <= 1 { return n }
     return fib(n - 1) + fib(n - 2)
 }
 
 fn main(): i32 {
     let result = fib(35)
-    println(result)
+    $println(result)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -37,7 +37,7 @@ func main() {
 	result := fib(35)
 	fmt.Println(result)
 }`,
-    rust: `fn fib(n: i32) -> i32 {
+        rust: `fn fib(n: i32) -> i32 {
     if n <= 1 { return n; }
     fib(n - 1) + fib(n - 2)
 }
@@ -46,7 +46,7 @@ fn main() {
     let result = fib(35);
     println!("{}", result);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn fib(n: i32) i32 {
     if (n <= 1) return n;
@@ -58,21 +58,21 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{result});
 }`,
-  },
+    },
 
-  // 2. Sum 1M
-  {
-    name: 'Sum 1M',
-    description: 'Sum integers 0..1M — tests loop auto-vectorization',
-    vex: `fn main(): i32 {
+    // 2. Sum 1M
+    {
+        name: 'Sum 1M',
+        description: 'Sum integers 0..1M — tests loop auto-vectorization',
+        vex: `fn main(): i32 {
     let! sum: i64 = 0
     for i in 0..1000000 {
         sum += i as i64
     }
-    println(sum)
+    $println(sum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -83,14 +83,14 @@ func main() {
 	}
 	fmt.Println(sum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut sum: i64 = 0;
     for i in 0..1000000 {
         sum += i;
     }
     println!("{}", sum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var sum: i64 = 0;
@@ -101,21 +101,21 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{sum});
 }`,
-  },
+    },
 
-  // 3. String Concat
-  {
-    name: 'String Concat',
-    description: 'Build string by concat — tests VexString COW allocator',
-    vex: `fn main(): i32 {
+    // 3. String Concat
+    {
+        name: 'String Concat',
+        description: 'Build string by concat — tests VexString COW allocator',
+        vex: `fn main(): i32 {
     let! s = ""
     for _ in 0..10000 {
         s += "x"   // VexString: COW + SSO + inline up to 15 bytes
     }
-    println(s.len())
+    $println(s.len())
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -126,14 +126,14 @@ func main() {
 	}
 	fmt.Println(len(s))
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut s = String::new();
     for _ in 0..10000 {
         s.push('x');
     }
     println!("{}", s.len());
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var buf: [10000]u8 = undefined;
@@ -143,13 +143,13 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{@as(usize, 10000)});
 }`,
-  },
+    },
 
-  // 4. Array Dot Product
-  {
-    name: 'Dot Product',
-    description: 'SIMD dot product — Vex compiles a * b to single VMUL + horizontal VADD',
-    vex: `// Vex: array * array → SIMD multiply, <+ → horizontal sum
+    // 4. Array Dot Product
+    {
+        name: 'Dot Product',
+        description: 'SIMD dot product — Vex compiles a * b to single VMUL + horizontal VADD',
+        vex: `// Vex: array * array → SIMD multiply, <+ → horizontal sum
 // Compiles to: vmulpd + vhaddpd (2 instructions!)
 fn dot(a: [f64; 4], b: [f64; 4]): f64 {
     return <+ (a * b)
@@ -162,10 +162,10 @@ fn main(): i32 {
     for _ in 0..100000 {
         sum += dot(a, b)
     }
-    println(sum)
+    $println(sum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -182,7 +182,7 @@ func main() {
 	}
 	fmt.Println(sum)
 }`,
-    rust: `fn dot(a: [f64; 4], b: [f64; 4]) -> f64 {
+        rust: `fn dot(a: [f64; 4], b: [f64; 4]) -> f64 {
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
 }
 
@@ -195,53 +195,65 @@ fn main() {
     }
     println!("{}", sum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
-fn dot(a: [4]f64, b: [4]f64) f64 {
-    var s: f64 = 0;
-    for (0..4) |i| {
-        s += a[i] * b[i];
-    }
-    return s;
+fn dot(a: @Vector(4, f64), b: @Vector(4, f64)) f64 {
+    return @reduce(.Add, a * b);
 }
 
 pub fn main() !void {
     var sum: f64 = 0;
     var i: usize = 0;
     while (i < 100000) : (i += 1) {
-        const a = [4]f64{ 1, 2, 3, 4 };
-        const b = [4]f64{ 5, 6, 7, 8 };
+        const a: @Vector(4, f64) = .{ 1, 2, 3, 4 };
+        const b: @Vector(4, f64) = .{ 5, 6, 7, 8 };
         sum += dot(a, b);
     }
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{sum});
 }`,
-  },
+    },
 
-  // 5. Sieve of Eratosthenes
-  {
-    name: 'Prime Sieve',
-    description: 'Sieve of Eratosthenes up to 100K — tests array access patterns',
-    vex: `fn main(): i32 {
+    // 5. Sieve of Eratosthenes
+    {
+        name: 'Prime Sieve',
+        description: 'Sieve of Eratosthenes up to 100K — tests array access patterns',
+        vex: `fn main(): i32 {
     let limit = 100000
-    let! sieve = [true; limit]   // Fixed-size array, stack allocated
+    
+    // Sabit boyutlu array'i stack yerine Heap üzerinde açıyoruz kanka!
+    // Vex'in canavar gibi çalışan allocator'ı devreye giriyor.
+    let! sieve = Vec<bool>(limit)
+    
+    // Diziyi true ile doldur
+    let! k = 0
+    while k < limit {
+        sieve.push(true)
+        k = k + 1
+    }
+    
     sieve[0] = false
     sieve[1] = false
+    
     let! count = 0
+    
     for i in 2..limit {
         if sieve[i] {
             count += 1
-            let! j = i * i
-            while j < limit {
+            
+            let! j: usize = (i as usize) * (i as usize)
+            
+            while j < (limit as usize) {
                 sieve[j] = false
-                j += i
+                j += (i as usize)
             }
         }
     }
-    println(count)
+    
+    $println(count)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -262,7 +274,7 @@ func main() {
 	}
 	fmt.Println(count)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     const LIMIT: usize = 100000;
     let mut sieve = vec![true; LIMIT];
     let mut count = 0;
@@ -278,7 +290,7 @@ func main() {
     }
     println!("{}", count);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const limit = 100000;
@@ -297,13 +309,13 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{count});
 }`,
-  },
+    },
 
-  // 6. Matrix Multiply (4x4)
-  {
-    name: 'Matrix 4×4',
-    description: '4×4 matrix multiply 100K times — tests compute density',
-    vex: `fn main(): i32 {
+    // 6. Matrix Multiply (4x4)
+    {
+        name: 'Matrix 4×4',
+        description: '4×4 matrix multiply 100K times — tests compute density',
+        vex: `fn main(): i32 {
     let! sum: f64 = 0.0
     for _ in 0..100000 {
         let a = [1.0, 2.0, 3.0, 4.0,
@@ -326,10 +338,10 @@ pub fn main() !void {
         }
         sum += c[0]
     }
-    println(sum)
+    $println(sum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -352,7 +364,7 @@ func main() {
 	}
 	fmt.Println(sum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut sum = 0.0_f64;
     for _ in 0..100000 {
         let a = [1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0,16.0_f64];
@@ -371,7 +383,7 @@ func main() {
     }
     println!("{}", sum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var sum: f64 = 0;
@@ -394,13 +406,13 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{sum});
 }`,
-  },
+    },
 
-  // 7. Collatz Conjecture
-  {
-    name: 'Collatz',
-    description: 'Longest Collatz chain under 100K — tests branching',
-    vex: `fn collatz_len(n: i64): i32 {
+    // 7. Collatz Conjecture
+    {
+        name: 'Collatz',
+        description: 'Longest Collatz chain under 100K — tests branching',
+        vex: `fn collatz_len(n: i64): i32 {
     let! x = n
     let! count = 0
     while x > 1 {
@@ -424,11 +436,11 @@ fn main(): i32 {
             max_n = i
         }
     }
-    println(max_n)
-    println(max_len)
+    $println(max_n)
+    $println(max_len)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -459,7 +471,7 @@ func main() {
 	fmt.Println(maxN)
 	fmt.Println(maxLen)
 }`,
-    rust: `fn collatz_len(n: i64) -> i32 {
+        rust: `fn collatz_len(n: i64) -> i32 {
     let mut x = n;
     let mut count = 0;
     while x > 1 {
@@ -482,7 +494,7 @@ fn main() {
     println!("{}", max_n);
     println!("{}", max_len);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn collatzLen(n: i64) i32 {
     var x = n;
@@ -512,13 +524,13 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n{d}\\n", .{ max_n, max_len });
 }`,
-  },
+    },
 
-  // 8. Binary Search
-  {
-    name: 'Binary Search',
-    description: '10M binary searches in sorted array — tests branch prediction',
-    vex: `fn binary_search(arr: &Vec<i32>, target: i32): i32 {
+    // 8. Binary Search
+    {
+        name: 'Binary Search',
+        description: '10M binary searches in sorted array — tests branch prediction',
+        vex: `fn binary_search(arr: &Vec<i32>, target: i32): i32 {
     let! lo = 0
     let! hi = arr.len()
     while lo < hi {
@@ -544,10 +556,10 @@ fn main(): i32 {
         let idx = binary_search(&arr, i % 10000)
         if idx >= 0 { found += 1 }
     }
-    println(found)
+    $println(found)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import (
 	"fmt"
@@ -568,7 +580,7 @@ func main() {
 	}
 	fmt.Println(found)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let arr: Vec<i32> = (0..10000).collect();
     let mut found = 0;
     for i in 0..1000000 {
@@ -578,7 +590,7 @@ func main() {
     }
     println!("{}", found);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn binarySearch(arr: []const i32, target: i32) i32 {
     var lo: usize = 0;
@@ -607,13 +619,13 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{found});
 }`,
-  },
+    },
 
-  // 9. N-Body simulation step
-  {
-    name: 'N-Body',
-    description: 'Simple gravity simulation — tests floating-point throughput',
-    vex: `fn main(): i32 {
+    // 9. N-Body simulation step
+    {
+        name: 'N-Body',
+        description: 'Simple gravity simulation — tests floating-point throughput',
+        vex: `fn main(): i32 {
     let n = 200
     let! x = Vec.new<f64>()
     let! y = Vec.new<f64>()
@@ -647,10 +659,10 @@ pub fn main() !void {
             y.set(i, y.getUnchecked(i) + vy.getUnchecked(i))
         }
     }
-    println(x.getUnchecked(0))
+    $println(x.getUnchecked(0))
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -687,7 +699,7 @@ func main() {
 	}
 	fmt.Println(x[0])
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let n = 200;
     let mut x: Vec<f64> = (0..n).map(|i| i as f64).collect();
     let mut y: Vec<f64> = (0..n).map(|i| i as f64 * 0.5).collect();
@@ -716,7 +728,7 @@ func main() {
     }
     println!("{}", x[0]);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const n = 200;
@@ -753,23 +765,23 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{x[0]});
 }`,
-  },
+    },
 
-  // 10. FizzBuzz (100K iterations)
-  {
-    name: 'FizzBuzz 100K',
-    description: 'Classic FizzBuzz to 100K — tests branching + I/O',
-    vex: `fn main(): i32 {
+    // 10. FizzBuzz (100K iterations)
+    {
+        name: 'FizzBuzz 100K',
+        description: 'Classic FizzBuzz to 100K — tests branching + I/O',
+        vex: `fn main(): i32 {
     let! count = 0
     for i in 1..100001 {
         if i % 15 == 0 { count += 3 }
         elif i % 3 == 0 { count += 1 }
         elif i % 5 == 0 { count += 2 }
     }
-    println(count)
+    $println(count)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -786,7 +798,7 @@ func main() {
 	}
 	fmt.Println(count)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut count = 0;
     for i in 1..=100000 {
         if i % 15 == 0 { count += 3; }
@@ -795,7 +807,7 @@ func main() {
     }
     println!("{}", count);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var count: i32 = 0;
@@ -812,21 +824,21 @@ pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     try stdout.print("{d}\\n", .{count});
 }`,
-  },
+    },
 
-  // 11. Sum of squares
-  {
-    name: 'Sum Squares',
-    description: 'Accumulate squares up to 1M — tests FMA auto-vectorization',
-    vex: `fn main(): i32 {
+    // 11. Sum of squares
+    {
+        name: 'Sum Squares',
+        description: 'Accumulate squares up to 1M — tests FMA auto-vectorization',
+        vex: `fn main(): i32 {
     let! total: i64 = 0
     for i in 0..1000000 {
         total += (i as i64) * (i as i64)
     }
-    println(total)
+    $println(total)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -837,14 +849,14 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut total: i64 = 0;
     for i in 0_i64..1_000_000 {
         total += i * i;
     }
     println!("{}", total);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var total: i64 = 0;
@@ -854,13 +866,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{total});
 }`,
-  },
+    },
 
-  // 12. Prefix sum
-  {
-    name: 'Prefix Sum',
-    description: 'Inclusive prefix sum over 200K integers — tests memory bandwidth',
-    vex: `fn main(): i32 {
+    // 12. Prefix sum
+    {
+        name: 'Prefix Sum',
+        description: 'Inclusive prefix sum over 200K integers — tests memory bandwidth',
+        vex: `fn main(): i32 {
     let n = 200000
     let! values = Vec.new<i64>()
     for i in 0..n {
@@ -871,10 +883,10 @@ pub fn main() !void {
         running += values.getUnchecked(i)
         values.set(i, running)
     }
-    println(values.getUnchecked(n - 1))
+    $println(values.getUnchecked(n - 1))
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -891,7 +903,7 @@ func main() {
 	}
 	fmt.Println(values[n-1])
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let n = 200000usize;
     let mut values: Vec<i64> = (0..n).map(|i| (i % 97) as i64).collect();
     let mut running: i64 = 0;
@@ -901,7 +913,7 @@ func main() {
     }
     println!("{}", values[n - 1]);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const n = 200000;
@@ -916,13 +928,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{values[n - 1]});
 }`,
-  },
+    },
 
-  // 13. XorShift RNG
-  {
-    name: 'XorShift RNG',
-    description: 'Generate 5M pseudo-random values — tests bitwise throughput',
-    vex: `fn next_rng(state: u64): u64 {
+    // 13. XorShift RNG
+    {
+        name: 'XorShift RNG',
+        description: 'Generate 5M pseudo-random values — tests bitwise throughput',
+        vex: `fn next_rng(state: u64): u64 {
     let! x = state
     x ^= x << 13
     x ^= x >> 7
@@ -937,10 +949,10 @@ fn main(): i32 {
         state = next_rng(state)
         checksum ^= state
     }
-    println(checksum)
+    $println(checksum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -960,7 +972,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-    rust: `fn next_rng(mut x: u64) -> u64 {
+        rust: `fn next_rng(mut x: u64) -> u64 {
     x ^= x << 13;
     x ^= x >> 7;
     x ^= x << 17;
@@ -976,7 +988,7 @@ fn main() {
     }
     println!("{}", checksum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn nextRng(x0: u64) u64 {
     var x = x0;
@@ -996,22 +1008,22 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
 }`,
-  },
+    },
 
-  // 14. Histogram
-  {
-    name: 'Histogram 256',
-    description: 'Build 256-bin histogram over 1M values — tests indexed updates',
-    vex: `fn main(): i32 {
+    // 14. Histogram
+    {
+        name: 'Histogram 256',
+        description: 'Build 256-bin histogram over 1M values — tests indexed updates',
+        vex: `fn main(): i32 {
     let! hist = [0i32; 256]    // Stack-allocated fixed array
     for i in 0..1000000 {
         let idx = (i * 17 + 23) % 256
         hist[idx] += 1
     }
-    println(hist[0] + hist[17] + hist[42])
+    $println(hist[0] + hist[17] + hist[42])
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1023,7 +1035,7 @@ func main() {
 	}
 	fmt.Println(hist[0] + hist[17] + hist[42])
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut hist = [0_i32; 256];
     for i in 0..1_000_000 {
         let idx = (i * 17 + 23) % 256;
@@ -1031,7 +1043,7 @@ func main() {
     }
     println!("{}", hist[0] + hist[17] + hist[42]);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var hist: [256]i32 = .{0} ** 256;
@@ -1042,13 +1054,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{hist[0] + hist[17] + hist[42]});
 }`,
-  },
+    },
 
-  // 15. Horner polynomial
-  {
-    name: 'Horner Polynomial',
-    description: 'Evaluate polynomial 2M times — tests fused arithmetic chains',
-    vex: `fn poly(x: f64): f64 {
+    // 15. Horner polynomial
+    {
+        name: 'Horner Polynomial',
+        description: 'Evaluate polynomial 2M times — tests fused arithmetic chains',
+        vex: `fn poly(x: f64): f64 {
     return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0)
 }
 
@@ -1057,10 +1069,10 @@ fn main(): i32 {
     for i in 0..2000000 {
         acc += poly((i % 1000) as f64 * 0.001)
     }
-    println(acc)
+    $println(acc)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1075,7 +1087,7 @@ func main() {
 	}
 	fmt.Println(acc)
 }`,
-    rust: `fn poly(x: f64) -> f64 {
+        rust: `fn poly(x: f64) -> f64 {
     (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0)
 }
 
@@ -1086,7 +1098,7 @@ fn main() {
     }
     println!("{}", acc);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn poly(x: f64) f64 {
     return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0);
@@ -1100,13 +1112,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{acc});
 }`,
-  },
+    },
 
-  // 16. Mandelbrot mini
-  {
-    name: 'Mandelbrot Mini',
-    description: '64×64 Mandelbrot sweep — tests floating-point branches',
-    vex: `fn escape(cx: f64, cy: f64): i32 {
+    // 16. Mandelbrot mini
+    {
+        name: 'Mandelbrot Mini',
+        description: '64×64 Mandelbrot sweep — tests floating-point branches',
+        vex: `fn escape(cx: f64, cy: f64): i32 {
     let! zr: f64 = 0.0
     let! zi: f64 = 0.0
     for it in 0..50 {
@@ -1126,10 +1138,10 @@ fn main(): i32 {
                             py as f64 * 0.05 - 1.6)
         }
     }
-    println(total)
+    $println(total)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1157,7 +1169,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-    rust: `fn iter(cx: f64, cy: f64) -> i32 {
+        rust: `fn iter(cx: f64, cy: f64) -> i32 {
     let (mut x, mut y) = (0.0_f64, 0.0_f64);
     for i in 0..50 {
         let x2 = x * x - y * y + cx;
@@ -1182,7 +1194,7 @@ fn main() {
     }
     println!("{}", total);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn iter(cx: f64, cy: f64) i32 {
     var x: f64 = 0;
@@ -1209,13 +1221,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{total});
 }`,
-  },
+    },
 
-  // 17. Bit count
-  {
-    name: 'Bit Count Sweep',
-    description: 'Manual popcount over 1M values — tests integer bit-twiddling',
-    vex: `// Fast manual popcount using Kernighan's algorithm
+    // 17. Bit count
+    {
+        name: 'Bit Count Sweep',
+        description: 'Manual popcount over 1M values — tests integer bit-twiddling',
+        vex: `// Fast manual popcount using Kernighan's algorithm
 fn popcount(x0: u64): i32 {
     let! x = x0
     let! count = 0
@@ -1231,10 +1243,10 @@ fn main(): i32 {
     for i in 1..1000001 {
         total += popcount((i as u64) * 2654435761)
     }
-    println(total)
+    $println(total)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1254,7 +1266,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-    rust: `fn popcount(mut x: u64) -> i32 {
+        rust: `fn popcount(mut x: u64) -> i32 {
     let mut count = 0;
     while x != 0 {
         x &= x - 1;
@@ -1270,7 +1282,7 @@ fn main() {
     }
     println!("{}", total);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn popcount(x0: u64) i32 {
     var x = x0;
@@ -1290,13 +1302,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{total});
 }`,
-  },
+    },
 
-  // 18. GCD sweep
-  {
-    name: 'GCD Sweep',
-    description: 'Euclidean GCD across 500K pairs — tests modulo-heavy loops',
-    vex: `fn gcd(a0: i64, b0: i64): i64 {
+    // 18. GCD sweep
+    {
+        name: 'GCD Sweep',
+        description: 'Euclidean GCD across 500K pairs — tests modulo-heavy loops',
+        vex: `fn gcd(a0: i64, b0: i64): i64 {
     let! a = a0
     let! b = b0
     while b != 0 {
@@ -1312,10 +1324,10 @@ fn main(): i32 {
     for i in 1..500001 {
         total += gcd(i as i64 * 17, i as i64 * 29 + 1)
     }
-    println(total)
+    $println(total)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1333,7 +1345,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-    rust: `fn gcd(mut a: i64, mut b: i64) -> i64 {
+        rust: `fn gcd(mut a: i64, mut b: i64) -> i64 {
     while b != 0 {
         let t = a % b;
         a = b;
@@ -1349,7 +1361,7 @@ fn main() {
     }
     println!("{}", total);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn gcd(a0: i64, b0: i64) i64 {
     var a = a0;
@@ -1370,13 +1382,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{total});
 }`,
-  },
+    },
 
-  // 19. Trapezoid integration
-  {
-    name: 'Trapezoid Integral',
-    description: 'Numerical integration of x² over [0,1] — tests scalar FP loops',
-    vex: `fn f(x: f64): f64 { return x * x }
+    // 19. Trapezoid integration
+    {
+        name: 'Trapezoid Integral',
+        description: 'Numerical integration of x² over [0,1] — tests scalar FP loops',
+        vex: `fn f(x: f64): f64 { return x * x }
 
 fn main(): i32 {
     let n = 1000000
@@ -1387,10 +1399,10 @@ fn main(): i32 {
         let x1 = (i + 1) as f64 * h
         area += (f(x0) + f(x1)) * h * 0.5
     }
-    println(area)
+    $println(area)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1407,7 +1419,7 @@ func main() {
 	}
 	fmt.Println(area)
 }`,
-    rust: `fn f(x: f64) -> f64 { x * x }
+        rust: `fn f(x: f64) -> f64 { x * x }
 
 fn main() {
     let n = 1_000_000usize;
@@ -1420,7 +1432,7 @@ fn main() {
     }
     println!("{}", area);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn f(x: f64) f64 { return x * x; }
 
@@ -1436,13 +1448,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{area});
 }`,
-  },
+    },
 
-  // 20. Monte Carlo pi
-  {
-    name: 'Monte Carlo Pi',
-    description: 'Estimate π with 1M samples — tests RNG + FP mix',
-    vex: `fn next_rng(state0: u64): u64 {
+    // 20. Monte Carlo pi
+    {
+        name: 'Monte Carlo Pi',
+        description: 'Estimate π with 1M samples — tests RNG + FP mix',
+        vex: `fn next_rng(state0: u64): u64 {
     let! state = state0
     state = state * 6364136223846793005 + 1
     return state
@@ -1460,10 +1472,10 @@ fn main(): i32 {
             inside += 1
         }
     }
-    println(inside)
+    $println(inside)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1485,7 +1497,7 @@ func main() {
 	}
 	fmt.Println(inside)
 }`,
-    rust: `fn next_rng(state: u64) -> u64 {
+        rust: `fn next_rng(state: u64) -> u64 {
     state.wrapping_mul(6364136223846793005).wrapping_add(1)
 }
 
@@ -1503,7 +1515,7 @@ fn main() {
     }
     println!("{}", inside);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 fn nextRng(state: u64) u64 {
     return state *% 6364136223846793005 +% 1;
@@ -1522,13 +1534,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{inside});
 }`,
-  },
+    },
 
-  // 21. 3x3 stencil
-  {
-    name: 'Stencil 3×3',
-    description: 'Repeated 3×3 blur over 64×64 grid — tests neighborhood access',
-    vex: `fn main(): i32 {
+    // 21. 3x3 stencil
+    {
+        name: 'Stencil 3×3',
+        description: 'Repeated 3×3 blur over 64×64 grid — tests neighborhood access',
+        vex: `fn main(): i32 {
     let n = 64
     let! src = Vec.new<f64>()
     let! dst = Vec.new<f64>()
@@ -1550,10 +1562,10 @@ pub fn main() !void {
             src.set(i, dst.getUnchecked(i))
         }
     }
-    println(src.getUnchecked(n + 1))
+    $println(src.getUnchecked(n + 1))
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1576,7 +1588,7 @@ func main() {
 	}
 	fmt.Println(src[n+1])
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     const N: usize = 64;
     let mut src = vec![0.0_f64; N * N];
     let mut dst = vec![0.0_f64; N * N];
@@ -1597,7 +1609,7 @@ func main() {
     }
     println!("{}", src[N + 1]);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const n = 64;
@@ -1618,13 +1630,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{src[n + 1]});
 }`,
-  },
+    },
 
-  // 22. Moving average
-  {
-    name: 'Moving Average',
-    description: 'Sliding average over 500K values — tests rolling updates',
-    vex: `fn main(): i32 {
+    // 22. Moving average
+    {
+        name: 'Moving Average',
+        description: 'Sliding average over 500K values — tests rolling updates',
+        vex: `fn main(): i32 {
     let n = 500000
     let window = 32
     let! values = Vec.new<i64>()
@@ -1640,10 +1652,10 @@ pub fn main() !void {
         rolling += values.getUnchecked(i) - values.getUnchecked(i - window)
         checksum += rolling
     }
-    println(checksum)
+    $println(checksum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1665,7 +1677,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     const N: usize = 500000;
     const WINDOW: usize = 32;
     let values: Vec<i64> = (0..N).map(|i| (i % 31) as i64).collect();
@@ -1677,7 +1689,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const n = 500000;
@@ -1698,13 +1710,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
 }`,
-  },
+    },
 
-  // 23. Selection sort
-  {
-    name: 'Selection Sort',
-    description: 'Sort 512 values repeatedly — tests branchy in-place mutation',
-    vex: `fn main(): i32 {
+    // 23. Selection sort
+    {
+        name: 'Selection Sort',
+        description: 'Sort 512 values repeatedly — tests branchy in-place mutation',
+        vex: `fn main(): i32 {
     let! checksum: i64 = 0
     for round in 0..200 {
         let! values = Vec.new<i64>()
@@ -1724,10 +1736,10 @@ pub fn main() !void {
         }
         checksum += values.getUnchecked(0) + values.getUnchecked(511)
     }
-    println(checksum)
+    $println(checksum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1751,7 +1763,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut checksum: i64 = 0;
     for round in 0..200 {
         let mut values: Vec<i64> = (0..512).map(|i| ((i * 73 + round * 19) % 997) as i64).collect();
@@ -1768,7 +1780,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var checksum: i64 = 0;
@@ -1791,13 +1803,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
 }`,
-  },
+    },
 
-  // 24. Merge sorted arrays
-  {
-    name: 'Merge Sorted',
-    description: 'Merge two sorted 2K arrays repeatedly — tests linear access',
-    vex: `fn main(): i32 {
+    // 24. Merge sorted arrays
+    {
+        name: 'Merge Sorted',
+        description: 'Merge two sorted 2K arrays repeatedly — tests linear access',
+        vex: `fn main(): i32 {
     let! checksum: i64 = 0
     for _ in 0..400 {
         let! a = Vec.new<i64>()
@@ -1828,10 +1840,10 @@ pub fn main() !void {
         }
         checksum += merged.getUnchecked(0) + merged.getUnchecked(merged.len() - 1)
     }
-    println(checksum)
+    $println(checksum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1861,7 +1873,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut checksum: i64 = 0;
     for _ in 0..400 {
         let a: Vec<i64> = (0..2048).map(|i| (i * 2) as i64).collect();
@@ -1883,7 +1895,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var checksum: i64 = 0;
@@ -1915,13 +1927,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
 }`,
-  },
+    },
 
-  // 25. Ring buffer
-  {
-    name: 'Ring Buffer',
-    description: 'Push/pop through fixed circular buffer — tests modulo indexing',
-    vex: `fn main(): i32 {
+    // 25. Ring buffer
+    {
+        name: 'Ring Buffer',
+        description: 'Push/pop through fixed circular buffer — tests modulo indexing',
+        vex: `fn main(): i32 {
     let cap = 1024
     let! buf = Vec.new<i64>()
     for _ in 0..cap {
@@ -1937,10 +1949,10 @@ pub fn main() !void {
         head = (head + 1) % cap
         checksum += value
     }
-    println(checksum)
+    $println(checksum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -1958,7 +1970,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     const CAP: usize = 1024;
     let mut buf = [0_i64; CAP];
     let (mut head, mut tail) = (0usize, 0usize);
@@ -1972,7 +1984,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const cap = 1024;
@@ -1990,23 +2002,23 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
 }`,
-  },
+    },
 
-  // 26. LCG checksum
-  {
-    name: 'LCG Checksum',
-    description: 'Linear congruential generator checksum — tests integer pipelines',
-    vex: `fn main(): i32 {
+    // 26. LCG checksum
+    {
+        name: 'LCG Checksum',
+        description: 'Linear congruential generator checksum — tests integer pipelines',
+        vex: `fn main(): i32 {
     let! x: u64 = 123456789
     let! checksum: u64 = 0
     for _ in 0..5000000 {
         x = x * 1664525 + 1013904223
         checksum += x & 65535
     }
-    println(checksum)
+    $println(checksum)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -2019,7 +2031,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut x: u64 = 123456789;
     let mut checksum: u64 = 0;
     for _ in 0..5_000_000 {
@@ -2028,7 +2040,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var x: u64 = 123456789;
@@ -2040,13 +2052,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
 }`,
-  },
+    },
 
-  // 27. Pairwise distance
-  {
-    name: 'Pairwise Distance',
-    description: 'All-pairs squared distances for 128 points — tests nested FP loops',
-    vex: `fn main(): i32 {
+    // 27. Pairwise distance
+    {
+        name: 'Pairwise Distance',
+        description: 'All-pairs squared distances for 128 points — tests nested FP loops',
+        vex: `fn main(): i32 {
     let n = 128
     let! x = [0.0f64; n]
     let! y = [0.0f64; n]
@@ -2062,10 +2074,10 @@ pub fn main() !void {
             total += dx * dx + dy * dy
         }
     }
-    println(total)
+    $println(total)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -2087,7 +2099,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     const N: usize = 128;
     let x: Vec<f64> = (0..N).map(|i| i as f64 * 0.25).collect();
     let y: Vec<f64> = (0..N).map(|i| i as f64 * 0.5).collect();
@@ -2101,7 +2113,7 @@ func main() {
     }
     println!("{}", total);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     const n = 128;
@@ -2121,13 +2133,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{total});
 }`,
-  },
+    },
 
-  // 28. Pascal row
-  {
-    name: 'Pascal Rows',
-    description: 'Build Pascal triangle up to row 256 — tests dependent updates',
-    vex: `fn main(): i32 {
+    // 28. Pascal row
+    {
+        name: 'Pascal Rows',
+        description: 'Build Pascal triangle up to row 256 — tests dependent updates',
+        vex: `fn main(): i32 {
     let rows = 256
     let! current = Vec.new<i64>()
     current.push(1)
@@ -2140,10 +2152,10 @@ pub fn main() !void {
         next.push(1)
         current = next
     }
-    println(current.getUnchecked(current.len() / 2))
+    $println(current.getUnchecked(current.len() / 2))
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -2160,7 +2172,7 @@ func main() {
 	}
 	fmt.Println(current[len(current)/2])
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let mut current = vec![1_i64];
     for _ in 1..256 {
         let mut next = Vec::with_capacity(current.len() + 1);
@@ -2173,10 +2185,9 @@ func main() {
     }
     println!("{}", current[current.len() / 2]);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
-    var current = [_]i64{1} ++ [_]i64{};
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
@@ -2194,16 +2205,15 @@ pub fn main() !void {
         next[cur.len] = 1;
         cur = next;
     }
-    _ = current;
     try std.io.getStdOut().writer().print("{d}\\n", .{cur[cur.len / 2]});
 }`,
-  },
+    },
 
-  // 29. Tribonacci
-  {
-    name: 'Tribonacci',
-    description: 'Iterative tribonacci stream — tests scalar recurrence chains',
-    vex: `fn main(): i32 {
+    // 29. Tribonacci
+    {
+        name: 'Tribonacci',
+        description: 'Iterative tribonacci stream — tests scalar recurrence chains',
+        vex: `fn main(): i32 {
     let! a: i64 = 0
     let! b: i64 = 1
     let! c: i64 = 1
@@ -2213,10 +2223,10 @@ pub fn main() !void {
         b = c
         c = next
     }
-    println(c)
+    $println(c)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -2228,7 +2238,7 @@ func main() {
 	}
 	fmt.Println(c)
 }`,
-    rust: `fn main() {
+        rust: `fn main() {
     let (mut a, mut b, mut c): (i64, i64, i64) = (0, 1, 1);
     for _ in 0..1_000_000 {
         let next = a + b + c;
@@ -2238,7 +2248,7 @@ func main() {
     }
     println!("{}", c);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
 pub fn main() !void {
     var a: i64 = 0;
@@ -2253,13 +2263,13 @@ pub fn main() !void {
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{c});
 }`,
-  },
+    },
 
-  // 30. Min/max reduction
-  {
-    name: 'Min/Max Reduce',
-    description: 'Vex reduction-friendly min/max scan — tests aggregate operations',
-    vex: `// Vex SIMD reduction operators: <?| (min), >?| (max)
+    // 30. Min/max reduction
+    {
+        name: 'Min/Max Reduce',
+        description: 'Vex reduction-friendly min/max scan — tests aggregate operations',
+        vex: `// Vex SIMD reduction operators: <?| (min), >?| (max)
 fn main(): i32 {
     let! acc: f64 = 0.0
     for i in 0..500000 {
@@ -2267,10 +2277,10 @@ fn main(): i32 {
         let v = [base, base + 3.0, base - 2.0, base + 1.0]
         acc += (>?| v) - (<?| v)   // Hardware SIMD min/max reduction
     }
-    println(acc)
+    $println(acc)
     return 0
 }`,
-    go: `package main
+        go: `package main
 
 import "fmt"
 
@@ -2303,7 +2313,7 @@ func main() {
 	}
 	fmt.Println(acc)
 }`,
-    rust: `fn lane_min(v: [f64; 4]) -> f64 {
+        rust: `fn lane_min(v: [f64; 4]) -> f64 {
     v.into_iter().fold(f64::INFINITY, f64::min)
 }
 
@@ -2320,22 +2330,14 @@ fn main() {
     }
     println!("{}", acc);
 }`,
-    zig: `const std = @import("std");
+        zig: `const std = @import("std");
 
-fn laneMin(v: [4]f64) f64 {
-    var best = v[0];
-    for (1..4) |i| {
-        if (v[i] < best) best = v[i];
-    }
-    return best;
+fn laneMin(v: @Vector(4, f64)) f64 {
+    return @reduce(.Min, v);
 }
 
-fn laneMax(v: [4]f64) f64 {
-    var best = v[0];
-    for (1..4) |i| {
-        if (v[i] > best) best = v[i];
-    }
-    return best;
+fn laneMax(v: @Vector(4, f64)) f64 {
+    return @reduce(.Max, v);
 }
 
 pub fn main() !void {
@@ -2343,10 +2345,10 @@ pub fn main() !void {
     var i: usize = 0;
     while (i < 500_000) : (i += 1) {
         const base = @as(f64, @floatFromInt(i)) * 0.001;
-        const v = [4]f64{ base, base + 3.0, base - 2.0, base + 1.0 };
+        const v: @Vector(4, f64) = .{ base, base + 3.0, base - 2.0, base + 1.0 };
         acc += laneMax(v) - laneMin(v);
     }
     try std.io.getStdOut().writer().print("{d}\\n", .{acc});
 }`,
-  },
+    },
 ]

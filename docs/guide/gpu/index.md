@@ -1,391 +1,152 @@
 # GPU & Compute with SIR
 
-SIR is Vex's heterogeneous compute layer. It is the part of the compiler/runtime stack that can lower tensor-style work to SIMD and, where available, GPU-oriented backends.
+SIR (Static Intermediate Representation) is Vex's heterogeneous compute layer. It allows the compiler and runtime to compile, optimize, and dispatch tensor-style operations to parallel execution targets (CPUs and GPUs) transparently.
 
-This page is intentionally conservative: today, the most reliable path is still CPU/SIMD. GPU backends exist, but they do not all have equally mature runtime execution.
+---
 
-## What to use today
+## The Zero-Cost Perception Philosophy
 
-- Use normal array math and the [SIMD guide](../simd/) for the main production-ready fast path.
-- Use `graph fn`, `Tensor<T>`, and related APIs when you want to work directly with SIR-style compute graphs.
-- Treat non-SIMD GPU execution as evolving, not universally production-ready.
+Vex does not force GPU programming through complex shader languages or custom runtime APIs. Instead, the compiler analyzes standard dataflow inside functions marked with `graph fn` to automatically construct a SIR Directed Acyclic Graph (DAG) for parallel execution.
 
-## Minimal SIR example
-
-The current repo already contains examples like this:
-
+### Perception Example: Dot Product
 ```vex
-graph fn dynamic_even_gather(data: Span<f32>): Tensor<f32> {
-    let t: Tensor<f32> = data;
-    let total = data.len() as f64;
-    let even_indices = Tensor.arange<i64>(0.0, total, 2.0);
-    return t.gather(even_indices);
+graph fn dot(a: Span<f32>, b: Span<f32>): f32 {
+    let ta: Tensor<f32> = a;
+    let tb: Tensor<f32> = b;
+    return <+(ta * tb);
 }
 ```
 
-This is the clearest signal that you are on the graph/SIR path rather than only writing ordinary scalar code.
+The compiler detects the element-wise multiplication followed by a sum reduction and lowers it to a SIR `Map` and `Reduce` DAG. The runtime then chooses the best execution path based on the input size.
 
-## Conceptual pipeline
+---
+
+## Metal GPU Backend Architecture
+
+The Metal backend integrates SIR code generation with a runtime dispatch system optimized for Apple Silicon.
+
+### 1. MSL Compliance and Type Parity
+* **F64 to F32 Downcasting**: Because many mobile and integrated GPUs do not natively support `double` precision, the compiler downcasts `DType::F64` to `float` in Metal Shading Language (MSL).
+* **Deferred Constants**: MSL prohibits non-constant variables at global scope. The compiler automatically defers global constants, emitting them locally inside the generated kernels.
+* **Literal Precision**: All literal float values are formatted with explicit type suffixes (e.g., `1.0f` or `1e-5f`) to prevent MSL compiler warnings and type ambiguities.
+
+### 2. Parallel Two-Pass Reduction
+To maximize GPU core utilization on Apple Silicon during complex fused operations (such as Softmax and Normalization), Vex uses a **Two-Pass Reduction** architecture:
 
 ```
-Vex source
-  -> HIR
-  -> SIR graph
-  -> optimization and fusion
-  -> backend codegen
-  -> runtime dispatch or fallback
+  Pass 1: reduce_kernel (1 Threadgroup, 256 Threads)
+  ┌────────────────────────────────────────────────┐
+  │ Parallel Tree Reduction using Shared Memory    │
+  └───────────────────────┬────────────────────────┘
+                          │
+                          ▼ Writes partial results
+                    _scalars buffer (buffer(4))
+                          │
+                          ▼ Reads scalar inputs
+  Pass 2: map_kernel (N Threads, Full GPU Cores)
+  ┌────────────────────────────────────────────────┐
+  │ Element-wise computation using unified memory  │
+  └────────────────────────────────────────────────┘
 ```
 
-Backends in the tree include SIMD, Metal, CUDA, ROCm, SPIR-V, and WGSL-oriented code generation.
+* **Pass 1: `reduce_kernel`**: Launched with exactly **one threadgroup** (256 threads). Threads perform a binary tree reduction using threadgroup shared memory (`threadgroup float shared_data[256]`) and write the final scalar result to a temporary `_scalars` buffer.
+* **Pass 2: `map_kernel`**: Launched with **N threads** to utilize all available GPU compute cores. Threads read the scalar reduction results from the `_scalars` buffer and execute the element-wise portion of the fused operator in parallel.
 
-## Current maturity snapshot
+### 3. Buffer Binding Conventions
 
-The repo's backend roadmap currently points to this practical picture:
+Vex structures MSL shader parameters using a rigid buffer binding index convention:
 
-| Backend  | Practical status                                                            |
-| -------- | --------------------------------------------------------------------------- |
-| `SIMD`   | Most mature and the safest fast path today                                  |
-| `Metal`  | Real codegen exists, runtime execution is only solid in some configurations |
-| `CUDA`   | Codegen exists, runtime dispatch is still incomplete                        |
-| `ROCm`   | Separate HIP-oriented backend exists, runtime dispatch is still incomplete  |
-| `SPIR-V` | Important intermediate target, full Vulkan runtime path is not finished     |
-| `WGSL`   | Generation exists, but correctness and runtime coverage still need caution  |
+| Buffer Index | Parameter | Description |
+| :--- | :--- | :--- |
+| **`buffer(0)`** | `output` | Destination pointer for results. |
+| **`buffer(1)`** | `input_0` | Primary input tensor buffer. |
+| **`buffer(2)`** | `input_1` | Secondary input tensor buffer (or padding for unary operations). |
+| **`buffer(3)`** | `N` | Constant integer representing the total number of elements. |
+| **`buffer(4)`** | `_scalars` | Temporary buffer passing reduction results between passes. |
 
-If you need dependable behavior now, assume CPU/SIMD first and treat GPU execution as opt-in validation territory.
+---
 
-## What SIR is good at
+## Runtime Deferred Dispatch
 
-SIR is the right abstraction for:
+For functions with dynamic, runtime-sized inputs (e.g., `Span<f32>`), Vex uses a **Deferred Dispatch** strategy to choose the execution path at runtime:
 
-- tensor and graph-style transforms
-- gather/scatter patterns
-- backend-specific optimization and fusion
-- routing the same high-level compute description across multiple targets
+1. **Length Extraction**: The runtime extracts the length field from the incoming `Span` structure.
+2. **Complexity Scoring**: The compiler computes a complexity score for the SIR DAG (e.g., `Map` operations score low, `MatMul` and `Reduce` score high) to determine an `adjusted_threshold`.
+3. **Safety Clamping**: Any input length larger than `1GB` is clamped to `0` to force a safe CPU fallback on corrupted memory.
+4. **Branching**: If the input length exceeds the complexity threshold, execution is routed to the **GPU Path** (Metal). Otherwise, it falls back to the **CPU SIMD Path** (NEON/AVX) to avoid GPU launch overhead.
 
-## What not to assume
+::: warning UB Prevention: The `noinline` Attribute
+LLVM optimizations (like scalar replacement of aggregates) can decompose Span structures into registers, corrupting runtime length extraction. To prevent this, all functions using runtime dispatch are marked `noinline` in the generated LLVM IR, forcing explicit struct `extractvalue` calls.
+:::
 
-Do not assume that every SIR-capable program:
+---
 
-- will run on a real GPU on every machine
-- will avoid fallback paths
-- will have parity across Metal, CUDA, SPIR-V, and WGSL today
-- will beat the SIMD path for every workload
+## Special Handling & Optimizations
 
-Those are explicit areas still being hardened in the compiler and runtime.
+* **Sentinel Constants (`-1.0`)**: For dynamic spans, the compiler emits a `-1.0` sentinel for `.len()` operations. The runtime automatically replaces this with the actual runtime length before execution.
+* **Graph-in-Graph Inlining**: To support composability (e.g., `softmax` calling `reduce_max`), the compiler performs periodic SIR-level inlining, merging separate graphs into a single DAG to enable global kernel fusion.
 
-## Practical guidance
+---
 
-1. Start with a correct CPU/SIMD version.
-2. Introduce `graph fn` and `Tensor` only where the dataflow really fits.
-3. Validate results on the backend you care about instead of assuming parity.
-4. Treat Metal on macOS as the most realistic current GPU target.
-5. Use docs in the architecture section when you need backend-level caveats.
+## Target Architectures & Backend Pipelines
 
-## Related docs
+Vex compiles and routes Silicon IR (SIR) graphs dynamically based on the platform and hardware configuration:
 
-- [SIMD and Auto-Vectorization](../simd/)
-- [Tensor and Mask Types](../simd/tensor-mask)
-- [SIR and Backends](/architecture/sir-and-backends)
+### 1. CPU SIMD Fallback (AVX-512 / AVX2 / NEON)
+If the array length is below the execution threshold, or if no compatible GPU is detected, Vex routes execution to the CPU:
+* **Vectorization**: The compiler lowers SIR operations into LLVM vector instructions (e.g., `<8 x float>`).
+* **Loop Optimizations**: Loops are annotated with unrolling and vectorization width hints (`llvm.loop.vectorize.width` and `llvm.loop.unroll.enable`) to ensure LLVM generates efficient CPU SIMD instructions (AVX-512, AVX2, or ARM NEON).
 
-```vex
-// This simple code:
-fn compute(a: [f32], b: [f32]): [f32] {
-    let c = a + b
-    let d = c * 2.0
-    return d
-}
+### 2. Apple Silicon Metal (macOS)
+The primary GPU acceleration pathway on macOS:
+* **Zero-Copy / UMA**: Apple Silicon utilizes a Unified Memory Architecture (UMA). The CPU and GPU share the same memory space, completely eliminating PCIe transfer overhead.
+* **Dispatch Threshold**: Set to a low **50,000 elements** due to the absence of buffer copying costs.
 
-// Becomes optimized fused kernel:
-// Add + Mul fused into single pass
-```
+### 3. Vulkan & SPIR-V (Linux / Windows)
+For Linux and Windows platforms, Vex lowers SIR nodes to Vulkan compute shaders:
+* **SPIR-V Codegen**: The compiler outputs SPIR-V intermediate binary instructions.
+* **PCIe Transfer Overhead**: Since discrete GPUs (NVIDIA/AMD) require copying input buffers over the PCIe bus, the routing complexity model increases the dispatch threshold to **1,000,000 elements** to amortize latency.
 
-## Backend Selection
+### 4. WebGPU & WGSL (Web)
+For WASM/Web applications, Vex lowers graphs directly to WebGPU Shading Language (WGSL):
+* **WGSL Generation**: Compiles arithmetic and reduction networks into subgroup-accelerated WGSL shaders.
+* **Dynamic Loading**: Shaders are loaded and compiled by the browser runtime asynchronously.
 
-Vex **automatically** selects the best backend (CPU SIMD, Metal, Vulkan, etc.) based on the operation size and available hardware.
+---
 
-You do **not** need to import or configure backends manually. The compiler and runtime handle this transparently.
+## Backend Support Summary
 
-### Automatic GPU Offloading
+| Platform / OS | Primary Target | Shader / IR Pipeline | Memory Model | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **macOS** | `Metal` | MSL Compiler | Unified (UMA) | Fully Supported (Optimized) |
+| **Linux** | `Vulkan` | SPIR-V Codegen | Discrete / Copied | Supported |
+| **Windows** | `Vulkan` | SPIR-V Codegen | Discrete / Copied | Supported |
+| **Web / WASM** | `WebGPU` | WGSL Code Generator | Sandboxed / Copied | Supported |
+| **Any (Fallback)** | `CPU SIMD` | LLVM Vector IR | CPU Cache | Fully Supported |
 
-The SIR compiler automatically dispatches to GPU when:
+---
 
-- Array operations exceed 4096 elements
-- Matrix multiplications with output > 64x64
-- Large reduction operations
+## Runtime Controls
 
-```vex
-// Small arrays → CPU SIMD (fast, no GPU overhead)
-let small = [1.0, 2.0, 3.0, 4.0]
-let result = small + 1.0  // Uses SIMD
-
-// Large arrays → GPU automatically
-let large: [f32; 10000] = [0.0; 10000]
-let result = large * 2.0 + 1.0  // GPU if available
-```
-
-### Building with GPU Support
+You can override the automatic GPU dispatch decisions using environment variables:
 
 ```bash
-# macOS with Metal GPU (recommended)
-cargo build --features metal-gpu
-
-# Cross-platform with WebGPU
-cargo build --features webgpu
-```
-
-### Runtime Control
-
-```bash
-# Disable GPU (force CPU SIMD)
+# Disable GPU offloading (force CPU SIMD fallback)
 VEX_NO_GPU=1 vex run program.vx
 
-# Verbose SIR output
-VEX_VERBOSE=1 vex run program.vx
-```
+# Force GPU offloading regardless of cost model
+VEX_FORCE_GPU=1 vex run program.vx
 
-## Supported GPU Backends
+# Select a specific GPU backend
+VEX_GPU_BACKEND=metal|vulkan|webgpu vex run program.vx
 
-Vex's SIR compiler automatically targets the appropriate API for your platform:
-
-| Platform     | Backend     | Requirement                              |
-| ------------ | ----------- | ---------------------------------------- |
-| **macOS**    | `Metal`     | macOS 10.13+ (Apple Silicon recommended) |
-| **Linux**    | `Vulkan`    | Vulkan 1.2+ driver                       |
-| **Windows**  | `Vulkan`    | Vulkan 1.2+ driver                       |
-| **Web**      | `WebGPU`    | Modern browser (Chrome/Edge/Firefox)     |
-| **Fallback** | `LLVM-SIMD` | Any CPU (if GPU unavailable)             |
-
-For intrinsics supported on GPU, see the [Standard Intrinsics](/guide/simd#standard-intrinsics) table in the SIMD guide.
-
-## VUMM Integration
-
-SIR integrates with VUMM (Vex Unified Memory Manager):
-
-- **Zero-Copy**: Uses unified memory on supported platforms (Apple Silicon, APUs)
-- **Pool Allocator**: Reuses buffers to reduce allocation overhead
-- **Lifecycle Management**: Reference counting for automatic cleanup
-
-```vex
-// Memory is managed automatically
-fn process_large_array(data: [f32]): [f32] {
-    // VUMM handles buffer allocation
-    let result = transform(data)
-    // Buffer freed when no longer referenced
-    return result
-}
-```
-
-## Optimization Passes
-
-### Kernel Fusion
-
-Adjacent operations are fused into single kernels:
-
-```vex
-// Before fusion: 3 separate kernel launches
-let b = a + 1.0
-let c = b * 2.0
-let d = $relu(c)
-
-// After fusion: 1 kernel launch
-// (a + 1.0) * 2.0 → relu in single pass
-```
-
-### Tiling for Cache Efficiency
-
-Large operations are tiled automatically:
-
-```vex
-// Matrix multiply auto-tiled for cache
-fn large_matmul(
-    a: [[f32; 1024]; 1024],
-    b: [[f32; 1024]; 1024]
-): [[f32; 1024]; 1024] {
-    return a <*> b  // Tiling applied automatically
-}
-```
-
-## Practical Examples
-
-### Image Processing
-
-```vex
-// Brighten image - saturating add prevents overflow
-fn brighten(pixels: [u8], amount: u8): [u8] {
-    return pixels +| amount
-}
-
-// Grayscale conversion with broadcasting
-fn grayscale(r: [u8], g: [u8], b: [u8]): [u8] {
-    return (r * 0.299 + g * 0.587 + b * 0.114) as [u8]
-}
-
-// Contrast adjustment
-fn contrast(pixels: [f32], factor: f32): [f32] {
-    let mean = \+ pixels / pixels.len() as f32
-    return (pixels - mean) * factor + mean
-}
-
-// Blur (box filter)
-fn blur_3x3(img: [[f32]]): [[f32]] {
-    let kernel = [[1, 1, 1], [1, 1, 1], [1, 1, 1]] / 9.0
-    return $conv(img, kernel)
-}
-```
-
-### Signal Processing
-
-```vex
-// FFT-based operations would use SIR's optimized kernels
-fn normalize(signal: [f32]): [f32] {
-    let min = \< signal
-    let max = \> signal
-    return (signal - min) / (max - min)
-}
-
-fn rms(signal: [f32]): f32 {
-    return $sqrt(\+ signal ** 2 / #signal)
-}
-
-fn moving_average(data: [f32], window: i32): [f32] {
-    return $conv(data, [1.0; window] / window as f32)
-}
-```
-
-### Machine Learning
-
-```vex
-// Neural network layer
-fn linear(x: [[f32]], w: [[f32]], b: [f32]): [[f32]] {
-    return x <*> w + b  // MatMul + broadcast bias
-}
-
-fn relu(x: [[f32]]): [[f32]] {
-    return x >? 0.0  // Element-wise max with 0
-}
-
-fn softmax(logits: [f32]): [f32] {
-    let exp_x = $exp(logits - \> logits)  // Subtract max for stability
-    return exp_x / \+ exp_x
-}
-
-fn cross_entropy(pred: [f32], target: [f32]): f32 {
-    return -\+ target * $log(pred + 1e-7)
-}
-
-// Full forward pass - fuses into optimized kernels
-fn mlp_forward(x: [[f32]], w1: [[f32]], b1: [f32],
-               w2: [[f32]], b2: [f32]): [[f32]] {
-    return x
-        |> fn(h) { h <*> w1 + b1 }    // Linear 1
-        |> fn(h) { h >? 0.0 }          // ReLU
-        |> fn(h) { h <*> w2 + b2 }    // Linear 2
-}
-```
-
-### Physics Simulation
-
-```vex
-// N-body gravity calculation
-fn gravity_accel(
-    pos: [[f32; 3]],  // N x 3 positions
-    masses: [f32]      // N masses
-): [[f32; 3]] {
-    // Broadcasting: each body vs all others
-    let dx = pos[:, None, :] - pos[None, :, :]  // N x N x 3
-    let dist_sq = \+ dx ** 2, axis: 2           // N x N
-    let inv_dist3 = 1.0 / (dist_sq * $sqrt(dist_sq) + 1e-9)
-
-    // a = G * m * dx / r^3
-    return \+ masses[None, :, None] * dx * inv_dist3[:, :, None], axis: 1
-}
-
-// Velocity Verlet integration
-fn integrate(pos: [[f32; 3]], vel: [[f32; 3]],
-             accel: [[f32; 3]], dt: f32): ([[f32; 3]], [[f32; 3]]) {
-    let new_pos = pos + vel * dt + 0.5 * accel * dt ** 2
-    let new_accel = gravity_accel(new_pos, masses)
-    let new_vel = vel + 0.5 * (accel + new_accel) * dt
-    return (new_pos, new_vel)
-}
-```
-
-### Crypto Operations
-
-```vex
-// AES SubBytes using Galois Field multiply
-fn aes_sbox(state: [u8; 16]): [u8; 16] {
-    let inv = $gf_inv(state)
-    return inv ^ (inv <<< 1) ^ (inv <<< 2) ^ (inv <<< 3) ^ (inv <<< 4) ^ 0x63
-}
-
-// SHA-256 compression round
-fn sha256_round(a: u32, b: u32, c: u32, d: u32,
-                e: u32, f: u32, g: u32, h: u32,
-                k: u32, w: u32): (u32, u32, u32, u32, u32, u32, u32, u32) {
-    let s1 = (e >>> 6) ^ (e >>> 11) ^ (e >>> 25)
-    let ch = (e & f) ^ (~e & g)
-    let temp1 = h +| s1 +| ch +| k +| w
-
-    let s0 = (a >>> 2) ^ (a >>> 13) ^ (a >>> 22)
-    let maj = (a & b) ^ (a & c) ^ (b & c)
-    let temp2 = s0 +| maj
-
-    return (temp1 +| temp2, a, b, c, d +| temp1, e, f, g)
-}
-```
-
-## Best Practices
-
-1. **Use operators, not loops** - SIR optimizes operators directly
-2. **Prefer fixed-size arrays** - Enables better optimization
-3. **Use reduction operators** - `\+`, `\<`, `\>` for reductions
-4. **Chain with pipeline** - `|>` for readable data flow
-5. **Let fusion happen** - Don't manually split operations
-
-```vex
-// ✅ Excellent: Direct operators
-fn dot_product(a: [f64], b: [f64]): f64 {
-    return \+ a * b
-}
-
-fn normalize(v: [f64]): [f64] {
-    return v / $sqrt(\+ v ** 2)
-}
-
-// ✅ Good: Pipeline for complex operations
-fn standardize(data: [f64]): [f64] {
-    let mean = \+ data / data.len() as f64
-    let std = $sqrt(\+ (data - mean) ** 2 / data.len() as f64)
-    return (data - mean) / std
-}
-
-// ❌ Avoid: Manual loops when operators work
-fn bad_dot_product(a: [f64], b: [f64]): f64 {
-    let! sum = 0.0
-    for i in 0..a.len() {
-        sum = sum + a[i] * b[i]  // Unnecessary loop!
-    }
-    return sum
-}
-```
-
-## Compilation Flags
-
-```bash
-# Auto-detect best backend
-vex compile file.vx
-
-# Specify optimization level
-vex compile -O 3 file.vx
-
-# Target specific CPU for SIMD
-vex compile --target-cpu=x86-64-v3 file.vx  # AVX2
-vex compile --target-cpu=native file.vx     # Current CPU
+# Enable verbose dispatch logging
+VEX_DISPATCH_VERBOSE=1 vex run program.vx
 ```
 
 ## Next Steps
 
-- [SIMD](/guide/simd) - CPU vectorization details
-- [Memory Management](/guide/memory/vumm) - VUMM system
+- [SIMD Auto-Vectorization](/guide/simd) - CPU SIMD details
+- [VUMM Memory Model](/guide/memory/vumm) - Automatic memory management
 - [Performance](/guide/advanced/performance) - Optimization techniques
+

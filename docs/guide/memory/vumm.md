@@ -1,115 +1,97 @@
-# VUMM
+# VUMM: Vex Universal Memory Manager
 
-VUMM is Vex's unified ownership strategy for heap values. The user-facing surface stays simple: you write `Box.new(value)` or `Box(value)`, and the compiler/runtime can choose an internal ownership mode.
+VUMM (Vex Universal Memory Manager) is the core memory management strategy in Vex. Its primary goal is to provide **automatic, efficient ownership transitions** without a garbage collector, ensuring that data is managed correctly and safely across unique, shared, and concurrent contexts.
 
-## The user-facing rule
+## The Design Philosophy: Zero Ceremony
 
-In ordinary Vex code there is no separate `Rc` or `Arc` type hierarchy to choose from. The heap-owning abstraction you work with is `Box`.
-
-```vex
-let a = Box.new(42);
-let b = Box(99);
-```
-
-That simplicity is the main point of VUMM.
-
-## Internal box kinds
-
-Inside the compiler and runtime, VUMM tracks different ownership strategies. The current codebase exposes these internal kinds:
-
-- `Unique`
-- `SharedRc`
-- `AtomicArc`
-
-These names show up in typed metadata and runtime support code. They describe how a boxed value is represented and reference-counted internally.
-
-## What typically pushes each mode
-
-### `Unique`
-
-This is the straight-line ownership case: one owner, no shared references, no cross-thread sharing.
+In ordinary Vex code, you don't choose between a separate `Rc` or `Arc` type hierarchy. The heap-owning abstraction you work with is always `Box`.
 
 ```vex
-let data = Box.new(Config { debug: true });
-use_config(data);
+let a = Box.new(42)
+let b = Box(99)
 ```
 
-### `SharedRc`
+Behind this simple interface, VUMM dynamically chooses the underlying memory management strategy. It combines value-based move semantics with automatic reference counting, scaling thread-safety guarantees only when concurrency is actually introduced.
 
-This is the shared single-threaded case: a heap value is cloned or otherwise needs shared ownership without crossing concurrency boundaries.
+---
 
-```vex
-let item = Box.new(load_resource());
-let copy = item.clone();
+## Internal Ownership States
+
+VUMM manages three primary ownership modes for heap-allocated data:
+
+```
+                  Clone (same thread)
+  ┌───────────┐  ────────────────────→  ┌─────────────┐
+  │  Unique   │                         │  SharedRc   │
+  │ (Box<T>)  │  ←────────────────────  │ (Ref Count) │
+  └───────────┘    Only 1 ref remaining  └─────────────┘
+        │
+        │ Share across 'go' block
+        ▼
+  ┌─────────────┐
+  │  AtomicArc  │ (Atomic Ref Count)
+  └─────────────┘
 ```
 
-### `AtomicArc`
+### 1. Unique Ownership (`Unique`)
+* **Role**: The data has exactly one owner (equivalent to Rust's `Box<T>`).
+* **Performance**: Supports in-place mutation and efficient, zero-overhead moves.
+* **Deallocation**: Freed immediately when the owning variable goes out of scope.
 
-This is the concurrent sharing case: the value needs ownership semantics that remain valid across `go` blocks or other cross-thread paths.
+### 2. Shared Reference Counting (`SharedRc`)
+* **Role**: The data is reference-counted and shared among multiple owners on the same thread.
+* **Transition**: Triggered automatically when a `Box` is cloned within a non-concurrent context.
+* **Performance**: Cloning simply performs a fast reference count increment (`vex_rc_retain`) instead of a deep copy, providing value semantics with zero overhead.
 
-```vex
-let state = Box.new(make_state());
-let copy = state.clone();
+### 3. Atomic Shared Reference Counting (`AtomicArc`)
+* **Role**: The data is shared across thread boundaries with atomic reference counting for thread safety.
+* **Transition**: Triggered automatically when a shared `Box` is captured inside a `go` block or passed to a concurrent task.
+* **Performance**: Uses atomic fetch-and-add operations (`vex_arc_retain`) to prevent data races.
 
-go {
-    use_state(copy);
-};
-```
+---
 
-## What VUMM does not change
+## Relationship with Contracts
 
-VUMM does not replace the ownership rules explained in the rest of the language:
+VUMM leverages Vex's contract-based system to automate lifetime management:
 
-- moves are still moves
-- borrows are still borrows
-- `Box` is still an owning value
-- `clone()` still signals sharing or duplication intent
+* **`$Copy`**: Primitive types (numbers, bools, raw pointers) copy on assignment. Owning VUMM types do not implement `$Copy` and default to move semantics.
+* **`$Clone`**: Cloning a VUMM type triggers a cheap reference count increment (`vex_rc_retain` or `vex_arc_retain`) under the hood instead of duplicating heap allocations, unless a deep copy is explicitly requested.
+* **`$Drop`**: VUMM automatically decrements reference counts when an owner leaves scope, freeing the underlying allocation once the reference count reaches zero.
 
-VUMM changes representation strategy, not the surface ownership model.
+---
 
-## Why this matters
+## Monomorphized Drop Calls
 
-Without VUMM, a language often forces users to pick between several heap ownership types up front. Vex tries to keep the source-level choice simpler while still leaving room for the compiler/runtime to specialize the underlying behavior.
+To eliminate brittle, complex inline drop glue for generic containers (e.g., `Vec<T>`), the Vex compiler uses a **Monomorphized Drop Call** strategy:
 
-## Current implementation reality
+1. **Explicit Monomorphization**: The compiler analyzes concrete generic types at compile time (e.g., `Vec<String>`).
+2. **Direct Call Emission**: When a container is dropped, Vex emits a direct call to the monomorphized user `drop()` function (e.g., `call void @"drop@Vec_String"`).
+3. **Safety**: This ensures both the container allocation and its elements are cleaned up correctly according to the specific type `T`, preventing "orphan drops" and Use-After-Free (UAF) errors.
 
-The important practical statement for the docs is this:
+---
 
-1. user code writes `Box`
-2. compiler and runtime may lower it to `Unique`, `SharedRc`, or `AtomicArc`
-3. exact lowering is an implementation detail and may evolve as analysis improves
+## Memory Allocator Integration
 
-This page should be read as the model behind `Box`, not as a separate syntax you are expected to program directly.
+VUMM is backed by a custom runtime memory allocator designed for low latency:
 
-## Practical guidance
+* **Slab Allocator**: Reuses uniform memory chunks in a thread-local pool to avoid expensive syscalls.
+* **Epoch Quiescence**: FFI and dynamic allocations are retired via epoch-based reclamation, ensuring memory is reclaimed only when no active execution thread holds a reference.
+* **Zero-Copy Unified Memory**: On Apple Silicon and supported APUs, VUMM maps buffers directly between CPU and GPU without copy overhead.
 
-- Start with plain `Box.new(value)`.
-- Borrow boxed values when read-only access is enough.
-- Clone only when shared ownership is actually needed.
-- Treat concurrency boundaries like `go` as a signal that stronger sharing semantics may be required under the hood.
-
-## See also
-
-- [Box](./box)
-- [Ownership](./ownership)
-- [Concurrency: Async](../concurrency/async)
-  | Rust | `Box`, `Rc`, `Arc` | Choose correct type |
-  | Go | GC handles everything | Runtime overhead |
-  | **Vex** | `Box.new()` | **Automatic, zero overhead** |
+---
 
 ## Summary
 
 ::: info TL;DR
-
-1. **Write `Box(value)` or `Box.new(value)`** - that's it
-2. **Never look for `Rc` or `Arc` types** - they don't exist in Vex
-3. **VUMM picks Unique/SharedRc/AtomicArc** automatically at compile time
-4. **Zero runtime overhead** - kind is monomorphized, no branching
-5. **Use `--explain-boxing`** to see VUMM's decisions
-   :::
+1. **Write `Box(value)`** - Vex has no explicit `Rc` or `Arc` types.
+2. **VUMM chooses** between Unique, SharedRc, and AtomicArc automatically at compile time.
+3. **Fast Clones**: Cloning VUMM values increments reference counts instead of deep-copying.
+4. **Monomorphized Drop**: Frees generic containers and elements safely using concrete drop functions.
+5. **Compile Flag**: Use `--explain-boxing` to inspect VUMM's decisions during compilation.
+:::
 
 ## Next Steps
 
-- [Borrowing](borrowing) - Reference rules
-- [Lifetimes](lifetimes) - Lifetime annotations
-- [Performance](/guide/advanced/performance) - Optimization tips
+- [Borrowing](borrowing) - Reference rules and NLL
+- [Lifetimes](lifetimes) - Lifetime elision and regions
+- [Contracts](../types/contracts) - Contract system

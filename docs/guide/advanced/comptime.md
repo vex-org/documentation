@@ -1,36 +1,36 @@
 # Compile-Time Evaluation
 
-Vex currently splits comptime features into two groups:
+Vex splits compile-time features into two groups:
 
-- `#name(...)` style compile-time functions and queries
-- `$if`, `$elif`, `$else`, `$for`, `$while`, and `$const` compile-time control-flow forms
+- `#name(...)` style compile-time functions, intrinsic helpers, and queries.
+- `#if`, `#elif`, `#else`, `#for`, `#while`, and `#const` compile-time control-flow and evaluation blocks.
 
-That distinction matters. Earlier docs blurred `#` and `$`; the current compiler does not.
-
-## Prefix Model
-
-Use this rule of thumb:
-
-- Prefer `#...` for reflection, diagnostics, embedding, compile-time math, and bit helpers
-- Use `$if`, `$for`, `$while`, and `$const` for compile-time branching and expansion
-- Layout helpers accept both historical `$sizeof` and `#sizeof` style spellings, plus the same pattern for alignment
+::: tip Design Principle: No Runtime Cost
+Vex uses the `#` prefix for all compile-time expressions and control flow. The `$` prefix is reserved exclusively for runtime features that call compiler-internal runtime helper intrinsics (such as `$print` and `$println`), indicating they have a runtime execution cost.
+:::
 
 ## Layout and Reflection
 
 ```vex
 let size_a = #sizeof<i64>()
-let size_b = $sizeof<i64>()
-
 let align_a = #alignof<f64>()
-let align_b = $alignof<f64>()
-
-let ty_name = $typeName<Vec<i32>>()
+let ty_name = #typeName<Vec<i32>>()
 let field_count = #fieldCount<User>()
 let variant_count = #variantCount<Result<i32, string>>()
+
+let array_len = #arrayLen<[f32; 16]>()
+let implements_copy = #implements<User, Copy>()
 ```
 
-The compiler also supports field and variant reflection helpers such as:
+The compiler supports additional compile-time type and layout reflection helpers:
 
+- `#len<T>()` / `#length<T>()` — Length of static arrays, tuples, etc.
+- `#rank<T>()` / `#ndim<T>()` — Number of dimensions of a static tensor/array.
+- `#shape<T>()` — Shape of a static tensor/array as a compile-time tuple.
+- `#tupleLen<T>()` — Length of a tuple type.
+- `#arrayLen<T>()` — Length of an array type.
+- `#elementType<T>()` — Element type of static arrays, spans, or vectors.
+- `#implements<T, Contract>()` — Compile-time check if `T` implements a contract.
 - `#fieldNames<T>()`
 - `#hasField<T>(name)`
 - `#fieldType<T>(name)`
@@ -43,9 +43,43 @@ The compiler also supports field and variant reflection helpers such as:
 - `#variantHasPayload<E>(name)`
 - `#variantPayload<E>(name)`
 
+## Compile-Time Type Predicates
+
+Type predicates allow checking characteristics of types at compile time (e.g., inside `#if` statements):
+
+```vex
+#if #isStruct<T>() {
+    // T is a struct type
+}
+#if #needsDrop<T>() {
+    // T has drop semantics and owns resources
+}
+#if #sameType<T, U>() {
+    // T and U are the same type
+}
+```
+
+The full list of compile-time type predicates:
+
+* **`#isStruct<T>()`**: Returns `true` if `T` is a struct or named user type.
+* **`#isEnum<T>()`**: Returns `true` if `T` is an enum type.
+* **`#isPrimitive<T>()`**: Returns `true` if `T` is a primitive type (scalar, boolean, char).
+* **`#isInteger<T>()`**: Returns `true` if `T` is an integer type.
+* **`#isFloat<T>()`**: Returns `true` if `T` is a floating-point type.
+* **`#isSigned<T>()`**: Returns `true` if `T` is a signed numeric type.
+* **`#isPointer<T>()`**: Returns `true` if `T` is a raw pointer type (`*U` or `ptr`).
+* **`#isArray<T>()`**: Returns `true` if `T` is a compile-time sized array.
+* **`#isTuple<T>()`**: Returns `true` if `T` is a tuple.
+* **`#isCopy<T>()`**: Returns `true` if `T` implements the `$Copy` contract (trivially copyable).
+* **`#needsDrop<T>()`**: Returns `true` if `T` has custom drop logic or contains fields requiring drop.
+* **`#isReference<T>()`**: Returns `true` if `T` is a borrowed reference type (`&U`).
+* **`#isFunction<T>()`**: Returns `true` if `T` is a function pointer or function signature type.
+* **`#isGeneric<T>()`**: Returns `true` if `T` is unresolved or generic.
+* **`#sameType<T, U>()`**: Returns `true` if type `T` and type `U` are identical.
+
 ## `#typeInfo<T>()`
 
-`#typeInfo<T>()` is the current structured reflection entry point.
+`#typeInfo<T>()` is the structured reflection entry point.
 
 ```vex
 struct User {
@@ -54,10 +88,10 @@ struct User {
 }
 
 fn dump_user_fields(u: User) {
-    $for f in #typeInfo<User>().fields {
+    #for f in #typeInfo<User>().fields {
         $println("field: ", f.name, " type: ", f.type_name)
 
-        $for t in f.tags {
+        #for t in f.tags {
             $println("  tag ", t.key, " = ", t.value)
         }
 
@@ -67,13 +101,13 @@ fn dump_user_fields(u: User) {
 }
 ```
 
-Inside a `$for f in #typeInfo<T>().fields` loop, the current compiler also supports `#setField`:
+Inside a `#for f in #typeInfo<Point>().fields` loop, the compiler also supports `#setField`:
 
 ```vex
 fn rewrite_all_fields() {
     let! p = Point { x: 1, y: 2 }
 
-    $for f in #typeInfo<Point>().fields {
+    #for f in #typeInfo<Point>().fields {
         #setField(p, f, 99)
     }
 }
@@ -81,31 +115,29 @@ fn rewrite_all_fields() {
 
 ## Compile-Time Control Flow
 
-The parser and codegen currently support all of the following forms:
+The parser and codegen support the following compile-time blocks:
 
 ```vex
-$if #fieldCount<User>() > 0 {
+#if #fieldCount<User>() > 0 {
     #warning("User has fields")
-} $elif #fieldCount<User>() == 0 {
+} #elif #fieldCount<User>() == 0 {
     #warning("User is empty")
-} $else {
+} #else {
     #compileError("unreachable comptime branch")
 }
 
-$for f in #typeInfo<User>().fields {
+#for f in #typeInfo<User>().fields {
     $println(f.name)
 }
 
-$while condition {
+#while condition {
     break
 }
 
-let value = $const {
+let value = #const {
     2 + 2
 }
 ```
-
-`$while` is part of the language surface today even though older docs barely mentioned it.
 
 ## Diagnostics and Embedding
 
@@ -121,7 +153,7 @@ let source = #stringify(User { id: 1, name: "A" })
 let ident = #concatIdents(foo, bar)
 ```
 
-The primary diagnostics and meta helpers currently documented by the compiler are:
+The primary diagnostics and meta helpers documented by the compiler are:
 
 - `#staticAssert`
 - `#compileError`
@@ -135,8 +167,6 @@ The primary diagnostics and meta helpers currently documented by the compiler ar
 - `#concatIdents`
 
 ## Compile-Time Math and Bit Operations
-
-The current implementation accepts both canonical names and several compatibility aliases.
 
 ```vex
 let pow = #constPow(2, 10)
@@ -154,9 +184,10 @@ let pop = #bitCount(0b1010101)
 let clz = #leadingZeros(16)
 let ctz = #trailingZeros(16)
 let swapped = #bswap(0x12345678)
+let is_pow2 = #isPowerOf2(64)
 ```
 
-Accepted aliases in the current compiler include:
+Accepted aliases in the compiler include:
 
 - `#constAbs` for `#abs`
 - `#constMin` for `#min`
@@ -168,6 +199,7 @@ Accepted aliases in the current compiler include:
 - `#clz` for `#leadingZeros`
 - `#ctz` for `#trailingZeros`
 - `#reverseBytes` for `#bswap`
+- `#isPowerOfTwo` for `#isPowerOf2`
 
 ## Forcing Evaluation
 
@@ -185,14 +217,12 @@ let default_i32 = #default<i32>()
 let zeroed_user = #zeroed<User>()
 ```
 
-These helpers exist today and are useful in low-level or generated code, but they should still be used with the same care you would apply to raw initialization elsewhere in the language.
-
 ## Practical Guidance
 
 1. Prefer `#typeInfo<T>()` when you need structured field iteration instead of parsing `#fieldNames<T>()` strings yourself.
 2. Prefer `#staticAssert` over comment-based assumptions.
 3. Treat compatibility aliases as compatibility aliases; document the primary spelling you actually want other code to use.
-4. Keep `$for` and `$if` bodies simple. They are easiest to reason about when they expand straightforward source.
+4. Keep `#for` and `#if` bodies simple. They are easiest to reason about when they expand straightforward source.
 
 ## Related
 

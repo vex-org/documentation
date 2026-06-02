@@ -87,59 +87,131 @@ In practical terms:
 - `Tensor<T>` and `Span<T>` are not just two names for the same thing
 - bugs at generic call boundaries have historically shown up exactly here
 
-## Backend capability, in plain language
+## Unified Silicon IR (SIR) Operator Reference
 
-Current backend support is uneven by operation family.
+All data-parallel operations in Vex graph and tensor pipelines lower to a standardized set of SIR operators, which are optimized across different backend architectures (CPU/SIMD, Metal, Vulkan, and WebGPU).
 
-The strongest, most stable parts are:
+### Binary Operators (`BinOp`)
 
-- element-wise tensor math
-- reductions
-- inline SIMD for small arrays
-- mask operations
+| Operator Category | BinOp | Vex Syntax | LLVM Instruction / Intrinsic | Metal / CUDA / Vulkan |
+| :--- | :--- | :--- | :--- | :--- |
+| **Arithmetic** | `Add` | `a + b` | `fadd` / `add` | `+` |
+| | `Sub` | `a - b` | `fsub` / `sub` | `-` |
+| | `Mul` | `a * b` | `fmul` / `mul` | `*` |
+| | `Div` | `a / b` | `fdiv` / `sdiv` | `/` |
+| | `Mod` | `a % b` | `frem` / `srem` | `fmod` / `%` |
+| | `Pow` | `a ** b` | `llvm.pow.*` | `pow` / `powf` |
+| **Saturating** | `SaturatingAdd` | `a +| b` | Clamped add | Clamped by Type `MAX` |
+| | `SaturatingSub` | `a -| b` | Clamped sub | Clamped by Type `MIN` |
+| | `SaturatingMul` | `a *| b` | Clamped mul | Clamped by Type `MIN/MAX` |
+| **Comparison** | `Eq` / `Ne` | `a == b` / `a != b` | `icmp eq` / `fcmp oeq` | Returns `Mask<N>` |
+| | `Lt` / `Le` | `a < b` / `a <= b` | `icmp` / `fcmp` | Returns `Mask<N>` |
+| | `Gt` / `Ge` | `a > b` / `a >= b` | `icmp` / `fcmp` | Returns `Mask<N>` |
+| **Logical** | `And` / `Or` | `a && b` / `a \|\| b` | `and` / `or` | `&&` / `\|\|` |
+| **Bitwise** | `BitAnd` / `BitOr` | `a & b` / `a \| b` | `and` / `or` | `&` / `\|` |
+| | `BitXor` | `a ^ b` | `xor` | `^` |
+| | `Shl` / `Shr` | `a << b` / `a >> b` | `shl` / `lshr` or `ashr` | `<<` / `>>` |
+| | `RotL` / `RotR` | `a <<< b` / `a >>> b`| `llvm.fshl` / `llvm.fshr` | `rotate` (Metal/CUDA) |
+| **Min/Max** | `Min` / `Max` | `a <? b` / `a >? b` | `llvm.minnum` / `llvm.maxnum`| `min` / `max` |
+| **Matrix/Vector**| `MatMul` | `a <*> b` | Lowered to MatMul Node | Blas / Metal kernel |
+| | `MatPow` | `a <^> n` | Matrix Exponentiation | Iterative / Spectral |
+| | `Dot` / `Cross` | `a · b` / `a × b` | Vector Dot / Cross | `dot` / `cross` |
+| | `Solve` | `A <\> b` | Lowered to Solve Node | Linear Solver (Ax=b) |
+| **Extended Math**| `Atan2` / `Hypot` | `atan2(y,x)` / `hypot(x,y)`| `atan2` / `llvm.sqrt` | `atan2` / `hypot` |
+| | `Fmod` / `Copysign`| `fmod(x,y)` / `copysign(x,y)`| `frem` / `llvm.copysign` | `fmod` / `copysign` |
+| **Special** | `GaloisMul` | `a *^ b` | Carry-less multiply | `pmul` (AVX) / clmul |
+| | `Concat` | `a ++ b` | Lowered to Concat Node | Dynamic Concatenation |
 
-More conditional areas include:
+---
 
-- dynamic indexed gather and scatter
-- specialized scatter combine variants
-- generic tensor arithmetic across arbitrary `T`
-- assuming a single fused kernel for every graph-shaped expression
+### Unary Operators (`UnaryOp`)
 
-The current type-shape contract documents one especially important special case: dynamic SIMD indexed routing is intentionally narrow and only kicks in for certain single-node gather and scatter forms.
+| Operator Category | UnaryOp | Vex Syntax | LLVM / Backend Mapping |
+| :--- | :--- | :--- | :--- |
+| **Basic** | `Neg` / `Not` | `-x` / `!x` | `fneg` or `sub 0, x` / `xor x, true` |
+| | `BitNot` | `~x` | `xor x, -1` |
+| | `Cast` | `x as T` | `trunc` / `ext` / `fptosi` / `sitofp` |
+| **Math Functions**| `Abs` / `Sqrt` | `abs(x)` / `sqrt(x)` | `llvm.fabs.*` / `llvm.sqrt.*` |
+| | `Exp` / `Exp2` | `exp(x)` / `exp2(x)` | `llvm.exp.*` / `llvm.exp2.*` |
+| | `Log` / `Log2` / `Log10`| `log(x)` / `log2` / `log10`| `llvm.log.*` / `llvm.log2.*` / `llvm.log10.*` |
+| | `Sin` / `Cos` / `Tan` | `sin(x)` / `cos` / `tan` | `llvm.sin.*` / `llvm.cos.*` / `tan` |
+| | `Floor` / `Ceil` / `Round`| `floor` / `ceil` / `round`| `llvm.floor.*` / `llvm.ceil.*` / `llvm.round.*` |
+| | `Trunc` / `Rint` | `trunc(x)` / `rint(x)` | `llvm.trunc.*` / `llvm.rint.*` (Banker's round) |
+| | `Rsqrt` | `rsqrt(x)` | `1.0 / llvm.sqrt.*` |
+| **Activation** | `Relu` | `relu(x)` | `max(0, x)` (fused element-wise) |
+| | `Sigmoid` | `sigmoid(x)` | `1.0 / (1.0 + exp(-x))` |
+| **Matrix** | `Transpose` | `a^T` or `a.T` | Lowered to Permute Node |
 
-## What to verify when performance matters
+---
 
-For small arrays:
+### Ternary Operators (`TernaryOp`)
 
-```bash
-vex compile --emit-llvm file.vx
-```
+* **`Fma`**: Fused Multiply-Add (`a * b + c`). Lowers directly to hardware `llvm.fma.*` or GPU FMA instructions.
+* **`Clamp`**: Value clamping (`clamp(val, min, max)`). Lowers to nested min/max intrinsics.
+* **`Select`**: Conditional selection (`cond ? true_val : false_val`). Lowers to LLVM `select` instruction.
 
-Look for:
+---
 
-- `<N x T>` vector operations
-- `llvm.vector.reduce.*`
-- fewer temporary allocas on the hot path
+### Reduction Operators (`ReduceOp`)
 
-For tensor and graph workloads, emitted LLVM alone is not the whole story. The more relevant question is whether the workload lowered into the intended SIR route and backend family.
+Reduction operations accumulate tensor elements along specified axes:
 
-## Current documentation stance
+* **`Sum` (`<+ arr`)**: Computes the sum of elements (LLVM `llvm.vector.reduce.fadd`).
+* **`Prod` (`<* arr`)**: Computes the product of elements (LLVM `llvm.vector.reduce.fmul`).
+* **`Min` (`<?| arr`) / `Max` (`>?| arr`)**: Computes minimum/maximum elements (LLVM `llvm.vector.reduce.fmin` / `fmax`).
+* **`And` (`<& arr`) / `Or` (`<\| arr`)**: Logical/bitwise reductions on masks.
+* **`Mean`**: Computed as `Sum / N`.
+* **`ArgMin` / `ArgMax`**: Computes the index of the minimum/maximum element.
 
-Treat these as accurate today:
+---
 
-- there is a real inline SIMD threshold at 64 bytes
-- small-array reductions use LLVM vector reduction intrinsics
-- dynamic tensors are owning `{ ptr, i64 }` values with drop semantics
-- masks and dynamic indexed operations have dedicated backend codepaths
+### Mask Operators (`MaskOp`)
 
-Do not assume from this page that:
+These operate on boolean `Mask<N>` vectors and return scalar results:
 
-- every qualifying source expression will always fuse the way you expect
-- all tensor math is equally mature across all dtypes and backends
-- generic `Tensor<T>` arithmetic is a stable public contract yet
+* **`ToBitmask`**: Converts a `Mask<N>` to an integer bitmask (`iN`) representing lanes (LLVM `bitcast <N x i1> -> iN`).
+* **`FromBitmask`**: Converts an integer bitmask to a `Mask<N>`.
+* **`Any` / `All`**: Returns `true` if any/all lanes are true (`icmp ne bitmask, 0` / `icmp eq bitmask, all_ones`).
+* **`CountSetBits`**: Returns the count of true lanes (LLVM `llvm.ctpop`).
+* **`FirstSet`**: Returns the index of the first true lane, or `-1` if none (LLVM `llvm.cttz`).
+* **`MaskAnd` / `MaskOr` / `MaskXor` / `MaskNot`**: Logical bitwise operations on masks.
+
+---
+
+## Backend Operator Support Matrix
+
+The following table summarizes compiler code generation support for Silicon IR (SIR) operations across backends:
+
+| Operator Category | CPU (SIMD/Scalar) | macOS (Metal) | Linux/Windows (Vulkan) | Web (WebGPU/WGSL) | CUDA / ROCm |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Element-wise Math** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| **Reductions** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| **Mask Ops** | ✅ Native (cttz/ctpop) | ✅ Native (`popcount`) | ✅ Native (subgroup) | ✅ Native | ✅ Native |
+| **Matrix Operations** | ✅ LLVM-SIMD / BLAS | ✅ Metal Kernels | ✅ SPIR-V MatMul | ✅ WGSL Compute | ✅ CuBLAS / HIP |
+| **Saturating Arithmetic**| ✅ Native | ✅ Clamped emulation | ✅ Clamped emulation | ✅ Clamped | ✅ Native |
+| **Quantized/Sparse** | ✅ SIMD-optimized | ✅ MSL Quantized | 🟡 Partial | 🟡 Partial | ✅ CUDA Kernels |
+
+---
+
+## Performance Routing & FLOP Weights
+
+When evaluating whether to dispatch a tensor workload to the CPU or GPU at runtime, Vex uses a complexity cost model based on operator FLOP weights:
+
+* **Weight 1.0 (Trivial)**: `Abs`, `Neg`, `Floor`, `Ceil`, `Round`, `Trunc`, `Rint`, `Sign`, `Not`, `BitNot`, `Relu`.
+* **Weight 2.0 (Basic Math)**: `Fmod`, `Copysign`.
+* **Weight 4.0 (Hardware-optimized)**: `Sqrt`, `Rsqrt`, `Cbrt`.
+* **Weight 6.0 (Composite)**: `Hypot`.
+* **Weight 8.0 (Transcendental)**: `Sin`, `Cos`, `Tan`, `Exp`, `Log`, `Exp2`, `Expm1`, `Log2`, `Log10`, `Log1p`, `Sinh`, `Cosh`, `Tanh`.
+* **Weight 10.0 (Inverse Trig / Activation)**: `Asin`, `Acos`, `Atan`, `Asinh`, `Acosh`, `Atanh`, `Atan2`, `Sigmoid`, `Erf`.
+* **Weight 12.0 (Exponentiation)**: `Pow`.
+
+Workloads with cumulative FLOP scores exceeding the dispatch threshold are automatically offloaded to the target GPU backend (e.g. Metal).
+
+---
 
 ## See also
 
 - [SIMD and Auto-Vectorization](./index)
 - [Tensor and Mask Types](./tensor-mask)
 - [GPU Programming](/guide/gpu)
+

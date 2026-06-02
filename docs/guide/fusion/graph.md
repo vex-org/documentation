@@ -143,6 +143,42 @@ VEX_NO_GPU=1 vex run app.vx        # Force SIMD
 VEX_FORCE_GPU=1 vex run app.vx     # Force GPU
 ```
 
+---
+
+## Analytical Fusion & DAG Compilation Pipeline
+
+To eliminate intermediate allocations and memory bandwidth overhead, Vex compiles `graph fn` blocks using a dedicated Silicon IR (SIR) optimization pass.
+
+### The Lowering Flow
+When compiling a data-parallel function, the compiler takes the following steps:
+1. **HIR Generation**: The source code is parsed into a High-level Intermediate Representation (HIR) tree.
+2. **SIR Lowering**: The compiler walks the HIR and lowers operations into a Silicon IR Directed Acyclic Graph (SIR DAG). Nodes represent parallel primitives (e.g. `Input`, `Map`, `Reduce`, `MatMul`).
+3. **Fusion Analysis (`optimize_sir`)**: An optimization pass traces the DAG to find consecutive element-wise operations (such as `Map` and `Reduce`) that share identical shape constraints.
+4. **Kernel Rebuilding**: The compiler coalesces the matching nodes into a single `FusedKernel` or `FusedReduce` node.
+
+```
+Vex Source: <+ (a * b + c)
+   │
+   ▼ [Lowering]
+ HIR: Reduce(Sum, Binary(Add, Binary(Mul, a, b), c))
+   │
+   ▼ [Silicon IR Representation]
+ SIR Nodes: [Input(a), Input(b), Input(c)] -> Map(Mul) -> Map(Add) -> Reduce(Sum)
+   │
+   ▼ [optimize_sir Pass]
+ SIR Fused Nodes: FusedReduce(kernel = FusedKernel { t0 = a[i]*b[i]; t1 = t0+c[i]; }, op = Sum)
+```
+
+### The `FusedKernel` Structure
+A fused kernel encapsulates the entire chain of execution in a single struct:
+- **Inputs**: Reference pointers to external source tensors (e.g., `a`, `b`, `c`).
+- **Ops Chain**: A contiguous list of operations mapped as instructions (e.g., `t0 = Mul(Input0, Input1)`, `t1 = Add(t0, Input2)`).
+- **Target Type / Shape**: Dimension rules that dictate iteration bounds.
+
+This allows the backends to emit a single unified loop block (such as an LLVM vector loop on CPU or an MSL kernel on GPU), passing intermediates in register arrays instead of allocating heap memory.
+
+---
+
 ## Inline Fusion vs Graph Functions
 
 | Feature | Inline Fusion `<+ (a*b)` | Graph Function |
@@ -179,3 +215,4 @@ Output:
 [Metal] Kernel 2: fused softmax → buffer_1
 [Metal] Kernel 3: matmul → readback
 ```
+
