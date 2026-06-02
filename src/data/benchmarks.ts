@@ -53,10 +53,11 @@ fn fib(n: i32) i32 {
     return fib(n - 1) + fib(n - 2);
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const result = fib(35);
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{result});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{result});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -92,14 +93,15 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var sum: i64 = 0;
     var i: i64 = 0;
     while (i < 1000000) : (i += 1) {
         sum += i;
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{sum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -135,13 +137,14 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var buf: [10000]u8 = undefined;
     for (0..10000) |i| {
         buf[i] = 'x';
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{@as(usize, 10000)});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{@as(usize, 10000)});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -201,7 +204,7 @@ fn dot(a: @Vector(4, f64), b: @Vector(4, f64)) f64 {
     return @reduce(.Add, a * b);
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var sum: f64 = 0;
     var i: usize = 0;
     while (i < 100000) : (i += 1) {
@@ -209,8 +212,9 @@ pub fn main() !void {
         const b: @Vector(4, f64) = .{ 5, 6, 7, 8 };
         sum += dot(a, b);
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{sum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -292,7 +296,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const limit = 100000;
     var sieve: [limit]bool = undefined;
     for (&sieve) |*s| s.* = true;
@@ -306,8 +310,9 @@ pub fn main() !void {
             }
         }
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{count});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -385,7 +390,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var sum: f64 = 0;
     var iter: usize = 0;
     while (iter < 100000) : (iter += 1) {
@@ -403,8 +408,9 @@ pub fn main() !void {
         }
         sum += c[0];
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{sum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -510,7 +516,7 @@ fn collatzLen(n: i64) i32 {
     return count;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var max_len: i32 = 0;
     var max_n: i64 = 1;
     var i: i64 = 1;
@@ -521,8 +527,9 @@ pub fn main() !void {
             max_n = i;
         }
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n{d}\\n", .{ max_n, max_len });
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n{d}\\n", .{ max_n, max_len });
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -608,7 +615,7 @@ fn binarySearch(arr: []const i32, target: i32) i32 {
     return -1;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var arr: [10000]i32 = undefined;
     for (0..10000) |i| arr[i] = @intCast(i);
     var found: i32 = 0;
@@ -616,8 +623,9 @@ pub fn main() !void {
     while (i < 1000000) : (i += 1) {
         if (binarySearch(&arr, @mod(i, 10000)) >= 0) found += 1;
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{found});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{found});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -730,7 +738,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const n = 200;
     var x: [n]f64 = undefined;
     var y: [n]f64 = undefined;
@@ -762,8 +770,9 @@ pub fn main() !void {
             y[i] += vy[i];
         }
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{x[0]});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{x[0]});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -809,7 +818,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var count: i32 = 0;
     var i: i32 = 1;
     while (i <= 100000) : (i += 1) {
@@ -821,8 +830,9 @@ pub fn main() !void {
             count += 2;
         }
     }
-    const stdout = std.io.getStdOut().writer();
-    try stdout.print("{d}\\n", .{count});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -858,13 +868,15 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var total: i64 = 0;
     var i: i64 = 0;
     while (i < 1_000_000) : (i += 1) {
         total += i * i;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{total});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -915,7 +927,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const n = 200000;
     var values: [n]i64 = undefined;
     for (0..n) |i| {
@@ -926,7 +938,9 @@ pub fn main() !void {
         running += values[i];
         values[i] = running;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{values[n - 1]});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{values[n - 1]});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -998,7 +1012,7 @@ fn nextRng(x0: u64) u64 {
     return x;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var state: u64 = 88172645463325252;
     var checksum: u64 = 0;
     var i: usize = 0;
@@ -1006,7 +1020,9 @@ pub fn main() !void {
         state = nextRng(state);
         checksum ^= state;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1045,14 +1061,16 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var hist: [256]i32 = .{0} ** 256;
     var i: usize = 0;
     while (i < 1_000_000) : (i += 1) {
         const idx = (i * 17 + 23) % 256;
         hist[idx] += 1;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{hist[0] + hist[17] + hist[42]});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{hist[0] + hist[17] + hist[42]});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1104,13 +1122,15 @@ fn poly(x: f64) f64 {
     return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0);
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var acc: f64 = 0;
     var i: usize = 0;
     while (i < 2_000_000) : (i += 1) {
         acc += poly(@as(f64, @floatFromInt(i % 1000)) * 0.001);
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{acc});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{acc});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1210,7 +1230,7 @@ fn iter(cx: f64, cy: f64) i32 {
     return 50;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var total: i32 = 0;
     for (0..64) |py| {
         for (0..64) |px| {
@@ -1219,7 +1239,9 @@ pub fn main() !void {
             total += iter(cx, cy);
         }
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{total});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1294,13 +1316,15 @@ fn popcount(x0: u64) i32 {
     return count;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var total: i32 = 0;
     var i: u64 = 1;
     while (i <= 1_000_000) : (i += 1) {
         total += popcount(i * 2_654_435_761);
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{total});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1374,13 +1398,15 @@ fn gcd(a0: i64, b0: i64) i64 {
     return a;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var total: i64 = 0;
     var i: i64 = 1;
     while (i <= 500_000) : (i += 1) {
         total += gcd(i * 17, i * 29 + 1);
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{total});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1436,7 +1462,7 @@ fn main() {
 
 fn f(x: f64) f64 { return x * x; }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const n: usize = 1_000_000;
     const h = 1.0 / @as(f64, @floatFromInt(n));
     var area: f64 = 0;
@@ -1446,7 +1472,9 @@ pub fn main() !void {
         const x1 = @as(f64, @floatFromInt(i + 1)) * h;
         area += (f(x0) + f(x1)) * h * 0.5;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{area});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{area});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1521,7 +1549,7 @@ fn nextRng(state: u64) u64 {
     return state *% 6364136223846793005 +% 1;
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var state: u64 = 1;
     var inside: i32 = 0;
     var i: usize = 0;
@@ -1532,7 +1560,9 @@ pub fn main() !void {
         const y = @as(f64, @floatFromInt(state % 1_000_000)) / 1_000_000.0;
         if (x * x + y * y <= 1.0) inside += 1;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{inside});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{inside});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1612,7 +1642,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const n = 64;
     var src: [n * n]f64 = undefined;
     var dst: [n * n]f64 = .{0} ** (n * n);
@@ -1629,7 +1659,9 @@ pub fn main() !void {
         }
         src = dst;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{src[n + 1]});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{src[n + 1]});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1692,7 +1724,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const n = 500000;
     const window = 32;
     var values: [n]i64 = undefined;
@@ -1709,7 +1741,9 @@ pub fn main() !void {
         rolling += values[i] - values[i - window];
         checksum += rolling;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1783,7 +1817,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var checksum: i64 = 0;
     var round: usize = 0;
     while (round < 200) : (round += 1) {
@@ -1802,7 +1836,9 @@ pub fn main() !void {
         }
         checksum += values[0] + values[511];
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1898,7 +1934,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var checksum: i64 = 0;
     var round: usize = 0;
     while (round < 400) : (round += 1) {
@@ -1926,7 +1962,9 @@ pub fn main() !void {
         while (ib < b.len) : (ib += 1) { merged[im] = b[ib]; im += 1; }
         checksum += merged[0] + merged[4095];
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -1987,7 +2025,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const cap = 1024;
     var buf: [cap]i64 = .{0} ** cap;
     var head: usize = 0;
@@ -2001,7 +2039,9 @@ pub fn main() !void {
         head = (head + 1) % cap;
         checksum += value;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -2043,7 +2083,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var x: u64 = 123456789;
     var checksum: u64 = 0;
     var i: usize = 0;
@@ -2051,7 +2091,9 @@ pub fn main() !void {
         x = x *% 1_664_525 +% 1_013_904_223;
         checksum += x & 65535;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{checksum});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -2116,7 +2158,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     const n = 128;
     var x: [n]f64 = undefined;
     var y: [n]f64 = undefined;
@@ -2132,7 +2174,9 @@ pub fn main() !void {
             total += dx * dx + dy * dy;
         }
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{total});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -2188,7 +2232,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
@@ -2206,7 +2250,9 @@ pub fn main() !void {
         next[cur.len] = 1;
         cur = next;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{cur[cur.len / 2]});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{cur[cur.len / 2]});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -2251,7 +2297,7 @@ func main() {
 }`,
         zig: `const std = @import("std");
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var a: i64 = 0;
     var b: i64 = 1;
     var c: i64 = 1;
@@ -2262,7 +2308,9 @@ pub fn main() !void {
         b = c;
         c = next;
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{c});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{c});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 
@@ -2341,7 +2389,7 @@ fn laneMax(v: @Vector(4, f64)) f64 {
     return @reduce(.Max, v);
 }
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var acc: f64 = 0;
     var i: usize = 0;
     while (i < 500_000) : (i += 1) {
@@ -2349,7 +2397,9 @@ pub fn main() !void {
         const v: @Vector(4, f64) = .{ base, base + 3.0, base - 2.0, base + 1.0 };
         acc += laneMax(v) - laneMin(v);
     }
-    try std.io.getStdOut().writer().print("{d}\\n", .{acc});
+    var __stdout_buf: [256]u8 = undefined;
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{acc});
+    try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     },
 ]
