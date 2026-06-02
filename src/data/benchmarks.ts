@@ -1551,18 +1551,19 @@ pub fn main() !void {
     for _ in 0..50 {
         for y in 1..n - 1 {
             for x in 1..n - 1 {
-                let idx = y * n + x
-                let sum = src.getUnchecked(idx - n - 1) + src.getUnchecked(idx - n) + src.getUnchecked(idx - n + 1) +
-                          src.getUnchecked(idx - 1)     + src.getUnchecked(idx)     + src.getUnchecked(idx + 1) +
-                          src.getUnchecked(idx + n - 1) + src.getUnchecked(idx + n) + src.getUnchecked(idx + n + 1)
+                let idx = (y * n + x) as usize
+                let n_u = n as usize
+                let sum = *src.getUnchecked(idx - n_u - 1) + *src.getUnchecked(idx - n_u) + *src.getUnchecked(idx - n_u + 1) +
+                          *src.getUnchecked(idx - 1)       + *src.getUnchecked(idx)       + *src.getUnchecked(idx + 1) +
+                          *src.getUnchecked(idx + n_u - 1) + *src.getUnchecked(idx + n_u) + *src.getUnchecked(idx + n_u + 1)
                 dst.set(idx, sum / 9.0)
             }
         }
         for i in 0..n * n {
-            src.set(i, dst.getUnchecked(i))
+            src.set(i as usize, *dst.getUnchecked(i as usize))
         }
     }
-    $println(src.getUnchecked(n + 1))
+    $println(*src.getUnchecked((n + 1) as usize))
     return 0
 }`,
         go: `package main
@@ -1724,17 +1725,17 @@ pub fn main() !void {
             values.push(((i * 73 + round * 19) % 997) as i64)
         }
         for i in 0..511 {
-            let! best = i
+            let! best = i as usize
             for j in i + 1..512 {
-                if values.getUnchecked(j) < values.getUnchecked(best) {
-                    best = j
+                if *values.getUnchecked(j as usize) < *values.getUnchecked(best) {
+                    best = j as usize
                 }
             }
-            let tmp = values.getUnchecked(i)
-            values.set(i, values.getUnchecked(best))
+            let tmp = *values.getUnchecked(i as usize)
+            values.set(i as usize, *values.getUnchecked(best))
             values.set(best, tmp)
         }
-        checksum += values.getUnchecked(0) + values.getUnchecked(511)
+        checksum += *values.getUnchecked(0) + *values.getUnchecked(511)
     }
     $println(checksum)
     return 0
@@ -1822,23 +1823,23 @@ pub fn main() !void {
         let! ia = 0
         let! ib = 0
         while ia < a.len() && ib < b.len() {
-            if a.getUnchecked(ia) < b.getUnchecked(ib) {
-                merged.push(a.getUnchecked(ia))
+            if *a.getUnchecked(ia as usize) < *b.getUnchecked(ib as usize) {
+                merged.push(*a.getUnchecked(ia as usize))
                 ia += 1
             } else {
-                merged.push(b.getUnchecked(ib))
+                merged.push(*b.getUnchecked(ib as usize))
                 ib += 1
             }
         }
         while ia < a.len() {
-            merged.push(a.getUnchecked(ia))
+            merged.push(*a.getUnchecked(ia as usize))
             ia += 1
         }
         while ib < b.len() {
-            merged.push(b.getUnchecked(ib))
+            merged.push(*b.getUnchecked(ib as usize))
             ib += 1
         }
-        checksum += merged.getUnchecked(0) + merged.getUnchecked(merged.len() - 1)
+        checksum += *merged.getUnchecked(0) + *merged.getUnchecked((merged.len() - 1) as usize)
     }
     $println(checksum)
     return 0
@@ -2060,8 +2061,8 @@ pub fn main() !void {
         description: 'All-pairs squared distances for 128 points — tests nested FP loops',
         vex: `fn main(): i32 {
     let n = 128
-    let! x = [0.0f64; n]
-    let! y = [0.0f64; n]
+    let! x = [0.0; 128]
+    let! y = [0.0; 128]
     for i in 0..n {
         x[i] = i as f64 * 0.25
         y[i] = i as f64 * 0.5
