@@ -1,224 +1,196 @@
 # Async Functions -- Internals
 
-This page covers the internal mechanics of `async fn` and `await`: how the state machine is constructed, suspension points, and memory layout.
+This page covers how `async fn` and `await` work under the hood: the state machine lowering, suspension mechanics, and runtime interaction.
 
 ## The Async State Machine
 
-When you write an `async fn`, the compiler transforms it into a state machine enum. Each `await` point becomes a state variant.
+When you write an `async fn`, the Vex compiler lowers it into a **stackless coroutine** -- a state machine that can suspend and resume. Each `await` point becomes a state in the machine.
 
 ### Source Code
 
 ```vex
 async fn fetchAndProcess(url: string): Result<Data, Error> {
-    let response = http.get(url).await?
-    let parsed = parse(response).await?
+    let response = await http.get(url)?
+    let parsed = await parse(response)?
     return Ok(parsed)
 }
 ```
 
-### Conceptual State Machine (Compiler Output)
+### What the Compiler Does
+
+The compiler:
+
+1. Identifies all `await` points in the function body.
+2. Partitions the code into **basic blocks** between `await` points.
+3. Generates a state machine that saves/restores live variables at each boundary.
+4. Generates a **resume function** that jumps to the correct state and continues execution.
+
+Conceptually (not actual generated code):
 
 ```vex
-// Compiler-generated (conceptual, not actual Vex code)
-enum FetchAndProcessStateMachine {
-    State0_Start { url: string },
-    State1_AwaitGet { /* saved locals */ },
-    State2_AwaitParse { response: Response },
-    State3_Done,
-    Poisoned,
-}
-
-fn FetchAndProcessStateMachine.poll(self: &FetchAndProcessStateMachine!): Poll<Result<Data, Error>> {
-    match self.currentState {
-        State0_Start => {
-            let future = http.get(self.url)
-            self.transition(State1_AwaitGet, future)
-            return Poll.Pending
-        },
-        State1_AwaitGet => {
-            let response = self.savedFuture.result()?
-            let future = parse(response)
-            self.transition(State2_AwaitParse, future)
-            return Poll.Pending
-        },
-        State2_AwaitParse => {
-            let parsed = self.savedFuture.result()?
-            return Poll.Ready(Ok(parsed))
-        },
-        State3_Done | Poisoned => $panic("polled after completion"),
-    }
-}
+// The compiler creates:
+// - A struct holding all live variables across await points
+// - A state enum tracking which await point is next
+// - A resume function with a jump table to each state
 ```
 
-## Suspension Points
-
-An `await` expression is a **suspension point** -- the function may yield control back to the scheduler at that point.
+## Suspension Mechanics
 
 ### What Happens at `await`
 
-1. The current future is polled.
-2. If `Poll::Pending`, the function saves all live local variables into the state machine.
-3. The state machine is registered with the async runtime to be woken when the awaited future completes.
-4. The current goroutine yields, allowing other tasks to run.
+```vex
+let result = await someAsyncFn()
+```
 
-### What CANNOT Cross Suspension Points
+1. The current function's state (live variables, program counter) is saved.
+2. Control returns to the runtime scheduler.
+3. The runtime polls the awaited operation.
+4. When the operation completes, the runtime re-queues the task.
+5. On resume, the state machine restores live variables and continues from the next instruction.
 
-The borrow checker enforces that certain values cannot live across `await`:
+### Suspension Safety
+
+The compiler enforces rules about what can live across suspension points:
 
 ```vex
 async fn badExample(data: &Vec<i32>): i32 {
-    // ERROR: borrowed reference across await
+    // ERROR: borrowed reference cannot live across await
     let first = &data[0]
-    http.get("...").await?    // suspension point
-    return first              // first may be invalid after resume
+    await http.get("...")?
+    return first              // first may be invalid
 }
 
 async fn goodExample(data: &Vec<i32>): i32 {
-    let first = data[0]       // copy the value, not a reference
-    http.get("...").await?    // suspension point
-    return first              // first is owned, still valid
+    let first = data[0]       // copy the value before await
+    await http.get("...")?
+    return first              // first is owned, always valid
 }
 ```
 
 ### `$SuspendSafe` Contract
 
-Types implementing `$SuspendSafe` are guaranteed to remain valid across suspension:
+Types implementing `$SuspendSafe` are guaranteed to remain valid across suspension boundaries:
 
-```vex
-// i32 is SuspendSafe (it's a Copy type)
-// &T is NOT SuspendSafe (the reference may dangle)
-// Box<T> IS SuspendSafe (heap-allocated, stable address)
-// Pin<T> IS SuspendSafe (pinned, cannot move)
-```
+- `i32`, `f64`, `bool` (Copy types) -- always safe
+- `Box<T>` (heap-allocated, stable address) -- safe
+- `string` (owned, heap-backed) -- safe
+- `&T` (borrowed reference) -- NOT safe, may dangle
+- `Span<T>` (non-owning view) -- NOT safe
 
 ## Pin and Async
 
-Async state machines are self-referential: the state machine contains pointers to its own fields. This requires `Pin` to prevent moves:
+Self-referential state machines require immovability. When a function body contains references to its own local variables, the compiler wraps the state machine in `Pin<T>` to prevent moves:
 
 ```vex
-// The compiler wraps the state machine in Pin automatically
 async fn selfReferential() {
     let x = 42
-    let ref_x = &x     // points into the state machine itself
-    something().await    // x must not move during await
-    $println(ref_x)      // ref_x is still valid because of Pin
+    let ref_x = &x         // ref_x points into the state machine
+    await something()
+    $println(ref_x)         // Pin guarantees ref_x is still valid
 }
 ```
 
-Without `Pin`, moving the state machine would invalidate `ref_x`. The compiler detects self-referential fields and applies `Pin` automatically.
+The compiler automatically detects self-referential patterns and applies `Pin` where needed. No manual `Pin` annotation is required.
 
-## Waker and Notification
+## Runtime Integration
 
-When a future returns `Poll::Pending`, it stores a **Waker** -- a handle that can signal completion:
-
-```vex
-// Simplified Waker concept (runtime internals)
-struct Waker {
-    taskId: u64,       // which task to wake
-    workerId: u32,     // which worker owns the task
-}
-
-fn Waker.wake(self) {
-    // Push the task back onto the worker's deque
-    runtime.schedule(self.workerId, self.taskId)
-}
-```
-
-When an I/O operation completes (e.g., data arrives on a socket), the poller calls `waker.wake()`, which re-queues the async task.
-
-## Async Runtime Integration
+### How the Scheduler Runs Async Tasks
 
 ```
-User Code:   async fn myTask() { ... }
-                    |
-                    v
-Compiler:    State Machine (enum) + poll() method
-                    |
-                    v
-Runtime:     Task { stateMachine, waker }
-             Worker polls task
-                |
-        +-------+-------+
-        |               |
-    Poll::Ready     Poll::Pending
-        |               |
-    Task completes   Task suspended
-                     Waker registered with poller
-                     Worker moves to next task
-                        |
-                    I/O completes
-                        |
-                     Waker.wake()
-                        |
-                     Task re-queued
+User code:     async fn myTask() { ... }
+                      |
+                      v
+Compiler:      State machine struct + resume function
+                      |
+                      v
+Runtime:       Task pushed to worker's local deque
+               Worker picks up task
+               Calls resume function
+                   |
+           +-------+-------+
+           |               |
+       Completes        Hits await
+           |               |
+       Task done       Save state
+                       Register with I/O poller
+                       Yield to scheduler
+                           |
+                       I/O completes
+                           |
+                       Re-queue task on worker
+                           |
+                       Resume from saved state
 ```
 
-## Async Function Restrictions
+### Key Runtime Functions
 
-### Not Allowed in `async fn`
+| Function (C runtime) | Purpose                                   |
+| -------------------- | ----------------------------------------- |
+| `vex_async_spawn()`  | Push a new task to the scheduler          |
+| `vex_async_yield()`  | Suspend current task, return to scheduler |
+| `vex_async_resume()` | Re-queue a suspended task                 |
+| `vex_poller_wait()`  | Block on I/O events (kqueue/epoll/IOCP)   |
 
-- `&self!` (mutable self reference) across `.await`
-- Holding a `MutexGuard` across `.await` (causes deadlocks)
-- Recursive `async fn` (would require boxed futures)
-- `extern "C"` async functions (C cannot call async functions)
+The generated state machine calls into these runtime functions at each `await` boundary.
 
-### Allowed in `async fn`
+## Async Function Rules
 
-- `&self` (immutable self, if `Self: $SuspendSafe`)
-- All owned values
-- `Pin<T>` values
-- Calling other `async fn` with `.await`
+### Not Allowed
+
+- Mutable borrows (`&T!`) across `await` -- data could be mutated during suspension
+- Holding locks across `await` -- causes deadlocks
+- `extern "C"` async functions -- C cannot call Vex async functions
+- Recursive `async fn` without boxing -- state machine would be infinite
+
+### Allowed
+
+- Owned values (moved into state machine)
+- Immutable references (`&T`, if `T: $SuspendSafe`)
+- `Box<T>` and `Pin<T>` values
+- Calling other `async fn` with `await`
 - `go { }` blocks (fire-and-forget from async context)
 
-## Async with Error Handling
+## Async with `?` Operator
 
-The `?` operator works naturally in async functions:
+The `?` operator integrates seamlessly with `await`:
 
 ```vex
 async fn processRequest(req: Request): Result<Response, AppError> {
-    let user = auth.verify(req.token).await?       // propagates AuthError
-    let data = db.query(user.id).await?             // propagates DbError
-    let result = compute(data).await?               // propagates ComputeError
+    let user = await auth.verify(req.token)?      // propagates AuthError
+    let data = await db.query(user.id)?            // propagates DbError
+    let result = await compute(data)?              // propagates ComputeError
     return Ok(Response.new(result))
 }
 ```
 
-## Async Traits / Contracts
+## Comparison: Vex vs Rust Async
 
-Contracts can have async methods:
+| Concept            | Rust                        | Vex                                   |
+| ------------------ | --------------------------- | ------------------------------------- |
+| `await` syntax     | Postfix: `expr.await`       | Prefix: `await expr`                  |
+| State machine type | `impl Future` with `poll()` | Compiler-generated struct + resume fn |
+| Waker mechanism    | `std::task::Waker`          | Runtime-internal, not exposed         |
+| Trait              | `Future` trait              | No trait -- compiler intrinsic        |
+| Executor           | External (tokio, async-std) | Built-in M:N scheduler                |
+| Pin requirement    | Manual for self-referential | Auto-applied by compiler              |
 
-```vex
-contract AsyncReader {
-    async fn read(): Result<Vec<u8>, IoError>
-    async fn readExact(n: usize): Result<Vec<u8>, IoError>
-}
+## Performance Characteristics
 
-struct HttpStream: AsyncReader {
-    async fn read(): Result<Vec<u8>, IoError> {
-        let chunk = self.socket.read().await?
-        return Ok(chunk)
-    }
-}
-```
-
-## Performance
-
-| Metric                     | Value                                             |
-| -------------------------- | ------------------------------------------------- |
-| State machine size         | Sum of all live variables across await points     |
-| Task spawn (async fn call) | Heap allocation for state machine (if not inline) |
-| `await` overhead (pending) | ~10-20 ns (waker registration)                    |
-| `await` overhead (ready)   | ~5 ns (no context switch)                         |
-| Memory overhead per task   | ~200 bytes + state machine size                   |
+| Metric                  | Approximate                          | Notes                             |
+| ----------------------- | ------------------------------------ | --------------------------------- |
+| State machine size      | Sum of live vars across await points | Compiler optimizes dead stores    |
+| Task memory overhead    | ~200 bytes + state machine           | On par with Goroutines (Go)       |
+| `await` on ready value  | ~5 ns                                | No context switch needed          |
+| `await` with suspension | ~50-100 ns                           | Save state + yield + later resume |
 
 ## Best Practices
 
-1. Keep async functions small -- large state machines waste memory.
-2. Don't hold locks across `.await` -- use `select` with timeout if needed.
-3. Avoid borrowing across `.await` points -- copy or clone values instead.
-4. Use `async fn` for I/O-bound work; `graph fn` for GPU-bound work; `go` blocks for fire-and-forget.
-5. Be explicit about error types -- `async fn` returning `Result<T, E>` composes well with `?`.
-6. Avoid deep async call stacks -- each level adds to the state machine.
+1. Keep async functions focused -- each `await` point adds to the state machine.
+2. Copy/clone values before `await` instead of borrowing across it.
+3. Don't hold locks across `await` -- restructure to acquire-release around suspension.
+4. Use `async fn` for I/O-bound work; `go` blocks for fire-and-forget.
+5. Be explicit about error types -- `Result<T, E>` composes well with `?`.
+6. Avoid deep async call stacks -- each level adds state.
 
 ## Related Pages
 

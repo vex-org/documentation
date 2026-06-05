@@ -36,8 +36,8 @@ let deposited = Bit.pdep(0b1010, mask); // 0b1010_0000 (bits deposited at mask p
 
 Scatter bits from source to positions indicated by the mask. Accepts `u64`, `[u64; N]`, `Span<u64>`, `Tensor<u64>`.
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
+| Function                 | Signature                                                     | Description                    |
+| ------------------------ | ------------------------------------------------------------- | ------------------------------ |
 | `Bit.pdep(source, mask)` | `(T, T) → T` where `T = u64, [u64;N], Span<u64>, Tensor<u64>` | Deposit bits at mask positions |
 
 ### How PDEP Works
@@ -53,16 +53,16 @@ Each bit from `source` is placed at the next set bit position in `mask`, left to
 
 ### Platform Mapping
 
-| x86 | ARM |
-|---|---|
+| x86                                               | ARM                                          |
+| ------------------------------------------------- | -------------------------------------------- |
 | `PDEP` (BMI2, 1 cycle Intel / 3 cycles AMD Zen3+) | Software fallback (Apple Silicon has no SVE) |
 
 ## Parallel Bit Extract
 
 Gather bits from source at positions indicated by the mask, packed contiguously. Same type support as `pdep`.
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
+| Function                 | Signature                                                     | Description                      |
+| ------------------------ | ------------------------------------------------------------- | -------------------------------- |
 | `Bit.pext(source, mask)` | `(T, T) → T` where `T = u64, [u64;N], Span<u64>, Tensor<u64>` | Extract bits from mask positions |
 
 ### How PEXT Works
@@ -78,8 +78,8 @@ Each bit at a set position in `mask` is extracted and packed into the result, st
 
 ### Platform Mapping
 
-| x86 | ARM |
-|---|---|
+| x86                                               | ARM               |
+| ------------------------------------------------- | ----------------- |
 | `PEXT` (BMI2, 1 cycle Intel / 3 cycles AMD Zen3+) | Software fallback |
 
 ## Use Cases
@@ -156,10 +156,10 @@ fn unpackA(packed: u64): u64 {
 
 ## Hardware Support
 
-| Function | x86 | ARM | Apple Silicon |
-|----------|-----|-----|---------------|
-| `pdep` | BMI2 (Haswell+ 2013) | Software fallback | Software fallback |
-| `pext` | BMI2 (Haswell+ 2013) | Software fallback | Software fallback |
+| Function | x86                  | ARM               | Apple Silicon     |
+| -------- | -------------------- | ----------------- | ----------------- |
+| `pdep`   | BMI2 (Haswell+ 2013) | Software fallback | Software fallback |
+| `pext`   | BMI2 (Haswell+ 2013) | Software fallback | Software fallback |
 
 > **Note:** On ARM/Apple Silicon, `pdep` and `pext` use efficient software fallback loops. On x86 with BMI2 support, they compile to single instructions.
 
@@ -168,7 +168,7 @@ fn unpackA(packed: u64): u64 {
 ## Related
 
 - [Math.popcount](/guide/math#bit-operations) — Count set bits
-- [Math.clz / Math.ctz](/guide/math#bit-operations) — Leading/trailing zeros  
+- [Math.clz / Math.ctz](/guide/math#bit-operations) — Leading/trailing zeros
 - [Math.bswap](/guide/math#bit-operations) — Byte-swap (endian conversion)
 - [Crypto Namespace](/guide/crypto) — Cryptographic operations
 - [SIMD](/guide/simd) — Array-level bit operations

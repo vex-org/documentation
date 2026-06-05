@@ -93,8 +93,8 @@ The compiler uses `Pin` internally for async functions. When an `async fn` is su
 
 ```vex
 async fn fetchAndProcess(url: string): Result<Data, Error> {
-    let response = http.get(url).await?    // suspension point
-    let data = parse(response).await?       // another suspension point
+    let response = await http.get(url)?    // suspension point
+    let data = await parse(response)?       // another suspension point
     return Ok(data)
 }
 // Compiler wraps the state machine in Pin internally

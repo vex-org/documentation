@@ -53,17 +53,17 @@ let size = vex_malloc_usable_size(ptr)
 
 ## Complete API Reference
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `vex_malloc` | `(size: usize): ptr` | Allocate `size` bytes, uninitialized |
-| `vex_calloc` | `(count: usize, size: usize): ptr` | Allocate `count * size` bytes, zero-initialized |
-| `vex_realloc` | `(ptr: ptr, size: usize): ptr` | Resize allocation to `size` bytes |
-| `vex_free` | `(ptr: ptr)` | Free an allocation |
-| `vex_memcpy` | `(dest: ptr, src: ptr, n: usize): ptr` | Copy `n` bytes from `src` to `dest` |
-| `vex_memmove` | `(dest: ptr, src: ptr, n: usize): ptr` | Move `n` bytes (safe for overlap) |
-| `vex_memset` | `(dest: ptr, val: i32, n: usize): ptr` | Set `n` bytes to byte value `val` |
-| `vex_memcmp` | `(a: ptr, b: ptr, n: usize): i32` | Compare `n` bytes, returns 0 if equal |
-| `vex_malloc_usable_size` | `(ptr: ptr): usize` | Get allocation size |
+| Function                 | Signature                              | Description                                     |
+| ------------------------ | -------------------------------------- | ----------------------------------------------- |
+| `vex_malloc`             | `(size: usize): ptr`                   | Allocate `size` bytes, uninitialized            |
+| `vex_calloc`             | `(count: usize, size: usize): ptr`     | Allocate `count * size` bytes, zero-initialized |
+| `vex_realloc`            | `(ptr: ptr, size: usize): ptr`         | Resize allocation to `size` bytes               |
+| `vex_free`               | `(ptr: ptr)`                           | Free an allocation                              |
+| `vex_memcpy`             | `(dest: ptr, src: ptr, n: usize): ptr` | Copy `n` bytes from `src` to `dest`             |
+| `vex_memmove`            | `(dest: ptr, src: ptr, n: usize): ptr` | Move `n` bytes (safe for overlap)               |
+| `vex_memset`             | `(dest: ptr, val: i32, n: usize): ptr` | Set `n` bytes to byte value `val`               |
+| `vex_memcmp`             | `(a: ptr, b: ptr, n: usize): i32`      | Compare `n` bytes, returns 0 if equal           |
+| `vex_malloc_usable_size` | `(ptr: ptr): usize`                    | Get allocation size                             |
 
 ## Alignment
 
@@ -108,13 +108,13 @@ unsafe {
 
 ## Comparison with Safe Types
 
-| Raw Mem | Safe Alternative | When to Use Raw |
-|---------|-----------------|-----------------|
-| `vex_malloc` + `vex_free` | `Box.new()` | Building custom allocators |
-| `vex_malloc` + manual indexing | `Vec.new()` | Building custom data structures |
-| `vex_memcpy` | `Ptr<T>.copyFrom()` | FFI, byte-level protocols |
-| `vex_memset` | `Ptr<T>.writeBytes()` | FFI, clearing sensitive data |
-| `vex_memcmp` | `Ptr<T>.compare()` | FFI, binary comparison |
+| Raw Mem                        | Safe Alternative      | When to Use Raw                 |
+| ------------------------------ | --------------------- | ------------------------------- |
+| `vex_malloc` + `vex_free`      | `Box.new()`           | Building custom allocators      |
+| `vex_malloc` + manual indexing | `Vec.new()`           | Building custom data structures |
+| `vex_memcpy`                   | `Ptr<T>.copyFrom()`   | FFI, byte-level protocols       |
+| `vex_memset`                   | `Ptr<T>.writeBytes()` | FFI, clearing sensitive data    |
+| `vex_memcmp`                   | `Ptr<T>.compare()`    | FFI, binary comparison          |
 
 ## Example: Custom Allocator Wrapper
 
