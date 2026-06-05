@@ -38,7 +38,7 @@ Scatter bits from source to positions indicated by the mask. Accepts `u64`, `[u6
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Bit.pdep(source, mask)` | `(T, T) → T` where T = u64, [u64;N], Span<u64>, Tensor<u64> | Deposit bits at mask positions |
+| `Bit.pdep(source, mask)` | `(T, T) → T` where `T = u64, [u64;N], Span<u64>, Tensor<u64>` | Deposit bits at mask positions |
 
 ### How PDEP Works
 
@@ -63,7 +63,7 @@ Gather bits from source at positions indicated by the mask, packed contiguously.
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Bit.pext(source, mask)` | `(T, T) → T` where T = u64, [u64;N], Span<u64>, Tensor<u64> | Extract bits from mask positions |
+| `Bit.pext(source, mask)` | `(T, T) → T` where `T = u64, [u64;N], Span<u64>, Tensor<u64>` | Extract bits from mask positions |
 
 ### How PEXT Works
 
