@@ -34,6 +34,7 @@ export default defineConfig({
           items: [
             { text: "Introduction", link: "/guide/introduction" },
             { text: "Installation", link: "/guide/installation" },
+            { text: "Why Vex?", link: "/guide/why-vex" },
           ],
         },
         {
@@ -43,6 +44,7 @@ export default defineConfig({
             { text: "Variables", link: "/guide/basics/variables" },
             { text: "Functions", link: "/guide/basics/functions" },
             { text: "Control Flow", link: "/guide/basics/control-flow" },
+            { text: "Loops & Labels", link: "/guide/basics/loops" },
             {
               text: "Template Literals",
               link: "/guide/basics/template-literals",
@@ -54,17 +56,37 @@ export default defineConfig({
           text: "Types & Data Model",
           items: [
             { text: "Primitives", link: "/guide/types/primitives" },
+            { text: "Arrays", link: "/guide/types/arrays" },
+            { text: "Tuples", link: "/guide/types/tuples" },
             { text: "Structs", link: "/guide/types/structs" },
             { text: "Enums", link: "/guide/types/enums" },
             { text: "Unions", link: "/guide/types/unions" },
             { text: "Pattern Matching", link: "/guide/types/pattern-matching" },
+            {
+              text: "Advanced Patterns",
+              link: "/guide/types/advanced-patterns",
+            },
             { text: "Generics", link: "/guide/types/generics" },
             { text: "Contracts", link: "/guide/types/contracts" },
+            {
+              text: "Contracts Reference",
+              link: "/guide/types/contracts-reference",
+            },
             { text: "Policies", link: "/guide/types/policies" },
             { text: "Strings", link: "/guide/types/strings" },
             { text: "Vec", link: "/guide/types/vec" },
             { text: "Map & Set", link: "/guide/types/map-set" },
+            { text: "OrderedMap", link: "/guide/types/ordered-map" },
+            { text: "Range", link: "/guide/types/range" },
             { text: "Type Aliases", link: "/guide/types/aliases" },
+            { text: "Function Types", link: "/guide/types/function-types" },
+            { text: "Closures", link: "/guide/types/closures" },
+            { text: "Raw Pointers", link: "/guide/types/raw-pointers" },
+            { text: "Never & Unit", link: "/guide/types/never-and-unit" },
+            { text: "Complex", link: "/guide/types/complex" },
+            { text: "Variadics", link: "/guide/types/variadics" },
+            { text: "Option API", link: "/guide/types/option-api" },
+            { text: "Result API", link: "/guide/types/result-api" },
           ],
         },
         {
@@ -79,6 +101,8 @@ export default defineConfig({
             { text: "RawBuf", link: "/guide/memory/rawbuf" },
             { text: "Memory Safety", link: "/guide/memory/safety" },
             { text: "VUMM", link: "/guide/memory/vumm" },
+            { text: "Pin<T>", link: "/guide/memory/pin" },
+            { text: "Mem Prelude", link: "/guide/memory/mem-prelude" },
           ],
         },
         {
@@ -86,14 +110,21 @@ export default defineConfig({
           items: [
             { text: "Overview", link: "/guide/concurrency/overview" },
             { text: "Async", link: "/guide/concurrency/async" },
+            {
+              text: "Async Internals",
+              link: "/guide/concurrency/async-internals",
+            },
             { text: "Channels", link: "/guide/concurrency/channels" },
+            { text: "Deep Dive", link: "/guide/concurrency/deep-dive" },
           ],
         },
         {
           text: "SIMD & Tensors",
           items: [
             { text: "SIMD Overview", link: "/guide/simd/" },
+            { text: "SIMD Operations", link: "/guide/simd/simd-operations" },
             { text: "Tensor & Mask", link: "/guide/simd/tensor-mask" },
+            { text: "Dynamic Tensors", link: "/guide/simd/dynamic-tensors" },
             { text: "SIR Pipeline", link: "/guide/simd/sir-pipeline" },
           ],
         },
@@ -102,7 +133,15 @@ export default defineConfig({
           items: [
             { text: "Methods", link: "/guide/advanced/methods" },
             { text: "Operators", link: "/guide/advanced/operators" },
+            {
+              text: "Operators Reference",
+              link: "/guide/advanced/operators-reference",
+            },
             { text: "Pointers", link: "/guide/advanced/pointers" },
+            {
+              text: "Compiler Directives",
+              link: "/guide/advanced/compiler-directives",
+            },
             { text: "Assembly", link: "/guide/advanced/assembly" },
             { text: "Builtins", link: "/guide/advanced/builtins" },
             { text: "Comptime", link: "/guide/advanced/comptime" },
@@ -113,6 +152,7 @@ export default defineConfig({
           text: "Compute & Acceleration",
           items: [
             { text: "GPU Programming", link: "/guide/gpu/" },
+            { text: "Graph Functions", link: "/guide/gpu/graph-functions" },
             { text: "Fusion Graph", link: "/guide/fusion/graph" },
             { text: "Math", link: "/guide/math" },
             { text: "Autograd", link: "/guide/advanced/autograd" },
@@ -125,9 +165,26 @@ export default defineConfig({
           items: [
             { text: "Error Handling", link: "/guide/error-handling" },
             { text: "FFI", link: "/guide/ffi" },
+            { text: "FFI Deep Dive", link: "/guide/ffi-deep-dive" },
             { text: "Freestanding", link: "/guide/freestanding" },
+            { text: "Platform Support", link: "/guide/platform-support" },
+            {
+              text: "Compilation Modes",
+              link: "/guide/tooling/compilation-modes",
+            },
+            { text: "Toolchain", link: "/guide/tooling/full-toolchain" },
             { text: "Standard Library Overview", link: "/guide/stdlib" },
             { text: "Testing", link: "/guide/tooling/testing" },
+          ],
+        },
+        {
+          text: "Contributing",
+          items: [
+            { text: "Contributing Guide", link: "/guide/contributing" },
+            { text: "Versioning & Stability", link: "/guide/versioning" },
+            { text: "Benchmarks", link: "/guide/benchmarks" },
+            { text: "FAQ", link: "/guide/faq" },
+            { text: "Glossary", link: "/guide/glossary" },
           ],
         },
       ],
@@ -139,6 +196,7 @@ export default defineConfig({
             { text: "CLI Reference", link: "/references/vex-cli-reference" },
             { text: "Test Reference", link: "/references/vex-test-reference" },
             { text: "Package Manager", link: "/references/vex-pm-reference" },
+            { text: "PM Deep Dive", link: "/references/vex-pm-deep-dive" },
             { text: "Doc Reference", link: "/references/vex-doc-reference" },
             { text: "Native FFI", link: "/references/vex-pm-native-ffi" },
           ],
@@ -155,8 +213,20 @@ export default defineConfig({
             },
             { text: "SIR & Backends", link: "/architecture/sir-and-backends" },
             {
+              text: "SIR Backends Reference",
+              link: "/architecture/sir-backends-reference",
+            },
+            {
+              text: "SIR Passes Deep Dive",
+              link: "/architecture/sir-passes-deep-dive",
+            },
+            {
               text: "Runtime & Tooling",
               link: "/architecture/runtime-and-tooling",
+            },
+            {
+              text: "Runtime Architecture",
+              link: "/architecture/runtime-architecture",
             },
           ],
         },

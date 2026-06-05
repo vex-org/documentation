@@ -14,18 +14,11 @@ This layer includes infrastructure for:
 - runtime symbols used by CLI execution paths
 - platform integration for native execution
 
-## JIT vs No-JIT
+## Execution Model
 
-The repository distinguishes between JIT-oriented execution and no-JIT/subprocess execution.
+Vex compiles to native code ahead-of-time (AOT). Both `vex run` and `vex compile` produce native binaries via LLVM. `vex run` compiles to a temporary executable and runs it as a subprocess; `vex compile` produces a standalone binary.
 
-One important documented constraint is that whole-runtime bitcode merge is intentionally disabled in JIT mode because runtime state is not yet structured for that safely.
-
-Current safe model:
-
-- AOT / subprocess mode can link runtime artifacts more traditionally
-- JIT mode relies on symbol registration rather than merging the entire runtime bitcode into the JIT module
-
-This is an architectural detail worth understanding when debugging “works in no-JIT but not in JIT” issues.
+The runtime is linked as a static library (`libvexruntime.a`) alongside the compiled Vex code. The system linker resolves all symbols at build time -- no runtime symbol registration is needed.
 
 ## CLI Tooling
 
@@ -42,7 +35,7 @@ The CLI owns orchestration around:
 - dependency resolution
 - compiler-driver invocation
 - linking
-- JIT/no-JIT selection
+- execution model selection
 - test discovery and execution
 
 ## Other Tooling

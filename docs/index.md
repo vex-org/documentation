@@ -16,7 +16,7 @@ hero:
       link: /references/vex-cli-reference
 features:
   - title: LLVM 21 Toolchain
-    details: "Native codegen is built around LLVM 21.1.8 with JIT and no-JIT execution paths."
+    details: "Native AOT codegen built on LLVM 21.1.8 with cross-compilation and LTO support."
   - title: Memory-Safe Systems Model
     details: "Ownership, borrowing, NLL-style analysis, and VUMM-backed heap management without GC."
   - title: SIMD, Tensor, and SIR

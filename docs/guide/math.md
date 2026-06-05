@@ -1,119 +1,150 @@
 # Math Namespace
 
-The `Math` namespace provides hardware-accelerated mathematical functions. All functions map directly to LLVM intrinsics or optimized C library calls — no overhead, single-instruction where possible.
+The `Math` namespace provides hardware-accelerated mathematical functions. All functions map directly to LLVM intrinsics or optimized C library calls on scalars, and auto-vectorize to SIMD instructions on arrays, slices, and tensors.
 
 > **No import needed.** `Math.*` is a builtin namespace available everywhere.
+
+## Scalar vs Vectorized Usage
+
+Every `Math` function works on BOTH scalars AND arrays/tensors. When passed an array or tensor, the operation is automatically vectorized:
+
+```vex
+// Scalar: single value
+let s = Math.sin(1.5708)              // 1.0
+
+// Array: auto-vectorized to single SIMD instruction
+let angles = [0.0, 1.5708, 3.14159, 4.71239]
+let sines = Math.sin(angles)          // [0.0, 1.0, 0.0, -1.0]
+// Compiles to: single SIMD sin instruction on all 4 elements
+
+// Span: works on non-owning views
+let view: Span<f64> = getData()
+let logs = Math.log(view)             // auto-vectorized
+
+// Tensor: static SIMD vector types
+let t: Tensor<f64, 8> = [1.0; 8]
+let exp_t = Math.exp(t)               // single SIMD exp instruction
+
+// DynTensor: runtime-sized tensors
+let big: Tensor<f64> = loadModel()
+let activated = Math.relu(big)        // loop-vectorized in SIMD chunks
+```
+
+This is the core Vex philosophy: **write plain math, get hardware SIMD automatically.**
 
 ## Quick Examples
 
 ```vex
-let angle = Math.PI / 4.0;
-let s = Math.sin(angle);           // 0.7071...
-let c = Math.cos(angle);           // 0.7071...
+// Scalars
+let angle = Math.PI / 4.0
+let s = Math.sin(angle)              // 0.7071...
+let x = Math.sqrt(144.0)             // 12.0
+let clamped = Math.clamp(x, 0.0, 1.0)
 
-let x = Math.sqrt(144.0);          // 12.0
-let p = Math.pow(2.0, 10.0);       // 1024.0
-let bits = Math.popcount(0xFF);     // 8
-
-let r = Math.random();             // [0.0, 1.0) random float
-let clamped = Math.clamp(x, 0.0, 1.0);
+// Arrays and Tensors (auto-vectorized)
+let vals = [1.0, 4.0, 9.0, 16.0]
+let roots = Math.sqrt(vals)          // [1.0, 2.0, 3.0, 4.0] -- single SIMD instr
+let relued = Math.relu([-1.0, 2.0, -3.0, 4.0])  // [0.0, 2.0, 0.0, 4.0]
 ```
 
 ## Trigonometric
 
-| Function | Signature | Description |
+Every function below accepts `f64`, `[f64; N]`, `Span<f64>`, `Tensor<f64, N>`, or `Tensor<f64>`.
+When given an array/tensor, the operation auto-vectorizes to SIMD.
+
+| Function | Scalar Signature | Description |
 |----------|-----------|-------------|
-| `Math.sin(x)` | `f64 → f64` | Sine (radians) |
-| `Math.cos(x)` | `f64 → f64` | Cosine (radians) |
-| `Math.tan(x)` | `f64 → f64` | Tangent (radians) |
-| `Math.asin(x)` | `f64 → f64` | Arc sine → radians |
-| `Math.acos(x)` | `f64 → f64` | Arc cosine → radians |
-| `Math.atan(x)` | `f64 → f64` | Arc tangent → radians |
-| `Math.atan2(y, x)` | `(f64, f64) → f64` | Two-arg arc tangent |
+| `Math.sin(x)` | `T, [T;N], Span<T>, Tensor<T>` | Sine (radians) |
+| `Math.cos(x)` | `T, [T;N], Span<T>, Tensor<T>` | Cosine (radians) |
+| `Math.tan(x)` | `T, [T;N], Span<T>, Tensor<T>` | Tangent (radians) |
+| `Math.asin(x)` | `T, [T;N], Span<T>, Tensor<T>` | Arc sine → radians |
+| `Math.acos(x)` | `T, [T;N], Span<T>, Tensor<T>` | Arc cosine → radians |
+| `Math.atan(x)` | `T, [T;N], Span<T>, Tensor<T>` | Arc tangent → radians |
+| `Math.atan2(y, x)` | `T, [T;N], Span<T>, Tensor<T>` | Two-arg arc tangent |
 
 ## Hyperbolic
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.sinh(x)` | `f64 → f64` | Hyperbolic sine |
-| `Math.cosh(x)` | `f64 → f64` | Hyperbolic cosine |
-| `Math.tanh(x)` | `f64 → f64` | Hyperbolic tangent |
-| `Math.asinh(x)` | `f64 → f64` | Inverse hyperbolic sine |
-| `Math.acosh(x)` | `f64 → f64` | Inverse hyperbolic cosine |
-| `Math.atanh(x)` | `f64 → f64` | Inverse hyperbolic tangent |
+| `Math.sinh(x)` | `T, [T;N], Span<T>, Tensor<T>` | Hyperbolic sine |
+| `Math.cosh(x)` | `T, [T;N], Span<T>, Tensor<T>` | Hyperbolic cosine |
+| `Math.tanh(x)` | `T, [T;N], Span<T>, Tensor<T>` | Hyperbolic tangent |
+| `Math.asinh(x)` | `T, [T;N], Span<T>, Tensor<T>` | Inverse hyperbolic sine |
+| `Math.acosh(x)` | `T, [T;N], Span<T>, Tensor<T>` | Inverse hyperbolic cosine |
+| `Math.atanh(x)` | `T, [T;N], Span<T>, Tensor<T>` | Inverse hyperbolic tangent |
 
 ## Exponential & Logarithmic
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.exp(x)` | `f64 → f64` | e^x |
-| `Math.exp2(x)` | `f64 → f64` | 2^x |
-| `Math.expm1(x)` | `f64 → f64` | e^x - 1 (precise near 0) |
-| `Math.log(x)` | `f64 → f64` | Natural log (ln) |
-| `Math.ln(x)` | `f64 → f64` | Natural log (alias) |
-| `Math.log2(x)` | `f64 → f64` | Base-2 logarithm |
-| `Math.log10(x)` | `f64 → f64` | Base-10 logarithm |
-| `Math.log1p(x)` | `f64 → f64` | ln(1+x) (precise near 0) |
+| `Math.exp(x)` | `T, [T;N], Span<T>, Tensor<T>` | e^x |
+| `Math.exp2(x)` | `T, [T;N], Span<T>, Tensor<T>` | 2^x |
+| `Math.expm1(x)` | `T, [T;N], Span<T>, Tensor<T>` | e^x - 1 (precise near 0) |
+| `Math.log(x)` | `T, [T;N], Span<T>, Tensor<T>` | Natural log (ln) |
+| `Math.ln(x)` | `T, [T;N], Span<T>, Tensor<T>` | Natural log (alias) |
+| `Math.log2(x)` | `T, [T;N], Span<T>, Tensor<T>` | Base-2 logarithm |
+| `Math.log10(x)` | `T, [T;N], Span<T>, Tensor<T>` | Base-10 logarithm |
+| `Math.log1p(x)` | `T, [T;N], Span<T>, Tensor<T>` | ln(1+x) (precise near 0) |
 
 ## Power & Root
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.pow(base, exp)` | `(f64, f64) → f64` | base^exp |
-| `Math.sqrt(x)` | `f64 → f64` | Square root |
-| `Math.cbrt(x)` | `f64 → f64` | Cube root |
-| `Math.rsqrt(x)` | `f64 → f64` | 1/√x (reciprocal sqrt) |
-| `Math.copysign(x, y)` | `(f64, f64) → f64` | x with sign of y |
+| `Math.pow(base, exp)` | `T, [T;N], Span<T>, Tensor<T>` | base^exp |
+| `Math.sqrt(x)` | `T, [T;N], Span<T>, Tensor<T>` | Square root |
+| `Math.cbrt(x)` | `T, [T;N], Span<T>, Tensor<T>` | Cube root |
+| `Math.rsqrt(x)` | `T, [T;N], Span<T>, Tensor<T>` | 1/√x (reciprocal sqrt) |
+| `Math.copysign(x, y)` | `T, [T;N], Span<T>, Tensor<T>` | x with sign of y |
 
 ## Rounding
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.floor(x)` | `f64 → f64` | Round towards -∞ |
-| `Math.ceil(x)` | `f64 → f64` | Round towards +∞ |
-| `Math.round(x)` | `f64 → f64` | Round to nearest integer |
-| `Math.trunc(x)` | `f64 → f64` | Truncate towards 0 |
-| `Math.rint(x)` | `f64 → f64` | Round to nearest (banker's rounding) |
+| `Math.floor(x)` | `T, [T;N], Span<T>, Tensor<T>` | Round towards -∞ |
+| `Math.ceil(x)` | `T, [T;N], Span<T>, Tensor<T>` | Round towards +∞ |
+| `Math.round(x)` | `T, [T;N], Span<T>, Tensor<T>` | Round to nearest integer |
+| `Math.trunc(x)` | `T, [T;N], Span<T>, Tensor<T>` | Truncate towards 0 |
+| `Math.rint(x)` | `T, [T;N], Span<T>, Tensor<T>` | Round to nearest (banker's rounding) |
 
 ## Comparison & Clamping
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.min(a, b)` | `(numeric, numeric) → numeric` | Minimum of two values |
-| `Math.max(a, b)` | `(numeric, numeric) → numeric` | Maximum of two values |
-| `Math.fmax(a, b)` | `(f64, f64) → f64` | Float max (NaN-safe) |
-| `Math.fmin(a, b)` | `(f64, f64) → f64` | Float min (NaN-safe) |
-| `Math.clamp(x, lo, hi)` | `(numeric, numeric, numeric) → numeric` | Clamp x to [lo, hi] |
-| `Math.abs(x)` | `numeric → numeric` | Absolute value (int or float) |
-| `Math.fabs(x)` | `f64 → f64` | Float absolute value |
-| `Math.sign(x)` | `f64 → f64` | Returns -1, 0, or +1 |
+| `Math.min(a, b)` | `T, [T;N], Span<T>, Tensor<T>` | Minimum of two values |
+| `Math.max(a, b)` | `T, [T;N], Span<T>, Tensor<T>` | Maximum of two values |
+| `Math.fmax(a, b)` | `T, [T;N], Span<T>, Tensor<T>` | Float max (NaN-safe) |
+| `Math.fmin(a, b)` | `T, [T;N], Span<T>, Tensor<T>` | Float min (NaN-safe) |
+| `Math.clamp(x, lo, hi)` | `T, [T;N], Span<T>, Tensor<T>` | Clamp x to [lo, hi] |
+| `Math.abs(x)` | `T, [T;N], Span<T>, Tensor<T>` | Absolute value (int or float) |
+| `Math.fabs(x)` | `T, [T;N], Span<T>, Tensor<T>` | Float absolute value |
+| `Math.sign(x)` | `T, [T;N], Span<T>, Tensor<T>` | Returns -1, 0, or +1 |
 
 ## Activation Functions (ML)
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.relu(x)` | `f64 → f64` | max(0, x) |
-| `Math.sigmoid(x)` | `f64 → f64` | 1/(1+e^(-x)) |
-| `Math.erf(x)` | `f64 → f64` | Error function |
+| `Math.relu(x)` | `T, [T;N], Span<T>, Tensor<T>` | max(0, x) |
+| `Math.sigmoid(x)` | `T, [T;N], Span<T>, Tensor<T>` | 1/(1+e^(-x)) |
+| `Math.erf(x)` | `T, [T;N], Span<T>, Tensor<T>` | Error function |
 
 ## Bit Operations
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.popcount(x)` | `int → int` | Count set bits |
-| `Math.clz(x)` | `int → int` | Count leading zeros |
-| `Math.ctz(x)` | `int → int` | Count trailing zeros |
-| `Math.nextPowerOf2(x)` | `int → int` | Next power of 2 |
-| `Math.bswap(x)` | `int → int` | Byte-swap (endian reverse) |
+| `Math.popcount(x)` | `T, [T;N], Span<T>, Tensor<T>` | Count set bits |
+| `Math.clz(x)` | `T, [T;N], Span<T>, Tensor<T>` | Count leading zeros |
+| `Math.ctz(x)` | `T, [T;N], Span<T>, Tensor<T>` | Count trailing zeros |
+| `Math.nextPowerOf2(x)` | `T, [T;N], Span<T>, Tensor<T>` | Next power of 2 |
+| `Math.bswap(x)` | `T, [T;N], Span<T>, Tensor<T>` | Byte-swap (endian reverse) |
 
 ## Angle Conversion
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.degrees(x)` | `f64 → f64` | Radians → degrees |
-| `Math.radians(x)` | `f64 → f64` | Degrees → radians |
-| `Math.degreesf(x)` | `f32 → f32` | Radians → degrees (f32) |
-| `Math.radiansf(x)` | `f32 → f32` | Degrees → radians (f32) |
+| `Math.degrees(x)` | `T, [T;N], Span<T>, Tensor<T>` | Radians → degrees |
+| `Math.radians(x)` | `T, [T;N], Span<T>, Tensor<T>` | Degrees → radians |
+| `Math.degreesf(x)` | `T, [T;N], Span<T>, Tensor<T>` | Radians → degrees (f32) |
+| `Math.radiansf(x)` | `T, [T;N], Span<T>, Tensor<T>` | Degrees → radians (f32) |
 
 ```vex
 let angle_deg = Math.degrees(Math.PI);   // 180.0
@@ -124,7 +155,7 @@ let angle_rad = Math.radians(90.0);      // 1.5707...
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Math.random()` | `→ f64` | Random float in [0.0, 1.0) |
+| `Math.random()` | `T, [T;N], Span<T>, Tensor<T>` | Random float in [0.0, 1.0) |
 
 Fast PRNG (xoshiro256++) — **NOT cryptographically secure**. For crypto-safe randomness, use [`Crypto.secureRand()`](/guide/crypto).
 
@@ -167,23 +198,23 @@ Every f64 math function has an f32 counterpart with `f` suffix:
 
 | f64 | f32 | Description |
 |-----|-----|-------------|
-| `Math.sin(x)` | `Math.sinf(x)` | Sine |
-| `Math.cos(x)` | `Math.cosf(x)` | Cosine |
-| `Math.exp(x)` | `Math.expf(x)` | Exponential |
-| `Math.log(x)` | `Math.logf(x)` | Natural log |
-| `Math.sqrt(x)` | `Math.sqrtf(x)` | Square root |
-| `Math.floor(x)` | `Math.floorf(x)` | Floor |
-| `Math.ceil(x)` | `Math.ceilf(x)` | Ceiling |
-| `Math.round(x)` | `Math.roundf(x)` | Round |
-| `Math.trunc(x)` | `Math.truncf(x)` | Truncate |
-| `Math.abs(x)` | `Math.fabsf(x)` | Float abs |
-| `Math.exp2(x)` | `Math.exp2f(x)` | 2^x |
-| `Math.log2(x)` | `Math.log2f(x)` | Base-2 log |
-| `Math.log10(x)` | `Math.log10f(x)` | Base-10 log |
-| `Math.pow(a,b)` | `Math.powf(a,b)` | Power |
-| `Math.copysign(x,y)` | `Math.copysignf(x,y)` | Copy sign |
-| `Math.fmax(a,b)` | `Math.fmaxf(a,b)` | Float max |
-| `Math.fmin(a,b)` | `Math.fminf(a,b)` | Float min |
+| `Math.sin(x)` | `T, [T;N], Span<T>, Tensor<T>` | Sine |
+| `Math.cos(x)` | `T, [T;N], Span<T>, Tensor<T>` | Cosine |
+| `Math.exp(x)` | `T, [T;N], Span<T>, Tensor<T>` | Exponential |
+| `Math.log(x)` | `T, [T;N], Span<T>, Tensor<T>` | Natural log |
+| `Math.sqrt(x)` | `T, [T;N], Span<T>, Tensor<T>` | Square root |
+| `Math.floor(x)` | `T, [T;N], Span<T>, Tensor<T>` | Floor |
+| `Math.ceil(x)` | `T, [T;N], Span<T>, Tensor<T>` | Ceiling |
+| `Math.round(x)` | `T, [T;N], Span<T>, Tensor<T>` | Round |
+| `Math.trunc(x)` | `T, [T;N], Span<T>, Tensor<T>` | Truncate |
+| `Math.abs(x)` | `T, [T;N], Span<T>, Tensor<T>` | Float abs |
+| `Math.exp2(x)` | `T, [T;N], Span<T>, Tensor<T>` | 2^x |
+| `Math.log2(x)` | `T, [T;N], Span<T>, Tensor<T>` | Base-2 log |
+| `Math.log10(x)` | `T, [T;N], Span<T>, Tensor<T>` | Base-10 log |
+| `Math.pow(a,b)` | `T, [T;N], Span<T>, Tensor<T>` | Power |
+| `Math.copysign(x,y)` | `T, [T;N], Span<T>, Tensor<T>` | Copy sign |
+| `Math.fmax(a,b)` | `T, [T;N], Span<T>, Tensor<T>` | Float max |
+| `Math.fmin(a,b)` | `T, [T;N], Span<T>, Tensor<T>` | Float min |
 
 ```vex
 // Use f32 variants for ML workloads

@@ -24,7 +24,7 @@ It is the source-of-truth reference for how `vex.json` native blocks are resolve
 2. `vex-pm` collects native linker args from all relevant package manifests.
 3. `vex-pm::NativeLinker` compiles native C sources declared in `vex.json`.
 4. `vex-cli` appends merged native linker args during link stage.
-5. If external native deps are detected in `run`, execution switches to subprocess mode (no-JIT) for safe native symbol resolution.
+5. `vex run` compiles to a temporary executable and runs it as a subprocess, with native symbols resolved by the system linker and dynamic loader.
 
 ---
 
@@ -153,16 +153,9 @@ This keeps FFI bridge overhead minimal while preserving flexible dynamic linking
 
 ---
 
-## JIT vs no-JIT for Native FFI
+## Execution Model for Native FFI
 
-For `vex run`:
-
-- if no external native deps are detected: JIT path can be used
-- if external native deps are detected from manifest/native resolution:
-  - runner switches to subprocess (no-JIT) mode
-  - native symbols are resolved by normal linker/dynamic loader
-
-This avoids fragile hardcoded JIT symbol registration for package-defined native APIs.
+`vex run` compiles to a temporary executable and runs it as a subprocess. Native symbols are resolved by the normal system linker and dynamic loader. This avoids any need for manual symbol registration for package-defined native APIs.
 
 ---
 
@@ -184,14 +177,13 @@ This avoids fragile hardcoded JIT symbol registration for package-defined native
   - appends merged native linker args at link stage
 - `tools/vex-cli/src/commands/run.rs`
   - source-aware native arg collection
-  - auto no-JIT fallback when external native deps exist
-  - ThinLTO in subprocess mode for optimized builds
+  - ThinLTO in optimized builds
 - `tools/vex-cli/build.rs`
   - intentionally no-op for package native linking (no package hardcoding)
 
 ---
 
-## Recommended Package Authoring Rules
+## R
 
 1. Declare all native requirements in `vex.json` only.
 2. Prefer feature bundles for optional drivers/backends.
@@ -218,9 +210,9 @@ This avoids fragile hardcoded JIT symbol registration for package-defined native
 - Check `VEX_NATIVE_FEATURES` / `VEX_DB_FEATURES`
 - Check `cflags` contains matching `-D...` macro for guarded source
 
-### Runtime symbol errors in JIT
+### Runtime symbol errors
 
-- For external native dependencies, use no-JIT path (auto-selected in run flow when native deps are detected)
+- Native symbols are resolved by the system dynamic linker at runtime. Ensure native libraries are installed and accessible via `LD_LIBRARY_PATH` (Linux) or `DYLD_LIBRARY_PATH` (macOS).
 
 ---
 

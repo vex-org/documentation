@@ -117,7 +117,7 @@ Run it:
 
 ## Useful Development Notes
 
-- `vex run` may use JIT or no-JIT execution depending on runtime/native-linking constraints.
+- `vex run` compiles to a temporary executable and executes it as a subprocess.
 - `vex compile` is the right entry point when you want persistent artifacts or LLVM output.
 - Examples in this repository often use `~/.cargo/target/debug/vex` directly during compiler development.
 

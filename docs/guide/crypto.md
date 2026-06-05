@@ -1,10 +1,23 @@
 # Crypto Namespace
 
-The `Crypto` namespace provides hardware-accelerated cryptographic micro-helpers. These are single-instruction building blocks that the compiler maps to platform-specific intrinsics (x86 AES-NI / ARM Crypto Extensions) automatically.
+The `Crypto` namespace provides hardware-accelerated cryptographic micro-helpers. Functions auto-vectorize on arrays, slices, and tensors -- a single `Crypto.aesEncRound()` on a `[u8; 64]` encrypts 4 AES blocks in parallel via SIMD.
 
 > **No import needed.** `Crypto.*` is a builtin namespace available everywhere.
 
-> **These are building blocks, not full algorithms.** For complete crypto implementations (AES-256-GCM, SHA-256, ChaCha20, etc.), see the [`crypto` standard library package](/stdlib).
+> **These are building blocks, not full algorithms.** For complete crypto implementations (AES-256-GCM, SHA-256, ChaCha20, etc.), see the [`crypto` standard library package](/std/crypto/).
+
+## Scalar vs Vectorized Usage
+
+```vex
+// Scalar: single AES block
+let state: [u8; 16] = [0; 16]
+let key: [u8; 16] = getRoundKey()
+let encrypted = Crypto.aesEncRound(state, key)
+
+// Vectorized: 4 AES blocks in parallel via SIMD
+let states: [[u8; 16]; 4] = [block1, block2, block3, block4]
+let encrypted = Crypto.aesEncRound(states, key)  // key broadcast, 4 blocks at once
+```
 
 ## Quick Example
 

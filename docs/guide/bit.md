@@ -1,8 +1,25 @@
 # Bit Namespace
 
-The `Bit` namespace provides hardware-accelerated parallel bit manipulation operations. These are essential for high-performance compression, encoding, and data structure implementations.
+The `Bit` namespace provides hardware-accelerated parallel bit manipulation operations. Functions auto-vectorize on arrays, slices, and tensors -- a single `Bit.pext()` call on an array processes all elements in parallel via SIMD.
 
 > **No import needed.** `Bit.*` is a builtin namespace available everywhere.
+
+## Scalar vs Vectorized Usage
+
+```vex
+// Scalar: single u64
+let extracted = Bit.pext(0b1010_0110, 0b1111_0000)  // 0b1010
+
+// Array: all elements processed in parallel via SIMD
+let bitmaps: [u64; 4] = [0b1010_0110, 0b1111_0000, 0b0011_1100, 0b1100_0011]
+let masks: [u64; 4] = [0xFF00, 0xFF00, 0xFF00, 0xFF00]
+let extracted = Bit.pext(bitmaps, masks)
+// All 4 PEXT operations execute in a single SIMD instruction
+
+// Span / Tensor: same auto-vectorization
+let data: Span<u64> = getBitstream()
+let packed = Bit.pext(data, 0xFF00)   // broadcasts mask, vectorizes
+```
 
 ## Quick Example
 
@@ -17,11 +34,11 @@ let deposited = Bit.pdep(0b1010, mask); // 0b1010_0000 (bits deposited at mask p
 
 ## Parallel Bit Deposit
 
-Scatter bits from source to positions indicated by the mask.
+Scatter bits from source to positions indicated by the mask. Accepts `u64`, `[u64; N]`, `Span<u64>`, `Tensor<u64>`.
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Bit.pdep(source, mask)` | `(u64, u64) → u64` | Deposit bits at mask positions |
+| `Bit.pdep(source, mask)` | `(T, T) → T` where T = u64, [u64;N], Span<u64>, Tensor<u64> | Deposit bits at mask positions |
 
 ### How PDEP Works
 
@@ -42,11 +59,11 @@ Each bit from `source` is placed at the next set bit position in `mask`, left to
 
 ## Parallel Bit Extract
 
-Gather bits from source at positions indicated by the mask, packed contiguously.
+Gather bits from source at positions indicated by the mask, packed contiguously. Same type support as `pdep`.
 
 | Function | Signature | Description |
 |----------|-----------|-------------|
-| `Bit.pext(source, mask)` | `(u64, u64) → u64` | Extract bits from mask positions |
+| `Bit.pext(source, mask)` | `(T, T) → T` where T = u64, [u64;N], Span<u64>, Tensor<u64> | Extract bits from mask positions |
 
 ### How PEXT Works
 

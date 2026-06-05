@@ -13,7 +13,7 @@ source (.vx)
   -> codegen path selection
     -> LLVM/native path
     -> SIR path for data-parallel graphs
-  -> link / JIT / run / test integration
+  -> link / run / test integration
 ```
 
 The important split is that Vex has both:
@@ -56,7 +56,7 @@ This is where most language semantics become concrete:
 
 ## Native Codegen Path
 
-The native path in `vex-compiler` lowers checked HIR into LLVM IR and from there into object code, linked executables, or JIT-executed code depending on the command path.
+The native path in `vex-compiler` lowers checked HIR into LLVM IR and from there into object code and linked executables.
 
 This path is used for ordinary systems programming, CLI tools, servers, runtime code, and general application code.
 

@@ -41,10 +41,8 @@ Responsibilities:
 Responsibilities:
 
 1. Resolve deps + compile module
-2. Decide JIT vs subprocess mode
-3. If native external deps exist, switch to subprocess mode automatically
-4. Link temporary executable with runtime + merged native linker args
-5. Execute and report timings
+2. Link temporary executable with runtime + merged native linker args
+3. Execute and report timings
 
 ### `vex test`
 
@@ -81,14 +79,11 @@ For optimized builds, ThinLTO is enabled where appropriate to reduce FFI overhea
 
 ---
 
-## JIT Behavior and Safety
+## Execution Model
 
-JIT is used when possible for speed, but:
+`vex run` compiles to a temporary executable and runs it as a subprocess. Native dependencies are resolved via the system linker and dynamic loader at runtime.
 
-- if external native dependencies are detected, `run` switches to no-JIT subprocess
-- this avoids hardcoded symbol tables for arbitrary package-defined C APIs
-
-JIT path still registers core runtime + libc/libm/platform symbols needed by runtime.
+`vex compile` produces a standalone binary linked against the Vex runtime static library.
 
 ---
 

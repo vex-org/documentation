@@ -13,7 +13,7 @@ source (.vx)
   -> codegen selection
        -> LLVM/native path
        -> SIR graph path
-  -> link / JIT / subprocess execution
+  -> link / subprocess execution
 ```
 
 ## Front-End Stages
@@ -58,7 +58,7 @@ This is the part of the compiler that enforces the memory model documented in th
 
 ### Native LLVM Path
 
-`vex-compiler` lowers checked HIR into LLVM IR and then into object code, linked executables, or JIT-executed code.
+`vex-compiler` lowers checked HIR into LLVM IR and then into object code, linked executables.
 
 This path is the default for ordinary systems code.
 
@@ -75,7 +75,7 @@ This path is the basis for:
 
 ## Driver Layer
 
-The user usually interacts with the compiler through `vex-cli`, which wraps compilation, linking, JIT/no-JIT execution, and test discovery.
+The user usually interacts with the compiler through `vex-cli`, which wraps compilation, linking, execution, and test discovery.
 
 That means the operational pipeline is often:
 
