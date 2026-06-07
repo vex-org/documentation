@@ -40,15 +40,19 @@ let nine = triple(3)      // 9
 Closure parameter types can often be inferred from context:
 
 ```vex
-// Type inferred from usage
+// Named function reference (always works):
+fn timesTwo(x: i32): i32 { return x * 2 }
 let numbers = [1, 2, 3, 4, 5]
+let doubled = numbers.map(timesTwo)
 
-// Parameter type i32 inferred because numbers is [i32; 5]
-let doubled = numbers.map(|x|  x * 2)
+// Parameter type explicit — currently required for closures passed to generics:
+let doubled = numbers.map(|x: i32| x * 2)
 
-// Explicit type when inference is ambiguous
-let explicit = numbers.map(|x: i32|  x as f64 * 1.5)
+// Cast in closure body if needed:
+let explicit = numbers.map(|x: i32| x as f64 * 1.5)
 ```
+
+> **Note:** When passing closures to generic methods like `map()`, parameter type annotations are currently required due to ongoing generic type inference improvements. Named function references and `for` loops with closures do not have this limitation.
 
 ## Capture Modes
 
@@ -122,17 +126,17 @@ Closures are the standard way to pass behavior into higher-order functions:
 ```vex
 // Filter with closure predicate
 let numbers = [1, 2, 3, 4, 5, 6]
-let evens = numbers.filter(|n|  n % 2 == 0)  // [2, 4, 6]
+let evens = numbers.filter(|n: i32| n % 2 == 0)  // [2, 4, 6]
 
 // Sort with custom comparator
 let! items = [3, 1, 4, 1, 5]
-items.sortBy(|a, b|  b - a)  // descending: [5, 4, 3, 1, 1]
+items.sortBy(|a: i32, b: i32| b - a)  // descending: [5, 4, 3, 1, 1]
 
 // Map transformation
-let squares = numbers.map(|n|  n * n)  // [1, 4, 9, 16, 25, 36]
+let squares = numbers.map(|n: i32| n * n)  // [1, 4, 9, 16, 25, 36]
 
 // Find first matching element
-let found = numbers.find(|n|  n > 4)  // Some(5)
+let found = numbers.find(|n: i32| n > 4)  // Some(5)
 
 // Fold / reduce with closure
 let sum = numbers.fold(0, |acc, n|  acc + n)  // 21

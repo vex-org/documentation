@@ -160,7 +160,9 @@ let signals: [Complex<f64>; 4] = [
 
 // Element-wise operations are SIMD-accelerated
 let scaled = signals * Complex.new(2.0, 0.0)
-let conjugated = signals.map(|s|  s.conjugate())
+// Named function or explicit closure annotation:
+fn conjugateS(s: Complex<f64>): Complex<f64> { return s.conjugate() }
+let conjugated = signals.map(conjugateS)
 ```
 
 ## Memory Layout

@@ -2,6 +2,8 @@
 
 Vex compiles to native code ahead-of-time (AOT) via LLVM 21. `vex compile` produces standalone binaries; `vex run` compiles and executes in one step.
 
+> **Note:** Some optimization flags described below (LTO, cross-compilation targets, sanitizers, incremental compilation) are **planned features**. Currently available flags are documented in the [CLI Reference](/references/vex-cli-reference) and visible via `vex compile --help`.
+
 ## Compilation Modes
 
 ### `vex run` -- Compile and Execute
@@ -86,16 +88,15 @@ vex run -O 2 main.vx          # Fast iteration with decent optimization
 - Aggressive loop unrolling
 - Profile-guided optimization hooks (PGO)
 
-## LTO (Link-Time Optimization)
+## LTO (Link-Time Optimization) -- PLANNED
 
-LTO enables cross-module optimization by preserving LLVM bitcode through the link step.
+LTO enables cross-module optimization by preserving LLVM bitcode through the link step. This feature is planned for a future release.
 
-```bash
-# ThinLTO (recommended): fast, scalable, good results
-vex compile --lto=thin main.vx
-
-# FullLTO: maximum optimization, slower linking
-vex compile --lto=full main.vx
+```vex
+// Planned syntax:
+// vex compile --lto=thin main.vx
+// vex compile --lto=full main.vx
+```
 
 # Disable LTO
 vex compile --lto=off main.vx
@@ -157,7 +158,7 @@ vex compile --profile bench main.vx
 vex compile --profile dev-fast main.vx
 ```
 
-## Incremental Compilation
+## Incremental Compilation -- PLANNED
 
 Incremental compilation caches intermediate results to avoid recompiling unchanged code:
 
@@ -171,7 +172,7 @@ The cache lives in `target/vex/incremental/` and tracks:
 - Dependency graphs
 - LLVM module fingerprints
 
-## Parallel Compilation
+## Parallel Compilation -- PLANNED
 
 Vex compiles independent modules in parallel:
 
@@ -180,7 +181,7 @@ vex compile --jobs 8 main.vx    # Use 8 parallel jobs
 vex compile --jobs 0 main.vx    # Use all available cores (default)
 ```
 
-## Cross-Compilation
+## Cross-Compilation -- PLANNED
 
 Compile for a different target than the host:
 
@@ -219,7 +220,7 @@ vex compile --emit-llvm-ir main.vx   # LLVM bitcode (.bc)
 vex compile --emit-all main.vx       # All of the above + binary
 ```
 
-## Debug Symbols
+## Debug Symbols -- PLANNED
 
 ```bash
 # Full debug info (DWARF), larger binary
@@ -232,7 +233,7 @@ vex compile --debug-info=limited main.vx
 vex compile --debug-info=none main.vx
 ```
 
-## Sanitizer Integration
+## Sanitizer Integration -- PLANNED
 
 ```bash
 # Address Sanitizer (detects memory errors)

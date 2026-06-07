@@ -148,10 +148,10 @@ match temperature {
 let numbers: Vec<i32> = (0..100).collect()
 
 // Filter range
-let evens = (0..20).filter(|n|  n % 2 == 0)
+let evens = (0..20).filter(|n: i32| n % 2 == 0)
 
 // Map range
-let squares = (0..10).map(|n|  n * n)
+let squares = (0..10).map(|n: i32| n * n)
 
 // Sum a range
 let sum = <+ (0..100)   // 4950 via horizontal reduction
@@ -167,7 +167,7 @@ let first_ten: Vec<i32> = infinite.take(10).collect()
 // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 // Useful for generating sequences
-let powers_of_two = (1..).map(|n|  1 << n).take(10)
+let powers_of_two = (1..).map(|n: i32| 1 << n).take(10)
 ```
 
 ## Custom Range-Like Types

@@ -1,6 +1,8 @@
 # Runtime Architecture
 
-This page covers the C runtime that underpins Vex's concurrency, memory management, and async I/O.
+This page covers the C runtime that underpins Vex's concurrency, memory management, and async I/O. Implementation details reflect the current codebase structure under `lib/runtime/`.
+
+> **Note:** Specific C function names and internal algorithms described here represent the current implementation and may evolve. The architectural patterns (M:N scheduler, VUMM allocator, platform pollers) are stable.
 
 ## Runtime Layer Map
 

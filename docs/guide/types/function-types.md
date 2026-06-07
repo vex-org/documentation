@@ -96,7 +96,8 @@ handler.callback(200)
 // Array of function pointers
 let operations: [fn(i32, i32): i32; 3] = [add, mul, sub]
 
-let results = operations.map(|op|  op(10, 5))
+// Named function or explicit closure annotation:
+let results = operations.map(|op: fn(i32, i32): i32| op(10, 5))
 // [15, 50, 5]
 ```
 

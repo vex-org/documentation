@@ -2,6 +2,8 @@
 
 `graph fn` is the Vex syntax for defining GPU compute kernels. Graph functions compile through the SIR (Silicon IR) pipeline and can target Metal, CUDA, SPIR-V, WGSL, and other GPU backends.
 
+> **Status:** The `graph fn` feature and SIR pipeline are under active development. Syntax details (thread indexing builtins, memory qualifiers) may evolve. The architectural concepts described here are accurate; specific keywords should be verified against the current compiler.
+
 ## Syntax
 
 ```vex

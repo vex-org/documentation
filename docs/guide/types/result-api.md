@@ -136,14 +136,15 @@ let value = result.orElse(|e| {
 ```vex
 let result: Result<i32, Error> = Ok(5)
 
-let doubled: Result<i32, Error> = result.map(|n|  n * 2)   // Ok(10)
-let still_err = Err(Error.new()).map(|n|  n * 2)            // Err unchanged
+// Named function reference (fully supported):
+fn timesTwo(n: i32): i32 { return n * 2 }
+let doubled: Result<i32, Error> = result.map(timesTwo)   // Ok(10)
 
-// Chaining
-let processed = fetchData()
-    .map(|raw|  parse(raw))
-    .map(|parsed|  validate(parsed))
+// Closure with explicit annotation:
+let doubled: Result<i32, Error> = result.map(|n: i32| n * 2)
 ```
+
+> **Note:** `map()` with closures currently requires explicit type annotations. Named function references work without annotations. Same applies to `flatMap()`, `mapErr()`, and `filter()`.
 
 ### `mapErr()` -- Transform Error Value
 

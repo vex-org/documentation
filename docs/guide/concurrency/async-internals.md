@@ -124,14 +124,16 @@ Runtime:       Task pushed to worker's local deque
 
 ### Key Runtime Functions
 
-| Function (C runtime) | Purpose                                   |
-| -------------------- | ----------------------------------------- |
-| `vex_async_spawn()`  | Push a new task to the scheduler          |
-| `vex_async_yield()`  | Suspend current task, return to scheduler |
-| `vex_async_resume()` | Re-queue a suspended task                 |
-| `vex_poller_wait()`  | Block on I/O events (kqueue/epoll/IOCP)   |
+The generated state machine calls into the C runtime at each `await` boundary. The exact function signatures are compiler internals; the table below shows the conceptual interface:
 
-The generated state machine calls into these runtime functions at each `await` boundary.
+| Concept | Purpose |
+|---------|---------|
+| Task spawn | Push a new task to the scheduler |
+| Task yield | Suspend current task, return to scheduler |
+| Task resume | Re-queue a suspended task |
+| Poller wait | Block on I/O events (kqueue/epoll/IOCP) |
+
+> **Implementation detail:** See `lib/runtime/runtime/src/async/` for the actual C runtime API.
 
 ## Async Function Rules
 

@@ -118,15 +118,15 @@ let fromCache = lookup(key).orElse(|| {
 ```vex
 let opt = Some(5)
 
-let doubled: Option<i32> = opt.map(|n|  n * 2)   // Some(10)
-let none_mapped: Option<i32> = None.map(|n|  n * 2)  // None
+// Named function reference (fully supported):
+fn doubleIt(n: i32): i32 { return n * 2 }
+let doubled: Option<i32> = opt.map(doubleIt)   // Some(10)
 
-// Chaining
-let result = getNumber()
-    .map(|n|  n * 3)
-    .map(|n|  n + 1)
-// Some(x) becomes Some(x*3+1), None stays None
+// Closure with explicit type annotation:
+let doubled: Option<i32> = opt.map(|n: i32| n * 2)
 ```
+
+> **Note:** `map()` with closures currently requires explicit type annotations due to ongoing generic inference improvements. Named function references work without annotations. This limitation also affects `flatMap()` and `filter()`.
 
 ### `andThen()` -- Chain Fallible Operations
 
@@ -250,10 +250,17 @@ fn parseAndValidate(input: string): Option<i32> {
 ### Conditional Execution
 
 ```vex
-let user = getCurrentUser()
+let user: Option<User> = getCurrentUser()
 
-// Execute only if Some
-user.map(|u|  {
+// Named function:
+fn greetUser(u: User) {
+    $println(f"Welcome, {u.name}")
+    sendNotification(u)
+}
+user.map(greetUser)
+
+// Or with explicit closure annotation:
+user.map(|u: User| {
     $println(f"Welcome, {u.name}")
     sendNotification(u)
 })
@@ -270,8 +277,8 @@ if user.isNone() {
 let results = [Some(1), Some(2), None, Some(4)]
 
 // Filter to only Some values
-let valid = results.filter(|opt| opt.isSome())
-                   .map(|opt| opt.or(0))
+let valid = results.filter(|opt: Option<i32>| opt.isSome())
+                   .map(|opt: Option<i32>| opt.or(0))
 // valid = [1, 2, 0, 4] -- uses 0 for None elements
 ```
 

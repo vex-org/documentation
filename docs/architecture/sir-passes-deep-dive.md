@@ -1,6 +1,8 @@
 # SIR Optimization Passes
 
-The Silicon IR (SIR) pipeline applies a series of optimization passes before lowering to target-specific GPU or CPU code. This page details each pass, its purpose, and when it triggers.
+The Silicon IR (SIR) pipeline applies a series of optimization passes before lowering to target-specific GPU or CPU code. This page catalogs the pass pipeline based on the current `vex-sir` crate structure.
+
+> **Status:** SIR is under active development. Pass names and ordering reflect the current codebase (`crates/vex-sir/src/passes/`). Pass heuristics and thresholds are subject to change. See the source for authoritative details.
 
 ## Pass Pipeline Order
 

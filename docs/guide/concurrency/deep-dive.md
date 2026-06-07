@@ -1,6 +1,8 @@
 # Concurrency -- Deep Dive
 
-This page covers the advanced concurrency features beyond the basics: the M:N scheduler, atomic operations, synchronization primitives, and channel `select`.
+This page covers advanced concurrency features: the M:N scheduler, synchronization primitives, and channel patterns.
+
+> **Note:** The standard library module paths shown here (e.g., `import { ... } from "sync"`) represent the planned API. Verify exact import paths and method signatures against the current `lib/std/` source.
 
 ## M:N Scheduler Architecture
 

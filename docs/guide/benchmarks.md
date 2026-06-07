@@ -1,8 +1,8 @@
 # Benchmarks
 
-Performance comparisons between Vex and other systems programming languages. All benchmarks run on the same hardware with equivalent implementations.
+Performance comparisons between Vex and other systems programming languages.
 
-**Note:** These benchmarks represent current performance. Vex is pre-1.0 and optimizations are ongoing. Run benchmarks yourself with `vex test --bench`.
+> **IMPORTANT:** All numbers on this page are **illustrative estimates** based on LLVM backend performance characteristics and known algorithmic complexity. Vex is pre-1.0 -- real benchmarks will be published as the compiler matures. Run `vex test --bench` for current measurements on your hardware.
 
 ## Benchmark Methodology
 
