@@ -88,15 +88,23 @@ vex run -O 2 main.vx          # Fast iteration with decent optimization
 - Aggressive loop unrolling
 - Profile-guided optimization hooks (PGO)
 
-## LTO (Link-Time Optimization) -- PLANNED
+## LTO (Link-Time Optimization)
 
-LTO enables cross-module optimization by preserving LLVM bitcode through the link step. This feature is planned for a future release.
+Vex supports both Full LTO and ThinLTO via LLVM's LTO C API. ThinLTO is **auto-enabled at O2+** on non-macOS platforms.
 
-```vex
-// Planned syntax:
-// vex compile --lto=thin main.vx
-// vex compile --lto=full main.vx
+```bash
+# Full LTO — whole-program optimization
+vex compile --lto main.vx
+
+# ThinLTO — scalable parallel LTO (auto at O2+)
+vex compile --thin_lto main.vx
+
+# ThinLTO is automatically enabled when:
+# - opt_level >= 2
+# - not on macOS (clang version compatibility check)
 ```
+
+**Implementation:** `crates/vex-llvm/src/lto.rs` wraps `llvm-c/lto.h` with safe Rust bindings for both [`LTOCodeGenerator`] and [`ThinLTOCodeGenerator`].
 
 # Disable LTO
 vex compile --lto=off main.vx
@@ -160,30 +168,15 @@ vex compile --profile dev-fast main.vx
 
 ## Incremental Compilation -- PLANNED
 
-Incremental compilation caches intermediate results to avoid recompiling unchanged code:
-
-```bash
-vex compile --incremental main.vx
-```
-
-The cache lives in `target/vex/incremental/` and tracks:
-
-- Source file hashes
-- Dependency graphs
-- LLVM module fingerprints
+> **Genuinely not yet implemented.** No incremental compilation infrastructure exists in the current compiler.
 
 ## Parallel Compilation -- PLANNED
 
-Vex compiles independent modules in parallel:
+> **Partially implemented.** `rayon` 1.10 is a workspace dependency and parallel cache infrastructure (`save_parallel_cache`/`load_parallel_cache`) exists for multi-worker test execution, but the compiler does not yet distribute module compilation across threads.
 
-```bash
-vex compile --jobs 8 main.vx    # Use 8 parallel jobs
-vex compile --jobs 0 main.vx    # Use all available cores (default)
-```
+## Cross-Compilation
 
-## Cross-Compilation -- PLANNED
-
-Compile for a different target than the host:
+Compile for a different target than the host using the `--target` flag:
 
 ```bash
 # From macOS, compile for Linux
@@ -192,8 +185,8 @@ vex compile --target x86_64-unknown-linux-gnu main.vx
 # From x86_64, compile for ARM64
 vex compile --target aarch64-unknown-linux-gnu main.vx
 
-# From Linux, compile for Windows
-vex compile --target x86_64-pc-windows-msvc main.vx
+# WASM target
+vex compile --target wasm32-unknown-unknown main.vx
 ```
 
 **Supported targets:**
@@ -220,34 +213,41 @@ vex compile --emit-llvm-ir main.vx   # LLVM bitcode (.bc)
 vex compile --emit-all main.vx       # All of the above + binary
 ```
 
-## Debug Symbols -- PLANNED
+## Debug Symbols (DWARF)
+
+Vex **always emits LineTablesOnly DWARF** for crash symbolication. Full debug info is enabled with `-g`.
 
 ```bash
-# Full debug info (DWARF), larger binary
-vex compile --debug-info=full main.vx
+# Default: LineTablesOnly DWARF (function names, line numbers)
+vex compile main.vx
 
-# Limited debug info (function names, line numbers only)
-vex compile --debug-info=limited main.vx
-
-# No debug info (smallest binary)
-vex compile --debug-info=none main.vx
+# Full debug info: all DWARF sections (types, locals, scope)
+vex compile -g main.vx
+vex compile --debug_info main.vx
 ```
 
-## Sanitizer Integration -- PLANNED
+**Implementation:** `crates/vex-compiler/src/codegen_hir/debug.rs` — full `DebugInfoBuilder` with source locations, function DI, and scope tracking.
+
+## Sanitizer Integration
+
+Compile with sanitizer instrumentation via the `--sanitize` flag (passed through to clang linker):
 
 ```bash
 # Address Sanitizer (detects memory errors)
-vex compile --sanitize=address main.vx
+vex compile --sanitize address main.vx
 
 # Thread Sanitizer (detects data races)
-vex compile --sanitize=thread main.vx
+vex compile --sanitize thread main.vx
 
 # Undefined Behavior Sanitizer
-vex compile --sanitize=undefined main.vx
+vex compile --sanitize undefined main.vx
 
-# Leak Sanitizer
-vex compile --sanitize=leak main.vx
+# Memory Sanitizer (uninitialized reads)
+vex compile --sanitize memory main.vx
 ```
+
+Valid values: `address` (asan), `memory` (msan), `thread` (tsan), `undefined` (ubsan).
+LeakSanitizer is included with AddressSanitizer on supported platforms.
 
 ## Best Practices
 
