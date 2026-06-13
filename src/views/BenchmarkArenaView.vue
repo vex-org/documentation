@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import {
   Play,
   Trophy,
@@ -24,6 +24,8 @@ const LANG_META: Record<
   go: { label: "Go", color: "#00ADD8", logo: "/logos/go.png" },
   rust: { label: "Rust", color: "#CE422B", logo: "/logos/rust.png" },
   zig: { label: "Zig", color: "#F7A41D", logo: "/logos/zig.png" },
+  c: { label: "C", color: "#A8B9CC", logo: "/logos/c.png" },
+  cpp: { label: "C++", color: "#00599C", logo: "/logos/cpp.png" },
 };
 
 // Tabs: "preset" or "custom"
@@ -51,6 +53,19 @@ const customDisclaimer = ref("");
 
 // Shared
 const selectedLangs = ref(["go", "rust", "zig"]);
+const availableLangs = computed(() => {
+  if (activeTab.value === "custom") {
+    return ["go", "rust", "zig"];
+  }
+  return ["go", "rust", "zig", "c", "cpp"];
+});
+
+watch(activeTab, (newTab) => {
+  if (newTab === "custom") {
+    selectedLangs.value = selectedLangs.value.filter((l) => l !== "c" && l !== "cpp");
+  }
+});
+
 const optLevel = ref("O2");
 const langVersions = ref<Record<string, string>>({});
 const optLevels = [
@@ -118,6 +133,8 @@ async function runPreset() {
       go_code: selectedLangs.value.includes("go") ? ex.go : "",
       rust_code: selectedLangs.value.includes("rust") ? ex.rust : "",
       zig_code: selectedLangs.value.includes("zig") ? ex.zig : "",
+      c_code: selectedLangs.value.includes("c") ? ex.c : "",
+      cpp_code: selectedLangs.value.includes("cpp") ? ex.cpp : "",
       opt_level: optLevel.value,
     });
     presetResults.value = res.results;
@@ -309,7 +326,7 @@ function runBenchmark() {
           </div>
           <div class="p-3 space-y-2">
             <button
-              v-for="lang in ['go', 'rust', 'zig']"
+              v-for="lang in availableLangs"
               :key="lang"
               @click="toggleLang(lang)"
               :class="[
@@ -431,21 +448,14 @@ function runBenchmark() {
           <div class="flex items-center justify-center gap-4">
             <div class="flex gap-6">
               <div
-                v-for="lang in ['vex', ...selectedLangs]"
+                v-for="(lang, index) in ['vex', ...selectedLangs]"
                 :key="lang"
                 class="flex flex-col items-center gap-2"
               >
                 <div
                   class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl animate-bounce"
                   :style="{
-                    animationDelay:
-                      lang === 'vex'
-                        ? '0ms'
-                        : lang === 'go'
-                          ? '100ms'
-                          : lang === 'rust'
-                            ? '200ms'
-                            : '300ms',
+                    animationDelay: `${index * 100}ms`,
                     backgroundColor: LANG_META[lang]?.color + '15',
                   }"
                 >

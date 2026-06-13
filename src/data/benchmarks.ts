@@ -5,6 +5,8 @@ export interface BenchmarkExample {
     go: string
     rust: string
     zig: string
+    c?: string
+    cpp?: string
 }
 
 export const benchmarks: BenchmarkExample[] = [
@@ -23,16 +25,16 @@ fn main(): i32 {
     return 0
 }`,
         go: `package main
-
+ 
 import "fmt"
-
+ 
 func fib(n int) int {
 	if n <= 1 {
 		return n
 	}
 	return fib(n-1) + fib(n-2)
 }
-
+ 
 func main() {
 	result := fib(35)
 	fmt.Println(result)
@@ -41,23 +43,47 @@ func main() {
     if n <= 1 { return n; }
     fib(n - 1) + fib(n - 2)
 }
-
+ 
 fn main() {
     let result = fib(35);
     println!("{}", result);
 }`,
         zig: `const std = @import("std");
-
+ 
 fn fib(n: i32) i32 {
     if (n <= 1) return n;
     return fib(n - 1) + fib(n - 2);
 }
-
+ 
 pub fn main(init: std.process.Init) !void {
     const result = fib(35);
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{result});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
+}`,
+        c: `#include <stdio.h>
+
+int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}
+
+int main() {
+    int result = fib(35);
+    printf("%d\\n", result);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int fib(int n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}
+
+int main() {
+    int result = fib(35);
+    std::cout << result << "\\n";
+    return 0;
 }`,
     },
 
@@ -74,9 +100,9 @@ pub fn main(init: std.process.Init) !void {
     return 0
 }`,
         go: `package main
-
+ 
 import "fmt"
-
+ 
 func main() {
 	sum := 0
 	for i := 0; i < 1000000; i++ {
@@ -92,7 +118,7 @@ func main() {
     println!("{}", sum);
 }`,
         zig: `const std = @import("std");
-
+ 
 pub fn main(init: std.process.Init) !void {
     var sum: i64 = 0;
     var i: i64 = 0;
@@ -102,6 +128,26 @@ pub fn main(init: std.process.Init) !void {
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
+}`,
+        c: `#include <stdio.h>
+
+int main() {
+    long long sum = 0;
+    for (int i = 0; i < 1000000; i++) {
+        sum += i;
+    }
+    printf("%lld\\n", sum);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int main() {
+    long long sum = 0;
+    for (int i = 0; i < 1000000; i++) {
+        sum += i;
+    }
+    std::cout << sum << "\\n";
+    return 0;
 }`,
     },
 
@@ -118,9 +164,9 @@ pub fn main(init: std.process.Init) !void {
     return 0
 }`,
         go: `package main
-
+ 
 import "fmt"
-
+ 
 func main() {
 	s := ""
 	for i := 0; i < 10000; i++ {
@@ -136,7 +182,7 @@ func main() {
     println!("{}", s.len());
 }`,
         zig: `const std = @import("std");
-
+ 
 pub fn main(init: std.process.Init) !void {
     var buf: [10000]u8 = undefined;
     for (0..10000) |i| {
@@ -145,6 +191,38 @@ pub fn main(init: std.process.Init) !void {
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{@as(usize, 10000)});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
+}`,
+        c: `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    char *s = malloc(1);
+    s[0] = '\\0';
+    int capacity = 1;
+    int len = 0;
+    for (int i = 0; i < 10000; i++) {
+        if (len + 1 >= capacity) {
+            capacity *= 2;
+            s = realloc(s, capacity);
+        }
+        s[len++] = 'x';
+        s[len] = '\\0';
+    }
+    printf("%d\\n", len);
+    free(s);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <string>
+
+int main() {
+    std::string s = "";
+    for (int i = 0; i < 10000; i++) {
+        s += "x";
+    }
+    std::cout << s.length() << "\\n";
+    return 0;
 }`,
     },
 
@@ -157,7 +235,7 @@ pub fn main(init: std.process.Init) !void {
 fn dot(a: [f64; 4], b: [f64; 4]): f64 {
     return <+ (a * b)
 }
-
+ 
 fn main(): i32 {
     let a = [1.0, 2.0, 3.0, 4.0]
     let b = [5.0, 6.0, 7.0, 8.0]
@@ -169,13 +247,13 @@ fn main(): i32 {
     return 0
 }`,
         go: `package main
-
+ 
 import "fmt"
-
+ 
 func dot(a, b [4]float64) float64 {
 	return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3]
 }
-
+ 
 func main() {
 	sum := 0.0
 	for i := 0; i < 100000; i++ {
@@ -188,7 +266,7 @@ func main() {
         rust: `fn dot(a: [f64; 4], b: [f64; 4]) -> f64 {
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
 }
-
+ 
 fn main() {
     let mut sum = 0.0_f64;
     for _ in 0..100000 {
@@ -199,11 +277,11 @@ fn main() {
     println!("{}", sum);
 }`,
         zig: `const std = @import("std");
-
+ 
 fn dot(a: @Vector(4, f64), b: @Vector(4, f64)) f64 {
     return @reduce(.Add, a * b);
 }
-
+ 
 pub fn main(init: std.process.Init) !void {
     var sum: f64 = 0;
     var i: usize = 0;
@@ -216,8 +294,42 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+        c: `#include <stdio.h>
 
+double dot(double a[4], double b[4]) {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+}
+
+int main() {
+    double sum = 0.0;
+    for (int i = 0; i < 100000; i++) {
+        double a[4] = {1.0, 2.0, 3.0, 4.0};
+        double b[4] = {5.0, 6.0, 7.0, 8.0};
+        sum += dot(a, b);
+    }
+    printf("%g\\n", sum);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <array>
+#include <numeric>
+
+double dot(const std::array<double, 4>& a, const std::array<double, 4>& b) {
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
+}
+
+int main() {
+    double sum = 0.0;
+    for (int i = 0; i < 100000; i++) {
+        std::array<double, 4> a = {1.0, 2.0, 3.0, 4.0};
+        std::array<double, 4> b = {5.0, 6.0, 7.0, 8.0};
+        sum += dot(a, b);
+    }
+    std::cout << sum << "\\n";
+    return 0;
+}`,
+    },
+ 
     // 5. Sieve of Eratosthenes
     {
         name: 'Prime Sieve',
@@ -258,9 +370,9 @@ pub fn main(init: std.process.Init) !void {
     return 0
 }`,
         go: `package main
-
+ 
 import "fmt"
-
+ 
 func main() {
 	const limit = 100000
 	sieve := make([]bool, limit)
@@ -295,7 +407,7 @@ func main() {
     println!("{}", count);
 }`,
         zig: `const std = @import("std");
-
+ 
 pub fn main(init: std.process.Init) !void {
     const limit = 100000;
     var sieve: [limit]bool = undefined;
@@ -313,6 +425,47 @@ pub fn main(init: std.process.Init) !void {
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
+}`,
+        c: `#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+int main() {
+    const int limit = 100000;
+    bool *sieve = malloc(limit * sizeof(bool));
+    for (int i = 0; i < limit; i++) {
+        sieve[i] = true;
+    }
+    int count = 0;
+    for (long long i = 2; i < limit; i++) {
+        if (sieve[i]) {
+            count++;
+            for (long long j = i * i; j < limit; j += i) {
+                sieve[j] = false;
+            }
+        }
+    }
+    printf("%d\\n", count);
+    free(sieve);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    const int limit = 100000;
+    std::vector<bool> sieve(limit, true);
+    int count = 0;
+    for (long long i = 2; i < limit; i++) {
+        if (sieve[i]) {
+            count++;
+            for (long long j = i * i; j < limit; j += i) {
+                sieve[j] = false;
+            }
+        }
+    }
+    std::cout << count << "\\n";
+    return 0;
 }`,
     },
 
@@ -2245,7 +2398,7 @@ pub fn main(init: std.process.Init) !void {
         next[0] = 1;
         var i: usize = 1;
         while (i < cur.len) : (i += 1) {
-            next[i] = cur[i - 1] + cur[i];
+            next[i] = cur[i - 1] +% cur[i];
         }
         next[cur.len] = 1;
         cur = next;
@@ -2303,7 +2456,7 @@ pub fn main(init: std.process.Init) !void {
     var c: i64 = 1;
     var i: usize = 0;
     while (i < 1_000_000) : (i += 1) {
-        const next = a + b + c;
+        const next = a +% b +% c;
         a = b;
         b = c;
         c = next;

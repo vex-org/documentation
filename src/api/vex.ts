@@ -120,6 +120,8 @@ export interface PresetCompareRequest {
   go_code: string
   rust_code: string
   zig_code: string
+  cpp_code?: string
+  c_code?: string
   opt_level?: string
 }
 

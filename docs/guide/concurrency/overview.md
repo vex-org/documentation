@@ -85,19 +85,29 @@ async fn process_items(): i32 {
 
 ## `select` Statement
 
-Current repository tests use a `select { ... }` statement form:
+`select` waits on multiple channel operations, executing the first one that becomes ready. Fully implemented with codegen + runtime backing (`vex_async_channel_select`).
 
 ```vex
+// Receive from whichever channel gets data first
 select {
-    val = c1.recv() => $println(f"Got int: {val}"),
-    msg = c2.recv() => $println(f"Got string: {msg}"),
-    timeout(1000) => $println("Timed out"),
+    val = <-ch1 => $println(f"From ch1: {val}"),
+    msg = <-ch2 => $println(f"From ch2: {msg}"),
+}
+
+// Send with timeout
+select {
+    ch <- value => $println("Sent"),
+    after 1.second() => $println("Timeout"),
+}
+
+// Non-blocking check with default
+select {
+    msg = <-ch => $println(f"Got: {msg}"),
+    default => $println("Nothing ready"),
 }
 ```
 
-::: warning Status Note
-`select` is present and tested, but current repository tests describe it as an MVP/front-end surface. Prefer simpler channel patterns unless you specifically need it.
-:::
+> **Fairness:** `select` picks randomly among ready cases to prevent starvation.
 
 ## Next Steps
 
