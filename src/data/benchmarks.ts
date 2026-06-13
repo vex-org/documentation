@@ -565,7 +565,53 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    double sum = 0.0;
+    for (int iter = 0; iter < 100000; iter++) {
+        double a[16] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        double b[16];
+        for (int i = 0; i < 16; i++) b[i] = a[i];
+        double c[16] = {0};
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                double s = 0.0;
+                for (int k = 0; k < 4; k++) {
+                    s += a[i*4+k] * b[k*4+j];
+                }
+                c[i*4+j] = s;
+            }
+        }
+        sum += c[0];
+    }
+    printf("%g\n", sum);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <array>
+
+int main() {
+    double sum = 0.0;
+    for (int iter = 0; iter < 100000; iter++) {
+        std::array<double, 16> a = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+        std::array<double, 16> b = a;
+        std::array<double, 16> c = {0};
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                double s = 0.0;
+                for (int k = 0; k < 4; k++) {
+                    s += a[i*4+k] * b[k*4+j];
+                }
+                c[i*4+j] = s;
+            }
+        }
+        sum += c[0];
+    }
+    std::cout << sum << "\n";
+    return 0;
+}`,
+        },
 
     // 7. Collatz Conjecture
     {
@@ -684,7 +730,65 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n{d}\\n", .{ max_n, max_len });
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int collatz_len(long long n) {
+    long long x = n;
+    int count = 0;
+    while (x > 1) {
+        if (x % 2 == 0) {
+            x /= 2;
+        } else {
+            x = 3 * x + 1;
+        }
+        count++;
+    }
+    return count;
+}
+
+int main() {
+    int max_len = 0;
+    long long max_n = 1;
+    for (long long i = 1; i < 100000; i++) {
+        int len = collatz_len(i);
+        if (len > max_len) {
+            max_len = len;
+            max_n = i;
+        }
+    }
+    printf("%lld\n%d\n", max_n, max_len);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int collatz_len(long long n) {
+    long long x = n;
+    int count = 0;
+    while (x > 1) {
+        if (x % 2 == 0) {
+            x /= 2;
+        } else {
+            x = 3 * x + 1;
+        }
+        count++;
+    }
+    return count;
+}
+
+int main() {
+    int max_len = 0;
+    long long max_n = 1;
+    for (long long i = 1; i < 100000; i++) {
+        int len = collatz_len(i);
+        if (len > max_len) {
+            max_len = len;
+            max_n = i;
+        }
+    }
+    std::cout << max_n << "\n" << max_len << "\n";
+    return 0;
+}`,
+        },
 
     // 8. Binary Search
     {
@@ -780,7 +884,58 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{found});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int binary_search(const int *arr, int len, int target) {
+    int lo = 0;
+    int hi = len - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (arr[mid] == target) return mid;
+        if (arr[mid] < target) {
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return -1;
+}
+
+int main() {
+    int *arr = malloc(10000 * sizeof(int));
+    for (int i = 0; i < 10000; i++) {
+        arr[i] = i;
+    }
+    int found = 0;
+    for (int i = 0; i < 1000000; i++) {
+        if (binary_search(arr, 10000, i % 10000) >= 0) {
+            found++;
+        }
+    }
+    printf("%d\n", found);
+    free(arr);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    std::vector<int> arr(10000);
+    for (int i = 0; i < 10000; i++) {
+        arr[i] = i;
+    }
+    int found = 0;
+    for (int i = 0; i < 1000000; i++) {
+        if (std::binary_search(arr.begin(), arr.end(), i % 10000)) {
+            found++;
+        }
+    }
+    std::cout << found << "\n";
+    return 0;
+}`,
+        },
 
     // 9. N-Body simulation step
     {
@@ -927,7 +1082,79 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{x[0]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n = 200;
+    double *x = malloc(n * sizeof(double));
+    double *y = malloc(n * sizeof(double));
+    double *vx = calloc(n, sizeof(double));
+    double *vy = calloc(n, sizeof(double));
+    for (int i = 0; i < n; i++) {
+        x[i] = (double)i;
+        y[i] = (double)i * 0.5;
+    }
+    for (int step = 0; step < 100; step++) {
+        for (int i = 0; i < n; i++) {
+            double fx = 0.0, fy = 0.0;
+            for (int j = 0; j < n; j++) {
+                if (i != j) {
+                    double dx = x[j] - x[i];
+                    double dy = y[j] - y[i];
+                    double dist = dx*dx + dy*dy + 0.01;
+                    double force = 1.0 / dist;
+                    fx += dx * force;
+                    fy += dy * force;
+                }
+            }
+            vx[i] += fx * 0.001;
+            vy[i] += fy * 0.001;
+        }
+        for (int i = 0; i < n; i++) {
+            x[i] += vx[i];
+            y[i] += vy[i];
+        }
+    }
+    printf("%g\n", x[0]);
+    free(x); free(y); free(vx); free(vy);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    int n = 200;
+    std::vector<double> x(n), y(n), vx(n, 0.0), vy(n, 0.0);
+    for (int i = 0; i < n; i++) {
+        x[i] = (double)i;
+        y[i] = (double)i * 0.5;
+    }
+    for (int step = 0; step < 100; step++) {
+        for (int i = 0; i < n; i++) {
+            double fx = 0.0, fy = 0.0;
+            for (int j = 0; j < n; j++) {
+                if (i != j) {
+                    double dx = x[j] - x[i];
+                    double dy = y[j] - y[i];
+                    double dist = dx*dx + dy*dy + 0.01;
+                    double force = 1.0 / dist;
+                    fx += dx * force;
+                    fy += dy * force;
+                }
+            }
+            vx[i] += fx * 0.001;
+            vy[i] += fy * 0.001;
+        }
+        for (int i = 0; i < n; i++) {
+            x[i] += vx[i];
+            y[i] += vy[i];
+        }
+    }
+    std::cout << x[0] << "\n";
+    return 0;
+}`,
+        },
 
     // 10. FizzBuzz (100K iterations)
     {
@@ -987,7 +1214,31 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    int count = 0;
+    for (int i = 1; i <= 100000; i++) {
+        if (i % 15 == 0) count += 3;
+        else if (i % 3 == 0) count += 1;
+        else if (i % 5 == 0) count += 2;
+    }
+    printf("%d\n", count);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int main() {
+    int count = 0;
+    for (int i = 1; i <= 100000; i++) {
+        if (i % 15 == 0) count += 3;
+        else if (i % 3 == 0) count += 1;
+        else if (i % 5 == 0) count += 2;
+    }
+    std::cout << count << "\n";
+    return 0;
+}`,
+        },
 
     // 11. Sum of squares
     {
@@ -1031,7 +1282,27 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    long long total = 0;
+    for (long long i = 0; i < 1000000; i++) {
+        total += i * i;
+    }
+    printf("%lld\n", total);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int main() {
+    long long total = 0;
+    for (long long i = 0; i < 1000000; i++) {
+        total += i * i;
+    }
+    std::cout << total << "\n";
+    return 0;
+}`,
+        },
 
     // 12. Prefix sum
     {
@@ -1095,7 +1366,42 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{values[n - 1]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    const int n = 200000;
+    long long *values = malloc(n * sizeof(long long));
+    for (int i = 0; i < n; i++) {
+        values[i] = i % 97;
+    }
+    long long running = 0;
+    for (int i = 0; i < n; i++) {
+        running += values[i];
+        values[i] = running;
+    }
+    printf("%lld\n", values[n - 1]);
+    free(values);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    const int n = 200000;
+    std::vector<long long> values(n);
+    for (int i = 0; i < n; i++) {
+        values[i] = i % 97;
+    }
+    long long running = 0;
+    for (int i = 0; i < n; i++) {
+        running += values[i];
+        values[i] = running;
+    }
+    std::cout << values[n - 1] << "\n";
+    return 0;
+}`,
+        },
 
     // 13. XorShift RNG
     {
@@ -1177,7 +1483,45 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+unsigned long long next_rng(unsigned long long x) {
+    x ^= x << 13;
+    x ^= x >> 7;
+    x ^= x << 17;
+    return x;
+}
+
+int main() {
+    unsigned long long state = 88172645463325252ULL;
+    unsigned long long checksum = 0;
+    for (int i = 0; i < 5000000; i++) {
+        state = next_rng(state);
+        checksum ^= state;
+    }
+    printf("%llu\n", checksum);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+unsigned long long next_rng(unsigned long long x) {
+    x ^= x << 13;
+    x ^= x >> 7;
+    x ^= x << 17;
+    return x;
+}
+
+int main() {
+    unsigned long long state = 88172645463325252ULL;
+    unsigned long long checksum = 0;
+    for (int i = 0; i < 5000000; i++) {
+        state = next_rng(state);
+        checksum ^= state;
+    }
+    std::cout << checksum << "\n";
+    return 0;
+}`,
+        },
 
     // 14. Histogram
     {
@@ -1225,7 +1569,30 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{hist[0] + hist[17] + hist[42]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    int hist[256] = {0};
+    for (int i = 0; i < 1000000; i++) {
+        int idx = (i * 17 + 23) % 256;
+        hist[idx]++;
+    }
+    printf("%d\n", hist[0] + hist[17] + hist[42]);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <array>
+
+int main() {
+    std::array<int, 256> hist = {0};
+    for (int i = 0; i < 1000000; i++) {
+        int idx = (i * 17 + 23) % 256;
+        hist[idx]++;
+    }
+    std::cout << (hist[0] + hist[17] + hist[42]) << "\n";
+    return 0;
+}`,
+        },
 
     // 15. Horner polynomial
     {
@@ -1285,7 +1652,35 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{acc});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+double poly(double x) {
+    return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0);
+}
+
+int main() {
+    double acc = 0.0;
+    for (int i = 0; i < 2000000; i++) {
+        acc += poly((i % 1000) * 0.001);
+    }
+    printf("%g\n", acc);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+double poly(double x) {
+    return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0);
+}
+
+int main() {
+    double acc = 0.0;
+    for (int i = 0; i < 2000000; i++) {
+        acc += poly((i % 1000) * 0.001);
+    }
+    std::cout << acc << "\n";
+    return 0;
+}`,
+        },
 
     // 16. Mandelbrot mini
     {
@@ -1396,7 +1791,55 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int escape(double cx, double cy) {
+    double zr = 0.0;
+    double zi = 0.0;
+    for (int it = 0; it < 50; it++) {
+        double zr2 = zr * zr - zi * zi + cx;
+        zi = 2.0 * zr * zi + cy;
+        zr = zr2;
+        if (zr * zr + zi * zi > 4.0) return it;
+    }
+    return 50;
+}
+
+int main() {
+    int total = 0;
+    for (int py = 0; py < 64; py++) {
+        for (int px = 0; px < 64; px++) {
+            total += escape((double)px * 0.05 - 2.0, (double)py * 0.05 - 1.6);
+        }
+    }
+    printf("%d\n", total);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int escape(double cx, double cy) {
+    double zr = 0.0;
+    double zi = 0.0;
+    for (int it = 0; it < 50; it++) {
+        double zr2 = zr * zr - zi * zi + cx;
+        zi = 2.0 * zr * zi + cy;
+        zr = zr2;
+        if (zr * zr + zi * zi > 4.0) return it;
+    }
+    return 50;
+}
+
+int main() {
+    int total = 0;
+    for (int py = 0; py < 64; py++) {
+        for (int px = 0; px < 64; px++) {
+            total += escape((double)px * 0.05 - 2.0, (double)py * 0.05 - 1.6);
+        }
+    }
+    std::cout << total << "\n";
+    return 0;
+}`,
+        },
 
     // 17. Bit count
     {
@@ -1479,7 +1922,45 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int popcount(unsigned long long x) {
+    int count = 0;
+    while (x != 0) {
+        x &= x - 1;
+        count++;
+    }
+    return count;
+}
+
+int main() {
+    int total = 0;
+    for (unsigned long long i = 1; i <= 1000000; i++) {
+        total += popcount(i * 2654435761ULL);
+    }
+    printf("%d\n", total);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int popcount(unsigned long long x) {
+    int count = 0;
+    while (x != 0) {
+        x &= x - 1;
+        count++;
+    }
+    return count;
+}
+
+int main() {
+    int total = 0;
+    for (unsigned long long i = 1; i <= 1000000; i++) {
+        total += popcount(i * 2654435761ULL);
+    }
+    std::cout << total << "\n";
+    return 0;
+}`,
+        },
 
     // 18. GCD sweep
     {
@@ -1561,7 +2042,45 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+long long gcd(long long a, long long b) {
+    while (b != 0) {
+        long long t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+int main() {
+    long long total = 0;
+    for (long long i = 1; i <= 500000; i++) {
+        total += gcd(i * 17, i * 29 + 1);
+    }
+    printf("%lld\n", total);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+long long gcd(long long a, long long b) {
+    while (b != 0) {
+        long long t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+int main() {
+    long long total = 0;
+    for (long long i = 1; i <= 500000; i++) {
+        total += gcd(i * 17, i * 29 + 1);
+    }
+    std::cout << total << "\n";
+    return 0;
+}`,
+        },
 
     // 19. Trapezoid integration
     {
@@ -1629,7 +2148,39 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{area});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+double f(double x) { return x * x; }
+
+int main() {
+    int n = 1000000;
+    double h = 1.0 / (double)n;
+    double area = 0.0;
+    for (int i = 0; i < n; i++) {
+        double x0 = (double)i * h;
+        double x1 = (double)(i + 1) * h;
+        area += (f(x0) + f(x1)) * h * 0.5;
+    }
+    printf("%g\n", area);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+double f(double x) { return x * x; }
+
+int main() {
+    int n = 1000000;
+    double h = 1.0 / (double)n;
+    double area = 0.0;
+    for (int i = 0; i < n; i++) {
+        double x0 = (double)i * h;
+        double x1 = (double)(i + 1) * h;
+        area += (f(x0) + f(x1)) * h * 0.5;
+    }
+    std::cout << area << "\n";
+    return 0;
+}`,
+        },
 
     // 20. Monte Carlo pi
     {
@@ -1717,7 +2268,49 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{inside});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+unsigned long long next_rng(unsigned long long state) {
+    return state * 6364136223846793005ULL + 1;
+}
+
+int main() {
+    unsigned long long state = 1;
+    int inside = 0;
+    for (int i = 0; i < 1000000; i++) {
+        state = next_rng(state);
+        double x = (double)(state % 1000000) / 1000000.0;
+        state = next_rng(state);
+        double y = (double)(state % 1000000) / 1000000.0;
+        if (x * x + y * y <= 1.0) {
+            inside += 1;
+        }
+    }
+    printf("%d\n", inside);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+unsigned long long next_rng(unsigned long long state) {
+    return state * 6364136223846793005ULL + 1;
+}
+
+int main() {
+    unsigned long long state = 1;
+    int inside = 0;
+    for (int i = 0; i < 1000000; i++) {
+        state = next_rng(state);
+        double x = (double)(state % 1000000) / 1000000.0;
+        state = next_rng(state);
+        double y = (double)(state % 1000000) / 1000000.0;
+        if (x * x + y * y <= 1.0) {
+            inside += 1;
+        }
+    }
+    std::cout << inside << "\n";
+    return 0;
+}`,
+        },
 
     // 21. 3x3 stencil
     {
@@ -1816,7 +2409,57 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{src[n + 1]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n = 64;
+    double *src = malloc(n * n * sizeof(double));
+    double *dst = calloc(n * n, sizeof(double));
+    for (int i = 0; i < n * n; i++) {
+        src[i] = (double)(i % 17);
+    }
+    for (int step = 0; step < 50; step++) {
+        for (int y = 1; y < n - 1; y++) {
+            for (int x = 1; x < n - 1; x++) {
+                int idx = y * n + x;
+                double sum = src[idx - n - 1] + src[idx - n] + src[idx - n + 1] +
+                             src[idx - 1]       + src[idx]       + src[idx + 1] +
+                             src[idx + n - 1] + src[idx + n] + src[idx + n + 1];
+                dst[idx] = sum / 9.0;
+            }
+        }
+        for (int i = 0; i < n * n; i++) src[i] = dst[i];
+    }
+    printf("%g\n", src[n + 1]);
+    free(src); free(dst);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    int n = 64;
+    std::vector<double> src(n * n), dst(n * n, 0.0);
+    for (int i = 0; i < n * n; i++) {
+        src[i] = (double)(i % 17);
+    }
+    for (int step = 0; step < 50; step++) {
+        for (int y = 1; y < n - 1; y++) {
+            for (int x = 1; x < n - 1; x++) {
+                int idx = y * n + x;
+                double sum = src[idx - n - 1] + src[idx - n] + src[idx - n + 1] +
+                             src[idx - 1]       + src[idx]       + src[idx + 1] +
+                             src[idx + n - 1] + src[idx + n] + src[idx + n + 1];
+                dst[idx] = sum / 9.0;
+            }
+        }
+        src = dst;
+    }
+    std::cout << src[n + 1] << "\n";
+    return 0;
+}`,
+        },
 
     // 22. Moving average
     {
@@ -1898,7 +2541,50 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int n = 500000;
+    int window = 32;
+    long long *values = malloc(n * sizeof(long long));
+    for (int i = 0; i < n; i++) {
+        values[i] = i % 31;
+    }
+    long long rolling = 0;
+    for (int i = 0; i < window; i++) {
+        rolling += values[i];
+    }
+    long long checksum = rolling;
+    for (int i = window; i < n; i++) {
+        rolling += values[i] - values[i - window];
+        checksum += rolling;
+    }
+    printf("%lld\n", checksum);
+    free(values);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+#include <numeric>
+
+int main() {
+    int n = 500000;
+    int window = 32;
+    std::vector<long long> values(n);
+    for (int i = 0; i < n; i++) {
+        values[i] = i % 31;
+    }
+    long long rolling = std::accumulate(values.begin(), values.begin() + window, 0LL);
+    long long checksum = rolling;
+    for (int i = window; i < n; i++) {
+        rolling += values[i] - values[i - window];
+        checksum += rolling;
+    }
+    std::cout << checksum << "\n";
+    return 0;
+}`,
+        },
 
     // 23. Selection sort
     {
@@ -1993,7 +2679,58 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    long long checksum = 0;
+    for (int round = 0; round < 200; round++) {
+        long long values[512];
+        for (int i = 0; i < 512; i++) {
+            values[i] = (i * 73 + round * 19) % 997;
+        }
+        for (int i = 0; i < 511; i++) {
+            int best = i;
+            for (int j = i + 1; j < 512; j++) {
+                if (values[j] < values[best]) {
+                    best = j;
+                }
+            }
+            long long tmp = values[i];
+            values[i] = values[best];
+            values[best] = tmp;
+        }
+        checksum += values[0] + values[511];
+    }
+    printf("%lld\n", checksum);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    long long checksum = 0;
+    for (int round = 0; round < 200; round++) {
+        std::vector<long long> values(512);
+        for (int i = 0; i < 512; i++) {
+            values[i] = (i * 73 + round * 19) % 997;
+        }
+        for (int i = 0; i < 511; i++) {
+            int best = i;
+            for (int j = i + 1; j < 512; j++) {
+                if (values[j] < values[best]) {
+                    best = j;
+                }
+            }
+            std::swap(values[i], values[best]);
+        }
+        checksum += values[0] + values[511];
+    }
+    std::cout << checksum << "\n";
+    return 0;
+}`,
+        },
 
     // 24. Merge sorted arrays
     {
@@ -2119,7 +2856,62 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    long long checksum = 0;
+    long long *a = malloc(2048 * sizeof(long long));
+    long long *b = malloc(2048 * sizeof(long long));
+    long long *merged = malloc(4096 * sizeof(long long));
+    for (int round = 0; round < 400; round++) {
+        for (int i = 0; i < 2048; i++) {
+            a[i] = i * 2;
+            b[i] = i * 2 + 1;
+        }
+        int ia = 0, ib = 0, im = 0;
+        while (ia < 2048 && ib < 2048) {
+            if (a[ia] < b[ib]) {
+                merged[im++] = a[ia++];
+            } else {
+                merged[im++] = b[ib++];
+            }
+        }
+        while (ia < 2048) merged[im++] = a[ia++];
+        while (ib < 2048) merged[im++] = b[ib++];
+        checksum += merged[0] + merged[4095];
+    }
+    printf("%lld\n", checksum);
+    free(a); free(b); free(merged);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    long long checksum = 0;
+    std::vector<long long> a(2048), b(2048), merged(4096);
+    for (int round = 0; round < 400; round++) {
+        for (int i = 0; i < 2048; i++) {
+            a[i] = i * 2;
+            b[i] = i * 2 + 1;
+        }
+        int ia = 0, ib = 0, im = 0;
+        while (ia < 2048 && ib < 2048) {
+            if (a[ia] < b[ib]) {
+                merged[im++] = a[ia++];
+            } else {
+                merged[im++] = b[ib++];
+            }
+        }
+        while (ia < 2048) merged[im++] = a[ia++];
+        while (ib < 2048) merged[im++] = b[ib++];
+        checksum += merged[0] + merged[4095];
+    }
+    std::cout << checksum << "\n";
+    return 0;
+}`,
+        },
 
     // 25. Ring buffer
     {
@@ -2196,7 +2988,44 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int cap = 1024;
+    long long *buf = calloc(cap, sizeof(long long));
+    int head = 0, tail = 0;
+    long long checksum = 0;
+    for (int i = 0; i < 200000; i++) {
+        buf[tail] = i;
+        tail = (tail + 1) % cap;
+        long long value = buf[head];
+        head = (head + 1) % cap;
+        checksum += value;
+    }
+    printf("%lld\n", checksum);
+    free(buf);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    int cap = 1024;
+    std::vector<long long> buf(cap, 0);
+    int head = 0, tail = 0;
+    long long checksum = 0;
+    for (int i = 0; i < 200000; i++) {
+        buf[tail] = i;
+        tail = (tail + 1) % cap;
+        long long value = buf[head];
+        head = (head + 1) % cap;
+        checksum += value;
+    }
+    std::cout << checksum << "\n";
+    return 0;
+}`,
+        },
 
     // 26. LCG checksum
     {
@@ -2248,7 +3077,31 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    unsigned long long x = 123456789;
+    unsigned long long checksum = 0;
+    for (int i = 0; i < 5000000; i++) {
+        x = x * 1664525 + 1013904223;
+        checksum += x & 65535;
+    }
+    printf("%llu\n", checksum);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int main() {
+    unsigned long long x = 123456789;
+    unsigned long long checksum = 0;
+    for (int i = 0; i < 5000000; i++) {
+        x = x * 1664525 + 1013904223;
+        checksum += x & 65535;
+    }
+    std::cout << checksum << "\n";
+    return 0;
+}`,
+        },
 
     // 27. Pairwise distance
     {
@@ -2331,7 +3184,49 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    int n = 128;
+    double x[128];
+    double y[128];
+    for (int i = 0; i < n; i++) {
+        x[i] = (double)i * 0.25;
+        y[i] = (double)i * 0.5;
+    }
+    double total = 0.0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            double dx = x[i] - x[j];
+            double dy = y[i] - y[j];
+            total += dx * dx + dy * dy;
+        }
+    }
+    printf("%g\n", total);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    int n = 128;
+    std::vector<double> x(n), y(n);
+    for (int i = 0; i < n; i++) {
+        x[i] = (double)i * 0.25;
+        y[i] = (double)i * 0.5;
+    }
+    double total = 0.0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            double dx = x[i] - x[j];
+            double dy = y[i] - y[j];
+            total += dx * dx + dy * dy;
+        }
+    }
+    std::cout << total << "\n";
+    return 0;
+}`,
+        },
 
     // 28. Pascal row
     {
@@ -2407,7 +3302,49 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{cur[cur.len / 2]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int rows = 256;
+    long long *current = malloc(1 * sizeof(long long));
+    current[0] = 1;
+    int current_len = 1;
+    for (int row = 1; row < rows; row++) {
+        int next_len = current_len + 1;
+        long long *next = malloc(next_len * sizeof(long long));
+        next[0] = 1;
+        for (int i = 1; i < current_len; i++) {
+            next[i] = current[i - 1] + current[i];
+        }
+        next[current_len] = 1;
+        free(current);
+        current = next;
+        current_len = next_len;
+    }
+    printf("%lld\n", current[current_len / 2]);
+    free(current);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <vector>
+
+int main() {
+    int rows = 256;
+    std::vector<long long> current = {1};
+    for (int row = 1; row < rows; row++) {
+        std::vector<long long> next(current.size() + 1);
+        next[0] = 1;
+        for (size_t i = 1; i < current.size(); i++) {
+            next[i] = current[i - 1] + current[i];
+        }
+        next[current.size()] = 1;
+        current = std::move(next);
+    }
+    std::cout << current[current.size() / 2] << "\n";
+    return 0;
+}`,
+        },
 
     // 29. Tribonacci
     {
@@ -2465,7 +3402,33 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{c});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+int main() {
+    long long a = 0, b = 1, c = 1;
+    for (int i = 0; i < 1000000; i++) {
+        long long next = a + b + c;
+        a = b;
+        b = c;
+        c = next;
+    }
+    printf("%lld\n", c);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+
+int main() {
+    long long a = 0, b = 1, c = 1;
+    for (int i = 0; i < 1000000; i++) {
+        long long next = a + b + c;
+        a = b;
+        b = c;
+        c = next;
+    }
+    std::cout << c << "\n";
+    return 0;
+}`,
+        },
 
     // 30. Min/max reduction
     {
@@ -2554,5 +3517,55 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{acc});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-    },
+    c: `#include <stdio.h>
+
+double lane_min(double v[4]) {
+    double best = v[0];
+    for (int i = 1; i < 4; i++) {
+        if (v[i] < best) best = v[i];
+    }
+    return best;
+}
+
+double lane_max(double v[4]) {
+    double best = v[0];
+    for (int i = 1; i < 4; i++) {
+        if (v[i] > best) best = v[i];
+    }
+    return best;
+}
+
+int main() {
+    double acc = 0.0;
+    for (int i = 0; i < 500000; i++) {
+        double base = (double)i * 0.001;
+        double v[4] = {base, base + 3.0, base - 2.0, base + 1.0};
+        acc += lane_max(v) - lane_min(v);
+    }
+    printf("%g\n", acc);
+    return 0;
+}`,
+        cpp: `#include <iostream>
+#include <array>
+#include <algorithm>
+
+double lane_min(const std::array<double, 4>& v) {
+    return *std::min_element(v.begin(), v.end());
+}
+
+double lane_max(const std::array<double, 4>& v) {
+    return *std::max_element(v.begin(), v.end());
+}
+
+int main() {
+    double acc = 0.0;
+    for (int i = 0; i < 500000; i++) {
+        double base = (double)i * 0.001;
+        std::array<double, 4> v = {base, base + 3.0, base - 2.0, base + 1.0};
+        acc += lane_max(v) - lane_min(v);
+    }
+    std::cout << acc << "\n";
+    return 0;
+}`,
+        },
 ]

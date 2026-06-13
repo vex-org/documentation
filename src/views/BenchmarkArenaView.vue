@@ -52,7 +52,7 @@ const customError = ref("");
 const customDisclaimer = ref("");
 
 // Shared
-const selectedLangs = ref(["go", "rust", "zig"]);
+const selectedLangs = ref(["go", "rust", "zig", "c", "cpp"]);
 const availableLangs = computed(() => {
   if (activeTab.value === "custom") {
     return ["go", "rust", "zig"];
