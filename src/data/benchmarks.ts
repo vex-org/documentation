@@ -70,7 +70,7 @@ int fib(int n) {
 
 int main() {
     int result = fib(35);
-    printf("%d\\n", result);
+    printf("%d\\\n", result);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -82,7 +82,7 @@ int fib(int n) {
 
 int main() {
     int result = fib(35);
-    std::cout << result << "\\n";
+    std::cout << result << "\\\n";
     return 0;
 }`,
     },
@@ -136,7 +136,7 @@ int main() {
     for (int i = 0; i < 1000000; i++) {
         sum += i;
     }
-    printf("%lld\\n", sum);
+    printf("%lld\\\n", sum);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -146,7 +146,7 @@ int main() {
     for (int i = 0; i < 1000000; i++) {
         sum += i;
     }
-    std::cout << sum << "\\n";
+    std::cout << sum << "\\\n";
     return 0;
 }`,
     },
@@ -198,7 +198,7 @@ pub fn main(init: std.process.Init) !void {
 
 int main() {
     char *s = malloc(1);
-    s[0] = '\\0';
+    s[0] = '\\\0';
     int capacity = 1;
     int len = 0;
     for (int i = 0; i < 10000; i++) {
@@ -207,9 +207,9 @@ int main() {
             s = realloc(s, capacity);
         }
         s[len++] = 'x';
-        s[len] = '\\0';
+        s[len] = '\\\0';
     }
-    printf("%d\\n", len);
+    printf("%d\\\n", len);
     free(s);
     return 0;
 }`,
@@ -221,7 +221,7 @@ int main() {
     for (int i = 0; i < 10000; i++) {
         s += "x";
     }
-    std::cout << s.length() << "\\n";
+    std::cout << s.length() << "\\\n";
     return 0;
 }`,
     },
@@ -307,7 +307,7 @@ int main() {
         double b[4] = {5.0, 6.0, 7.0, 8.0};
         sum += dot(a, b);
     }
-    printf("%g\\n", sum);
+    printf("%g\\\n", sum);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -325,7 +325,7 @@ int main() {
         std::array<double, 4> b = {5.0, 6.0, 7.0, 8.0};
         sum += dot(a, b);
     }
-    std::cout << sum << "\\n";
+    std::cout << sum << "\\\n";
     return 0;
 }`,
     },
@@ -445,7 +445,7 @@ int main() {
             }
         }
     }
-    printf("%d\\n", count);
+    printf("%d\\\n", count);
     free(sieve);
     return 0;
 }`,
@@ -464,7 +464,7 @@ int main() {
             }
         }
     }
-    std::cout << count << "\\n";
+    std::cout << count << "\\\n";
     return 0;
 }`,
     },
@@ -585,7 +585,7 @@ int main() {
         }
         sum += c[0];
     }
-    printf("%g\n", sum);
+    printf("%g\\n", sum);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -608,7 +608,7 @@ int main() {
         }
         sum += c[0];
     }
-    std::cout << sum << "\n";
+    std::cout << sum << "\\n";
     return 0;
 }`,
         },
@@ -756,7 +756,7 @@ int main() {
             max_n = i;
         }
     }
-    printf("%lld\n%d\n", max_n, max_len);
+    printf("%lld\\n%d\\n", max_n, max_len);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -785,7 +785,7 @@ int main() {
             max_n = i;
         }
     }
-    std::cout << max_n << "\n" << max_len << "\n";
+    std::cout << max_n << "\\n" << max_len << "\\n";
     return 0;
 }`,
         },
@@ -913,7 +913,7 @@ int main() {
             found++;
         }
     }
-    printf("%d\n", found);
+    printf("%d\\n", found);
     free(arr);
     return 0;
 }`,
@@ -932,7 +932,7 @@ int main() {
             found++;
         }
     }
-    std::cout << found << "\n";
+    std::cout << found << "\\n";
     return 0;
 }`,
         },
@@ -1116,7 +1116,7 @@ int main() {
             y[i] += vy[i];
         }
     }
-    printf("%g\n", x[0]);
+    printf("%g\\n", x[0]);
     free(x); free(y); free(vx); free(vy);
     return 0;
 }`,
@@ -1151,7 +1151,7 @@ int main() {
             y[i] += vy[i];
         }
     }
-    std::cout << x[0] << "\n";
+    std::cout << x[0] << "\\n";
     return 0;
 }`,
         },
@@ -1223,7 +1223,7 @@ int main() {
         else if (i % 3 == 0) count += 1;
         else if (i % 5 == 0) count += 2;
     }
-    printf("%d\n", count);
+    printf("%d\\n", count);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1235,7 +1235,7 @@ int main() {
         else if (i % 3 == 0) count += 1;
         else if (i % 5 == 0) count += 2;
     }
-    std::cout << count << "\n";
+    std::cout << count << "\\n";
     return 0;
 }`,
         },
@@ -1289,7 +1289,7 @@ int main() {
     for (long long i = 0; i < 1000000; i++) {
         total += i * i;
     }
-    printf("%lld\n", total);
+    printf("%lld\\n", total);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1299,7 +1299,7 @@ int main() {
     for (long long i = 0; i < 1000000; i++) {
         total += i * i;
     }
-    std::cout << total << "\n";
+    std::cout << total << "\\n";
     return 0;
 }`,
         },
@@ -1380,7 +1380,7 @@ int main() {
         running += values[i];
         values[i] = running;
     }
-    printf("%lld\n", values[n - 1]);
+    printf("%lld\\n", values[n - 1]);
     free(values);
     return 0;
 }`,
@@ -1398,7 +1398,7 @@ int main() {
         running += values[i];
         values[i] = running;
     }
-    std::cout << values[n - 1] << "\n";
+    std::cout << values[n - 1] << "\\n";
     return 0;
 }`,
         },
@@ -1499,7 +1499,7 @@ int main() {
         state = next_rng(state);
         checksum ^= state;
     }
-    printf("%llu\n", checksum);
+    printf("%llu\\n", checksum);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1518,7 +1518,7 @@ int main() {
         state = next_rng(state);
         checksum ^= state;
     }
-    std::cout << checksum << "\n";
+    std::cout << checksum << "\\n";
     return 0;
 }`,
         },
@@ -1577,7 +1577,7 @@ int main() {
         int idx = (i * 17 + 23) % 256;
         hist[idx]++;
     }
-    printf("%d\n", hist[0] + hist[17] + hist[42]);
+    printf("%d\\n", hist[0] + hist[17] + hist[42]);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1589,7 +1589,7 @@ int main() {
         int idx = (i * 17 + 23) % 256;
         hist[idx]++;
     }
-    std::cout << (hist[0] + hist[17] + hist[42]) << "\n";
+    std::cout << (hist[0] + hist[17] + hist[42]) << "\\n";
     return 0;
 }`,
         },
@@ -1663,7 +1663,7 @@ int main() {
     for (int i = 0; i < 2000000; i++) {
         acc += poly((i % 1000) * 0.001);
     }
-    printf("%g\n", acc);
+    printf("%g\\n", acc);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1677,7 +1677,7 @@ int main() {
     for (int i = 0; i < 2000000; i++) {
         acc += poly((i % 1000) * 0.001);
     }
-    std::cout << acc << "\n";
+    std::cout << acc << "\\n";
     return 0;
 }`,
         },
@@ -1812,7 +1812,7 @@ int main() {
             total += escape((double)px * 0.05 - 2.0, (double)py * 0.05 - 1.6);
         }
     }
-    printf("%d\n", total);
+    printf("%d\\n", total);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1836,7 +1836,7 @@ int main() {
             total += escape((double)px * 0.05 - 2.0, (double)py * 0.05 - 1.6);
         }
     }
-    std::cout << total << "\n";
+    std::cout << total << "\\n";
     return 0;
 }`,
         },
@@ -1938,7 +1938,7 @@ int main() {
     for (unsigned long long i = 1; i <= 1000000; i++) {
         total += popcount(i * 2654435761ULL);
     }
-    printf("%d\n", total);
+    printf("%d\\n", total);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -1957,7 +1957,7 @@ int main() {
     for (unsigned long long i = 1; i <= 1000000; i++) {
         total += popcount(i * 2654435761ULL);
     }
-    std::cout << total << "\n";
+    std::cout << total << "\\n";
     return 0;
 }`,
         },
@@ -2058,7 +2058,7 @@ int main() {
     for (long long i = 1; i <= 500000; i++) {
         total += gcd(i * 17, i * 29 + 1);
     }
-    printf("%lld\n", total);
+    printf("%lld\\n", total);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -2077,7 +2077,7 @@ int main() {
     for (long long i = 1; i <= 500000; i++) {
         total += gcd(i * 17, i * 29 + 1);
     }
-    std::cout << total << "\n";
+    std::cout << total << "\\n";
     return 0;
 }`,
         },
@@ -2161,7 +2161,7 @@ int main() {
         double x1 = (double)(i + 1) * h;
         area += (f(x0) + f(x1)) * h * 0.5;
     }
-    printf("%g\n", area);
+    printf("%g\\n", area);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -2177,7 +2177,7 @@ int main() {
         double x1 = (double)(i + 1) * h;
         area += (f(x0) + f(x1)) * h * 0.5;
     }
-    std::cout << area << "\n";
+    std::cout << area << "\\n";
     return 0;
 }`,
         },
@@ -2286,7 +2286,7 @@ int main() {
             inside += 1;
         }
     }
-    printf("%d\n", inside);
+    printf("%d\\n", inside);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -2307,7 +2307,7 @@ int main() {
             inside += 1;
         }
     }
-    std::cout << inside << "\n";
+    std::cout << inside << "\\n";
     return 0;
 }`,
         },
@@ -2431,7 +2431,7 @@ int main() {
         }
         for (int i = 0; i < n * n; i++) src[i] = dst[i];
     }
-    printf("%g\n", src[n + 1]);
+    printf("%g\\n", src[n + 1]);
     free(src); free(dst);
     return 0;
 }`,
@@ -2456,7 +2456,7 @@ int main() {
         }
         src = dst;
     }
-    std::cout << src[n + 1] << "\n";
+    std::cout << src[n + 1] << "\\n";
     return 0;
 }`,
         },
@@ -2560,7 +2560,7 @@ int main() {
         rolling += values[i] - values[i - window];
         checksum += rolling;
     }
-    printf("%lld\n", checksum);
+    printf("%lld\\n", checksum);
     free(values);
     return 0;
 }`,
@@ -2581,7 +2581,7 @@ int main() {
         rolling += values[i] - values[i - window];
         checksum += rolling;
     }
-    std::cout << checksum << "\n";
+    std::cout << checksum << "\\n";
     return 0;
 }`,
         },
@@ -2702,7 +2702,7 @@ int main() {
         }
         checksum += values[0] + values[511];
     }
-    printf("%lld\n", checksum);
+    printf("%lld\\n", checksum);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -2727,7 +2727,7 @@ int main() {
         }
         checksum += values[0] + values[511];
     }
-    std::cout << checksum << "\n";
+    std::cout << checksum << "\\n";
     return 0;
 }`,
         },
@@ -2881,7 +2881,7 @@ int main() {
         while (ib < 2048) merged[im++] = b[ib++];
         checksum += merged[0] + merged[4095];
     }
-    printf("%lld\n", checksum);
+    printf("%lld\\n", checksum);
     free(a); free(b); free(merged);
     return 0;
 }`,
@@ -2908,7 +2908,7 @@ int main() {
         while (ib < 2048) merged[im++] = b[ib++];
         checksum += merged[0] + merged[4095];
     }
-    std::cout << checksum << "\n";
+    std::cout << checksum << "\\n";
     return 0;
 }`,
         },
@@ -3003,7 +3003,7 @@ int main() {
         head = (head + 1) % cap;
         checksum += value;
     }
-    printf("%lld\n", checksum);
+    printf("%lld\\n", checksum);
     free(buf);
     return 0;
 }`,
@@ -3022,7 +3022,7 @@ int main() {
         head = (head + 1) % cap;
         checksum += value;
     }
-    std::cout << checksum << "\n";
+    std::cout << checksum << "\\n";
     return 0;
 }`,
         },
@@ -3086,7 +3086,7 @@ int main() {
         x = x * 1664525 + 1013904223;
         checksum += x & 65535;
     }
-    printf("%llu\n", checksum);
+    printf("%llu\\n", checksum);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -3098,7 +3098,7 @@ int main() {
         x = x * 1664525 + 1013904223;
         checksum += x & 65535;
     }
-    std::cout << checksum << "\n";
+    std::cout << checksum << "\\n";
     return 0;
 }`,
         },
@@ -3202,7 +3202,7 @@ int main() {
             total += dx * dx + dy * dy;
         }
     }
-    printf("%g\n", total);
+    printf("%g\\n", total);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -3223,7 +3223,7 @@ int main() {
             total += dx * dx + dy * dy;
         }
     }
-    std::cout << total << "\n";
+    std::cout << total << "\\n";
     return 0;
 }`,
         },
@@ -3322,7 +3322,7 @@ int main() {
         current = next;
         current_len = next_len;
     }
-    printf("%lld\n", current[current_len / 2]);
+    printf("%lld\\n", current[current_len / 2]);
     free(current);
     return 0;
 }`,
@@ -3341,7 +3341,7 @@ int main() {
         next[current.size()] = 1;
         current = std::move(next);
     }
-    std::cout << current[current.size() / 2] << "\n";
+    std::cout << current[current.size() / 2] << "\\n";
     return 0;
 }`,
         },
@@ -3412,7 +3412,7 @@ int main() {
         b = c;
         c = next;
     }
-    printf("%lld\n", c);
+    printf("%lld\\n", c);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -3425,7 +3425,7 @@ int main() {
         b = c;
         c = next;
     }
-    std::cout << c << "\n";
+    std::cout << c << "\\n";
     return 0;
 }`,
         },
@@ -3542,7 +3542,7 @@ int main() {
         double v[4] = {base, base + 3.0, base - 2.0, base + 1.0};
         acc += lane_max(v) - lane_min(v);
     }
-    printf("%g\n", acc);
+    printf("%g\\n", acc);
     return 0;
 }`,
         cpp: `#include <iostream>
@@ -3564,7 +3564,7 @@ int main() {
         std::array<double, 4> v = {base, base + 3.0, base - 2.0, base + 1.0};
         acc += lane_max(v) - lane_min(v);
     }
-    std::cout << acc << "\n";
+    std::cout << acc << "\\n";
     return 0;
 }`,
         },
