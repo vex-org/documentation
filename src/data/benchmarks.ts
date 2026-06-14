@@ -58,7 +58,7 @@ fn fib(n: i32) i32 {
 pub fn main(init: std.process.Init) !void {
     const result = fib(35);
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{result});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{result});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
@@ -126,7 +126,7 @@ pub fn main(init: std.process.Init) !void {
         sum += i;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{sum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
@@ -189,7 +189,7 @@ pub fn main(init: std.process.Init) !void {
         buf[i] = 'x';
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{@as(usize, 10000)});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{@as(usize, 10000)});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
@@ -291,7 +291,7 @@ pub fn main(init: std.process.Init) !void {
         sum += dot(a, b);
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{sum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
@@ -423,7 +423,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{count});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
@@ -562,7 +562,7 @@ pub fn main(init: std.process.Init) !void {
         sum += c[0];
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{sum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -727,7 +727,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n{d}\\\n", .{ max_n, max_len });
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n{d}\\n", .{ max_n, max_len });
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -881,7 +881,7 @@ pub fn main(init: std.process.Init) !void {
         if (binarySearch(&arr, @mod(i, 10000)) >= 0) found += 1;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{found});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{found});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1079,7 +1079,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{x[0]});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{x[0]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1211,7 +1211,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{count});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1279,7 +1279,7 @@ pub fn main(init: std.process.Init) !void {
         total += i * i;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{total});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1363,7 +1363,7 @@ pub fn main(init: std.process.Init) !void {
         values[i] = running;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{values[n - 1]});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{values[n - 1]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1480,7 +1480,7 @@ pub fn main(init: std.process.Init) !void {
         checksum ^= state;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{checksum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1566,7 +1566,7 @@ pub fn main(init: std.process.Init) !void {
         hist[idx] += 1;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{hist[0] + hist[17] + hist[42]});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{hist[0] + hist[17] + hist[42]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1649,7 +1649,7 @@ pub fn main(init: std.process.Init) !void {
         acc += poly(@as(f64, @floatFromInt(i % 1000)) * 0.001);
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{acc});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{acc});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1788,7 +1788,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{total});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1919,7 +1919,7 @@ pub fn main(init: std.process.Init) !void {
         total += popcount(i * 2_654_435_761);
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{total});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2039,7 +2039,7 @@ pub fn main(init: std.process.Init) !void {
         total += gcd(i * 17, i * 29 + 1);
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{total});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2145,7 +2145,7 @@ pub fn main(init: std.process.Init) !void {
         area += (f(x0) + f(x1)) * h * 0.5;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{area});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{area});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2265,7 +2265,7 @@ pub fn main(init: std.process.Init) !void {
         if (x * x + y * y <= 1.0) inside += 1;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{inside});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{inside});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2406,7 +2406,7 @@ pub fn main(init: std.process.Init) !void {
         src = dst;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{src[n + 1]});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{src[n + 1]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2538,7 +2538,7 @@ pub fn main(init: std.process.Init) !void {
         checksum += rolling;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{checksum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2676,7 +2676,7 @@ pub fn main(init: std.process.Init) !void {
         checksum += values[0] + values[511];
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{checksum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2853,7 +2853,7 @@ pub fn main(init: std.process.Init) !void {
         checksum += merged[0] + merged[4095];
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{checksum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -2985,7 +2985,7 @@ pub fn main(init: std.process.Init) !void {
         checksum += value;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{checksum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -3074,7 +3074,7 @@ pub fn main(init: std.process.Init) !void {
         checksum += x & 65535;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{checksum});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -3181,7 +3181,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{total});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -3299,7 +3299,7 @@ pub fn main(init: std.process.Init) !void {
         cur = next;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{cur[cur.len / 2]});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{cur[cur.len / 2]});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -3399,7 +3399,7 @@ pub fn main(init: std.process.Init) !void {
         c = next;
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{c});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{c});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -3514,7 +3514,7 @@ pub fn main(init: std.process.Init) !void {
         acc += laneMax(v) - laneMin(v);
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\\n", .{acc});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{acc});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
