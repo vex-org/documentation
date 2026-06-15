@@ -32,6 +32,9 @@ vex <command> [options] [args]
 | `vex setup` | Setup `VEX_HOME` with standard library |
 | `vex clean` | Clean cache and build artifacts |
 | `vex repl` | Interactive REPL |
+| `vex analyze <file>` | Run compiler lints on AST and HIR |
+| `vex view <type> <file>` | Export AST, CFG, or DFG representations |
+| `vex prof <file>` | Profile microarchitectural pipeline performance using LLVM-MCA |
 
 ## `vex compile` -- AOT Compilation
 

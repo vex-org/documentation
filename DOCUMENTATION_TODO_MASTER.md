@@ -134,6 +134,7 @@
 | 5.12 | **Freestanding**                     | ✅     | `guide/freestanding.md`       | `#![no_std]`, bare metal, custom allocators, panic handler                              |
 | 5.13 | **Conditional Compilation**          | ❌     | —                             | `#if`, `#else`, `#endif`, `#target_os`, feature flags                                   |
 | 5.14 | **Compiler Directives / Attributes** | ❌     | —                             | `#[inline]`, `#[no_mangle]`, `#[export]`, `#[cold]`, `#[target_feature]`, etc.          |
+| 5.15 | **VXM Native Module Linking**        | ✅     | `guide/advanced/vxm-native-module-linking.md` | Architecture of VXM cache, `.bc` emission, and LTO linking |
 
 ---
 

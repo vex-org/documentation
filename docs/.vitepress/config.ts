@@ -214,6 +214,7 @@ export default defineConfig({
                 },
                 { text: "Toolchain", link: "/guide/tooling/full-toolchain" },
                 { text: "Testing", link: "/guide/tooling/testing" },
+                { text: "VAPE Analyzer", link: "/guide/tooling/vape" },
               ],
             },
             { text: "Standard Library Overview", link: "/guide/stdlib" },
