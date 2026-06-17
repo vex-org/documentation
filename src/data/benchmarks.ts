@@ -339,7 +339,7 @@ int main() {
     
     // Sabit boyutlu array'i stack yerine Heap üzerinde açıyoruz kanka!
     // Vex'in canavar gibi çalışan allocator'ı devreye giriyor.
-    let! sieve = Vec<bool>(limit)
+    let! sieve = Vec.new<bool>(limit as usize)
     
     // Diziyi true ile doldur
     let! k = 0
