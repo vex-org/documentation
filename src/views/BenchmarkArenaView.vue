@@ -581,7 +581,10 @@ function runBenchmark() {
                       >⚡ Compile: {{ r.compile_time_ms.toFixed(1) }}ms</span
                     >
                     <span v-if="r.run_time_ms"
-                      >▶ Run: {{ r.run_time_ms.toFixed(1) }}ms</span
+                      >▶ Total Run: {{ r.run_time_ms.toFixed(1) }}ms</span
+                    >
+                    <span v-if="r.execution_time_ms != null"
+                      >⏱️ Code Execution: {{ r.execution_time_ms.toFixed(2) }}ms</span
                     >
                     <span
                       >👤 User:

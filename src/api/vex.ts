@@ -8,6 +8,7 @@ export interface RunResult {
   run_time_ms: number
   user_time_ms: number
   sys_time_ms: number
+  execution_time_ms?: number
   memory_kb: number
   binary_kb: number
 }
@@ -92,6 +93,7 @@ export interface LangResult {
   run_time_ms: number
   user_time_ms: number
   sys_time_ms: number
+  execution_time_ms?: number
   binary_kb: number
   memory_kb: number
   code: string

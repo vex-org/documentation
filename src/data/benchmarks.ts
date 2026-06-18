@@ -184,12 +184,17 @@ func main() {
         zig: `const std = @import("std");
  
 pub fn main(init: std.process.Init) !void {
-    var buf: [10000]u8 = undefined;
-    for (0..10000) |i| {
-        buf[i] = 'x';
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+    var s: std.ArrayList(u8) = .empty;
+    defer s.deinit(allocator);
+    var i: usize = 0;
+    while (i < 10000) : (i += 1) {
+        try s.append(allocator, 'x');
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{@as(usize, 10000)});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{s.items.len});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
@@ -336,35 +341,22 @@ int main() {
         description: 'Sieve of Eratosthenes up to 100K — tests array access patterns',
         vex: `fn main(): i32 {
     let limit = 100000
-    
-    // Direct pointer allocation bypasses Vec indexing & drop glue overhead kanka!
-    let! p = Ptr.allocN<bool>(limit as usize)
-    
-    // Fast native memset to fill the buffer with true (1)
-    unsafe { p.writeBytes(1 as u8, limit as usize) }
-    
-    unsafe {
-        p.writeAt(0, false)
-        p.writeAt(1, false)
-    }
+    let! sieve: [bool; 100000] = [true; 100000]
+    sieve[0] = false
+    sieve[1] = false
     
     let! count = 0
-    
     for i in 2..limit {
-        if unsafe { p.readAt(i as usize) } {
+        if sieve[i as usize] {
             count += 1
-            
             let! j: usize = (i as usize) * (i as usize)
-            
             while j < (limit as usize) {
-                unsafe { p.writeAt(j, false) }
+                sieve[j] = false
                 j += (i as usize)
             }
         }
     }
-    
     $println(count)
-    unsafe { p.freeN(limit as usize) }
     return 0
 }`,
         go: `package main
@@ -373,7 +365,7 @@ import "fmt"
  
 func main() {
 	const limit = 100000
-	sieve := make([]bool, limit)
+	var sieve [limit]bool
 	for i := range sieve {
 		sieve[i] = true
 	}
@@ -390,7 +382,7 @@ func main() {
 }`,
         rust: `fn main() {
     const LIMIT: usize = 100000;
-    let mut sieve = vec![true; LIMIT];
+    let mut sieve = [true; LIMIT];
     let mut count = 0;
     for i in 2..LIMIT {
         if sieve[i] {
@@ -425,12 +417,11 @@ pub fn main(init: std.process.Init) !void {
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
         c: `#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
-
+ 
 int main() {
     const int limit = 100000;
-    bool *sieve = malloc(limit * sizeof(bool));
+    bool sieve[limit];
     for (int i = 0; i < limit; i++) {
         sieve[i] = true;
     }
@@ -443,16 +434,16 @@ int main() {
             }
         }
     }
-    printf("%d\\\n", count);
-    free(sieve);
+    printf("%d\\n", count);
     return 0;
 }`,
         cpp: `#include <iostream>
-#include <vector>
-
+#include <array>
+ 
 int main() {
     const int limit = 100000;
-    std::vector<bool> sieve(limit, true);
+    std::array<bool, limit> sieve;
+    sieve.fill(true);
     int count = 0;
     for (long long i = 2; i < limit; i++) {
         if (sieve[i]) {
@@ -462,7 +453,7 @@ int main() {
             }
         }
     }
-    std::cout << count << "\\\n";
+    std::cout << count << "\\n";
     return 0;
 }`,
     },
@@ -809,7 +800,7 @@ int main() {
 }
 
 fn main(): i32 {
-    let! arr = Vec.new<i32>()
+    let! arr = Vec.withCapacity<i32>(10000)
     for i in 0..10000 {
         arr.push(i)
     }
@@ -871,12 +862,15 @@ fn binarySearch(arr: []const i32, target: i32) i32 {
 }
 
 pub fn main(init: std.process.Init) !void {
-    var arr: [10000]i32 = undefined;
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+    var arr = try allocator.alloc(i32, 10000);
     for (0..10000) |i| arr[i] = @intCast(i);
     var found: i32 = 0;
     var i: i32 = 0;
     while (i < 1000000) : (i += 1) {
-        if (binarySearch(&arr, @mod(i, 10000)) >= 0) found += 1;
+        if (binarySearch(arr, @mod(i, 10000)) >= 0) found += 1;
     }
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{found});
@@ -941,10 +935,10 @@ int main() {
         description: 'Simple gravity simulation — tests floating-point throughput',
         vex: `fn main(): i32 {
     let n = 200
-    let! x = Vec.new<f64>()
-    let! y = Vec.new<f64>()
-    let! vx = Vec.new<f64>()
-    let! vy = Vec.new<f64>()
+    let! x = Vec.withCapacity<f64>(n as usize)
+    let! y = Vec.withCapacity<f64>(n as usize)
+    let! vx = Vec.withCapacity<f64>(n as usize)
+    let! vy = Vec.withCapacity<f64>(n as usize)
     for i in 0..n {
         x.push(i as f64)
         y.push(i as f64 * 0.5)
@@ -1045,11 +1039,16 @@ func main() {
         zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
     const n = 200;
-    var x: [n]f64 = undefined;
-    var y: [n]f64 = undefined;
-    var vx: [n]f64 = .{0} ** n;
-    var vy: [n]f64 = .{0} ** n;
+    var x = try allocator.alloc(f64, n);
+    var y = try allocator.alloc(f64, n);
+    var vx = try allocator.alloc(f64, n);
+    var vy = try allocator.alloc(f64, n);
+    @memset(vx, 0);
+    @memset(vy, 0);
     for (0..n) |i| {
         x[i] = @as(f64, @floatFromInt(i));
         y[i] = @as(f64, @floatFromInt(i)) * 0.5;
@@ -1308,7 +1307,7 @@ int main() {
         description: 'Inclusive prefix sum over 200K integers — tests memory bandwidth',
         vex: `fn main(): i32 {
     let n = 200000
-    let! values = Vec.new<i64>()
+    let! values = Vec.withCapacity<i64>(n as usize)
     for i in 0..n {
         values.push((i % 97) as i64)
     }
@@ -1350,8 +1349,11 @@ func main() {
         zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
     const n = 200000;
-    var values: [n]i64 = undefined;
+    var values = try allocator.alloc(i64, n);
     for (0..n) |i| {
         values[i] = @intCast(i % 97);
     }
@@ -1539,7 +1541,7 @@ int main() {
 import "fmt"
 
 func main() {
-	hist := make([]int, 256)
+	var hist [256]int
 	for i := 0; i < 1000000; i++ {
 		idx := (i*17 + 23) % 256
 		hist[idx]++
@@ -2387,9 +2389,13 @@ func main() {
         zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
     const n = 64;
-    var src: [n * n]f64 = undefined;
-    var dst: [n * n]f64 = .{0} ** (n * n);
+    var src = try allocator.alloc(f64, n * n);
+    var dst = try allocator.alloc(f64, n * n);
+    @memset(dst, 0);
     for (0..src.len) |i| {
         src[i] = @as(f64, @floatFromInt(i % 17));
     }
@@ -2401,7 +2407,7 @@ pub fn main(init: std.process.Init) !void {
                 dst[idx] = sum / 9.0;
             }
         }
-        src = dst;
+        @memcpy(src, dst);
     }
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{src[n + 1]});
@@ -2466,7 +2472,7 @@ int main() {
         vex: `fn main(): i32 {
     let n = 500000
     let window = 32
-    let! values = Vec.new<i64>()
+    let! values = Vec.withCapacity<i64>(n as usize)
     for i in 0..n {
         values.push((i % 31) as i64)
     }
@@ -2519,9 +2525,12 @@ func main() {
         zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
     const n = 500000;
     const window = 32;
-    var values: [n]i64 = undefined;
+    var values = try allocator.alloc(i64, n);
     for (0..n) |i| {
         values[i] = @intCast(i % 31);
     }
@@ -2591,22 +2600,22 @@ int main() {
         vex: `fn main(): i32 {
     let! checksum: i64 = 0
     for round in 0..200 {
-        let! values = Vec.new<i64>()
+        let! values: [i64; 512] = [0; 512]
         for i in 0..512 {
-            values.push(((i * 73 + round * 19) % 997) as i64)
+            values[i as usize] = ((i * 73 + round * 19) % 997) as i64
         }
         for i in 0..511 {
             let! best = i as usize
             for j in i + 1..512 {
-                if *values.getUnchecked(j as usize) < *values.getUnchecked(best) {
+                if values[j as usize] < values[best] {
                     best = j as usize
                 }
             }
-            let tmp = *values.getUnchecked(i as usize)
-            values.set(i as usize, *values.getUnchecked(best))
-            values.set(best, tmp)
+            let tmp = values[i as usize]
+            values[i as usize] = values[best]
+            values[best] = tmp
         }
-        checksum += *values.getUnchecked(0) + *values.getUnchecked(511)
+        checksum += values[0] + values[511]
     }
     $println(checksum)
     return 0
@@ -2618,7 +2627,7 @@ import "fmt"
 func main() {
 	var checksum int64 = 0
 	for round := 0; round < 200; round++ {
-		values := make([]int64, 512)
+		var values [512]int64
 		for i := 0; i < 512; i++ {
 			values[i] = int64((i*73 + round*19) % 997)
 		}
@@ -2638,7 +2647,10 @@ func main() {
         rust: `fn main() {
     let mut checksum: i64 = 0;
     for round in 0..200 {
-        let mut values: Vec<i64> = (0..512).map(|i| ((i * 73 + round * 19) % 997) as i64).collect();
+        let mut values = [0_i64; 512];
+        for i in 0..512 {
+            values[i] = ((i * 73 + round * 19) % 997) as i64;
+        }
         for i in 0..511 {
             let mut best = i;
             for j in i + 1..512 {
@@ -2825,30 +2837,33 @@ func main() {
 pub fn main(init: std.process.Init) !void {
     var checksum: i64 = 0;
     var round: usize = 0;
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
     while (round < 400) : (round += 1) {
-        var a: [2048]i64 = undefined;
-        var b: [2048]i64 = undefined;
+        _ = arena.reset(.retain_capacity);
+        var a = try allocator.alloc(i64, 2048);
+        var b = try allocator.alloc(i64, 2048);
         for (0..2048) |i| {
             a[i] = @intCast(i * 2);
             b[i] = @intCast(i * 2 + 1);
         }
-        var merged: [4096]i64 = undefined;
+        var merged: std.ArrayList(i64) = .empty;
+        defer merged.deinit(allocator);
         var ia: usize = 0;
         var ib: usize = 0;
-        var im: usize = 0;
         while (ia < a.len and ib < b.len) {
             if (a[ia] < b[ib]) {
-                merged[im] = a[ia];
+                try merged.append(allocator, a[ia]);
                 ia += 1;
             } else {
-                merged[im] = b[ib];
+                try merged.append(allocator, b[ib]);
                 ib += 1;
             }
-            im += 1;
         }
-        while (ia < a.len) : (ia += 1) { merged[im] = a[ia]; im += 1; }
-        while (ib < b.len) : (ib += 1) { merged[im] = b[ib]; im += 1; }
-        checksum += merged[0] + merged[4095];
+        while (ia < a.len) : (ia += 1) try merged.append(allocator, a[ia]);
+        while (ib < b.len) : (ib += 1) try merged.append(allocator, b[ib]);
+        checksum += merged.items[0] + merged.items[merged.items.len - 1];
     }
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{checksum});
@@ -2917,17 +2932,14 @@ int main() {
         description: 'Push/pop through fixed circular buffer — tests modulo indexing',
         vex: `fn main(): i32 {
     let cap = 1024
-    let! buf = Vec.new<i64>()
-    for _ in 0..cap {
-        buf.push(0)
-    }
+    let! buf: [i64; 1024] = [0; 1024]
     let! head = 0
     let! tail = 0
     let! checksum: i64 = 0
     for i in 0..200000 {
-        buf.set(tail, i as i64)
+        buf[tail as usize] = i as i64
         tail = (tail + 1) % cap
-        let value = buf.getUnchecked(head)
+        let value = buf[head as usize]
         head = (head + 1) % cap
         checksum += value
     }
@@ -2940,7 +2952,7 @@ import "fmt"
 
 func main() {
 	const cap = 1024
-	buf := make([]int64, cap)
+	var buf [cap]int64
 	head, tail := 0, 0
 	var checksum int64 = 0
 	for i := 0; i < 200000; i++ {
@@ -2991,7 +3003,7 @@ pub fn main(init: std.process.Init) !void {
 
 int main() {
     int cap = 1024;
-    long long *buf = calloc(cap, sizeof(long long));
+    long long buf[1024] = {0};
     int head = 0, tail = 0;
     long long checksum = 0;
     for (int i = 0; i < 200000; i++) {
@@ -3002,15 +3014,14 @@ int main() {
         checksum += value;
     }
     printf("%lld\\n", checksum);
-    free(buf);
     return 0;
 }`,
         cpp: `#include <iostream>
-#include <vector>
+#include <array>
 
 int main() {
-    int cap = 1024;
-    std::vector<long long> buf(cap, 0);
+    const int cap = 1024;
+    std::array<long long, cap> buf = {0};
     int head = 0, tail = 0;
     long long checksum = 0;
     for (int i = 0; i < 200000; i++) {
@@ -3130,8 +3141,8 @@ import "fmt"
 
 func main() {
 	const n = 128
-	x := make([]float64, n)
-	y := make([]float64, n)
+	var x [n]float64
+	var y [n]float64
 	for i := 0; i < n; i++ {
 		x[i] = float64(i) * 0.25
 		y[i] = float64(i) * 0.5
@@ -3148,8 +3159,12 @@ func main() {
 }`,
         rust: `fn main() {
     const N: usize = 128;
-    let x: Vec<f64> = (0..N).map(|i| i as f64 * 0.25).collect();
-    let y: Vec<f64> = (0..N).map(|i| i as f64 * 0.5).collect();
+    let mut x = [0.0_f64; N];
+    let mut y = [0.0_f64; N];
+    for i in 0..N {
+        x[i] = i as f64 * 0.25;
+        y[i] = i as f64 * 0.5;
+    }
     let mut total = 0.0_f64;
     for i in 0..N {
         for j in 0..N {
@@ -3204,11 +3219,12 @@ int main() {
     return 0;
 }`,
         cpp: `#include <iostream>
-#include <vector>
+#include <array>
 
 int main() {
-    int n = 128;
-    std::vector<double> x(n), y(n);
+    const int n = 128;
+    std::array<double, n> x;
+    std::array<double, n> y;
     for (int i = 0; i < n; i++) {
         x[i] = (double)i * 0.25;
         y[i] = (double)i * 0.5;
@@ -3477,11 +3493,11 @@ func main() {
 	fmt.Println(acc)
 }`,
         rust: `fn lane_min(v: [f64; 4]) -> f64 {
-    v.into_iter().fold(f64::INFINITY, f64::min)
+    v.iter().fold(f64::INFINITY, |a, &b| a.min(b))
 }
 
 fn lane_max(v: [f64; 4]) -> f64 {
-    v.into_iter().fold(f64::NEG_INFINITY, f64::max)
+    v.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b))
 }
 
 fn main() {
