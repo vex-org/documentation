@@ -337,36 +337,34 @@ int main() {
         vex: `fn main(): i32 {
     let limit = 100000
     
-    // Sabit boyutlu array'i stack yerine Heap üzerinde açıyoruz kanka!
-    // Vex'in canavar gibi çalışan allocator'ı devreye giriyor.
-    let! sieve = Vec.new<bool>(limit as usize)
+    // Direct pointer allocation bypasses Vec indexing & drop glue overhead kanka!
+    let! p = Ptr.allocN<bool>(limit as usize)
     
-    // Diziyi true ile doldur
-    let! k = 0
-    while k < limit {
-        sieve.push(true)
-        k = k + 1
+    // Fast native memset to fill the buffer with true (1)
+    unsafe { p.writeBytes(1 as u8, limit as usize) }
+    
+    unsafe {
+        p.writeAt(0, false)
+        p.writeAt(1, false)
     }
-    
-    sieve[0] = false
-    sieve[1] = false
     
     let! count = 0
     
     for i in 2..limit {
-        if sieve[i] {
+        if unsafe { p.readAt(i as usize) } {
             count += 1
             
             let! j: usize = (i as usize) * (i as usize)
             
             while j < (limit as usize) {
-                sieve[j] = false
+                unsafe { p.writeAt(j, false) }
                 j += (i as usize)
             }
         }
     }
     
     $println(count)
+    unsafe { p.freeN(limit as usize) }
     return 0
 }`,
         go: `package main
