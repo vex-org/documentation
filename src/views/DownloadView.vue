@@ -270,7 +270,7 @@ onMounted(fetchLatestVersion);
               </div>
             </div>
             <p class="text-xs sm:text-sm text-vex-text-muted leading-relaxed">
-              A next-generation systems programming language featuring a contract-based memory-safety model (<code class="text-vex-primary-light/90 font-mono text-xs">$Drop, $Copy, $Clone</code>) via the VUMM memory manager. Built with parallel LLVM compilation (AOT/JIT), SIMD regex acceleration, automated GPU/Metal shader compilation for neural net operations, and language server support. <strong>Built for systems programming, compiler engineering, and high-performance execution.</strong>
+              A next-generation systems programming language featuring a contract-based memory safety model (e.g., <code class="text-vex-primary-light/90 font-mono text-xs">Drop, Clone</code> contracts) via the VUMM memory manager. Powered by parallel ahead-of-time (AOT) compiling via LLVM, SIMD-accelerated regex matching, automated GPU/Metal shader generation for tensor operations, and full language server support. <strong>Built for low-level systems programming, compiler optimization, and high-performance bare-metal execution.</strong>
             </p>
           </div>
         </div>
