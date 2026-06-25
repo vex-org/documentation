@@ -208,7 +208,7 @@ onMounted(fetchLatestVersion);
         <h1
           class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4"
         >
-          Get Vex Toolchain & IDE
+          Get Vex Language & IDE
         </h1>
         <p class="text-lg text-vex-text-muted max-w-2xl mx-auto">
           Choose between the visual desktop suite or the lightweight CLI toolchain to build and simulate hardware designs.
@@ -220,6 +220,33 @@ onMounted(fetchLatestVersion);
     <section class="border-b border-vex-border bg-vex-surface/10 py-8">
       <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <div class="grid sm:grid-cols-2 gap-4">
+          <!-- Vex Language -->
+          <div
+            @click="selectedProduct = 'cli'"
+            :class="[
+              'cursor-pointer rounded-xl border p-5 transition-all text-left relative overflow-hidden',
+              selectedProduct === 'cli'
+                ? 'border-vex-primary bg-vex-primary/5 ring-1 ring-vex-primary'
+                : 'border-vex-border bg-vex-surface/30 hover:border-vex-border-light hover:bg-vex-surface/50'
+            ]"
+          >
+            <div class="flex items-center gap-3 mb-3">
+              <div class="p-2 rounded-lg bg-vex-primary/10 text-vex-primary">
+                <Terminal class="w-5 h-5" />
+              </div>
+              <div>
+                <h3 class="font-semibold text-white flex items-center gap-1.5">
+                  Vex Language
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-vex-primary/20 text-vex-primary-light font-medium font-sans">{{ latestVersion }}</span>
+                </h3>
+                <span class="text-xs text-vex-text-muted">Systems Programming Language</span>
+              </div>
+            </div>
+            <p class="text-xs sm:text-sm text-vex-text-muted leading-relaxed">
+              A modern systems language combining Rust's safety, Go's simplicity, and automatic hardware optimization — CPU, GPU, and NPU.
+            </p>
+          </div>
+
           <!-- Vex HDL Studio (IDE) -->
           <div
             @click="selectedProduct = 'studio'"
@@ -244,33 +271,6 @@ onMounted(fetchLatestVersion);
             </div>
             <p class="text-xs sm:text-sm text-vex-text-muted leading-relaxed">
               A comprehensive visual IDE featuring Monaco-based editing, interactive multi-cursor logic waveform analysis, mixed-signal SPICE co-simulation plotting, VUPPS policy verification, and gate-level physical power estimations. <strong>Recommended for visual-centric hardware design, debug pipelines, and simulations.</strong>
-            </p>
-          </div>
-
-          <!-- Vex CLI & Compiler -->
-          <div
-            @click="selectedProduct = 'cli'"
-            :class="[
-              'cursor-pointer rounded-xl border p-5 transition-all text-left relative overflow-hidden',
-              selectedProduct === 'cli'
-                ? 'border-vex-primary bg-vex-primary/5 ring-1 ring-vex-primary'
-                : 'border-vex-border bg-vex-surface/30 hover:border-vex-border-light hover:bg-vex-surface/50'
-            ]"
-          >
-            <div class="flex items-center gap-3 mb-3">
-              <div class="p-2 rounded-lg bg-vex-primary/10 text-vex-primary">
-                <Terminal class="w-5 h-5" />
-              </div>
-              <div>
-                <h3 class="font-semibold text-white flex items-center gap-1.5">
-                  Vex Toolchain & Compiler
-                  <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-vex-primary/20 text-vex-primary-light font-medium font-sans">{{ latestVersion }}</span>
-                </h3>
-                <span class="text-xs text-vex-text-muted">Systems Language & CLI</span>
-              </div>
-            </div>
-            <p class="text-xs sm:text-sm text-vex-text-muted leading-relaxed">
-              A next-generation systems programming language featuring a contract-based memory safety model (e.g., <code class="text-vex-primary-light/90 font-mono text-xs">Drop, Clone</code> contracts) via the VUMM memory manager. Powered by parallel ahead-of-time (AOT) compiling via LLVM, SIMD-accelerated regex matching, automated GPU/Metal shader generation for tensor operations, and full language server support. <strong>Built for low-level systems programming, compiler optimization, and high-performance bare-metal execution.</strong>
             </p>
           </div>
         </div>
