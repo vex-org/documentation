@@ -79,15 +79,6 @@ const studioPlatforms: StudioPlatformInfo[] = [
     downloadUrl: "https://github.com/vex-org/releases/releases/download/v0.1.0/vex-hdl%20Studio_0.1.0_aarch64.dmg",
   },
   {
-    id: "macos-x64",
-    name: "macOS (Intel)",
-    arch: "x64",
-    os: "Intel Core / Xeon",
-    icon: Apple,
-    fileName: "vex-hdl Studio_0.1.0_x64.dmg",
-    downloadUrl: "https://github.com/vex-org/releases/releases/download/v0.1.0/vex-hdl%20Studio_0.1.0_x64.dmg",
-  },
-  {
     id: "windows-x64",
     name: "Windows (x64)",
     arch: "x64",
