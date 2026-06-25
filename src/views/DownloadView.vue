@@ -239,11 +239,11 @@ onMounted(fetchLatestVersion);
                   Vex HDL Studio
                   <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-vex-accent/20 text-vex-accent font-medium font-sans">v0.1.0</span>
                 </h3>
-                <span class="text-xs text-vex-text-muted">Görsel IDE & Simülatör</span>
+                <span class="text-xs text-vex-text-muted">Visual IDE & Simulator</span>
               </div>
             </div>
             <p class="text-xs sm:text-sm text-vex-text-muted leading-relaxed">
-              Entegre Monaco kod editörü, interaktif dalga formu (waveform) izleyicisi, SPICE ko-simülasyon grafikleri ve güç tahmini sunan görsel masaüstü uygulaması. <strong>Donanım tasarımı ve analizini görsel olarak yapmak isteyenler için önerilir.</strong>
+              A comprehensive visual IDE featuring Monaco-based editing, interactive multi-cursor logic waveform analysis, mixed-signal SPICE co-simulation plotting, VUPPS policy verification, and gate-level physical power estimations. <strong>Recommended for visual-centric hardware design, debug pipelines, and simulations.</strong>
             </p>
           </div>
 
@@ -263,14 +263,14 @@ onMounted(fetchLatestVersion);
               </div>
               <div>
                 <h3 class="font-semibold text-white flex items-center gap-1.5">
-                  Vex CLI & Derleyici
+                  Vex Toolchain & Compiler
                   <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-vex-primary/20 text-vex-primary-light font-medium font-sans">{{ latestVersion }}</span>
                 </h3>
-                <span class="text-xs text-vex-text-muted">Geliştirici Araç Takımı (CLI)</span>
+                <span class="text-xs text-vex-text-muted">Systems Language & CLI</span>
               </div>
             </div>
             <p class="text-xs sm:text-sm text-vex-text-muted leading-relaxed">
-              Vex derleyicisi (AOT/JIT), test koşucu, VS Code/Neovim uyumlu LSP sunucusu, paket yöneticisi (`vex-pm`) ve standart kütüphane araçlarını içeren hafif terminal paketi. <strong>CI/CD otomasyonu ve terminal odaklı çalışan geliştiriciler içindir.</strong>
+              A next-generation systems programming language featuring a contract-based memory-safety model (<code class="text-vex-primary-light/90 font-mono text-xs">$Drop, $Copy, $Clone</code>) via the VUMM memory manager. Built with parallel LLVM compilation (AOT/JIT), SIMD regex acceleration, automated GPU/Metal shader compilation for neural net operations, and language server support. <strong>Built for systems programming, compiler engineering, and high-performance execution.</strong>
             </p>
           </div>
         </div>
