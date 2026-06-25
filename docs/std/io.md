@@ -45,12 +45,12 @@ match readLine() {
 - `stdin()` → `Stream`
 - `stdout()` → `Stream`
 - `stderr()` → `Stream`
-- `readLine()` → `Result<string, IoError>`
-- `prompt(message: string)` → `Result<string, IoError>`
+- `readLine()` → `Result&lt;string, IoError&gt;`
+- `prompt(message: string)` → `Result&lt;string, IoError&gt;`
 - `printInt`, `printFloat`, `printBool`
 
 ## Notes
 
-- Current `Reader` / `Writer` contracts are pointer-and-length based, not `Span<u8>` based.
+- Current `Reader` / `Writer` contracts are pointer-and-length based, not `Span&lt;u8&gt;` based.
 - Prefer `readLine()` / `prompt()` for simple terminal input examples.
 - Use `stdout().flush()` when prompt text must appear before a blocking read.

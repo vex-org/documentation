@@ -26,4 +26,4 @@ export fn bench_sort(b: &BenchCtx!) {
 
 - The current repository surface is **not** `test fn` / `bench fn` syntax.
 - Prefer the exported context-based API from `std/testing`.
-- Use `vex test <path>` for test files and `./test_all.sh` for the wider example sweep.
+- Use `vex test &lt;path&gt;` for test files and `./test_all.sh` for the wider example sweep.

@@ -18,16 +18,16 @@ Contracts are organized into three layers:
 
 ### Arithmetic Operators
 
-#### `$Add` -- Addition (`a + b`)
+#### `Add` -- Addition (`a + b`)
 
 ```vex
-contract $Add {
+contract Add {
     op+(rhs: Self): Self
 }
 ```
 
 ```vex
-struct Vector2: $Add {
+struct Vector2: Add {
     public:
     x: f64,
     y: f64,
@@ -38,42 +38,42 @@ fn (self: &Vector2) op+(rhs: Vector2): Vector2 {
 }
 ```
 
-#### `$Sub` -- Subtraction (`a - b`)
+#### `Sub` -- Subtraction (`a - b`)
 
 ```vex
-contract $Sub {
+contract Sub {
     op-(rhs: Self): Self
 }
 ```
 
-#### `$Mul` -- Multiplication (`a * b`)
+#### `Mul` -- Multiplication (`a * b`)
 
 ```vex
-contract $Mul {
+contract Mul {
     op*(rhs: Self): Self
 }
 ```
 
-#### `$Div` -- Division (`a / b`)
+#### `Div` -- Division (`a / b`)
 
 ```vex
-contract $Div {
+contract Div {
     op/(rhs: Self): Self
 }
 ```
 
-#### `$Mod` -- Modulo (`a % b`)
+#### `Mod` -- Modulo (`a % b`)
 
 ```vex
-contract $Mod {
+contract Mod {
     op%(rhs: Self): Self
 }
 ```
 
-#### `$Neg` -- Unary Negation (`-a`)
+#### `Neg` -- Unary Negation (`-a`)
 
 ```vex
-contract $Neg {
+contract Neg {
     op-(): Self
 }
 ```
@@ -86,67 +86,67 @@ fn (self: &Vector2) op-(): Vector2 {
 
 ### Bitwise Operators
 
-#### `$BitAnd` -- Bitwise AND (`a & b`)
+#### `BitAnd` -- Bitwise AND (`a & b`)
 
 ```vex
-contract $BitAnd {
+contract BitAnd {
     op&(rhs: Self): Self
 }
 ```
 
-#### `$BitOr` -- Bitwise OR (`a | b`)
+#### `BitOr` -- Bitwise OR (`a | b`)
 
 ```vex
-contract $BitOr {
+contract BitOr {
     op|(rhs: Self): Self
 }
 ```
 
-#### `$BitXor` -- Bitwise XOR (`a ^ b`)
+#### `BitXor` -- Bitwise XOR (`a ^ b`)
 
 ```vex
-contract $BitXor {
+contract BitXor {
     op^(rhs: Self): Self
 }
 ```
 
-#### `$BitNot` -- Bitwise NOT (`~a`)
+#### `BitNot` -- Bitwise NOT (`~a`)
 
 ```vex
-contract $BitNot {
+contract BitNot {
     op~(): Self
 }
 ```
 
-#### `$Shl` -- Left Shift (`a << b`)
+#### `Shl` -- Left Shift (`a << b`)
 
 ```vex
-contract $Shl {
+contract Shl {
     op<<(rhs: i32): Self
 }
 ```
 
-#### `$Shr` -- Right Shift (`a >> b`)
+#### `Shr` -- Right Shift (`a >> b`)
 
 ```vex
-contract $Shr {
+contract Shr {
     op>>(rhs: i32): Self
 }
 ```
 
 ### Comparison Operators
 
-#### `$Eq` -- Equality (`a == b`, `a != b`)
+#### `Eq` -- Equality (`a == b`, `a != b`)
 
 ```vex
-contract $Eq {
+contract Eq {
     op==(rhs: Self): bool
     op!=(rhs: Self): bool  // auto-implemented as !(a == b)
 }
 ```
 
 ```vex
-struct Point: $Eq {
+struct Point: Eq {
     public:
     x: i32,
     y: i32,
@@ -158,10 +158,10 @@ fn (self: &Point) op==(rhs: Point): bool {
 // op!= is auto-generated: !self.op==(rhs)
 ```
 
-#### `$Ord` -- Ordering (`a < b`, `a > b`, `a <= b`, `a >= b`)
+#### `Ord` -- Ordering (`a < b`, `a > b`, `a <= b`, `a >= b`)
 
 ```vex
-contract $Ord {
+contract Ord {
     op<(rhs: Self): bool
     op>(rhs: Self): bool
     op<=(rhs: Self): bool
@@ -169,26 +169,26 @@ contract $Ord {
 }
 ```
 
-#### `$Not` -- Logical NOT (`!a`)
+#### `Not` -- Logical NOT (`!a`)
 
 ```vex
-contract $Not {
+contract Not {
     op!(): bool
 }
 ```
 
 ### Other Operator Contracts
 
-#### `$Index` -- Indexing (`a[i]`)
+#### `Index` -- Indexing (`a[i]`)
 
 ```vex
-contract $Index {
+contract Index {
     op[](index: usize): Self.Element
 }
 ```
 
 ```vex
-struct Grid: $Index {
+struct Grid: Index {
     public:
     data: Vec<i32>,
 }
@@ -205,18 +205,18 @@ let value = grid[3]  // calls op[]
 
 ## Builtin Contracts (`prelude/builtin_contracts.vx`)
 
-### `$Display` -- Human-Readable String
+### `Display` -- Human-Readable String
 
 Used by `$println("{}", value)` and `toString()`.
 
 ```vex
-contract $Display {
+contract Display {
     fn toString(): string
 }
 ```
 
 ```vex
-struct User: $Display {
+struct User: Display {
     public:
     name: string,
     age: i32,
@@ -227,28 +227,28 @@ fn (self: &User) toString(): string {
 }
 ```
 
-### `$Debug` -- Debug String Representation
+### `Debug` -- Debug String Representation
 
 Used by `$println("{:?}", value)`.
 
 ```vex
-contract $Debug {
+contract Debug {
     fn debug(): string
 }
 ```
 
-### `$Clone` -- Deep Copy
+### `Clone` -- Deep Copy
 
 Creates an independent copy of a value. For heap types, allocates new memory.
 
 ```vex
-contract $Clone {
+contract Clone {
     fn clone(): Self
 }
 ```
 
 ```vex
-struct Node: $Clone {
+struct Node: Clone {
     public:
     value: i32,
     children: Vec<Node>,
@@ -259,18 +259,18 @@ fn (self: &Node) clone(): Node {
 }
 ```
 
-### `$Drop` -- RAII Cleanup
+### `Drop` -- RAII Cleanup
 
 Called automatically when a value goes out of scope. Used for releasing resources.
 
 ```vex
-contract $Drop {
+contract Drop {
     fn drop()
 }
 ```
 
 ```vex
-struct File: $Drop {
+struct File: Drop {
     public:
     handle: i32,
 }
@@ -281,31 +281,31 @@ fn (self: &File!) drop() {
 }
 ```
 
-### `$Hash` -- Hash Value
+### `Hash` -- Hash Value
 
 Used by `Map` and `Set` for key hashing. Uses AHash algorithm (fast + DoS-resistant).
 
 **Rule:** `a == b` implies `hash(a) == hash(b)`.
 
 ```vex
-contract $Hash {
+contract Hash {
     fn hash(): u64
 }
 ```
 
-### `$Bytes` -- Binary Serialization
+### `Bytes` -- Binary Serialization
 
 Zero-copy byte representation for FFI, network I/O, and file serialization.
 
 ```vex
-contract $Bytes {
+contract Bytes {
     fn asBytes(): &[u8]
     fn fromBytes(bytes: &[u8]): Result<Self, BytesError>
 }
 ```
 
 ```vex
-struct PacketHeader: $Bytes {
+struct PacketHeader: Bytes {
     public:
     version: u8,
     length: u16,
@@ -321,77 +321,77 @@ fn (self: &PacketHeader) asBytes(): &[u8] {
 
 These are **marker contracts** -- they have no methods and are used by the compiler for static analysis.
 
-#### `$Copy` -- Bitwise Copyable
+#### `Copy` -- Bitwise Copyable
 
-Types that can be duplicated by copying their bits. All primitives are `$Copy`.
+Types that can be duplicated by copying their bits. All primitives are `Copy`.
 
 ```vex
 // Marker -- no methods
-contract $Copy { }
+contract Copy { }
 ```
 
-#### `$Pin` -- Self-Referential Prevention
+#### `Pin` -- Self-Referential Prevention
 
 Prevents moving self-referential types. Auto-applied by the compiler when self-referential fields are detected.
 
 ```vex
-contract $Pin { }  // marker
+contract Pin { }  // marker
 ```
 
-#### `$Owner` -- Owning Capability
+#### `Owner` -- Owning Capability
 
 The value is responsible for eventual destruction. Applied to `Box<T>`, `Vec<T>`, `string`, etc.
 
 ```vex
-contract $Owner { }  // marker
+contract Owner { }  // marker
 ```
 
-#### `$BorrowedView` -- Non-Owning View
+#### `BorrowedView` -- Non-Owning View
 
 Non-owning reference into proven-live storage. Applied to `Span<T>`, `str`, `&T`.
 
 ```vex
-contract $BorrowedView { }  // marker
+contract BorrowedView { }  // marker
 ```
 
-#### `$RawPointer` -- Raw Memory Handle
+#### `RawPointer` -- Raw Memory Handle
 
 Types carrying raw, unmanaged pointers. Used for FFI and low-level code.
 
 ```vex
-contract $RawPointer { }  // marker
+contract RawPointer { }  // marker
 ```
 
-#### `$SuspendSafe` -- Await-Safe
+#### `SuspendSafe` -- Await-Safe
 
 Value remains valid across `await` suspension boundaries.
 
 ```vex
-contract $SuspendSafe { }  // marker
+contract SuspendSafe { }  // marker
 ```
 
-#### `$ConcurrentSafe` -- Thread-Safe
+#### `ConcurrentSafe` -- Thread-Safe
 
 Value can be sent across thread/concurrency boundaries safely.
 
 ```vex
-contract $ConcurrentSafe { }  // marker
+contract ConcurrentSafe { }  // marker
 ```
 
-#### `$ForeignManaged` -- Externally Owned
+#### `ForeignManaged` -- Externally Owned
 
 Lifetime is governed outside normal Vex ownership. Used for FFI objects.
 
 ```vex
-contract $ForeignManaged { }  // marker
+contract ForeignManaged { }  // marker
 ```
 
-#### `$Dealloc` -- Manual Deallocation
+#### `Dealloc` -- Manual Deallocation
 
 Types that support explicit, manual deallocation (typically unsafe).
 
 ```vex
-contract $Dealloc {
+contract Dealloc {
     fn free()
 }
 ```
@@ -612,7 +612,7 @@ contract Drop {
 }
 ```
 
-Note: This is the standard library `Drop`, distinct from the prelude `$Drop`. Both trigger RAII cleanup but `$Drop` is compiler-enforced.
+Note: This is the standard library `Drop`, distinct from the prelude `Drop`. Both trigger RAII cleanup but `Drop` is compiler-enforced.
 
 #### `Owner` -- Ownership Marker
 
@@ -718,10 +718,10 @@ fn (self: &RangeIter!) next(): Option<i32> {
 
 ## Best Practices
 
-1. Use operator contracts (`$Add`, `$Eq`, etc.) to make your types work with standard operators.
-2. Implement `$Display` for user-facing string representations; `$Debug` for developer-facing ones.
-3. Implement `$Drop` when your type owns resources (files, sockets, allocations) that need cleanup.
-4. Use marker contracts (`$SuspendSafe`, `$ConcurrentSafe`) to document and enforce safety guarantees.
+1. Use operator contracts (`Add`, `Eq`, etc.) to make your types work with standard operators.
+2. Implement `Display` for user-facing string representations; `Debug` for developer-facing ones.
+3. Implement `Drop` when your type owns resources (files, sockets, allocations) that need cleanup.
+4. Use marker contracts (`SuspendSafe`, `ConcurrentSafe`) to document and enforce safety guarantees.
 5. Prefer `From`/`Into` for infallible conversions and `TryFrom`/`TryInto` for fallible ones.
 6. Contracts in the prelude (`$`-prefixed) are always available without imports.
 7. Standard library contracts require `import` from `std.contracts`.

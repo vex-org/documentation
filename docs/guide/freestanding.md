@@ -43,7 +43,7 @@ export extern "C" fn _start(): never {
 In freestanding mode, you have access to `core` (a subset of `std`):
 
 ```vex
-// No imports needed for builtin contracts like $Add, $Eq
+// No imports needed for builtin contracts like Add, Eq
 // Primitive types and basic constructs are always available
 ```
 

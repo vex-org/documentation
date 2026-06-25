@@ -71,7 +71,7 @@ type Vec2<T> = (T, T)
 type Matrix<T> = [[T]]
 
 // Constrained generic alias
-type Numeric<T: $Add + $Mul> = T
+type Numeric<T: Add + Mul> = T
 
 // Usage
 let! users: Table<UserId, User> = Map.new<UserId, User>()
@@ -221,7 +221,7 @@ fn meters_to_km(m: Meters): Kilometers {
 type StringOrNumber = string | i32 | i64 | f64
 
 // Intersection-like (via contracts)
-type Printable = struct: $Display + $Debug
+type Printable = struct: Display + Debug
 
 // Mapped types
 type Readonly<T> = {

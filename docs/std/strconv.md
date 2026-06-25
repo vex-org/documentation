@@ -1,36 +1,37 @@
 # strconv — String Conversions
 
-Type-safe string ↔ number conversions. All parsing returns `Result<T, ParseError>` for safety — no panics.
+Type-safe string ↔ number conversions. All parsing returns `Result&lt;T, ParseError&gt;` for safety — no panics.
 
 ## Parsing Strings → Numbers
 
-```rust
-import { parseInt, parseFloat, ParseError } from "strconv";
+The safe, high-level parsing APIs accept a Vex `str` / `string` and return a standard `ParseResult&lt;T&gt;` containing `Ok(T)` or `Err(ParseError)`:
 
-// Parse integer with explicit type
-let n = parseInt<i64>("12345")?;           // → 12345
-let n = parseInt<i32>("-42")?;             // → -42
+```vex
+import { parseInt, parseFloat, ParseResult } from "std/strconv";
+
+// Parse integer
+match parseInt("12345") {
+    ParseResult.Ok(n) => $println("Parsed i64: ", n),
+    ParseResult.Err(e) => $println("Error: ", e.message),
+}
 
 // Parse float
-let f = parseFloat<f64>("3.14159")?;       // → 3.14159
-let f = parseFloat<f64>("1.5e10")?;        // → 15000000000.0
-
-// Error handling
-match parseInt<i64>("not_a_number") {
-    Ok(n) => println("Got: {n}"),
-    Err(e) => println("Error: {e.msg}"),    // "invalid digit"
+match parseFloat("3.14159") {
+    ParseResult.Ok(f) => $println("Parsed f64: ", f),
+    ParseResult.Err(e) => $println("Error: ", e.message),
 }
 ```
 
 ## Formatting Numbers → Strings
 
-```rust
-import { formatInt64, formatInt32, formatFloat64, formatBool } from "strconv";
+Convert numeric values directly to safe, owned Vex `string` values:
 
-let s = formatInt64(42);          // → "42"
-let s = formatInt32(-100);        // → "-100"
-let s = formatFloat64(3.14);      // → "3.14"
-let s = formatBool(true);         // → "true"
+```vex
+import { formatInt, formatFloat, boolToString } from "std/strconv";
+
+let s1 = formatInt(42);                // → "42" (string)
+let s2 = formatFloat(3.14159, 2);      // → "3.14" (string) with precision 2
+let s3 = boolToString(true);           // → "true" (string)
 ```
 
 ## Error Types
@@ -53,6 +54,6 @@ enum ParseErrorKind {
 
 | File | Purpose |
 |------|---------|
-| `parse.vx` | `parseInt<T>`, `parseFloat<T>` implementations |
+| `parse.vx` | `parseInt&lt;T&gt;`, `parseFloat&lt;T&gt;` implementations |
 | `format.vx` | `formatInt64`, `formatFloat64`, `formatBool` |
 | `errors.vx` | `ParseError`, `ParseErrorKind`, error constructors |

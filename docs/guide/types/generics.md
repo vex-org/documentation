@@ -104,7 +104,7 @@ contract Iterator {
     next(): Option<Self.Item>;
 }
 
-struct Counter: $Drop {
+struct Counter: Drop {
     type Item = i32;
     count: i32,
 }

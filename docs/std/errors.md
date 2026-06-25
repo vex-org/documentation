@@ -4,12 +4,26 @@ Structured error creation, wrapping, inspection, and comparison. Inspired by Go'
 
 ## Creating Errors
 
-```rust
-import { newError, newErrorCode, newErrorKind, StdError } from "errors";
+The modern way to construct errors is using struct-associated static methods on `StdError`:
 
-let e = newError("file not found");                // Simple message
-let e = newErrorCode("timeout", CODE_TIMEOUT());   // With error code
-let e = newErrorKind("denied", KIND_PERMISSION_DENIED()); // With semantic kind
+```rust
+import { StdError } from "errors";
+
+// Recommended static constructors
+let e = StdError.new("file not found");
+let e2 = StdError.newWithCode("timeout", CODE_TIMEOUT());
+let e3 = StdError.newWithKind("denied", KIND_PERMISSION_DENIED());
+let e4 = StdError.newFormatted("failed to parse: ", arg);
+```
+
+Legacy free-function constructors are deprecated but still supported for backward compatibility:
+
+```rust
+import { newError, newErrorCode, newErrorKind } from "errors";
+
+let e = newError("file not found");
+let e2 = newErrorCode("timeout", CODE_TIMEOUT());
+let e3 = newErrorKind("denied", KIND_PERMISSION_DENIED());
 ```
 
 ## Error Wrapping (Go 1.13+)

@@ -86,7 +86,7 @@ The `Ctx` object abstracts away all socket buffer writes, headers, and status co
 - **Sending Output**:
     - `c.sendString("Text")`
     - `c.sendJSON("{\"success\":true}")`
-    - `c.sendHTML("<h1>Welcome</h1>")`
+    - `c.sendHTML("&lt;h1&gt;Welcome&lt;/h1&gt;")`
     - `c.send()`: Flush manual body bytes.
     - `c.sendStatus(400)`: Throw an immediate HTTP Code 
     - `c.redirect("/login")`: HTTP 302 Redirection

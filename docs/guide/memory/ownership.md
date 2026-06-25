@@ -4,7 +4,7 @@ Vex is move-first. Values have an owner, moves transfer that ownership, and borr
 
 ## The default rule: moves
 
-Assignment and argument passing move non-`$Copy` values unless you borrow them.
+Assignment and argument passing move non-`Copy` values unless you borrow them.
 
 ```vex
 let data = Vec.new<i32>();
@@ -22,7 +22,7 @@ consume(more);
 
 That is the core rule to keep in mind for `Vec`, `Box`, `string`, maps, sets, and most user-defined structs.
 
-## `$Copy` values
+## `Copy` values
 
 Some values copy instead of move.
 
@@ -42,7 +42,7 @@ $println(x);
 $println(y);
 ```
 
-For larger or owning values, assume move semantics unless the type explicitly behaves as `$Copy`.
+For larger or owning values, assume move semantics unless the type explicitly behaves as `Copy`.
 
 ## Borrowing with references
 

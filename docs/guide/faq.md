@@ -63,7 +63,7 @@ vex compile --target aarch64-apple-darwin main.vx           # from Intel Mac to 
 
 ### Do I need to worry about memory leaks?
 
-Vex's ownership system prevents most leaks automatically. `$Drop` ensures resources are freed when they go out of scope. However, reference cycles (in `SharedRc`/`AtomicArc`) can cause leaks -- use weak references or break cycles manually.
+Vex's ownership system prevents most leaks automatically. `Drop` ensures resources are freed when they go out of scope. However, reference cycles (in `SharedRc`/`AtomicArc`) can cause leaks -- use weak references or break cycles manually.
 
 ### What's the difference between `Box<T>`, `Ptr<T>`, and raw pointers?
 

@@ -67,9 +67,9 @@ async fn goodExample(data: &Vec<i32>): i32 {
 }
 ```
 
-### `$SuspendSafe` Contract
+### `SuspendSafe` Contract
 
-Types implementing `$SuspendSafe` are guaranteed to remain valid across suspension boundaries:
+Types implementing `SuspendSafe` are guaranteed to remain valid across suspension boundaries:
 
 - `i32`, `f64`, `bool` (Copy types) -- always safe
 - `Box<T>` (heap-allocated, stable address) -- safe
@@ -147,7 +147,7 @@ The generated state machine calls into the C runtime at each `await` boundary. T
 ### Allowed
 
 - Owned values (moved into state machine)
-- Immutable references (`&T`, if `T: $SuspendSafe`)
+- Immutable references (`&T`, if `T: SuspendSafe`)
 - `Box<T>` and `Pin<T>` values
 - Calling other `async fn` with `await`
 - `go { }` blocks (fire-and-forget from async context)

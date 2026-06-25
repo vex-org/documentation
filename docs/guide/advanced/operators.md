@@ -47,15 +47,15 @@ Vex provides built-in contracts for all operators. They use the `$` prefix.
 
 | Operator | Contract | Method | Example |
 |----------|----------|--------|---------|
-| `a + b` | `$Add` | `op+(rhs: Self): Self` | Addition |
-| `a - b` | `$Sub` | `op-(rhs: Self): Self` | Subtraction |
-| `a * b` | `$Mul` | `op*(rhs: Self): Self` | Multiplication |
-| `a / b` | `$Div` | `op/(rhs: Self): Self` | Division |
-| `a % b` | `$Mod` | `op%(rhs: Self): Self` | Modulo |
-| `-a` | `$Neg` | `op-(): Self` | Negation |
+| `a + b` | `Add` | `op+(rhs: Self): Self` | Addition |
+| `a - b` | `Sub` | `op-(rhs: Self): Self` | Subtraction |
+| `a * b` | `Mul` | `op*(rhs: Self): Self` | Multiplication |
+| `a / b` | `Div` | `op/(rhs: Self): Self` | Division |
+| `a % b` | `Mod` | `op%(rhs: Self): Self` | Modulo |
+| `-a` | `Neg` | `op-(): Self` | Negation |
 
 ```vex
-struct Vec2:$Add, $Sub, $Neg {
+struct Vec2:Add, Sub, Neg {
     x: f64,
     y: f64,
     
@@ -80,15 +80,15 @@ let neg = -v  // Vec2 { x: -1.0, y: -2.0 }
 
 | Operator | Contract | Method | Example |
 |----------|----------|--------|---------|
-| `a == b` | `$Eq` | `op==(rhs: Self): bool` | Equality |
-| `a != b` | `$Eq` | `op!=(rhs: Self): bool` | Inequality |
-| `a < b` | `$Ord` | `op<(rhs: Self): bool` | Less than |
-| `a <= b` | `$Ord` | `op<=(rhs: Self): bool` | Less or equal |
-| `a > b` | `$Ord` | `op>(rhs: Self): bool` | Greater than |
-| `a >= b` | `$Ord` | `op>=(rhs: Self): bool` | Greater or equal |
+| `a == b` | `Eq` | `op==(rhs: Self): bool` | Equality |
+| `a != b` | `Eq` | `op!=(rhs: Self): bool` | Inequality |
+| `a < b` | `Ord` | `op<(rhs: Self): bool` | Less than |
+| `a <= b` | `Ord` | `op<=(rhs: Self): bool` | Less or equal |
+| `a > b` | `Ord` | `op>(rhs: Self): bool` | Greater than |
+| `a >= b` | `Ord` | `op>=(rhs: Self): bool` | Greater or equal |
 
 ```vex
-struct Version:$Eq, $Ord {
+struct Version:Eq, Ord {
     major: i32,
     minor: i32,
     
@@ -117,15 +117,15 @@ struct Version:$Eq, $Ord {
 
 | Operator | Contract | Method | Example |
 |----------|----------|--------|---------|
-| `a & b` | `$BitAnd` | `op&(rhs: Self): Self` | AND |
-| `a \| b` | `$BitOr` | `op\|(rhs: Self): Self` | OR |
-| `a ^ b` | `$BitXor` | `op^(rhs: Self): Self` | XOR |
-| `~a` | `$BitNot` | `op~(): Self` | NOT |
-| `a << n` | `$Shl` | `op<<(rhs: i32): Self` | Left shift |
-| `a >> n` | `$Shr` | `op>>(rhs: i32): Self` | Right shift |
+| `a & b` | `BitAnd` | `op&(rhs: Self): Self` | AND |
+| `a \| b` | `BitOr` | `op\|(rhs: Self): Self` | OR |
+| `a ^ b` | `BitXor` | `op^(rhs: Self): Self` | XOR |
+| `~a` | `BitNot` | `op~(): Self` | NOT |
+| `a << n` | `Shl` | `op<<(rhs: i32): Self` | Left shift |
+| `a >> n` | `Shr` | `op>>(rhs: i32): Self` | Right shift |
 
 ```vex
-struct Flags:$BitOr, $BitAnd {
+struct Flags:BitOr, BitAnd {
     value: u32,
     
     fn op|(other: Flags): Flags {
@@ -146,12 +146,12 @@ let perms = READ | WRITE  // Flags { value: 3 }
 
 | Operator | Contract | Method | Example |
 |----------|----------|--------|---------|
-| `a[i]` | `$Index` | `op[](index: Idx): Output` | Read access |
-| `a[i] = v` | `$IndexMut` | `op[]=(index: Idx, value: Val)` | Write access |
-| `a[i..j]` | `$Slice` | `op[..](start, end): Output` | Slice read |
+| `a[i]` | `Index` | `op[](index: Idx): Output` | Read access |
+| `a[i] = v` | `IndexMut` | `op[]=(index: Idx, value: Val)` | Write access |
+| `a[i..j]` | `Slice` | `op[..](start, end): Output` | Slice read |
 
 ```vex
-struct Matrix:$Index, $IndexMut {
+struct Matrix:Index, IndexMut {
     type Output = f64;
     data: Vec<f64>,
     cols: i64,
@@ -174,19 +174,19 @@ m[5] = 3.14        // Calls op[]=
 
 | Operator | Contract | Method |
 |----------|----------|--------|
-| `a += b` | `$AddAssign` | `op+=(rhs: Self)` |
-| `a -= b` | `$SubAssign` | `op-=(rhs: Self)` |
-| `a *= b` | `$MulAssign` | `op*=(rhs: Self)` |
-| `a /= b` | `$DivAssign` | `op/=(rhs: Self)` |
-| `a %= b` | `$ModAssign` | `op%=(rhs: Self)` |
-| `a &= b` | `$BitAndAssign` | `op&=(rhs: Self)` |
-| `a \|= b` | `$BitOrAssign` | `op\|=(rhs: Self)` |
-| `a ^= b` | `$BitXorAssign` | `op^=(rhs: Self)` |
-| `a <<= n` | `$ShlAssign` | `op<<=(rhs: i32)` |
-| `a >>= n` | `$ShrAssign` | `op>>=(rhs: i32)` |
+| `a += b` | `AddAssign` | `op+=(rhs: Self)` |
+| `a -= b` | `SubAssign` | `op-=(rhs: Self)` |
+| `a *= b` | `MulAssign` | `op*=(rhs: Self)` |
+| `a /= b` | `DivAssign` | `op/=(rhs: Self)` |
+| `a %= b` | `ModAssign` | `op%=(rhs: Self)` |
+| `a &= b` | `BitAndAssign` | `op&=(rhs: Self)` |
+| `a \|= b` | `BitOrAssign` | `op\|=(rhs: Self)` |
+| `a ^= b` | `BitXorAssign` | `op^=(rhs: Self)` |
+| `a <<= n` | `ShlAssign` | `op<<=(rhs: i32)` |
+| `a >>= n` | `ShrAssign` | `op>>=(rhs: i32)` |
 
 ```vex
-struct Counter:$AddAssign {
+struct Counter:AddAssign {
     value: i32,
     
     fn op+=(amount: Counter) {
@@ -202,14 +202,14 @@ c += Counter { value: 5 }  // c.value is now 15
 
 | Operator | Contract | Method | Example |
 |----------|----------|--------|---------|
-| `a ** b` | `$Pow` | `op**(exp: i32): Self` | Power |
-| `++a` | `$PreInc` | `op++(): Self` | Pre-increment |
-| `a++` | `$PostInc` | `op++(): Self` | Post-increment |
-| `--a` | `$PreDec` | `op--(): Self` | Pre-decrement |
-| `a--` | `$PostDec` | `op--(): Self` | Post-decrement |
-| `a..b` | `$Range` | `op..(end): Range<Self>` | Range |
-| `a..=b` | `$RangeInclusive` | `op..=(end): RangeInclusive<Self>` | Inclusive range |
-| `a ?? b` | `$NullCoalesce` | `op??(fallback): Self` | Null coalesce |
+| `a ** b` | `Pow` | `op**(exp: i32): Self` | Power |
+| `++a` | `PreInc` | `op++(): Self` | Pre-increment |
+| `a++` | `PostInc` | `op++(): Self` | Post-increment |
+| `--a` | `PreDec` | `op--(): Self` | Pre-decrement |
+| `a--` | `PostDec` | `op--(): Self` | Post-decrement |
+| `a..b` | `Range` | `op..(end): Range<Self>` | Range |
+| `a..=b` | `RangeInclusive` | `op..=(end): RangeInclusive<Self>` | Inclusive range |
+| `a ?? b` | `NullCoalesce` | `op??(fallback): Self` | Null coalesce |
 
 ## External Operator Methods
 
@@ -292,7 +292,7 @@ Overloading is in good shape, but the broader repository is still under active d
 A single struct can implement multiple operator contracts:
 
 ```vex
-struct Complex:$Add, $Sub, $Mul, $Eq, $Display {
+struct Complex:Add, Sub, Mul, Eq, Display {
     real: f64,
     imag: f64,
     
@@ -350,7 +350,7 @@ The following operators **cannot** be overloaded:
 ## Example: Matrix Type
 
 ```vex
-struct Matrix:$Add, $Mul, $Index, $Eq {
+struct Matrix:Add, Mul, Index, Eq {
     type Output = f64;
     data: Vec<f64>,
     rows: i64,

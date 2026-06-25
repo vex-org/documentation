@@ -304,7 +304,7 @@ let valid = results.filter(|opt: Option<i32>| opt.isSome())
 ## Related Pages
 
 - [Result API](/guide/types/result-api) / [Option API](/guide/types/option-api) -- the complementary type
-- [Contracts Reference](/guide/types/contracts-reference) -- `$Clone`, `$Drop`, `From`, `Into`
+- [Contracts Reference](/guide/types/contracts-reference) -- `Clone`, `Drop`, `From`, `Into`
 - [Operators Reference](/guide/advanced/operators-reference) -- `!>` rescue, `??` null-coalesce, `?` try
 - [Error Handling](/guide/error-handling) -- patterns for robust error management
 - [Pattern Matching](/guide/types/pattern-matching) -- `match` and `if let` with Option/Result

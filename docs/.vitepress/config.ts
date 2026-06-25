@@ -12,6 +12,7 @@ export default defineConfig({
   markdown: {
     languageAlias: {
       vex: "rust",
+      vexhdl: "rust",
     },
   },
   themeConfig: {
@@ -20,6 +21,7 @@ export default defineConfig({
 
     nav: [
       { text: "Guide", link: "/guide/introduction" },
+      { text: "VexHDL", link: "/hdl/" },
       { text: "Architecture", link: "/architecture/" },
       { text: "Standard Library", link: "/std/" },
       { text: "Reference", link: "/references/" },
@@ -28,6 +30,21 @@ export default defineConfig({
     ],
 
     sidebar: {
+      "/hdl/": [
+        {
+          text: "VexHDL Guide",
+          items: [
+            { text: "Overview", link: "/hdl/" },
+            { text: "Getting Started", link: "/hdl/getting-started" },
+            { text: "Syntax Reference", link: "/hdl/syntax-reference" },
+            { text: "Procedural & Control", link: "/hdl/procedural-control" },
+            { text: "Expressions & Operators", link: "/hdl/expressions-operators" },
+            { text: "Safety & Policies", link: "/hdl/safety-policies" },
+            { text: "Transpiler & Synthesis", link: "/hdl/transpiler-integration" },
+            { text: "Design Examples", link: "/hdl/design-examples" },
+          ],
+        },
+      ],
       "/guide/": [
         {
           text: "Getting Started",

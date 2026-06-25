@@ -1,5 +1,7 @@
 # Connection & Queries (`db`)
 
+The `db` module provides database driver bindings. Both `Connection` and `QueryResult` implement the `Drop` contract, guaranteeing that database handles are safely closed and query result set handles are freed when they go out of scope.
+
 ## `Connection` — Database Handle
 
 | Method | Description |
@@ -20,7 +22,7 @@
 | `.begin(): bool` | Start transaction |
 | `.commit(): bool` | Commit transaction |
 | `.rollback(): bool` | Rollback transaction |
-| `.close()` | Close connection |
+| `.close()` | Close connection (optional, as `Drop` closes it automatically) |
 
 ## `QueryResult` — Result Set
 
@@ -35,7 +37,29 @@
 | `.text(col): string` | Get column value as string |
 | `.isNull(col): bool` | Check if column is NULL |
 | `.length(col): u64` | Get column data length |
-| `.free()` | Free result set |
+| `.free()` | Free result set (optional, as `Drop` frees it automatically) |
+
+## Standard Resource Management (Drop)
+
+Connections and query results do not require manual resource closing/freeing when scoped:
+
+```vex
+import { Connection, QueryResult } from "std/db";
+
+fn runQuery() {
+    let conn = Connection.sqlite(":memory:");
+    if !conn.ok() { return; }
+    
+    // SQLite connection is automatically closed when `conn` goes out of scope.
+    
+    let rs = conn.query("SELECT name FROM users");
+    while rs.next() {
+        let name = rs.text(0);
+        $println(name);
+    }
+    // rs (QueryResult) is automatically freed when leaving the function.
+}
+```
 
 ## Transactions
 
@@ -61,3 +85,4 @@ let rows = conn.execWithParams(
     "INSERT INTO users (name, age) VALUES ($1, $2)", &params
 );
 ```
+

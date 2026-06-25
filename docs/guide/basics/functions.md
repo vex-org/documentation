@@ -125,7 +125,7 @@ let y = identity<string>("hello")
 Constrain generic types using contracts:
 
 ```vex
-fn print_it<T: $Display>(item: T) {
+fn print_it<T: Display>(item: T) {
     $println(item.toString())
 }
 ```

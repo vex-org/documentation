@@ -6,12 +6,12 @@ This page catalogs every operator in Vex with syntax, semantics, examples, and t
 
 | Operator       | Syntax  | Contract | Description                                 |
 | -------------- | ------- | -------- | ------------------------------------------- |
-| Addition       | `a + b` | `$Add`   | Element-wise or numeric addition            |
-| Subtraction    | `a - b` | `$Sub`   | Element-wise or numeric subtraction         |
-| Multiplication | `a * b` | `$Mul`   | Element-wise or numeric multiplication      |
-| Division       | `a / b` | `$Div`   | Element-wise or numeric division            |
-| Modulo         | `a % b` | `$Mod`   | Remainder (integers) or element-wise modulo |
-| Negation       | `-a`    | `$Neg`   | Unary minus                                 |
+| Addition       | `a + b` | `Add`   | Element-wise or numeric addition            |
+| Subtraction    | `a - b` | `Sub`   | Element-wise or numeric subtraction         |
+| Multiplication | `a * b` | `Mul`   | Element-wise or numeric multiplication      |
+| Division       | `a / b` | `Div`   | Element-wise or numeric division            |
+| Modulo         | `a % b` | `Mod`   | Remainder (integers) or element-wise modulo |
+| Negation       | `-a`    | `Neg`   | Unary minus                                 |
 
 ```vex
 let sum = 10 + 5          // 15
@@ -48,12 +48,12 @@ x %= 4    // x = 2
 
 | Operator    | Syntax   | Contract  | Description                |
 | ----------- | -------- | --------- | -------------------------- |
-| AND         | `a & b`  | `$BitAnd` | Bitwise AND                |
-| OR          | `a \| b` | `$BitOr`  | Bitwise OR                 |
-| XOR         | `a ^ b`  | `$BitXor` | Bitwise XOR                |
-| NOT         | `~a`     | `$BitNot` | Bitwise complement (unary) |
-| Left Shift  | `a << b` | `$Shl`    | Shift left by b bits       |
-| Right Shift | `a >> b` | `$Shr`    | Shift right by b bits      |
+| AND         | `a & b`  | `BitAnd` | Bitwise AND                |
+| OR          | `a \| b` | `BitOr`  | Bitwise OR                 |
+| XOR         | `a ^ b`  | `BitXor` | Bitwise XOR                |
+| NOT         | `~a`     | `BitNot` | Bitwise complement (unary) |
+| Left Shift  | `a << b` | `Shl`    | Shift left by b bits       |
+| Right Shift | `a >> b` | `Shr`    | Shift right by b bits      |
 
 ```vex
 let a: u8 = 0b1100_1010
@@ -82,12 +82,12 @@ let right = a >> 3      // 0b0001_1001 (right shift)
 
 | Operator         | Syntax   | Contract | Description                  |
 | ---------------- | -------- | -------- | ---------------------------- |
-| Equal            | `a == b` | `$Eq`    | Returns true if equal        |
-| Not Equal        | `a != b` | `$Eq`    | Returns true if not equal    |
-| Less Than        | `a < b`  | `$Ord`   | Returns true if a is less    |
-| Greater Than     | `a > b`  | `$Ord`   | Returns true if a is greater |
-| Less or Equal    | `a <= b` | `$Ord`   | Returns true if a <= b       |
-| Greater or Equal | `a >= b` | `$Ord`   | Returns true if a >= b       |
+| Equal            | `a == b` | `Eq`    | Returns true if equal        |
+| Not Equal        | `a != b` | `Eq`    | Returns true if not equal    |
+| Less Than        | `a < b`  | `Ord`   | Returns true if a is less    |
+| Greater Than     | `a > b`  | `Ord`   | Returns true if a is greater |
+| Less or Equal    | `a <= b` | `Ord`   | Returns true if a <= b       |
+| Greater or Equal | `a >= b` | `Ord`   | Returns true if a >= b       |
 
 ```vex
 let same = (5 == 5)       // true
@@ -104,7 +104,7 @@ let ge = (10 >= 5)        // true
 | -------- | ---------- | -------- | ------------------------- |
 | AND      | `a && b`   | —        | Short-circuit logical AND |
 | OR       | `a \|\| b` | —        | Short-circuit logical OR  |
-| NOT      | `!a`       | `$Not`   | Logical negation          |
+| NOT      | `!a`       | `Not`   | Logical negation          |
 
 ```vex
 let t = true
@@ -122,7 +122,7 @@ let ok = ptr != null_ptr && ptr.read() > 0  // safe: read() only called if ptr i
 
 | Operator | Syntax | Contract | Description             |
 | -------- | ------ | -------- | ----------------------- |
-| Index    | `a[i]` | `$Index` | Element access by index |
+| Index    | `a[i]` | `Index` | Element access by index |
 
 ```vex
 let arr = [10, 20, 30]
@@ -427,4 +427,4 @@ Operators are listed from highest to lowest precedence:
 3. Use compound assignment operators (`+=`, `*=`, etc.) for concise mutation.
 4. For SIMD operations, let the compiler handle vectorization -- write plain array math and Vex does the rest.
 5. When overloading operators, ensure the semantics match user expectations (e.g., `+` should be commutative).
-6. Implement `$Eq` and `$Ord` as a pair when your type has a natural ordering.
+6. Implement `Eq` and `Ord` as a pair when your type has a natural ordering.

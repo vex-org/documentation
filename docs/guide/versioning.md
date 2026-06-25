@@ -24,7 +24,7 @@ These are guaranteed NOT to change without a major version bump (after 1.0):
 - Primitive types (`i32`, `f64`, `bool`, `char`, etc.)
 - Basic operator semantics (`+`, `-`, `*`, `/`, `==`, `!=`, `<`, `>`)
 - Standard prelude types: `Option<T>`, `Result<T,E>`, `Box<T>`, `Vec<T>`, `Map<K,V>`, `Set<T>`
-- Core contracts: `$Add`, `$Sub`, `$Mul`, `$Div`, `$Eq`, `$Ord`, `$Display`, `$Debug`, `$Clone`, `$Drop`
+- Core contracts: `Add`, `Sub`, `Mul`, `Div`, `Eq`, `Ord`, `Display`, `Debug`, `Clone`, `Drop`
 - `vex run` and `vex compile` CLI
 
 ### Tier 2: Stabilizing (0.x)
@@ -35,7 +35,7 @@ These are largely stable but may see minor adjustments:
 - `async fn` / `await` semantics
 - `go` blocks
 - Pattern matching (all pattern forms)
-- Operator overloading (`$Index`, `$BitAnd`, etc.)
+- Operator overloading (`Index`, `BitAnd`, etc.)
 - `vex fmt`, `vex test`, `vex doc`
 - Standard library modules: `http`, `serde`, `crypto`, `fs`, `io`, `time`
 

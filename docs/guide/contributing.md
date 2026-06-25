@@ -251,7 +251,7 @@ fn parse_tokens(tokens: &[Token]) -> Result<Ast, ParseError> {
 
 ```vex
 // Use contracts for abstraction
-fn sum<T: $Add + Default>(items: Span<T>): T {
+fn sum<T: Add + Default>(items: Span<T>): T {
     let! total = T.default()
     for item in items {
         total = total + item

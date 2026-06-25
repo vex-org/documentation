@@ -74,15 +74,15 @@ When `Pin<T>` goes out of scope, the pinned value is dropped normally:
 }  // Resource.drop() is called, then memory is freed
 ```
 
-## The `$Pin` Contract
+## The `Pin` Contract
 
-Types that are self-referential implement the `$Pin` marker contract:
+Types that are self-referential implement the `Pin` marker contract:
 
 ```vex
-// $Pin is a marker contract -- it has no methods
-contract $Pin { }
+// Pin is a marker contract -- it has no methods
+contract Pin { }
 
-// The compiler may auto-detect self-referential fields and apply $Pin
+// The compiler may auto-detect self-referential fields and apply Pin
 ```
 
 ## Common Use Cases
@@ -105,7 +105,7 @@ async fn fetchAndProcess(url: string): Result<Data, Error> {
 Linked lists, trees, and graphs where nodes point to each other within the same allocation:
 
 ```vex
-struct IntrusiveNode: $Pin {
+struct IntrusiveNode: Pin {
     value: i32,
     next: *IntrusiveNode,    // self-referential: may point within same allocation
 }
@@ -122,7 +122,7 @@ fn createList(values: Vec<i32>): Pin<IntrusiveNode> {
 When interfacing with C libraries that maintain internal pointers:
 
 ```vex
-struct CContext: $Pin {
+struct CContext: Pin {
     handle: ptr,  // C library owns internal pointers based on this address
 }
 
@@ -138,7 +138,7 @@ fn createContext(): Pin<CContext> {
 1. **Once pinned, never move.** The compiler enforces this for `Pin<T>`.
 2. **Mutable access requires `unsafe`.** You must guarantee you don't break the pinning invariant.
 3. **Drop runs in place.** The pinned value is dropped at its pinned address, so internal pointers remain valid during drop.
-4. **`$Pin` is auto-detected.** The compiler may automatically apply `$Pin` to types with self-referential fields.
+4. **`Pin` is auto-detected.** The compiler may automatically apply `Pin` to types with self-referential fields.
 
 ## Pin vs Box
 
@@ -164,7 +164,7 @@ let pinned = Pin.new(SelfRef.new())
 1. Use `Pin` when you have types that contain pointers to themselves.
 2. Don't use `Pin` unless you need immovability -- `Box<T>` is simpler and sufficient for most heap allocations.
 3. Respect `unsafe` requirements when accessing `Pin` mutably -- you're responsible for maintaining invariants.
-4. Let the compiler auto-detect `$Pin` -- annotating manually is rarely needed.
+4. Let the compiler auto-detect `Pin` -- annotating manually is rarely needed.
 
 ## Related Pages
 

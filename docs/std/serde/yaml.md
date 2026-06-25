@@ -45,5 +45,5 @@ println("Pipeline: {pipeline.name} with {pipeline.stages} stages");
 |---------|------|------|
 | Nesting | Indentation-based | Section headers `[table]` |
 | Lists | `- item` | `[1, 2, 3]` |
-| Multi-line strings | `\|` and `>` blocks | Triple-quoted `"""..."""` |
+| Multi-line strings | `\|` and `&gt;` blocks | Triple-quoted `"""..."""` |
 | Best for | CI/CD, Kubernetes, Ansible | App configs, build manifests |

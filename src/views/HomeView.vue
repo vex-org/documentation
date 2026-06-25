@@ -13,12 +13,18 @@ import {
 import { markRaw, ref, onMounted, type Component } from "vue";
 import { getHealth } from "@/api/vex";
 
-const vexVersion = ref<string>("v0.4.0-rc.26");
+const vexVersion = ref<string>("v0.4.0-rc.35");
 
 onMounted(async () => {
   const health = await getHealth();
-  if (health?.compilers?.vex && health.compilers.vex !== "unknown" && health.compilers.vex !== "not found") {
-    vexVersion.value = health.compilers.vex.startsWith("v") ? health.compilers.vex : `v${health.compilers.vex}`;
+  if (
+    health?.compilers?.vex &&
+    health.compilers.vex !== "unknown" &&
+    health.compilers.vex !== "not found"
+  ) {
+    vexVersion.value = health.compilers.vex.startsWith("v")
+      ? health.compilers.vex
+      : `v${health.compilers.vex}`;
   }
 });
 
@@ -26,7 +32,7 @@ const features = [
   {
     icon: markRaw(Zap),
     title: "Rust-Level Speed",
-    desc: "Zero-cost abstractions with LLVM 21 backend. Competitive with native Rust performance.",
+    desc: "Zero-cost abstractions with LLVM 22 backend. Competitive with native Rust performance.",
   },
   {
     icon: markRaw(Shield),

@@ -368,7 +368,7 @@ match result {
 
 1. Use `Result<T, E>` as the return type for any function that can fail.
 2. Use the `?` operator for error propagation -- it's concise and makes the happy path clear.
-3. Define custom error types (enums) that implement `$Display` for rich error messages.
+3. Define custom error types (enums) that implement `Display` for rich error messages.
 4. Use `.mapErr()` to convert low-level errors to domain-specific errors at API boundaries.
 5. Prefer `.flatMap()` chains for multi-step operations where each step can fail.
 6. Vex has no `.unwrap()` or `.expect()` -- use `.or()` for defaults or `match` for handling both cases.
@@ -378,7 +378,7 @@ match result {
 ## Related Pages
 
 - [Result API](/guide/types/result-api) / [Option API](/guide/types/option-api) -- the complementary type
-- [Contracts Reference](/guide/types/contracts-reference) -- `$Clone`, `$Drop`, `From`, `Into`
+- [Contracts Reference](/guide/types/contracts-reference) -- `Clone`, `Drop`, `From`, `Into`
 - [Operators Reference](/guide/advanced/operators-reference) -- `!>` rescue, `??` null-coalesce, `?` try
 - [Error Handling](/guide/error-handling) -- patterns for robust error management
 - [Pattern Matching](/guide/types/pattern-matching) -- `match` and `if let` with Option/Result

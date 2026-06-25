@@ -125,7 +125,7 @@ unsafe {
 ## Platform-Specific Code
 
 ```vex
-$if TARGET_OS == "linux" {
+#if TARGET_OS == "linux" {
     extern "C" {
         fn epoll_create(size: i32): i32
     }

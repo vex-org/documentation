@@ -30,6 +30,6 @@ The Vex Standard Library (`std`) provides a set of highly optimized, parallelism
 ## Philosophy
 
 The Vex Standard Library follows a few central design pillars:
-1. **Zero-Copy & Low Allocation**: Functions prefer slices (`Span<T>`), byte buffers (`RawBuf`), and minimal heap allocations. 
+1. **Zero-Copy & Low Allocation**: Functions prefer slices (`Span&lt;T&gt;`), byte buffers (`RawBuf`), and minimal heap allocations. 
 2. **"Silicon-Ready" Operations**: Wherever there are SIMD instructions or potential for parallelism (hashes, loops, string escapes), the `std` structures it so `vex-compiler` can vectorize it directly.
 3. **Extensibility**: Things like `Serde` are abstracted via `contracts`, bringing familiar ergonomic usage to a completely custom systems stack.

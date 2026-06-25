@@ -147,7 +147,7 @@ fn (self: &Rect) area(): f64 {
 }
 ```
 
-Builtin contracts from the prelude commonly start with `$`, such as `$Display`, `$Clone`, and `$Drop`.
+Builtin contracts from the prelude commonly start with `$`, such as `Display`, `Clone`, and `Drop`.
 
 ## Tuple Structs
 

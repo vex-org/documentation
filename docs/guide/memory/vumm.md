@@ -54,9 +54,9 @@ VUMM manages three primary ownership modes for heap-allocated data:
 
 VUMM leverages Vex's contract-based system to automate lifetime management:
 
-* **`$Copy`**: Primitive types (numbers, bools, raw pointers) copy on assignment. Owning VUMM types do not implement `$Copy` and default to move semantics.
-* **`$Clone`**: Cloning a VUMM type triggers a cheap reference count increment (`vex_rc_retain` or `vex_arc_retain`) under the hood instead of duplicating heap allocations, unless a deep copy is explicitly requested.
-* **`$Drop`**: VUMM automatically decrements reference counts when an owner leaves scope, freeing the underlying allocation once the reference count reaches zero.
+* **`Copy`**: Primitive types (numbers, bools, raw pointers) copy on assignment. Owning VUMM types do not implement `Copy` and default to move semantics.
+* **`Clone`**: Cloning a VUMM type triggers a cheap reference count increment (`vex_rc_retain` or `vex_arc_retain`) under the hood instead of duplicating heap allocations, unless a deep copy is explicitly requested.
+* **`Drop`**: VUMM automatically decrements reference counts when an owner leaves scope, freeing the underlying allocation once the reference count reaches zero.
 
 ---
 

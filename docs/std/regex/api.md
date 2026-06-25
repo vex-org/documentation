@@ -20,7 +20,7 @@
 |--------|-------------|
 | `Match.new()` | Create empty match |
 | `.value(): string` | Full match text (group 0) |
-| `.group(i): Option<string>` | Get capture group by index |
+| `.group(i): Option&lt;string&gt;` | Get capture group by index |
 | `.groupCount(): i32` | Number of capture groups (excluding group 0) |
 | `.start(): i32` | Start position of full match |
 | `.end(): i32` | End position of full match |

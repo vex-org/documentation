@@ -38,6 +38,6 @@ conn.close();
 | Component | Description |
 |-----------|-------------|
 | `lib.vx` | Connection, QueryResult, FFI bindings |
-| `orm/orm.vx` | `Db<T>` generic query builder |
+| `orm/orm.vx` | `Db&lt;T&gt;` generic query builder |
 | `orm/query.vx` | SQL generation (SELECT, INSERT, UPDATE, DELETE) |
 | `orm/scanner.vx` | Row → Struct mapping |

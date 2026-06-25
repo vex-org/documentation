@@ -34,7 +34,7 @@ Key terms and concepts in the Vex ecosystem.
 
 **Defer** -- Statement that schedules code to run when the current scope exits (Go-style RAII). Syntax: `defer file.close()`.
 
-**Drop** -- The RAII cleanup mechanism. When a value implementing `$Drop` goes out of scope, its `drop()` method is called automatically.
+**Drop** -- The RAII cleanup mechanism. When a value implementing `Drop` goes out of scope, its `drop()` method is called automatically.
 
 **DynMask** -- Runtime-sized boolean mask for SIMD operations. Fat pointer: `{ ptr: *i8, len: i64 }`.
 
@@ -96,7 +96,7 @@ Key terms and concepts in the Vex ecosystem.
 
 ## O
 
-**Operator Overloading** -- Defining custom behavior for operators (`+`, `==`, `[]`, etc.) by implementing the corresponding contract (`$Add`, `$Eq`, `$Index`).
+**Operator Overloading** -- Defining custom behavior for operators (`+`, `==`, `[]`, etc.) by implementing the corresponding contract (`Add`, `Eq`, `Index`).
 
 **Option\<T\>** -- Type representing a value that may be absent. Variants: `Some(T)` or `None`. Safe alternative to null pointers.
 

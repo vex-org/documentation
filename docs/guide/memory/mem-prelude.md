@@ -119,7 +119,7 @@ unsafe {
 ## Example: Custom Allocator Wrapper
 
 ```vex
-struct Arena: $Drop {
+struct Arena: Drop {
     base: ptr,
     offset: usize,
     capacity: usize,
@@ -154,7 +154,7 @@ let p2 = arena.alloc!(128, 16)
 ## Best Practices
 
 1. **Don't use raw `Mem` functions directly** unless you're writing low-level systems code or building new abstractions.
-2. **Always pair `malloc` with `free`** -- use `defer` or `$Drop` to ensure cleanup.
+2. **Always pair `malloc` with `free`** -- use `defer` or `Drop` to ensure cleanup.
 3. **Use `calloc` when you need zeroed memory** -- it avoids bugs from uninitialized reads.
 4. **Prefer `memmove` over `memcpy`** when source and destination might overlap.
 5. **Set freed pointers to `null_ptr`** to catch use-after-free bugs early.

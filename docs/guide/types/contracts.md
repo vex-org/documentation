@@ -28,7 +28,7 @@ contract Display {
     toString(): string;
 }
 
-struct Point: $Drop, Display {
+struct Point: Drop, Display {
     public:
     x: i32,
     y: i32,
@@ -81,7 +81,7 @@ contract Iterator {
     next(): Option<Self.Item>;
 }
 
-struct Counter: $Drop {
+struct Counter: Drop {
     type Item = i32;
     count: i32,
 }
@@ -96,9 +96,9 @@ fn (self: &Counter!) next(): Option<i32> {
 
 Many important contracts live in the prelude and start with `$`.
 
-### `$Copy`
+### `Copy`
 
-`$Copy` values copy on assignment instead of moving.
+`Copy` values copy on assignment instead of moving.
 
 ```vex
 let x = 42;
@@ -106,14 +106,14 @@ let y = x;
 $println(x);
 ```
 
-Typical `$Copy` values include primitive numbers, `bool`, `char`, `str`, and raw pointer-like values.
+Typical `Copy` values include primitive numbers, `bool`, `char`, `str`, and raw pointer-like values.
 
-### `$Clone`
+### `Clone`
 
-`$Clone` provides explicit duplication.
+`Clone` provides explicit duplication.
 
 ```vex
-struct Config: $Clone {
+struct Config: Clone {
     public:
     name: string,
     value: i32,
@@ -124,12 +124,12 @@ fn (self: &Config) clone(): Config {
 }
 ```
 
-### `$Drop`
+### `Drop`
 
-`$Drop` runs cleanup when a value leaves scope.
+`Drop` runs cleanup when a value leaves scope.
 
 ```vex
-struct FileHandle: $Drop {
+struct FileHandle: Drop {
     public:
     fd: i32,
     path: string,
@@ -140,12 +140,12 @@ fn (self: &FileHandle) drop() {
 }
 ```
 
-### `$Display` and `$Debug`
+### `Display` and `Debug`
 
 These support human-readable and debug-oriented text conversion.
 
 ```vex
-struct Color: $Display, $Debug {
+struct Color: Display, Debug {
     public:
     r: u8,
     g: u8,
@@ -181,12 +181,12 @@ fn (self: &Vec2) op+(other: Vec2): Vec2 {
 }
 ```
 
-Builtin operator contracts also appear in prelude form such as `$Add<T>`, `$Index<Idx, Out>`, and related contracts.
+Builtin operator contracts also appear in prelude form such as `Add<T>`, `Index<Idx, Out>`, and related contracts.
 
 ## Guidance
 
 - Use plain contracts for domain behavior.
-- Use `$Drop`, `$Clone`, and `$Display` when you want standard language integration.
+- Use `Drop`, `Clone`, and `Display` when you want standard language integration.
 - Prefer simple method contracts first; add associated types or generic defaults when the API really needs them.
 - Keep examples aligned with real syntax from the repo: `struct Type: Contract {}` plus receiver methods.
 

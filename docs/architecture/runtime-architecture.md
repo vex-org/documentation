@@ -270,7 +270,7 @@ When a panic occurs:
 1. The panic message is formatted
 2. A backtrace is captured (DWARF unwinding on macOS/Linux)
 3. If a panic hook is registered, it's called
-4. The goroutine stack is unwound, running `$Drop` for all in-scope values
+4. The goroutine stack is unwound, running `Drop` for all in-scope values
 5. If uncaught, the process exits with code 101
 
 ```vex
@@ -284,7 +284,7 @@ sys.setPanicHook(|msg, backtrace|  {
 
 ### Abort
 
-`$abort(code)` immediately terminates the process without unwinding. No `$Drop` handlers run.
+`$abort(code)` immediately terminates the process without unwinding. No `Drop` handlers run.
 
 ## Memory Footprint
 

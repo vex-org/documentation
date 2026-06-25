@@ -1,20 +1,20 @@
 export interface BenchmarkExample {
-    name: string
-    description: string
-    vex: string
-    go: string
-    rust: string
-    zig: string
-    c?: string
-    cpp?: string
+  name: string;
+  description: string;
+  vex: string;
+  go: string;
+  rust: string;
+  zig: string;
+  c?: string;
+  cpp?: string;
 }
 
 export const benchmarks: BenchmarkExample[] = [
-    // 1. Fibonacci (recursive)
-    {
-        name: 'Fibonacci',
-        description: 'Recursive fibonacci — tests function call overhead',
-        vex: `fn fib(n: i32): i32 {
+  // 1. Fibonacci (recursive)
+  {
+    name: "Fibonacci",
+    description: "Recursive fibonacci — tests function call overhead",
+    vex: `fn fib(n: i32): i32 {
     if n <= 1 { return n }
     return fib(n - 1) + fib(n - 2)
 }
@@ -24,7 +24,7 @@ fn main(): i32 {
     $println(result)
     return 0
 }`,
-        go: `package main
+    go: `package main
  
 import "fmt"
  
@@ -39,7 +39,7 @@ func main() {
 	result := fib(35)
 	fmt.Println(result)
 }`,
-        rust: `fn fib(n: i32) -> i32 {
+    rust: `fn fib(n: i32) -> i32 {
     if n <= 1 { return n; }
     fib(n - 1) + fib(n - 2)
 }
@@ -48,7 +48,7 @@ fn main() {
     let result = fib(35);
     println!("{}", result);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
  
 fn fib(n: i32) i32 {
     if (n <= 1) return n;
@@ -61,7 +61,7 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{result});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-        c: `#include <stdio.h>
+    c: `#include <stdio.h>
 
 int fib(int n) {
     if (n <= 1) return n;
@@ -73,7 +73,7 @@ int main() {
     printf("%d\\\n", result);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int fib(int n) {
     if (n <= 1) return n;
@@ -85,21 +85,21 @@ int main() {
     std::cout << result << "\\\n";
     return 0;
 }`,
-    },
+  },
 
-    // 2. Sum 1M
-    {
-        name: 'Sum 1M',
-        description: 'Sum integers 0..1M — tests loop auto-vectorization',
-        vex: `fn main(): i32 {
+  // 2. Sum 1M
+  {
+    name: "Sum 1M",
+    description: "Sum integers 0..1M — tests loop auto-vectorization",
+    vex: `fn main(): i32 {
     let! sum: i64 = 0
-    for i in 0..1000000 {
-        sum += i as i64
+    for i in 0i64..1000000i64 {
+        sum += i
     }
     $println(sum)
     return 0
 }`,
-        go: `package main
+    go: `package main
  
 import "fmt"
  
@@ -110,14 +110,14 @@ func main() {
 	}
 	fmt.Println(sum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut sum: i64 = 0;
     for i in 0..1000000 {
         sum += i;
     }
     println!("{}", sum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
  
 pub fn main(init: std.process.Init) !void {
     var sum: i64 = 0;
@@ -129,7 +129,7 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-        c: `#include <stdio.h>
+    c: `#include <stdio.h>
 
 int main() {
     long long sum = 0;
@@ -139,7 +139,7 @@ int main() {
     printf("%lld\\\n", sum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int main() {
     long long sum = 0;
@@ -149,13 +149,13 @@ int main() {
     std::cout << sum << "\\\n";
     return 0;
 }`,
-    },
+  },
 
-    // 3. String Concat
-    {
-        name: 'String Concat',
-        description: 'Build string by concat — tests VexString COW allocator',
-        vex: `fn main(): i32 {
+  // 3. String Concat
+  {
+    name: "String Concat",
+    description: "Build string by concat — tests VexString COW allocator",
+    vex: `fn main(): i32 {
     let! s = ""
     for _ in 0..10000 {
         s += "x"   // VexString: COW + SSO + inline up to 15 bytes
@@ -163,25 +163,28 @@ int main() {
     $println(s.len())
     return 0
 }`,
-        go: `package main
- 
-import "fmt"
- 
+    go: `package main
+
+import (
+	"fmt"
+	"strings"
+)
+
 func main() {
-	s := ""
+	var sb strings.Builder
 	for i := 0; i < 10000; i++ {
-		s += "x"
+		sb.WriteByte('x')
 	}
-	fmt.Println(len(s))
+	fmt.Println(sb.Len())
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut s = String::new();
     for _ in 0..10000 {
         s.push('x');
     }
     println!("{}", s.len());
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
  
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -197,7 +200,7 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{s.items.len});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-        c: `#include <stdio.h>
+    c: `#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -218,7 +221,7 @@ int main() {
     free(s);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <string>
 
 int main() {
@@ -229,13 +232,14 @@ int main() {
     std::cout << s.length() << "\\\n";
     return 0;
 }`,
-    },
+  },
 
-    // 4. Array Dot Product
-    {
-        name: 'Dot Product',
-        description: 'SIMD dot product — Vex compiles a * b to single VMUL + horizontal VADD',
-        vex: `// Vex: array * array → SIMD multiply, <+ → horizontal sum
+  // 4. Array Dot Product
+  {
+    name: "Dot Product",
+    description:
+      "SIMD dot product — Vex compiles a * b to single VMUL + horizontal VADD",
+    vex: `// Vex: array * array → SIMD multiply, <+ → horizontal sum
 // Compiles to: vmulpd + vhaddpd (2 instructions!)
 fn dot(a: [f64; 4], b: [f64; 4]): f64 {
     return <+ (a * b)
@@ -251,7 +255,7 @@ fn main(): i32 {
     $println(sum)
     return 0
 }`,
-        go: `package main
+    go: `package main
  
 import "fmt"
  
@@ -268,7 +272,7 @@ func main() {
 	}
 	fmt.Println(sum)
 }`,
-        rust: `fn dot(a: [f64; 4], b: [f64; 4]) -> f64 {
+    rust: `fn dot(a: [f64; 4], b: [f64; 4]) -> f64 {
     a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
 }
  
@@ -281,7 +285,7 @@ fn main() {
     }
     println!("{}", sum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
  
 fn dot(a: @Vector(4, f64), b: @Vector(4, f64)) f64 {
     return @reduce(.Add, a * b);
@@ -299,7 +303,7 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{sum});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-        c: `#include <stdio.h>
+    c: `#include <stdio.h>
 
 double dot(double a[4], double b[4]) {
     return a[0]*b[0] + a[1]*b[1] + a[2]*b[2] + a[3]*b[3];
@@ -315,7 +319,7 @@ int main() {
     printf("%g\\\n", sum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
 #include <numeric>
 
@@ -333,33 +337,34 @@ int main() {
     std::cout << sum << "\\\n";
     return 0;
 }`,
-    },
- 
-    // 5. Sieve of Eratosthenes
-    {
-        name: 'Prime Sieve',
-        description: 'Sieve of Eratosthenes up to 100K — tests array access patterns',
-        vex: `fn main(): i32 {
-    let limit = 100000
+  },
+
+  // 5. Sieve of Eratosthenes
+  {
+    name: "Prime Sieve",
+    description:
+      "Sieve of Eratosthenes up to 100K — tests array access patterns",
+    vex: `fn main(): i32 {
+    let limit: usize = 100000
     let! sieve: [bool; 100000] = [true; 100000]
     sieve[0] = false
     sieve[1] = false
     
     let! count = 0
     for i in 2..limit {
-        if sieve[i as usize] {
+        if sieve[i] {
             count += 1
-            let! j: usize = (i as usize) * (i as usize)
-            while j < (limit as usize) {
+            let! j = i * i
+            while j < limit {
                 sieve[j] = false
-                j += (i as usize)
+                j += i
             }
         }
     }
     $println(count)
     return 0
 }`,
-        go: `package main
+    go: `package main
  
 import "fmt"
  
@@ -380,7 +385,7 @@ func main() {
 	}
 	fmt.Println(count)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     const LIMIT: usize = 100000;
     let mut sieve = [true; LIMIT];
     let mut count = 0;
@@ -396,7 +401,7 @@ func main() {
     }
     println!("{}", count);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
  
 pub fn main(init: std.process.Init) !void {
     const limit = 100000;
@@ -416,7 +421,7 @@ pub fn main(init: std.process.Init) !void {
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{count});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
-        c: `#include <stdio.h>
+    c: `#include <stdio.h>
 #include <stdbool.h>
  
 int main() {
@@ -437,7 +442,7 @@ int main() {
     printf("%d\\n", count);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
  
 int main() {
@@ -456,13 +461,13 @@ int main() {
     std::cout << count << "\\n";
     return 0;
 }`,
-    },
+  },
 
-    // 6. Matrix Multiply (4x4)
-    {
-        name: 'Matrix 4×4',
-        description: '4×4 matrix multiply 100K times — tests compute density',
-        vex: `fn main(): i32 {
+  // 6. Matrix Multiply (4x4)
+  {
+    name: "Matrix 4×4",
+    description: "4×4 matrix multiply 100K times — tests compute density",
+    vex: `fn main(): i32 {
     let! sum: f64 = 0.0
     for _ in 0..100000 {
         let a = [1.0, 2.0, 3.0, 4.0,
@@ -488,7 +493,7 @@ int main() {
     $println(sum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -511,7 +516,7 @@ func main() {
 	}
 	fmt.Println(sum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut sum = 0.0_f64;
     for _ in 0..100000 {
         let a = [1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0,11.0,12.0,13.0,14.0,15.0,16.0_f64];
@@ -530,7 +535,7 @@ func main() {
     }
     println!("{}", sum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var sum: f64 = 0;
@@ -577,7 +582,7 @@ int main() {
     printf("%g\\n", sum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
 
 int main() {
@@ -600,13 +605,13 @@ int main() {
     std::cout << sum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 7. Collatz Conjecture
-    {
-        name: 'Collatz',
-        description: 'Longest Collatz chain under 100K — tests branching',
-        vex: `fn collatz_len(n: i64): i32 {
+  // 7. Collatz Conjecture
+  {
+    name: "Collatz",
+    description: "Longest Collatz chain under 100K — tests branching",
+    vex: `fn collatz_len(n: i64): i32 {
     let! x = n
     let! count = 0
     while x > 1 {
@@ -634,7 +639,7 @@ fn main(): i32 {
     $println(max_len)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -665,7 +670,7 @@ func main() {
 	fmt.Println(maxN)
 	fmt.Println(maxLen)
 }`,
-        rust: `fn collatz_len(n: i64) -> i32 {
+    rust: `fn collatz_len(n: i64) -> i32 {
     let mut x = n;
     let mut count = 0;
     while x > 1 {
@@ -688,7 +693,7 @@ fn main() {
     println!("{}", max_n);
     println!("{}", max_len);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn collatzLen(n: i64) i32 {
     var x = n;
@@ -748,7 +753,7 @@ int main() {
     printf("%lld\\n%d\\n", max_n, max_len);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int collatz_len(long long n) {
     long long x = n;
@@ -777,13 +782,14 @@ int main() {
     std::cout << max_n << "\\n" << max_len << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 8. Binary Search
-    {
-        name: 'Binary Search',
-        description: '10M binary searches in sorted array — tests branch prediction',
-        vex: `fn binary_search(arr: &Vec<i32>, target: i32): i32 {
+  // 8. Binary Search
+  {
+    name: "Binary Search",
+    description:
+      "10M binary searches in sorted array — tests branch prediction",
+    vex: `fn binary_search(arr: &Vec<i32>, target: i32): i32 {
     let! lo = 0
     let! hi = arr.len()
     while lo < hi {
@@ -812,7 +818,7 @@ fn main(): i32 {
     $println(found)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import (
 	"fmt"
@@ -833,7 +839,7 @@ func main() {
 	}
 	fmt.Println(found)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let arr: Vec<i32> = (0..10000).collect();
     let mut found = 0;
     for i in 0..1000000 {
@@ -843,7 +849,7 @@ func main() {
     }
     println!("{}", found);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn binarySearch(arr: []const i32, target: i32) i32 {
     var lo: usize = 0;
@@ -909,7 +915,7 @@ int main() {
     free(arr);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 #include <algorithm>
 
@@ -927,18 +933,18 @@ int main() {
     std::cout << found << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 9. N-Body simulation step
-    {
-        name: 'N-Body',
-        description: 'Simple gravity simulation — tests floating-point throughput',
-        vex: `fn main(): i32 {
-    let n = 200
-    let! x = Vec.withCapacity<f64>(n as usize)
-    let! y = Vec.withCapacity<f64>(n as usize)
-    let! vx = Vec.withCapacity<f64>(n as usize)
-    let! vy = Vec.withCapacity<f64>(n as usize)
+  // 9. N-Body simulation step
+  {
+    name: "N-Body",
+    description: "Simple gravity simulation — tests floating-point throughput",
+    vex: `fn main(): i32 {
+    let n = 200usize
+    let! x = Vec.withCapacity<f64>(n)
+    let! y = Vec.withCapacity<f64>(n)
+    let! vx = Vec.withCapacity<f64>(n)
+    let! vy = Vec.withCapacity<f64>(n)
     for i in 0..n {
         x.push(i as f64)
         y.push(i as f64 * 0.5)
@@ -970,7 +976,7 @@ int main() {
     $println(x.getUnchecked(0))
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1007,7 +1013,7 @@ func main() {
 	}
 	fmt.Println(x[0])
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let n = 200;
     let mut x: Vec<f64> = (0..n).map(|i| i as f64).collect();
     let mut y: Vec<f64> = (0..n).map(|i| i as f64 * 0.5).collect();
@@ -1036,7 +1042,7 @@ func main() {
     }
     println!("{}", x[0]);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -1117,7 +1123,7 @@ int main() {
     free(x); free(y); free(vx); free(vy);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 
 int main() {
@@ -1151,13 +1157,13 @@ int main() {
     std::cout << x[0] << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 10. FizzBuzz (100K iterations)
-    {
-        name: 'FizzBuzz 100K',
-        description: 'Classic FizzBuzz to 100K — tests branching + I/O',
-        vex: `fn main(): i32 {
+  // 10. FizzBuzz (100K iterations)
+  {
+    name: "FizzBuzz 100K",
+    description: "Classic FizzBuzz to 100K — tests branching + I/O",
+    vex: `fn main(): i32 {
     let! count = 0
     for i in 1..100001 {
         if i % 15 == 0 { count += 3 }
@@ -1167,7 +1173,7 @@ int main() {
     $println(count)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1184,7 +1190,7 @@ func main() {
 	}
 	fmt.Println(count)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut count = 0;
     for i in 1..=100000 {
         if i % 15 == 0 { count += 3; }
@@ -1193,7 +1199,7 @@ func main() {
     }
     println!("{}", count);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var count: i32 = 0;
@@ -1223,7 +1229,7 @@ int main() {
     printf("%d\\n", count);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int main() {
     int count = 0;
@@ -1235,21 +1241,21 @@ int main() {
     std::cout << count << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 11. Sum of squares
-    {
-        name: 'Sum Squares',
-        description: 'Accumulate squares up to 1M — tests FMA auto-vectorization',
-        vex: `fn main(): i32 {
+  // 11. Sum of squares
+  {
+    name: "Sum Squares",
+    description: "Accumulate squares up to 1M — tests FMA auto-vectorization",
+    vex: `fn main(): i32 {
     let! total: i64 = 0
-    for i in 0..1000000 {
-        total += (i as i64) * (i as i64)
+    for i in 0i64..1000000i64 {
+        total += i * i
     }
     $println(total)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1260,14 +1266,14 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut total: i64 = 0;
     for i in 0_i64..1_000_000 {
         total += i * i;
     }
     println!("{}", total);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var total: i64 = 0;
@@ -1289,7 +1295,7 @@ int main() {
     printf("%lld\\n", total);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int main() {
     long long total = 0;
@@ -1299,15 +1305,16 @@ int main() {
     std::cout << total << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 12. Prefix sum
-    {
-        name: 'Prefix Sum',
-        description: 'Inclusive prefix sum over 200K integers — tests memory bandwidth',
-        vex: `fn main(): i32 {
-    let n = 200000
-    let! values = Vec.withCapacity<i64>(n as usize)
+  // 12. Prefix sum
+  {
+    name: "Prefix Sum",
+    description:
+      "Inclusive prefix sum over 200K integers — tests memory bandwidth",
+    vex: `fn main(): i32 {
+    let n = 200000usize
+    let! values = Vec.withCapacity<i64>(n)
     for i in 0..n {
         values.push((i % 97) as i64)
     }
@@ -1319,7 +1326,7 @@ int main() {
     $println(values.getUnchecked(n - 1))
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1336,7 +1343,7 @@ func main() {
 	}
 	fmt.Println(values[n-1])
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let n = 200000usize;
     let mut values: Vec<i64> = (0..n).map(|i| (i % 97) as i64).collect();
     let mut running: i64 = 0;
@@ -1346,7 +1353,7 @@ func main() {
     }
     println!("{}", values[n - 1]);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -1384,7 +1391,7 @@ int main() {
     free(values);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 
 int main() {
@@ -1401,13 +1408,13 @@ int main() {
     std::cout << values[n - 1] << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 13. XorShift RNG
-    {
-        name: 'XorShift RNG',
-        description: 'Generate 5M pseudo-random values — tests bitwise throughput',
-        vex: `fn next_rng(state: u64): u64 {
+  // 13. XorShift RNG
+  {
+    name: "XorShift RNG",
+    description: "Generate 5M pseudo-random values — tests bitwise throughput",
+    vex: `fn next_rng(state: u64): u64 {
     let! x = state
     x ^= x << 13
     x ^= x >> 7
@@ -1425,7 +1432,7 @@ fn main(): i32 {
     $println(checksum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1445,7 +1452,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-        rust: `fn next_rng(mut x: u64) -> u64 {
+    rust: `fn next_rng(mut x: u64) -> u64 {
     x ^= x << 13;
     x ^= x >> 7;
     x ^= x << 17;
@@ -1461,7 +1468,7 @@ fn main() {
     }
     println!("{}", checksum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn nextRng(x0: u64) u64 {
     var x = x0;
@@ -1502,7 +1509,7 @@ int main() {
     printf("%llu\\n", checksum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 unsigned long long next_rng(unsigned long long x) {
     x ^= x << 13;
@@ -1521,13 +1528,14 @@ int main() {
     std::cout << checksum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 14. Histogram
-    {
-        name: 'Histogram 256',
-        description: 'Build 256-bin histogram over 1M values — tests indexed updates',
-        vex: `fn main(): i32 {
+  // 14. Histogram
+  {
+    name: "Histogram 256",
+    description:
+      "Build 256-bin histogram over 1M values — tests indexed updates",
+    vex: `fn main(): i32 {
     let! hist = [0i32; 256]    // Stack-allocated fixed array
     for i in 0..1000000 {
         let idx = (i * 17 + 23) % 256
@@ -1536,7 +1544,7 @@ int main() {
     $println(hist[0] + hist[17] + hist[42])
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1548,7 +1556,7 @@ func main() {
 	}
 	fmt.Println(hist[0] + hist[17] + hist[42])
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut hist = [0_i32; 256];
     for i in 0..1_000_000 {
         let idx = (i * 17 + 23) % 256;
@@ -1556,7 +1564,7 @@ func main() {
     }
     println!("{}", hist[0] + hist[17] + hist[42]);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var hist: [256]i32 = .{0} ** 256;
@@ -1580,7 +1588,7 @@ int main() {
     printf("%d\\n", hist[0] + hist[17] + hist[42]);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
 
 int main() {
@@ -1592,13 +1600,13 @@ int main() {
     std::cout << (hist[0] + hist[17] + hist[42]) << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 15. Horner polynomial
-    {
-        name: 'Horner Polynomial',
-        description: 'Evaluate polynomial 2M times — tests fused arithmetic chains',
-        vex: `fn poly(x: f64): f64 {
+  // 15. Horner polynomial
+  {
+    name: "Horner Polynomial",
+    description: "Evaluate polynomial 2M times — tests fused arithmetic chains",
+    vex: `fn poly(x: f64): f64 {
     return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0)
 }
 
@@ -1610,7 +1618,7 @@ fn main(): i32 {
     $println(acc)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1625,7 +1633,7 @@ func main() {
 	}
 	fmt.Println(acc)
 }`,
-        rust: `fn poly(x: f64) -> f64 {
+    rust: `fn poly(x: f64) -> f64 {
     (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0)
 }
 
@@ -1636,7 +1644,7 @@ fn main() {
     }
     println!("{}", acc);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn poly(x: f64) f64 {
     return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0);
@@ -1666,7 +1674,7 @@ int main() {
     printf("%g\\n", acc);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 double poly(double x) {
     return (((((0.125 * x + 0.5) * x + 1.25) * x + 2.0) * x + 3.0) * x + 1.0);
@@ -1680,13 +1688,13 @@ int main() {
     std::cout << acc << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 16. Mandelbrot mini
-    {
-        name: 'Mandelbrot Mini',
-        description: '64×64 Mandelbrot sweep — tests floating-point branches',
-        vex: `fn escape(cx: f64, cy: f64): i32 {
+  // 16. Mandelbrot mini
+  {
+    name: "Mandelbrot Mini",
+    description: "64×64 Mandelbrot sweep — tests floating-point branches",
+    vex: `fn escape(cx: f64, cy: f64): i32 {
     let! zr: f64 = 0.0
     let! zi: f64 = 0.0
     for it in 0..50 {
@@ -1709,7 +1717,7 @@ fn main(): i32 {
     $println(total)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1737,7 +1745,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-        rust: `fn iter(cx: f64, cy: f64) -> i32 {
+    rust: `fn iter(cx: f64, cy: f64) -> i32 {
     let (mut x, mut y) = (0.0_f64, 0.0_f64);
     for i in 0..50 {
         let x2 = x * x - y * y + cx;
@@ -1762,7 +1770,7 @@ fn main() {
     }
     println!("{}", total);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn iter(cx: f64, cy: f64) i32 {
     var x: f64 = 0;
@@ -1815,7 +1823,7 @@ int main() {
     printf("%d\\n", total);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int escape(double cx, double cy) {
     double zr = 0.0;
@@ -1839,13 +1847,13 @@ int main() {
     std::cout << total << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 17. Bit count
-    {
-        name: 'Bit Count Sweep',
-        description: 'Manual popcount over 1M values — tests integer bit-twiddling',
-        vex: `// Fast manual popcount using Kernighan's algorithm
+  // 17. Bit count
+  {
+    name: "Bit Count Sweep",
+    description: "Manual popcount over 1M values — tests integer bit-twiddling",
+    vex: `// Fast manual popcount using Kernighan's algorithm
 fn popcount(x0: u64): i32 {
     let! x = x0
     let! count = 0
@@ -1858,13 +1866,13 @@ fn popcount(x0: u64): i32 {
 
 fn main(): i32 {
     let! total = 0
-    for i in 1..1000001 {
-        total += popcount((i as u64) * 2654435761)
+    for i in 1u64..1000001u64 {
+        total += popcount(i * 2654435761)
     }
     $println(total)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -1884,7 +1892,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-        rust: `fn popcount(mut x: u64) -> i32 {
+    rust: `fn popcount(mut x: u64) -> i32 {
     let mut count = 0;
     while x != 0 {
         x &= x - 1;
@@ -1900,7 +1908,7 @@ fn main() {
     }
     println!("{}", total);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn popcount(x0: u64) i32 {
     var x = x0;
@@ -1919,7 +1927,7 @@ pub fn main(init: std.process.Init) !void {
         total += popcount(i * 2_654_435_761);
     }
     var __stdout_buf: [256]u8 = undefined;
-    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{total});
+    const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\n", .{total});
     try std.Io.File.stdout().writeStreamingAll(init.io, __stdout_str);
 }`,
     c: `#include <stdio.h>
@@ -1938,10 +1946,10 @@ int main() {
     for (unsigned long long i = 1; i <= 1000000; i++) {
         total += popcount(i * 2654435761ULL);
     }
-    printf("%d\\n", total);
+    printf("%d\n", total);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int popcount(unsigned long long x) {
     int count = 0;
@@ -1957,16 +1965,16 @@ int main() {
     for (unsigned long long i = 1; i <= 1000000; i++) {
         total += popcount(i * 2654435761ULL);
     }
-    std::cout << total << "\\n";
+    std::cout << total << "\n";
     return 0;
 }`,
-        },
+  },
 
-    // 18. GCD sweep
-    {
-        name: 'GCD Sweep',
-        description: 'Euclidean GCD across 500K pairs — tests modulo-heavy loops',
-        vex: `fn gcd(a0: i64, b0: i64): i64 {
+  // 18. GCD sweep
+  {
+    name: "GCD Sweep",
+    description: "Euclidean GCD across 500K pairs — tests modulo-heavy loops",
+    vex: `fn gcd(a0: i64, b0: i64): i64 {
     let! a = a0
     let! b = b0
     while b != 0 {
@@ -1979,13 +1987,13 @@ int main() {
 
 fn main(): i32 {
     let! total: i64 = 0
-    for i in 1..500001 {
-        total += gcd(i as i64 * 17, i as i64 * 29 + 1)
+    for i in 1i64..500001i64 {
+        total += gcd(i * 17, i * 29 + 1)
     }
     $println(total)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2003,7 +2011,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-        rust: `fn gcd(mut a: i64, mut b: i64) -> i64 {
+    rust: `fn gcd(mut a: i64, mut b: i64) -> i64 {
     while b != 0 {
         let t = a % b;
         a = b;
@@ -2019,7 +2027,7 @@ fn main() {
     }
     println!("{}", total);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn gcd(a0: i64, b0: i64) i64 {
     var a = a0;
@@ -2061,7 +2069,7 @@ int main() {
     printf("%lld\\n", total);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 long long gcd(long long a, long long b) {
     while (b != 0) {
@@ -2080,13 +2088,14 @@ int main() {
     std::cout << total << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 19. Trapezoid integration
-    {
-        name: 'Trapezoid Integral',
-        description: 'Numerical integration of x² over [0,1] — tests scalar FP loops',
-        vex: `fn f(x: f64): f64 { return x * x }
+  // 19. Trapezoid integration
+  {
+    name: "Trapezoid Integral",
+    description:
+      "Numerical integration of x² over [0,1] — tests scalar FP loops",
+    vex: `fn f(x: f64): f64 { return x * x }
 
 fn main(): i32 {
     let n = 1000000
@@ -2100,7 +2109,7 @@ fn main(): i32 {
     $println(area)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2117,7 +2126,7 @@ func main() {
 	}
 	fmt.Println(area)
 }`,
-        rust: `fn f(x: f64) -> f64 { x * x }
+    rust: `fn f(x: f64) -> f64 { x * x }
 
 fn main() {
     let n = 1_000_000usize;
@@ -2130,7 +2139,7 @@ fn main() {
     }
     println!("{}", area);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn f(x: f64) f64 { return x * x; }
 
@@ -2164,7 +2173,7 @@ int main() {
     printf("%g\\n", area);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 double f(double x) { return x * x; }
 
@@ -2180,13 +2189,13 @@ int main() {
     std::cout << area << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 20. Monte Carlo pi
-    {
-        name: 'Monte Carlo Pi',
-        description: 'Estimate π with 1M samples — tests RNG + FP mix',
-        vex: `fn next_rng(state0: u64): u64 {
+  // 20. Monte Carlo pi
+  {
+    name: "Monte Carlo Pi",
+    description: "Estimate π with 1M samples — tests RNG + FP mix",
+    vex: `fn next_rng(state0: u64): u64 {
     let! state = state0
     state = state * 6364136223846793005 + 1
     return state
@@ -2207,7 +2216,7 @@ fn main(): i32 {
     $println(inside)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2229,7 +2238,7 @@ func main() {
 	}
 	fmt.Println(inside)
 }`,
-        rust: `fn next_rng(state: u64) -> u64 {
+    rust: `fn next_rng(state: u64) -> u64 {
     state.wrapping_mul(6364136223846793005).wrapping_add(1)
 }
 
@@ -2247,7 +2256,7 @@ fn main() {
     }
     println!("{}", inside);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn nextRng(state: u64) u64 {
     return state *% 6364136223846793005 +% 1;
@@ -2289,7 +2298,7 @@ int main() {
     printf("%d\\n", inside);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 unsigned long long next_rng(unsigned long long state) {
     return state * 6364136223846793005ULL + 1;
@@ -2310,14 +2319,15 @@ int main() {
     std::cout << inside << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 21. 3x3 stencil
-    {
-        name: 'Stencil 3×3',
-        description: 'Repeated 3×3 blur over 64×64 grid — tests neighborhood access',
-        vex: `fn main(): i32 {
-    let n = 64
+  // 21. 3x3 stencil
+  {
+    name: "Stencil 3×3",
+    description:
+      "Repeated 3×3 blur over 64×64 grid — tests neighborhood access",
+    vex: `fn main(): i32 {
+    let n = 64usize
     let! src = Vec.new<f64>()
     let! dst = Vec.new<f64>()
     for i in 0..n * n {
@@ -2327,22 +2337,21 @@ int main() {
     for _ in 0..50 {
         for y in 1..n - 1 {
             for x in 1..n - 1 {
-                let idx = (y * n + x) as usize
-                let n_u = n as usize
-                let sum = *src.getUnchecked(idx - n_u - 1) + *src.getUnchecked(idx - n_u) + *src.getUnchecked(idx - n_u + 1) +
-                          *src.getUnchecked(idx - 1)       + *src.getUnchecked(idx)       + *src.getUnchecked(idx + 1) +
-                          *src.getUnchecked(idx + n_u - 1) + *src.getUnchecked(idx + n_u) + *src.getUnchecked(idx + n_u + 1)
+                let idx = y * n + x
+                let sum = *src.getUnchecked(idx - n - 1) + *src.getUnchecked(idx - n) + *src.getUnchecked(idx - n + 1) +
+                          *src.getUnchecked(idx - 1)     + *src.getUnchecked(idx)     + *src.getUnchecked(idx + 1) +
+                          *src.getUnchecked(idx + n - 1) + *src.getUnchecked(idx + n) + *src.getUnchecked(idx + n + 1)
                 dst.set(idx, sum / 9.0)
             }
         }
         for i in 0..n * n {
-            src.set(i as usize, *dst.getUnchecked(i as usize))
+            src.set(i, *dst.getUnchecked(i))
         }
     }
-    $println(*src.getUnchecked((n + 1) as usize))
+    $println(*src.getUnchecked(n + 1))
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2361,11 +2370,13 @@ func main() {
 				dst[idx] = sum / 9.0
 			}
 		}
-		copy(src, dst)
+		for i := 0; i < n*n; i++ {
+			src[i] = dst[i]
+		}
 	}
 	fmt.Println(src[n+1])
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     const N: usize = 64;
     let mut src = vec![0.0_f64; N * N];
     let mut dst = vec![0.0_f64; N * N];
@@ -2382,11 +2393,13 @@ func main() {
                 dst[idx] = sum / 9.0;
             }
         }
-        src.copy_from_slice(&dst);
+        for i in 0..N * N {
+            src[i] = dst[i];
+        }
     }
     println!("{}", src[N + 1]);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -2407,7 +2420,9 @@ pub fn main(init: std.process.Init) !void {
                 dst[idx] = sum / 9.0;
             }
         }
-        @memcpy(src, dst);
+        for (0..n * n) |i| {
+            src[i] = dst[i];
+        }
     }
     var __stdout_buf: [256]u8 = undefined;
     const __stdout_str = try std.fmt.bufPrint(&__stdout_buf, "{d}\\n", .{src[n + 1]});
@@ -2439,7 +2454,7 @@ int main() {
     free(src); free(dst);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 
 int main() {
@@ -2458,21 +2473,21 @@ int main() {
                 dst[idx] = sum / 9.0;
             }
         }
-        src = dst;
+        for (int i = 0; i < n * n; i++) src[i] = dst[i];
     }
     std::cout << src[n + 1] << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 22. Moving average
-    {
-        name: 'Moving Average',
-        description: 'Sliding average over 500K values — tests rolling updates',
-        vex: `fn main(): i32 {
-    let n = 500000
-    let window = 32
-    let! values = Vec.withCapacity<i64>(n as usize)
+  // 22. Moving average
+  {
+    name: "Moving Average",
+    description: "Sliding average over 500K values — tests rolling updates",
+    vex: `fn main(): i32 {
+    let n = 500000usize
+    let window = 32usize
+    let! values = Vec.withCapacity<i64>(n)
     for i in 0..n {
         values.push((i % 31) as i64)
     }
@@ -2488,7 +2503,7 @@ int main() {
     $println(checksum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2510,11 +2525,17 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     const N: usize = 500000;
     const WINDOW: usize = 32;
-    let values: Vec<i64> = (0..N).map(|i| (i % 31) as i64).collect();
-    let mut rolling: i64 = values[..WINDOW].iter().sum();
+    let mut values: Vec<i64> = Vec::with_capacity(N);
+    for i in 0..N {
+        values.push((i % 31) as i64);
+    }
+    let mut rolling: i64 = 0;
+    for i in 0..WINDOW {
+        rolling += values[i];
+    }
     let mut checksum = rolling;
     for i in WINDOW..N {
         rolling += values[i] - values[i - WINDOW];
@@ -2522,7 +2543,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -2571,7 +2592,7 @@ int main() {
     free(values);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 #include <numeric>
 
@@ -2582,7 +2603,10 @@ int main() {
     for (int i = 0; i < n; i++) {
         values[i] = i % 31;
     }
-    long long rolling = std::accumulate(values.begin(), values.begin() + window, 0LL);
+    long long rolling = 0;
+    for (int i = 0; i < window; i++) {
+        rolling += values[i];
+    }
     long long checksum = rolling;
     for (int i = window; i < n; i++) {
         rolling += values[i] - values[i - window];
@@ -2591,36 +2615,38 @@ int main() {
     std::cout << checksum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 23. Selection sort
-    {
-        name: 'Selection Sort',
-        description: 'Sort 512 values repeatedly — tests branchy in-place mutation',
-        vex: `fn main(): i32 {
+  // 23. Selection sort
+  {
+    name: "Selection Sort",
+    description: "Sort 512 values repeatedly — tests branchy in-place mutation",
+    vex: `fn main(): i32 {
     let! checksum: i64 = 0
+    let len: usize = 512
+    let len_minus_1: usize = 511
     for round in 0..200 {
         let! values: [i64; 512] = [0; 512]
-        for i in 0..512 {
-            values[i as usize] = ((i * 73 + round * 19) % 997) as i64
+        for i in 0..len {
+            values[i] = ((i * 73 + round * 19) % 997) as i64
         }
-        for i in 0..511 {
-            let! best = i as usize
-            for j in i + 1..512 {
-                if values[j as usize] < values[best] {
-                    best = j as usize
+        for i in 0..len_minus_1 {
+            let! best = i
+            for j in i + 1..len {
+                if values[j] < values[best] {
+                    best = j
                 }
             }
-            let tmp = values[i as usize]
-            values[i as usize] = values[best]
+            let tmp = values[i]
+            values[i] = values[best]
             values[best] = tmp
         }
-        checksum += values[0] + values[511]
+        checksum += values[0] + values[len_minus_1]
     }
     $println(checksum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2644,7 +2670,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut checksum: i64 = 0;
     for round in 0..200 {
         let mut values = [0_i64; 512];
@@ -2664,7 +2690,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var checksum: i64 = 0;
@@ -2715,7 +2741,7 @@ int main() {
     printf("%lld\\n", checksum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 #include <algorithm>
 
@@ -2740,13 +2766,13 @@ int main() {
     std::cout << checksum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 24. Merge sorted arrays
-    {
-        name: 'Merge Sorted',
-        description: 'Merge two sorted 2K arrays repeatedly — tests linear access',
-        vex: `fn main(): i32 {
+  // 24. Merge sorted arrays
+  {
+    name: "Merge Sorted",
+    description: "Merge two sorted 2K arrays repeatedly — tests linear access",
+    vex: `fn main(): i32 {
     let! checksum: i64 = 0
     for _ in 0..400 {
         let! a = Vec.new<i64>()
@@ -2756,44 +2782,42 @@ int main() {
             b.push((i * 2 + 1) as i64)
         }
         let! merged = Vec.new<i64>()
-        let! ia = 0
-        let! ib = 0
+        let! ia: usize = 0
+        let! ib: usize = 0
         while ia < a.len() && ib < b.len() {
-            if *a.getUnchecked(ia as usize) < *b.getUnchecked(ib as usize) {
-                merged.push(*a.getUnchecked(ia as usize))
+            if *a.getUnchecked(ia) < *b.getUnchecked(ib) {
+                merged.push(*a.getUnchecked(ia))
                 ia += 1
             } else {
-                merged.push(*b.getUnchecked(ib as usize))
+                merged.push(*b.getUnchecked(ib))
                 ib += 1
             }
         }
         while ia < a.len() {
-            merged.push(*a.getUnchecked(ia as usize))
+            merged.push(*a.getUnchecked(ia))
             ia += 1
         }
         while ib < b.len() {
-            merged.push(*b.getUnchecked(ib as usize))
+            merged.push(*b.getUnchecked(ib))
             ib += 1
         }
-        checksum += *merged.getUnchecked(0) + *merged.getUnchecked((merged.len() - 1) as usize)
+        checksum += *merged.getUnchecked(0) + *merged.getUnchecked(merged.len() - 1)
     }
     $println(checksum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
 func main() {
 	var checksum int64 = 0
 	for round := 0; round < 400; round++ {
-		a := make([]int64, 2048)
-		b := make([]int64, 2048)
+		var a, b, merged []int64
 		for i := 0; i < 2048; i++ {
-			a[i] = int64(i * 2)
-			b[i] = int64(i*2 + 1)
+			a = append(a, int64(i*2))
+			b = append(b, int64(i*2+1))
 		}
-		merged := make([]int64, 0, 4096)
 		ia, ib := 0, 0
 		for ia < len(a) && ib < len(b) {
 			if a[ia] < b[ib] {
@@ -2804,18 +2828,28 @@ func main() {
 				ib++
 			}
 		}
-		merged = append(merged, a[ia:]...)
-		merged = append(merged, b[ib:]...)
+		for ia < len(a) {
+			merged = append(merged, a[ia])
+			ia++
+		}
+		for ib < len(b) {
+			merged = append(merged, b[ib])
+			ib++
+		}
 		checksum += merged[0] + merged[len(merged)-1]
 	}
 	fmt.Println(checksum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut checksum: i64 = 0;
     for _ in 0..400 {
-        let a: Vec<i64> = (0..2048).map(|i| (i * 2) as i64).collect();
-        let b: Vec<i64> = (0..2048).map(|i| (i * 2 + 1) as i64).collect();
-        let mut merged = Vec::with_capacity(4096);
+        let mut a: Vec<i64> = Vec::new();
+        let mut b: Vec<i64> = Vec::new();
+        for i in 0..2048 {
+            a.push((i * 2) as i64);
+            b.push((i * 2 + 1) as i64);
+        }
+        let mut merged: Vec<i64> = Vec::new();
         let (mut ia, mut ib) = (0usize, 0usize);
         while ia < a.len() && ib < b.len() {
             if a[ia] < b[ib] {
@@ -2826,13 +2860,19 @@ func main() {
                 ib += 1;
             }
         }
-        merged.extend_from_slice(&a[ia..]);
-        merged.extend_from_slice(&b[ib..]);
+        while ia < a.len() {
+            merged.push(a[ia]);
+            ia += 1;
+        }
+        while ib < b.len() {
+            merged.push(b[ib]);
+            ib += 1;
+        }
         checksum += merged[0] + merged[merged.len() - 1];
     }
     println!("{}", checksum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var checksum: i64 = 0;
@@ -2841,28 +2881,28 @@ pub fn main(init: std.process.Init) !void {
     defer arena.deinit();
     const allocator = arena.allocator();
     while (round < 400) : (round += 1) {
-        _ = arena.reset(.retain_capacity);
-        var a = try allocator.alloc(i64, 2048);
-        var b = try allocator.alloc(i64, 2048);
-        for (0..2048) |i| {
-            a[i] = @intCast(i * 2);
-            b[i] = @intCast(i * 2 + 1);
-        }
+        _ = arena.reset(.free_all);
+        var a: std.ArrayList(i64) = .empty;
+        var b: std.ArrayList(i64) = .empty;
         var merged: std.ArrayList(i64) = .empty;
-        defer merged.deinit(allocator);
+        var fi: usize = 0;
+        while (fi < 2048) : (fi += 1) {
+            try a.append(allocator, @intCast(fi * 2));
+            try b.append(allocator, @intCast(fi * 2 + 1));
+        }
         var ia: usize = 0;
         var ib: usize = 0;
-        while (ia < a.len and ib < b.len) {
-            if (a[ia] < b[ib]) {
-                try merged.append(allocator, a[ia]);
+        while (ia < a.items.len and ib < b.items.len) {
+            if (a.items[ia] < b.items[ib]) {
+                try merged.append(allocator, a.items[ia]);
                 ia += 1;
             } else {
-                try merged.append(allocator, b[ib]);
+                try merged.append(allocator, b.items[ib]);
                 ib += 1;
             }
         }
-        while (ia < a.len) : (ia += 1) try merged.append(allocator, a[ia]);
-        while (ib < b.len) : (ib += 1) try merged.append(allocator, b[ib]);
+        while (ia < a.items.len) : (ia += 1) try merged.append(allocator, a.items[ia]);
+        while (ib < b.items.len) : (ib += 1) try merged.append(allocator, b.items[ib]);
         checksum += merged.items[0] + merged.items[merged.items.len - 1];
     }
     var __stdout_buf: [256]u8 = undefined;
@@ -2872,81 +2912,90 @@ pub fn main(init: std.process.Init) !void {
     c: `#include <stdio.h>
 #include <stdlib.h>
 
+typedef struct { long long *data; int len; int cap; } Vec;
+
+static void vpush(Vec *v, long long x) {
+    if (v->len >= v->cap) {
+        v->cap = v->cap ? v->cap * 2 : 4;
+        v->data = realloc(v->data, v->cap * sizeof(long long));
+    }
+    v->data[v->len++] = x;
+}
+
 int main() {
     long long checksum = 0;
-    long long *a = malloc(2048 * sizeof(long long));
-    long long *b = malloc(2048 * sizeof(long long));
-    long long *merged = malloc(4096 * sizeof(long long));
     for (int round = 0; round < 400; round++) {
+        Vec a = {0, 0, 0}, b = {0, 0, 0}, merged = {0, 0, 0};
         for (int i = 0; i < 2048; i++) {
-            a[i] = i * 2;
-            b[i] = i * 2 + 1;
+            vpush(&a, i * 2);
+            vpush(&b, i * 2 + 1);
         }
-        int ia = 0, ib = 0, im = 0;
-        while (ia < 2048 && ib < 2048) {
-            if (a[ia] < b[ib]) {
-                merged[im++] = a[ia++];
+        int ia = 0, ib = 0;
+        while (ia < a.len && ib < b.len) {
+            if (a.data[ia] < b.data[ib]) {
+                vpush(&merged, a.data[ia]); ia++;
             } else {
-                merged[im++] = b[ib++];
+                vpush(&merged, b.data[ib]); ib++;
             }
         }
-        while (ia < 2048) merged[im++] = a[ia++];
-        while (ib < 2048) merged[im++] = b[ib++];
-        checksum += merged[0] + merged[4095];
+        while (ia < a.len) { vpush(&merged, a.data[ia]); ia++; }
+        while (ib < b.len) { vpush(&merged, b.data[ib]); ib++; }
+        checksum += merged.data[0] + merged.data[merged.len - 1];
+        free(a.data); free(b.data); free(merged.data);
     }
     printf("%lld\\n", checksum);
-    free(a); free(b); free(merged);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 
 int main() {
     long long checksum = 0;
-    std::vector<long long> a(2048), b(2048), merged(4096);
     for (int round = 0; round < 400; round++) {
+        std::vector<long long> a, b, merged;
         for (int i = 0; i < 2048; i++) {
-            a[i] = i * 2;
-            b[i] = i * 2 + 1;
+            a.push_back(i * 2);
+            b.push_back(i * 2 + 1);
         }
-        int ia = 0, ib = 0, im = 0;
-        while (ia < 2048 && ib < 2048) {
+        size_t ia = 0, ib = 0;
+        while (ia < a.size() && ib < b.size()) {
             if (a[ia] < b[ib]) {
-                merged[im++] = a[ia++];
+                merged.push_back(a[ia]); ia++;
             } else {
-                merged[im++] = b[ib++];
+                merged.push_back(b[ib]); ib++;
             }
         }
-        while (ia < 2048) merged[im++] = a[ia++];
-        while (ib < 2048) merged[im++] = b[ib++];
-        checksum += merged[0] + merged[4095];
+        while (ia < a.size()) { merged.push_back(a[ia]); ia++; }
+        while (ib < b.size()) { merged.push_back(b[ib]); ib++; }
+        checksum += merged[0] + merged[merged.size() - 1];
     }
     std::cout << checksum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 25. Ring buffer
-    {
-        name: 'Ring Buffer',
-        description: 'Push/pop through fixed circular buffer — tests modulo indexing',
-        vex: `fn main(): i32 {
-    let cap = 1024
+  // 25. Ring buffer
+  {
+    name: "Ring Buffer",
+    description:
+      "Push/pop through fixed circular buffer — tests modulo indexing",
+    vex: `fn main(): i32 {
+    let cap = 1024usize
     let! buf: [i64; 1024] = [0; 1024]
-    let! head = 0
-    let! tail = 0
+    let! head: usize = 0
+    let! tail: usize = 0
     let! checksum: i64 = 0
     for i in 0..200000 {
-        buf[tail as usize] = i as i64
+        buf[tail] = i as i64
         tail = (tail + 1) % cap
-        let value = buf[head as usize]
+        let value = buf[head]
         head = (head + 1) % cap
         checksum += value
     }
     $println(checksum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -2964,7 +3013,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     const CAP: usize = 1024;
     let mut buf = [0_i64; CAP];
     let (mut head, mut tail) = (0usize, 0usize);
@@ -2978,7 +3027,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     const cap = 1024;
@@ -3016,7 +3065,7 @@ int main() {
     printf("%lld\\n", checksum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
 
 int main() {
@@ -3034,13 +3083,14 @@ int main() {
     std::cout << checksum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 26. LCG checksum
-    {
-        name: 'LCG Checksum',
-        description: 'Linear congruential generator checksum — tests integer pipelines',
-        vex: `fn main(): i32 {
+  // 26. LCG checksum
+  {
+    name: "LCG Checksum",
+    description:
+      "Linear congruential generator checksum — tests integer pipelines",
+    vex: `fn main(): i32 {
     let! x: u64 = 123456789
     let! checksum: u64 = 0
     for _ in 0..5000000 {
@@ -3050,7 +3100,7 @@ int main() {
     $println(checksum)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -3063,7 +3113,7 @@ func main() {
 	}
 	fmt.Println(checksum)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut x: u64 = 123456789;
     let mut checksum: u64 = 0;
     for _ in 0..5_000_000 {
@@ -3072,7 +3122,7 @@ func main() {
     }
     println!("{}", checksum);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var x: u64 = 123456789;
@@ -3098,7 +3148,7 @@ int main() {
     printf("%llu\\n", checksum);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int main() {
     unsigned long long x = 123456789;
@@ -3110,13 +3160,14 @@ int main() {
     std::cout << checksum << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 27. Pairwise distance
-    {
-        name: 'Pairwise Distance',
-        description: 'All-pairs squared distances for 128 points — tests nested FP loops',
-        vex: `fn main(): i32 {
+  // 27. Pairwise distance
+  {
+    name: "Pairwise Distance",
+    description:
+      "All-pairs squared distances for 128 points — tests nested FP loops",
+    vex: `fn main(): i32 {
     let n = 128
     let! x = [0.0; 128]
     let! y = [0.0; 128]
@@ -3135,7 +3186,7 @@ int main() {
     $println(total)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -3157,7 +3208,7 @@ func main() {
 	}
 	fmt.Println(total)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     const N: usize = 128;
     let mut x = [0.0_f64; N];
     let mut y = [0.0_f64; N];
@@ -3175,7 +3226,7 @@ func main() {
     }
     println!("{}", total);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     const n = 128;
@@ -3218,7 +3269,7 @@ int main() {
     printf("%g\\n", total);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
 
 int main() {
@@ -3240,13 +3291,14 @@ int main() {
     std::cout << total << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 28. Pascal row
-    {
-        name: 'Pascal Rows',
-        description: 'Build Pascal triangle up to row 256 — tests dependent updates',
-        vex: `fn main(): i32 {
+  // 28. Pascal row
+  {
+    name: "Pascal Rows",
+    description:
+      "Build Pascal triangle up to row 256 — tests dependent updates",
+    vex: `fn main(): i32 {
     let rows = 256
     let! current = Vec.new<i64>()
     current.push(1)
@@ -3262,7 +3314,7 @@ int main() {
     $println(current.getUnchecked(current.len() / 2))
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -3279,7 +3331,7 @@ func main() {
 	}
 	fmt.Println(current[len(current)/2])
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let mut current = vec![1_i64];
     for _ in 1..256 {
         let mut next = Vec::with_capacity(current.len() + 1);
@@ -3292,7 +3344,7 @@ func main() {
     }
     println!("{}", current[current.len() / 2]);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -3340,7 +3392,7 @@ int main() {
     free(current);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <vector>
 
 int main() {
@@ -3358,13 +3410,13 @@ int main() {
     std::cout << current[current.size() / 2] << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 29. Tribonacci
-    {
-        name: 'Tribonacci',
-        description: 'Iterative tribonacci stream — tests scalar recurrence chains',
-        vex: `fn main(): i32 {
+  // 29. Tribonacci
+  {
+    name: "Tribonacci",
+    description: "Iterative tribonacci stream — tests scalar recurrence chains",
+    vex: `fn main(): i32 {
     let! a: i64 = 0
     let! b: i64 = 1
     let! c: i64 = 1
@@ -3377,7 +3429,7 @@ int main() {
     $println(c)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -3389,7 +3441,7 @@ func main() {
 	}
 	fmt.Println(c)
 }`,
-        rust: `fn main() {
+    rust: `fn main() {
     let (mut a, mut b, mut c): (i64, i64, i64) = (0, 1, 1);
     for _ in 0..1_000_000 {
         let next = a + b + c;
@@ -3399,7 +3451,7 @@ func main() {
     }
     println!("{}", c);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 pub fn main(init: std.process.Init) !void {
     var a: i64 = 0;
@@ -3429,7 +3481,7 @@ int main() {
     printf("%lld\\n", c);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 
 int main() {
     long long a = 0, b = 1, c = 1;
@@ -3442,13 +3494,14 @@ int main() {
     std::cout << c << "\\n";
     return 0;
 }`,
-        },
+  },
 
-    // 30. Min/max reduction
-    {
-        name: 'Min/Max Reduce',
-        description: 'Vex reduction-friendly min/max scan — tests aggregate operations',
-        vex: `// Vex SIMD reduction operators: <?| (min), >?| (max)
+  // 30. Min/max reduction
+  {
+    name: "Min/Max Reduce",
+    description:
+      "Vex reduction-friendly min/max scan — tests aggregate operations",
+    vex: `// Vex SIMD reduction operators: <?| (min), >?| (max)
 fn main(): i32 {
     let! acc: f64 = 0.0
     for i in 0..500000 {
@@ -3459,7 +3512,7 @@ fn main(): i32 {
     $println(acc)
     return 0
 }`,
-        go: `package main
+    go: `package main
 
 import "fmt"
 
@@ -3492,7 +3545,7 @@ func main() {
 	}
 	fmt.Println(acc)
 }`,
-        rust: `fn lane_min(v: [f64; 4]) -> f64 {
+    rust: `fn lane_min(v: [f64; 4]) -> f64 {
     v.iter().fold(f64::INFINITY, |a, &b| a.min(b))
 }
 
@@ -3509,7 +3562,7 @@ fn main() {
     }
     println!("{}", acc);
 }`,
-        zig: `const std = @import("std");
+    zig: `const std = @import("std");
 
 fn laneMin(v: @Vector(4, f64)) f64 {
     return @reduce(.Min, v);
@@ -3559,7 +3612,7 @@ int main() {
     printf("%g\\n", acc);
     return 0;
 }`,
-        cpp: `#include <iostream>
+    cpp: `#include <iostream>
 #include <array>
 #include <algorithm>
 
@@ -3581,5 +3634,5 @@ int main() {
     std::cout << acc << "\\n";
     return 0;
 }`,
-        },
-]
+  },
+];

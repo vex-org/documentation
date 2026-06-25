@@ -70,7 +70,7 @@ The full list of compile-time type predicates:
 * **`#isPointer<T>()`**: Returns `true` if `T` is a raw pointer type (`*U` or `ptr`).
 * **`#isArray<T>()`**: Returns `true` if `T` is a compile-time sized array.
 * **`#isTuple<T>()`**: Returns `true` if `T` is a tuple.
-* **`#isCopy<T>()`**: Returns `true` if `T` implements the `$Copy` contract (trivially copyable).
+* **`#isCopy<T>()`**: Returns `true` if `T` implements the `Copy` contract (trivially copyable).
 * **`#needsDrop<T>()`**: Returns `true` if `T` has custom drop logic or contains fields requiring drop.
 * **`#isReference<T>()`**: Returns `true` if `T` is a borrowed reference type (`&U`).
 * **`#isFunction<T>()`**: Returns `true` if `T` is a function pointer or function signature type.

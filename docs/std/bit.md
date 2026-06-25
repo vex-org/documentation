@@ -36,4 +36,4 @@ Bit.rotr32(val, 2);
 
 ## Integration with Tensors
 
-Like the `Math.*` built-ins, `Bit.*` primitives can be automatically promoted to SIMD vector executions when called on `Tensor<T, N>` structures!
+Like the `Math.*` built-ins, `Bit.*` primitives can be automatically promoted to SIMD vector executions when called on `Tensor&lt;T, N&gt;` structures!

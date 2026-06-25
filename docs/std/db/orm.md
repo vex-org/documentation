@@ -1,4 +1,4 @@
-# ORM — `Db<T>` Query Builder (`db/orm`)
+# ORM — `Db&lt;T&gt;` Query Builder (`db/orm`)
 
 Vex ships with a powerful GORM-style ORM. All struct-to-column mapping is resolved at **compile time** — zero reflection overhead.
 
@@ -52,11 +52,11 @@ let total = db.countRows();
 
 ## Chainable Query Builder
 
-Every modifier returns `&Db<T>!` for clean chaining:
+Every modifier returns `&Db&lt;T&gt;!` for clean chaining:
 
 | Method | SQL Equivalent | Example |
 |--------|----------------|---------|
-| `.filter(clause)` | `WHERE clause` | `.filter("age > 18")` |
+| `.filter(clause)` | `WHERE clause` | `.filter("age &gt; 18")` |
 | `.filter1(clause, arg)` | `WHERE clause` (parameterized) | `.filter1("name = ?", "Alice")` |
 | `.filter2(clause, a1, a2)` | `WHERE clause` (2 params) | `.filter2("age BETWEEN ? AND ?", "18", "65")` |
 | `.order(clause)` | `ORDER BY` | `.order("name ASC")` |
@@ -66,7 +66,7 @@ Every modifier returns `&Db<T>!` for clean chaining:
 | `.join(clause)` | `JOIN` | `.join("LEFT JOIN profiles ON ...")` |
 | `.preload(relation)` | Eager loading | `.preload("posts")` |
 | `.group(clause)` | `GROUP BY` | `.group("category")` |
-| `.having(clause)` | `HAVING` | `.having("COUNT(id) > 1")` |
+| `.having(clause)` | `HAVING` | `.having("COUNT(id) &gt; 1")` |
 
 ## Transactions in ORM
 

@@ -108,7 +108,7 @@ struct User with APIModel {
 }
 
 fn main(): i32 {
-    $for f in #typeInfo<User>().fields {
+    #for f in #typeInfo<User>().fields {
         $println(
             f.name,
             " -> json:",

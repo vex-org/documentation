@@ -44,7 +44,7 @@ if scores.contains(&"bob") {
 ### Lookup model
 
 - `get(&key)` returns `Option<&V>` for zero-copy access.
-- `getOwned(&key)` returns `Option<V>` when `V: $Clone`.
+- `getOwned(&key)` returns `Option<V>` when `V: Clone`.
 - `map[key]` is a read-only index shorthand for `get`, so it also returns `Option<&V>`.
 - Updates are done with `insert`, not with `map[key] = value` in the documented prelude surface.
 
@@ -56,7 +56,7 @@ if scores.contains(&"bob") {
 | `Map.withCap<K, V>(capacity: u64)` | `Map<K, V>`  | Preallocate buckets                  |
 | `insert(key: K, value: V)`         | `bool`       | `true` if the key was new            |
 | `get(key: &K)`                     | `Option<&V>` | Borrowed lookup                      |
-| `getOwned(key: &K)`                | `Option<V>`  | Cloned lookup when `V: $Clone`       |
+| `getOwned(key: &K)`                | `Option<V>`  | Cloned lookup when `V: Clone`       |
 | `getOr(key: &K, fallback: &V)`     | `&V`         | Borrowed fallback lookup             |
 | `getOrInsert(key: K, default: V)`  | `&V!`        | Insert-on-miss                       |
 | `contains(key: &K)`                | `bool`       | Membership check                     |
@@ -64,8 +64,8 @@ if scores.contains(&"bob") {
 | `len()`                            | `u64`        | Element count                        |
 | `isEmpty()`                        | `bool`       | Empty check                          |
 | `clear()`                          | `()`         | Drops all entries                    |
-| `keys()`                           | `Vec<K>`     | Clones keys when `K: $Clone`         |
-| `values()`                         | `Vec<V>`     | Clones values when `V: $Clone`       |
+| `keys()`                           | `Vec<K>`     | Clones keys when `K: Clone`         |
+| `values()`                         | `Vec<V>`     | Clones values when `V: Clone`       |
 
 ## `Set<T>`
 

@@ -63,7 +63,7 @@ let req = parseRequestAsync(fd);  // yields to scheduler on EAGAIN
 
 ## Headers (`Headers` Collection)
 
-Headers are stored as parallel `Vec<string>` arrays (names + values) with byte-level case-insensitive comparison. No `Map` overhead, no hash computation—just linear scan optimized for the typical 5–15 header count.
+Headers are stored as parallel `Vec&lt;string&gt;` arrays (names + values) with byte-level case-insensitive comparison. No `Map` overhead, no hash computation—just linear scan optimized for the typical 5–15 header count.
 
 | Method | Description |
 |--------|-------------|

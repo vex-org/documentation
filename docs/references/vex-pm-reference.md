@@ -30,7 +30,7 @@ This document describes `vex-pm` package management and build integration respon
 - `tools/vex-pm/src/resolver.rs`
   - dependency graph resolution
 - `tools/vex-pm/src/lockfile.rs`
-  - lock integrity and deterministic dependency selection
+  - lock integrity, commit-SHA pinning, and deterministic dependency selection
 - `tools/vex-pm/src/cache.rs`
   - local package/git cache logic
 
@@ -112,6 +112,11 @@ Policy:
 ## Cache and Determinism
 
 - package/git cache rooted in `~/.vex/cache` (or `VEX_CACHE`)
+- bare git repos under `git/db`, extracted trees under `git/checkouts/<name>/<version>`
+- `vex.lock` pins each non-local package to a canonical git URL (`source`) and an
+  exact commit SHA (`commit`); checkouts are extracted by that SHA when resolvable,
+  so a moved/force-pushed tag cannot change a reproducible build
+- tag selection is semver-ordered (numeric), not lexical
 - lock-file validation prevents drift in CI/locked mode
 
 ---

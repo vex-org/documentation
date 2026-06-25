@@ -147,7 +147,7 @@ fn main() {
 ### `go` Block Limitations
 
 - Cannot capture mutable references (`&T!`) -- causes compile error
-- Cannot capture values with non-`Send`-like contracts (compiler checks `$ConcurrentSafe`)
+- Cannot capture values with non-`Send`-like contracts (compiler checks `ConcurrentSafe`)
 - Stack-allocated data must be moved, not borrowed
 
 ## Channel `select`
@@ -394,8 +394,8 @@ The compiler enforces thread safety through capability contracts:
 
 | Contract             | Meaning                                                |
 | -------------------- | ------------------------------------------------------ |
-| `$ConcurrentSafe`    | Type can be safely sent between threads                |
-| `$SuspendSafe`       | Value remains valid across `await` suspension points   |
+| `ConcurrentSafe`    | Type can be safely sent between threads                |
+| `SuspendSafe`       | Value remains valid across `await` suspension points   |
 | `$Send` (conceptual) | Type can be transferred to another thread              |
 | `$Sync` (conceptual) | Shared reference can be accessed from multiple threads |
 

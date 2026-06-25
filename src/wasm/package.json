@@ -5,7 +5,7 @@
     "Vex Language Team"
   ],
   "description": "WebAssembly bridge for the Vex compiler",
-  "version": "0.4.0-rc.30",
+  "version": "0.4.0-rc.35",
   "files": [
     "vex_wasm_bg.wasm",
     "vex_wasm.js",

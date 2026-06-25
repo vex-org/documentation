@@ -6,7 +6,7 @@ It takes inspiration from Go's `net/http` to provide low-level controls but heav
 ## Key Capabilities
 
 1. **Fiber v3 Framework Layer**: Complete web framework abstractions (`App`, `Ctx`, `Router`) supporting `:param` binding and `*wildcard` routes.
-2. **Zero-Copy Parsers**: Request parsers strictly slice bytes (`Span<u8>`) from the underlying socket without any intermediate GC allocation for headers or values.
+2. **Zero-Copy Parsers**: Request parsers strictly slice bytes (`Span&lt;u8&gt;`) from the underlying socket without any intermediate GC allocation for headers or values.
 3. **WebSockets (`http/ws`)**: Full native WebSockets implementation based on RFC 6455 framing and connection upgrades.
 4. **HTTP/2 (`http/h2`)**: Built-in HTTP/2 streams and HPACK framing.
 5. **Middlewares**: Extensively functional middleware chaining allowing custom logic (`Logger`, `CORS`, `Recover`, `Static Files`).
