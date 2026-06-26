@@ -121,13 +121,21 @@ const selectedStudioInfo = computed(
   () => studioPlatforms.find((p) => p.id === selectedStudioPlatform.value)!,
 );
 
+const cleanLatestVersion = computed(() => {
+  const v = latestVersion.value;
+  if (v.startsWith('vv')) {
+    return v.substring(1); // Normalise vv0.1.0 to v0.1.0
+  }
+  return v;
+});
+
 const fileName = computed(() => {
-  const v = latestVersion.value === "latest" ? "latest" : latestVersion.value;
+  const v = cleanLatestVersion.value === "latest" ? "latest" : cleanLatestVersion.value;
   return `vex-${v}-${selectedInfo.value.suffix}.tar.gz`;
 });
 
 const downloadUrl = computed(() => {
-  return `https://github.com/${REPO}/releases/download/${latestVersion.value}/vex-${latestVersion.value}-${selectedInfo.value.suffix}.tar.gz`;
+  return `https://github.com/${REPO}/releases/download/${latestVersion.value}/vex-${cleanLatestVersion.value}-${selectedInfo.value.suffix}.tar.gz`;
 });
 
 const checksumUrl = computed(() => downloadUrl.value + ".sha256");
@@ -228,7 +236,7 @@ onMounted(fetchLatestVersion);
               <div>
                 <h3 class="font-semibold text-white flex items-center gap-1.5">
                   Vex Language
-                  <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-vex-primary/20 text-vex-primary-light font-medium font-sans">{{ latestVersion }}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-vex-primary/20 text-vex-primary-light font-medium font-sans">{{ cleanLatestVersion }}</span>
                 </h3>
                 <span class="text-xs text-vex-text-muted">Systems Programming Language</span>
               </div>
