@@ -53,13 +53,25 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'monaco': ['monaco-editor', 'monaco-textmate', 'monaco-editor-textmate', 'vscode-oniguruma'],
-          'vue-core': ['vue', 'vue-router'],
-          'supabase': ['@supabase/supabase-js'],
-          'markdown': ['marked', 'dompurify', 'turndown'],
-          'tiptap': ['@tiptap/vue-3', '@tiptap/starter-kit', '@tiptap/extension-placeholder', '@tiptap/extension-image', '@tiptap/extension-link', '@tiptap/extension-code-block-lowlight'],
-          'lowlight': ['lowlight'],
+        manualChunks(id) {
+          if (id.includes('monaco-editor') || id.includes('monaco-textmate') || id.includes('monaco-editor-textmate') || id.includes('vscode-oniguruma')) {
+            return 'monaco';
+          }
+          if (id.includes('node_modules/vue/') || id.includes('node_modules/vue-router/')) {
+            return 'vue-core';
+          }
+          if (id.includes('@supabase/supabase-js')) {
+            return 'supabase';
+          }
+          if (id.includes('marked') || id.includes('dompurify') || id.includes('turndown')) {
+            return 'markdown';
+          }
+          if (id.includes('@tiptap/')) {
+            return 'tiptap';
+          }
+          if (id.includes('lowlight')) {
+            return 'lowlight';
+          }
         },
       },
     },
