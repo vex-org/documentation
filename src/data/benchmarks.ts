@@ -965,12 +965,12 @@ int main() {
                     fy += dy * force
                 }
             }
-            vx.set(i, vx.getUnchecked(i) + fx * 0.001)
-            vy.set(i, vy.getUnchecked(i) + fy * 0.001)
+            vx.setUnchecked(i, vx.getUnchecked(i) + fx * 0.001)
+            vy.setUnchecked(i, vy.getUnchecked(i) + fy * 0.001)
         }
         for i in 0..n {
-            x.set(i, x.getUnchecked(i) + vx.getUnchecked(i))
-            y.set(i, y.getUnchecked(i) + vy.getUnchecked(i))
+            x.setUnchecked(i, x.getUnchecked(i) + vx.getUnchecked(i))
+            y.setUnchecked(i, y.getUnchecked(i) + vy.getUnchecked(i))
         }
     }
     $println(x.getUnchecked(0))
@@ -1165,7 +1165,7 @@ int main() {
     description: "Classic FizzBuzz to 100K — tests branching + I/O",
     vex: `fn main(): i32 {
     let! count = 0
-    for i in 1..100001 {
+    for i in 1i32..100001i32 {
         if i % 15 == 0 { count += 3 }
         elif i % 3 == 0 { count += 1 }
         elif i % 5 == 0 { count += 2 }
@@ -1321,7 +1321,7 @@ int main() {
     let! running: i64 = 0
     for i in 0..n {
         running += values.getUnchecked(i)
-        values.set(i, running)
+        values.setUnchecked(i, running)
     }
     $println(values.getUnchecked(n - 1))
     return 0
