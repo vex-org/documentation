@@ -380,7 +380,9 @@ contract ConcurrentSafe { }  // marker
 
 #### `ForeignManaged` -- Externally Owned
 
-Lifetime is governed outside normal Vex ownership. Used for FFI objects.
+Lifetime is governed outside normal Vex ownership. Used for FFI objects. Types with this contract bypass Vex's drop infrastructure — the foreign (C) side manages allocation and deallocation.
+
+See [Extern Types](extern-types.md) for the full FFI ownership system, including `Extern.Owned<T, "drop_fn">` and `Extern.ForeignManaged<T>` type syntax.
 
 ```vex
 contract ForeignManaged { }  // marker
@@ -642,12 +644,6 @@ contract SuspendSafe { }
 
 ```vex
 contract ConcurrentSafe { }
-```
-
-#### `ForeignManaged` -- External Ownership
-
-```vex
-contract ForeignManaged { }
 ```
 
 #### `Dealloc`
