@@ -4,7 +4,7 @@ Low-level memory allocation, arena allocators, and memory operations.
 
 ## Allocation
 
-```rust
+```vex
 import { alloc, allocZeroed, realloc, free } from "mem";
 
 let ptr = alloc(1024);          // Allocate 1KB
@@ -15,7 +15,7 @@ free(ptr);                       // Release
 
 ## Memory Operations
 
-```rust
+```vex
 import { memcpy, memset, memcmp, memmove } from "mem";
 
 memcpy(dest, src, len);         // Copy bytes (no overlap)
@@ -28,7 +28,7 @@ memcmp(a, b, len);              // Compare bytes → i32
 
 Bump-allocator for batch allocations that are freed together:
 
-```rust
+```vex
 import { Arena } from "mem";
 
 let! arena = Arena.new(4096);   // 4KB arena
@@ -39,6 +39,6 @@ arena.reset();                   // Free everything at once
 
 ## Slice Operations
 
-```rust
+```vex
 import { sliceCopy, sliceFill, sliceEquals } from "mem";
 ```

@@ -4,11 +4,11 @@ Extern types bridge Vex's ownership system with foreign (C) memory management. W
 
 ## Language Constructs
 
-| Syntax | Description |
-|--------|-------------|
-| `extern type Foo` | Declares an opaque type whose definition lives in C |
+| Syntax                       | Description                                                  |
+| ---------------------------- | ------------------------------------------------------------ |
+| `extern type Foo`            | Declares an opaque type whose definition lives in C          |
 | `Extern.Owned<T, "drop_fn">` | Vex owns the pointer; calls `drop_fn` (a C function) on drop |
-| `Extern.ForeignManaged<T>` | Vex does NOT own the pointer; C manages the lifetime |
+| `Extern.ForeignManaged<T>`   | Vex does NOT own the pointer; C manages the lifetime         |
 
 ---
 
@@ -76,6 +76,7 @@ let buf = Extern.Owned<u8>.new(
 ### How It Works (Compiler Internals)
 
 `Extern.Owned<T, "free">` lowers to `Ty::Box { inner: T, kind: BoxKind::ExternOwned { drop_fn: "free" } }`. The codegen emits:
+
 - **No VUMM header** — just a raw pointer
 - **Inline drop call** — `call @free(ptr)` at drop sites, not a vtable lookup
 - **Zero overhead** — identical to hand-written C cleanup
@@ -141,13 +142,13 @@ Types annotated with `ForeignManaged` bypass Vex's drop infrastructure. The comp
 
 ## When To Use Each
 
-| Scenario | Use |
-|----------|-----|
-| Vex opens a C file handle, must close it | `Extern.Owned<FILE, "fclose">` |
+| Scenario                                        | Use                                      |
+| ----------------------------------------------- | ---------------------------------------- |
+| Vex opens a C file handle, must close it        | `Extern.Owned<FILE, "fclose">`           |
 | Vex allocates memory with `malloc`, must `free` | `Extern.Owned<T>` (defaults to `"free"`) |
-| C library owns the handle (e.g., `sqlite3*`) | `Extern.ForeignManaged<T>` |
-| Opaque type whose layout is unknown | `extern type T` |
-| Vex owns the memory, Vex allocator | `Box<T>` or `Unique<T>` (standard VUMM) |
+| C library owns the handle (e.g., `sqlite3*`)    | `Extern.ForeignManaged<T>`               |
+| Opaque type whose layout is unknown             | `extern type T`                          |
+| Vex owns the memory, Vex allocator              | `Box<T>` or `Unique<T>` (standard VUMM)  |
 
 ---
 

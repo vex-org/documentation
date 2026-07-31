@@ -4,7 +4,7 @@ Google's modern compression algorithm (RFC 7932). Brotli achieves the best compr
 
 ## Usage
 
-```rust
+```vex
 import { brotliCompress, brotliDecompress } from "compress/brotli";
 
 let data = "Brotli in pure Vex!";

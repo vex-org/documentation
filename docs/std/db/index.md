@@ -14,7 +14,7 @@ The `db` module provides database connectors, high-level connection management, 
 
 ## Quick Start
 
-```rust
+```vex
 import { Connection, QueryResult } from "db";
 
 let conn = Connection.sqlite(":memory:");

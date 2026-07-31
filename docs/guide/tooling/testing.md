@@ -412,7 +412,7 @@ fn test_user_email(): i32 {
 
 ## Roadmap
 
-The following features are planned for future releases:
+The following features are planned for future releases (not yet available):
 
 ### Subtests (Planned)
 
@@ -454,7 +454,7 @@ fn test_add_cases(t: &TestCtx): i32 {
 ### Fuzzing (Planned)
 
 ```bash
-# TODO: Not yet implemented
+# Not yet implemented — planned for future releases
 vex test --fuzz FuzzParseJSON --fuzztime 30s
 ```
 

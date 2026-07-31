@@ -1,90 +1,74 @@
 # Standard Library
 
-Vex provides a focused standard library and a powerful **Prelude** that is available to all programs automatically.
+> **Vex's standard library.** Prelude (auto-imported) + `std.*` modules.
 
-## The Prelude
+## Prelude (Auto-Imported)
 
-Core types are available everywhere without an `import` statement. These include:
+These are available everywhere without `import`:
 
 ### Collections
-- `Vec<T>`: Dynamic heap-allocated array.
-- `Map<K, V>`: Hash map (SwissTable implementation).
-- `Set<T>`: Hash set (built on top of Map).
+| Type | Description |
+|-----|----------|
+| `Vec<T>` | Dynamic heap-allocated array |
+| `Map<K, V>` | Hash map (SwissTable) |
+| `Set<T>` | Hash set |
+| `String` | SSO-optimized heap string |
+| `str` | Borrowed string view |
 
 ### Smart Pointers
-- `Box<T>`: Revolutionary unified memory management (VUMM). Automatically selects Unique/SharedRc/AtomicArc.
+| Type | Description |
+|-----|----------|
+| `Box<T>` | VUMM: Unique/SharedRc/AtomicArc |
+| `Ptr<T>` | Typed pointer |
+| `Span<T>` | Bounds-checked fat pointer |
+| `RawBuf` | Raw byte buffer |
 
 ### Error & Optionality
-- `Result<T, E>`: For operations that can fail.
-- `Option<T>`: For values that may not exist.
+| Type | Description |
+|-----|----------|
+| `Result<T, E>` | Operations that can fail |
+| `Option<T>` | Values that may not exist |
+| `Range<T>` | Range expressions |
+| `Complex<T>` | Complex numbers |
 
----
-
-## Standard Modules
-
-Modules in `std` must be explicitly imported.
-
-### `std.fs` (File System)
-
-Provides basic file and path operations.
+## `std.*` Modules (Import Required)
 
 ```vex
+// File system
 import * as fs from "fs"
+let file = fs.open("test.txt") !> |err| { ... }
 
-fn example(): i32 {
-    // Path handling
-    let path = fs.newPath("test.txt")
-    if !path.exists() {
-        println("File not found")
-    }
-
-    // File I/O
-    let! file = fs.open("test.txt") !> |err| {
-        println(f"Error: {err.msg}")
-        return 1
-    }
-    
-    // ... read/write operations
-    return 0
-}
-```
-
-### `std.math`
-
-Comprehensive math constants and functions.
-
-```vex
+// Math
 import * as math from "math"
+let x = math.sqrt(16.0)
 
-let root = math.sqrt(16.0)
-let pi = math.PI
-```
-
-### `std.time`
-
-Time and duration utilities.
-
-```vex
+// Time
 import * as time from "time"
+let now = time.Instant.now()
 
-let start = time.Instant.now()
-// ... do work
-let elapsed = start.elapsed()
+// Crypto
+import * as crypto from "crypto"
+let hash = crypto.sha256(data)
+
+// Regex
+import * as regex from "regex"
+let re = regex.compile("\\d+")!
+
+// Serialization
+import * as json from "json"
+let data = json.parse(source)!
 ```
 
----
+## In Development
 
-## Future Roadmap
-
-The following modules are currently in development and not yet available in the stable standard library:
-- `std.json` / `std.toml`: Serialization support.
-- `std.net`: Networking (TCP/UDP/HTTP).
-- `std.process`: Advanced process management.
-
----
+| Module | Status |
+|-------|:-----:|
+| `std.json` / `std.toml` | 🔧 Planned |
+| `std.net` (TCP/UDP/HTTP) | 🔧 Planned |
+| `std.process` | 🔧 Planned |
 
 ## Next Steps
 
-- [VUMM Memory Model](/guide/memory/vumm) - How Box works
-- [Error Handling](/guide/error-handling) - Using Result and Option
-- [FFI](/guide/ffi) - Interacting with C code
+- [VUMM Memory Model](memory/vumm.md)
+- [Error Handling](error-handling.md)
+- [FFI](ffi.md)

@@ -13,7 +13,7 @@ Simple, leveled logging with ANSI color output.
 
 ## Quick Start (Global Functions)
 
-```rust
+```vex
 import { debug, info, warn, err } from "log";
 
 debug("Cache hit for key=user:42");
@@ -34,7 +34,7 @@ Output:
 
 For scoped logging with minimum level filtering:
 
-```rust
+```vex
 import { Logger, newLogger, INFO, WARN } from "log";
 
 let logger = newLogger(WARN);  // Only WARN and ERROR

@@ -12,7 +12,7 @@ YAML (YAML Ain't Markup Language) provides human-readable data serialization sui
 
 ## Encoding
 
-```rust
+```vex
 import { encode } from "serde/yaml";
 
 struct Pipeline {
@@ -30,7 +30,7 @@ let yaml_str = encode<Pipeline>(&p);
 
 ## Decoding
 
-```rust
+```vex
 import { decode } from "serde/yaml";
 
 let input = "name: build\nstages: 5\nparallel: false";

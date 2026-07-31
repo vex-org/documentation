@@ -4,7 +4,7 @@ Fast, high-quality pseudo-random number generation using the **Xoshiro256++** al
 
 ## Usage
 
-```rust
+```vex
 import { Rng } from "rand";
 
 // Auto-seeded (from system entropy)

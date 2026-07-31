@@ -4,7 +4,7 @@ Ultra-fast lossless compression with best-in-class speed. LZ4 is the go-to algor
 
 ## Usage
 
-```rust
+```vex
 import { compress, decompress, maxCompressedSize } from "compress/lz4";
 import { alloc, free } from "mem";
 

@@ -4,7 +4,7 @@ Go-style context propagation for cancellation signals, deadlines, timeouts, and 
 
 ## Background Context
 
-```rust
+```vex
 import { background, todo, withCancel, withTimeout, withValue } from "context";
 
 // Root context (never canceled)
@@ -16,7 +16,7 @@ let ctx = todo();
 
 ## Cancellation
 
-```rust
+```vex
 import { withCancel, cancel, isDone, isCanceled } from "context";
 
 let! ctx = withCancel(background());
@@ -31,7 +31,7 @@ cause(ctx);       // → "context canceled"
 
 ## Timeouts & Deadlines
 
-```rust
+```vex
 import { withTimeout, withDeadline, second, millis } from "context";
 
 // Cancel after 5 seconds
@@ -47,7 +47,7 @@ remainingTime(ctx);   // → nanoseconds remaining
 
 ## Request-Scoped Values
 
-```rust
+```vex
 import { withValue, withValueStr, getValue, getValueStr } from "context";
 
 let ctx = withValue(background(), "request_id", 42);

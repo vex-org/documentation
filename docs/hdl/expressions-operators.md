@@ -1,7 +1,12 @@
 ---
+---
 layout: doc
 title: Expressions and Operators
 ---
+
+> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> Implementation has not begun. Details may change.
+
 
 # VexHDL Expressions and Operators Guide
 

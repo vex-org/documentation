@@ -20,7 +20,7 @@ CBOR (Concise Binary Object Representation, RFC 8949) is an extremely compact bi
 
 ## Encoding
 
-```rust
+```vex
 import { encode } from "serde/cbor";
 
 struct SensorReading {
@@ -36,7 +36,7 @@ let bytes = encode<SensorReading>(&reading);
 
 ## Decoding
 
-```rust
+```vex
 import { decode } from "serde/cbor";
 
 let! reading = SensorReading { };

@@ -130,6 +130,10 @@ Compile-time reflection helpers also include:
 - `#isPointer<T>()`, `#isArray<T>()`, `#isTuple<T>()`
 - `#isCopy<T>()`, `#needsDrop<T>()`, `#isReference<T>()`
 - `#isFunction<T>()`, `#isGeneric<T>()`, `#sameType<T, U>()`
+- `#isTensor<T>()`, `#isDynTensor<T>()` — static/dynamic tensor types
+- `#isMask<T>()`, `#isDynMask<T>()` — SIMD mask types
+- `#isOption<T>()`, `#isResult<T>()` — stdlib type checks
+- `#isSlice<T>()` — borrowed view type check
 
 If you are doing compile-time code generation or reflection work, see [Comptime](/guide/advanced/comptime).
 
@@ -151,14 +155,72 @@ let name = #concatIdents(foo, bar)
 
 - `#staticAssert`
 - `#compileError`
+- `#compileWarning`
 - `#warning`
 - `#debugExpr`
+- `#debugType`
 - `#env`
 - `#includeStr`
 - `#includeBytes`
 - `#concat`
 - `#stringify`
 - `#concatIdents`
+
+---
+
+## Target Introspection
+
+```vex
+#if #targetOs() == "macos" {
+    // Darwin-specific path
+} elif #targetArch() == "arm64" {
+    // ARM-specific optimization
+}
+```
+
+- `#targetOs()` → `"macos"`, `"linux"`, `"windows"`
+- `#targetArch()` → `"arm64"`, `"x86_64"`, `"x86"`
+- `#targetEndian()` → `"little"`, `"big"`
+- `#targetPointerWidth()` → `64` or `32`
+
+All resolved at compile-time with zero runtime cost.
+
+---
+
+## Source-Location Intrinsics
+
+```vex
+$println("At {}:{} in {}", #line(), #column(), #fileName());
+```
+
+- `#line()` → current line number (i64)
+- `#column()` → current column number (i64)
+- `#fileName()` / `#file()` → current file path (str)
+- `#module()` → current module name (str)
+
+Useful for debugging, logging, and `#staticAssert` error messages.
+
+---
+
+## Compile-Time Math
+
+```vex
+let abs_val = #abs(-5)
+let pow_val = #constPow(2, 10)
+let gcd_val = #gcd(48, 18)
+```
+
+- `#abs`, `#min`, `#max`, `#clamp` — basic math
+- `#pow`, `#sqrt` — power and square root
+- `#constAbs`, `#constMin`, `#constMax`, `#constClamp` — comptime-only variants
+- `#constPow`, `#constSqrt`, `#constLog2`, `#constEval` — comptime power/log/eval
+- `#gcd`, `#lcm`, `#constGcd`, `#constLcm` — number theory
+- `#bitCount` / `#popcount` — population count
+- `#leadingZeros` / `#clz`, `#trailingZeros` / `#ctz` — bit scan
+- `#bswap` / `#reverseBytes` — byte swap
+- `#isPowerOf2` / `#isPowerOfTwo`, `#nextPowerOf2` / `#nextPow2`, `#log2` — power-of-2 utilities
+- `#typeof(x)` — returns the type name of an expression as a string
+- `#typeBaseName<T>()` — base type name without generic parameters
 
 ---
 

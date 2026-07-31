@@ -8,7 +8,7 @@ Through Vex's `Fiber v3` ecosystem, checking for `Upgrade` routes, negotiating W
 
 You can effortlessly transition an ordinary `App` route into a full-duplex WebSocket instance based on standard HTTP `Upgrade` headers:
 
-```rust
+```vex
 import { App, Ctx } from "http/fiber";
 import { WsConn, WsMessage, isWebSocketUpgrade } from "http/ws";
 

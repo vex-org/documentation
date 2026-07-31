@@ -12,7 +12,7 @@ If you need to hash a large buffer or establish consistent hashes in determinist
 
 ## Usage
 
-```rust
+```vex
 import { fnv1a_64 } from "hash/fnv";
 
 let raw = "my_string".asPtr();

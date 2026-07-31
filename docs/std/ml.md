@@ -17,7 +17,7 @@ The `ml` module includes primitives that ordinarily require importing massive de
 
 All of `ml` functions are labeled as `graph fn`. When used inside a Vex `graph { }` execution block, the entire logic tree pushes onto the GPU synchronously without costly ping-ponging of data buffers back to the CPU between layers.
 
-```rust
+```vex
 import { RMSNorm, Softmax } from "ml";
 
 // When compiled inside a graph execution pipeline:

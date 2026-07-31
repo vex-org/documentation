@@ -8,7 +8,7 @@ The entire `http/fiber` module relies on the zero-copy infrastructure of `http`,
 
 Apps are created, routes are mapped, and middlewares are configured dynamically onto memory tables during setup.
 
-```rust
+```vex
 import { App, Ctx } from "http/fiber";
 import { logger, cors } from "http/middleware";
 
@@ -44,7 +44,7 @@ Instead of pulling heavy Regex dependencies, Vex Fiber relies on ultra-fast segm
 
 Dynamic parts of the URL are easily accessible via the `Ctx: params` API.
 
-```rust
+```vex
 app.get("/users/:id", fn(c: &Ctx!) {
     let id = c.params("id");  // Given /users/142 -> 142
     
@@ -57,7 +57,7 @@ app.get("/users/:id", fn(c: &Ctx!) {
 
 Match all subsequent path requests. Highly useful for catching static directory matches.
 
-```rust
+```vex
 app.get("/files/*filepath", fn(c: &Ctx!) {
     let path = c.params("filepath");
     c.sendString("Serving file: " + path);

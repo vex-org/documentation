@@ -1,10 +1,14 @@
 ---
 layout: doc
 title: VexHDL Overview
-description: The Modern, Hardware-Safety-First Hardware Description Ecosystem
+description: Concept — VexHDL Hardware Description Language (Future Work)
 ---
 
-# VexHDL: The Modern, Hardware-Safety-First Hardware Description Ecosystem
+# VexHDL (Concept / Future Work)
+
+> **⚠️ Concept Stage:** VexHDL is a planned hardware description language extension
+> for Vex. The following pages describe a design vision. Implementation has not
+> begun. Syntax and features may change significantly.
 
 VexHDL is a next-generation Hardware Description Language (HDL) and Development Ecosystem designed to replace the verbosity, unsafe paradigms, and poor developer experience (DX) of traditional hardware design (Verilog, VHDL). 
 

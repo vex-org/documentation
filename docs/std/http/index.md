@@ -19,7 +19,7 @@ While `http/server` and `http/fiber` handle massive concurrency natively, `http`
 
 ### Basic Fetching
 
-```rust
+```vex
 import { httpGet, httpPostJSON } from "http";
 
 // Simple GET request
@@ -34,7 +34,7 @@ let resJSON = httpPostJSON("127.0.0.1", 8080, "/api/users", "{\"name\":\"Vex\"}"
 
 ### Flow via Builder Pattern
 
-```rust
+```vex
 import { ClientRequest } from "http";
 
 let! req = ClientRequest.new("PUT", "127.0.0.1", 8080, "/api/users/1");

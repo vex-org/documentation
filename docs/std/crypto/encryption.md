@@ -4,7 +4,7 @@
 
 Hardware-accelerated authenticated encryption. Uses AES-NI instructions when available.
 
-```rust
+```vex
 import { aes_gcm_encrypt, aes_gcm_decrypt } from "crypto";
 
 let key = ...;    // 16 or 32 bytes
@@ -19,7 +19,7 @@ let decrypted = aes_gcm_decrypt(key, nonce, ciphertext, aad);
 
 Extremely fast AEAD cipher, especially on platforms without AES hardware (mobile/ARM).
 
-```rust
+```vex
 import { chacha20_poly1305_encrypt, chacha20_poly1305_decrypt } from "crypto";
 
 let encrypted = chacha20_poly1305_encrypt(key, nonce, plaintext, aad);
@@ -30,7 +30,7 @@ let decrypted = chacha20_poly1305_decrypt(key, nonce, encrypted, aad);
 
 Low-level AES block cipher for custom constructions.
 
-```rust
+```vex
 import { aes_encrypt_block, aes_decrypt_block } from "crypto";
 ```
 

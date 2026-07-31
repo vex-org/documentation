@@ -36,7 +36,7 @@ let s3 = boolToString(true);           // → "true" (string)
 
 ## Error Types
 
-```rust
+```vex
 struct ParseError {
     msg: string
     kind: ParseErrorKind    // InvalidDigit, Overflow, Empty, InvalidFormat

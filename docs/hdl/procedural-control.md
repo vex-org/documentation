@@ -1,7 +1,12 @@
 ---
+---
 layout: doc
 title: Procedural and Control Flow
 ---
+
+> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> Implementation has not begun. Details may change.
+
 
 # VexHDL Procedural and Control Flow Guide
 

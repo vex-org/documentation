@@ -1,7 +1,12 @@
 ---
+---
 layout: doc
 title: Safety, Verification, and Policies
 ---
+
+> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> Implementation has not begun. Details may change.
+
 
 # VexHDL Safety, Verification, and Policy System
 

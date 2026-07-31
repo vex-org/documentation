@@ -13,7 +13,7 @@ The `serde/csv` module provides blazing-fast tabular data parsing and serializat
 
 ## Parsing CSV
 
-```rust
+```vex
 import { parse } from "serde/csv";
 
 let input = "name,age,city\nAlice,30,Istanbul\nBob,25,Berlin";
@@ -24,7 +24,7 @@ let rows = parse(input);
 
 ## Decoding into Structs
 
-```rust
+```vex
 import { decode } from "serde/csv";
 
 struct Person {
@@ -41,7 +41,7 @@ println("{person.name} lives in {person.city}");
 
 ## Encoding from Structs
 
-```rust
+```vex
 import { encode } from "serde/csv";
 
 let person = Person { name: "Charlie", age: 28, city: "Tokyo" };

@@ -4,7 +4,7 @@ Low-level encoding/decoding for Base64, Base32, Hex, and URL-safe encoding.
 
 ## Base64
 
-```rust
+```vex
 import { base64Encode, base64Decode } from "encoding";
 
 let encoded = base64Encode("Hello, Vex!");    // "SGVsbG8sIFZleCE="
@@ -13,7 +13,7 @@ let decoded = base64Decode(encoded);           // "Hello, Vex!"
 
 ## Base32
 
-```rust
+```vex
 import { base32Encode, base32Decode } from "encoding";
 
 let encoded = base32Encode(data);
@@ -22,7 +22,7 @@ let decoded = base32Decode(encoded);
 
 ## Hex
 
-```rust
+```vex
 import { hexEncode, hexDecode } from "encoding";
 
 let hex = hexEncode("Hello");    // "48656c6c6f"
@@ -31,7 +31,7 @@ let bytes = hexDecode(hex);      // [0x48, 0x65, 0x6c, 0x6c, 0x6f]
 
 ## URL Encoding
 
-```rust
+```vex
 import { urlEncode, urlDecode } from "encoding";
 
 let encoded = urlEncode("hello world&foo=bar");  // "hello%20world%26foo%3Dbar"

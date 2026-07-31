@@ -32,7 +32,7 @@ Internal representation: nanoseconds since Unix epoch (`i64`).
 
 ### Arithmetic
 
-```rust
+```vex
 let t2 = t.add(duration_ns);    // Add nanoseconds → new Time
 let diff = t1.sub(t2);          // Subtract → i64 nanoseconds
 
@@ -45,7 +45,7 @@ let d = sub(t1, t2);            // Time - Time → Duration
 
 Truncate or round time to boundaries:
 
-```rust
+```vex
 let t = now();
 
 // Start of day (midnight)
@@ -62,7 +62,7 @@ Supported units: `"year"` / `"y"`, `"month"` / `"M"`, `"day"` / `"d"`, `"hour"` 
 
 ### Formatting
 
-```rust
+```vex
 println("{t}");  // ISO 8601: "2024-06-15T14:30:00Z"
 ```
 
@@ -75,7 +75,7 @@ println("{t}");  // ISO 8601: "2024-06-15T14:30:00Z"
 
 ### Time Constants
 
-```rust
+```vex
 import { NANOSECOND, MICROSECOND, MILLISECOND, SECOND, MINUTE, HOUR } from "time";
 
 sleep(500 * MILLISECOND);
@@ -85,7 +85,7 @@ let interval = 1 * HOUR;
 
 ## Parsing
 
-```rust
+```vex
 import { parse } from "time";
 
 let t = parse("2024-06-15T14:30:00Z");     // ISO 8601
@@ -94,7 +94,7 @@ let t = parse("2024-06-15 14:30:00");       // Common format
 
 ## Enums
 
-```rust
+```vex
 enum Month { January, February, ..., December }
 enum Weekday { Sunday, Monday, ..., Saturday }
 ```

@@ -2,7 +2,7 @@
 
 > **Status:** ✅ REVIEWED 2026-07-22 — Content 100% complete  
 > **Toplam:** 179 dosya, **0 eksik**  
-> **Son güncelleme:** 2026-07-22  
+> **Son güncelleme:** 2026-07-22
 >
 > Bu liste AI tarafından oluşturulmuştu ve birçok ❌ aslında var.
 > Aşağıdaki tablo **gerçek durumu** yansıtmaktadır.
@@ -11,30 +11,30 @@
 
 ## Legend
 
-| Icon | Meaning |
-| ---- | ------- |
-| ✅   | Already documented |
-| ❌   | Missing (gerçekten eksik) |
+| Icon | Meaning                     |
+| ---- | --------------------------- |
+| ✅   | Already documented          |
+| ❌   | Missing (gerçekten eksik)   |
 | ➕   | Bonus (TODO'da yok ama var) |
 
 ---
 
 ## 📊 Summary
 
-| Kategori | ✅ Var | ❌ Eksik |
-|----------|:------:|:--------:|
-| Basics (6) | 6 | 0 |
-| Types (27) | 26 | **1 (pin.md)** |
-| Memory (11) | 11 | 0 |
-| Advanced (11) | 11 | 0 |
-| Concurrency (5) | 5 | 0 |
-| SIMD/GPU/Fusion (8) | 8 | 0 |
-| Std Library | 66 | 0 |
-| Architecture | 7 | 0 |
-| HDL | 8 | 0 |
-| References | 7 | 0 |
-| Other Guide | 18 | 0 |
-| **Toplam** | **177** | **1** |
+| Kategori            | ✅ Var  |    ❌ Eksik    |
+| ------------------- | :-----: | :------------: |
+| Basics (6)          |    6    |       0        |
+| Types (27)          |   26    | **1 (pin.md)** |
+| Memory (11)         |   11    |       0        |
+| Advanced (11)       |   11    |       0        |
+| Concurrency (5)     |    5    |       0        |
+| SIMD/GPU/Fusion (8) |    8    |       0        |
+| Std Library         |   66    |       0        |
+| Architecture        |    7    |       0        |
+| HDL                 |    8    |       0        |
+| References          |    7    |       0        |
+| Other Guide         |   18    |       0        |
+| **Toplam**          | **177** |     **1**      |
 
 ---
 
@@ -86,4 +86,4 @@ CLI, test, doc, pm references.
 
 ---
 
-*Reviewed 2026-07-20 — Gerçek audit sonuçları. Eski AI versiyonu `DOCUMENTATION_TODO_MASTER.md.bak` olarak kaydedildi.*
+_Reviewed 2026-07-20 — Gerçek audit sonuçları. Eski AI versiyonu `DOCUMENTATION_TODO_MASTER.md.bak` olarak kaydedildi._

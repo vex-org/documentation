@@ -13,7 +13,7 @@ TOML (Tom's Obvious, Minimal Language) is the preferred configuration format for
 
 ## Parsing into AST
 
-```rust
+```vex
 import { parse } from "serde/toml";
 
 let input = "[server]\nhost = \"0.0.0.0\"\nport = 8080\n\n[database]\nurl = \"postgres://localhost/app\"";
@@ -24,7 +24,7 @@ let toml = parse(input);
 
 ## Encoding (Struct → TOML)
 
-```rust
+```vex
 import { encode } from "serde/toml";
 
 struct ServerConfig {
@@ -40,7 +40,7 @@ let toml_str = encode<ServerConfig>(&cfg);
 
 ## Decoding (TOML → Struct)
 
-```rust
+```vex
 import { decode } from "serde/toml";
 
 let input = "host = \"0.0.0.0\"\nport = 9090\ndebug = true";

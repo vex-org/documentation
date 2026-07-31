@@ -20,7 +20,7 @@ Pattern Compile → Thompson NFA → Bytecode Program
 
 ## Quick Start
 
-```rust
+```vex
 import { Regex, Match } from "regex";
 
 let re = Regex.new("\\d{3}-\\d{4}");

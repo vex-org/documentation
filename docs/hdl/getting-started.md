@@ -1,7 +1,12 @@
 ---
+---
 layout: doc
 title: Getting Started
 ---
+
+> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> Implementation has not begun. Details may change.
+
 
 # VexHDL Getting Started Guide
 

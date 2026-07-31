@@ -13,7 +13,7 @@ The JSON module is the most heavily used format in `serde`. It provides a comple
 
 ## Encoding (Struct → JSON)
 
-```rust
+```vex
 import { encode } from "serde/json";
 
 struct User {
@@ -31,7 +31,7 @@ The encoder walks struct fields at compile-time offsets, emitting keys and value
 
 ## Decoding (JSON → Struct)
 
-```rust
+```vex
 import { decode } from "serde/json";
 
 let payload = "{\"id\":42,\"name\":\"Bob\",\"active\":false}";
@@ -46,7 +46,7 @@ The decoder uses a streaming byte scanner to walk the JSON token stream. When it
 
 For untyped or heterogeneous JSON, use `JsonValue`:
 
-```rust
+```vex
 import { parseJSON } from "serde/json";
 
 let val = parseJSON("{\"users\":[{\"name\":\"Alice\"},{\"name\":\"Bob\"}]}");

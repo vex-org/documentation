@@ -187,7 +187,7 @@ extern "C" {
 
 Vex links runtime symbols at compile time via the system linker. The C runtime functions are compiled as a static library (`libvexruntime.a`) and linked into every Vex binary automatically.
 
-```rust
+```vex
 // In lib/runtime/src/lib.rs -- FFI bindings
 pub mod ffi {
     extern "C" {

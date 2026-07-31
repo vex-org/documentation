@@ -18,7 +18,7 @@ When dealing with ASCII-range characters, `unicode` uses a **zero-table fast pat
 
 You can import properties directly from `unicode`:
 
-```rust
+```vex
 import { 
     isAlphabetic, 
     isDigit, 
@@ -35,7 +35,7 @@ import {
 
 Query the exact `General_Category` using the `category` function, which maps back to the `CAT_*` constants.
 
-```rust
+```vex
 import { category, CAT_LU, CAT_LL } from "unicode";
 
 let cp = 'A';
@@ -56,7 +56,7 @@ Available category categories follow the Unicode Standard:
 
 Vex provides simple boolean returns for common subsets of characters:
 
-```rust
+```vex
 let smiley = '😀';
 isAlphabetic(smiley);  // false
 isUppercase('H');      // true
@@ -70,7 +70,7 @@ isPunctuation(',');    // true
 
 Use `toLower` and `toUpper` to do Simple Case Folding over a single `char` Code Point.
 
-```rust
+```vex
 let folded = toLower('Ü');
 let upper = toUpper('ñ');
 ```

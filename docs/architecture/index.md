@@ -98,7 +98,7 @@ The lexer uses [Logos](https://github.com/maciejhirsz/logos) for high-performanc
 
 ### Token Types
 
-```rust
+```vex
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum Token {
     // Keywords
@@ -124,7 +124,7 @@ pub enum Token {
 
 ### Automatic Semicolon Insertion
 
-```rust
+```vex
 fn insert_semicolons(tokens: Vec<Token>) -> Vec<Token> {
     // Insert semicolons at newlines when:
     // - Previous token can end a statement
@@ -139,7 +139,7 @@ Built on Rowan for lossless syntax trees with error recovery.
 
 ### Syntax Kinds
 
-```rust
+```vex
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SyntaxKind {
     // Expressions
@@ -182,7 +182,7 @@ pub enum SyntaxKind {
 
 ### Error Recovery
 
-```rust
+```vex
 fn parse_block(&mut self) -> Block {
     self.expect(T!['{']);
 
@@ -208,7 +208,7 @@ High-level IR with semantic information, powered by Salsa for incremental comput
 
 ### Type System
 
-```rust
+```vex
 pub enum Ty {
     // Primitives
     Int(IntTy),    // i8, i16, i32, i64, i128
@@ -242,7 +242,7 @@ pub enum Ty {
 
 The borrow checker implements Polonius-style Non-Lexical Lifetimes (NLL).
 
-```rust
+```vex
 pub struct BorrowChecker {
     cfg: ControlFlowGraph,
     facts: AllFacts,
@@ -277,7 +277,7 @@ impl BorrowChecker {
 
 Automatic memory strategy selection.
 
-```rust
+```vex
 pub enum BoxKind {
     Unique,     // Single owner
     SharedRc,   // Reference counted (single-thread)
@@ -315,7 +315,7 @@ Intermediate representation for GPU compute.
 
 ### Node Types
 
-```rust
+```vex
 pub enum SirNode {
     // Data
     Constant(Value),
@@ -346,7 +346,7 @@ pub enum SirNode {
 
 ### Backends
 
-```rust
+```vex
 pub trait Backend {
     fn compile(&self, graph: &SirGraph) -> CompiledKernel;
     fn execute(&self, kernel: &CompiledKernel, inputs: &[Tensor]) -> Vec<Tensor>;
@@ -361,7 +361,7 @@ pub struct SimdBackend;    // CPU SIMD
 
 ### Automatic Differentiation
 
-```rust
+```vex
 pub struct Autograd {
     forward_graph: SirGraph,
     backward_graph: SirGraph,
@@ -449,7 +449,7 @@ __thread thread_cache_t* tlc = NULL;
 
 Rich error reporting with source locations.
 
-```rust
+```vex
 pub struct Diagnostic {
     severity: Severity,
     message: String,
@@ -490,7 +490,7 @@ help: consider cloning the value if you need to use it again
 
 ### Incremental Compilation
 
-```rust
+```vex
 #[salsa::query_group(CompilerDatabase)]
 pub trait Compiler {
     #[salsa::input]
@@ -505,7 +505,7 @@ pub trait Compiler {
 
 ### Parallel Compilation
 
-```rust
+```vex
 pub fn compile_crate(files: Vec<FileId>) -> Result<(), Error> {
     // Parse all files in parallel
     let parsed: Vec<_> = files

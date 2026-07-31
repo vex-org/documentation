@@ -13,7 +13,7 @@
 
 ### Dependencies
 
-- **LLVM 21.1.8** - backend code generation used by the main toolchain
+- **LLVM 22.1+** - backend code generation used by the main toolchain
 - **Clang / platform C toolchain** - runtime and native linking support
 - **Rust toolchain** - required to build the compiler and tools from source today
 

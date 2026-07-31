@@ -6,7 +6,7 @@ Structured error creation, wrapping, inspection, and comparison. Inspired by Go'
 
 The modern way to construct errors is using struct-associated static methods on `StdError`:
 
-```rust
+```vex
 import { StdError } from "errors";
 
 // Recommended static constructors
@@ -18,7 +18,7 @@ let e4 = StdError.newFormatted("failed to parse: ", arg);
 
 Legacy free-function constructors are deprecated but still supported for backward compatibility:
 
-```rust
+```vex
 import { newError, newErrorCode, newErrorKind } from "errors";
 
 let e = newError("file not found");
@@ -30,7 +30,7 @@ let e3 = newErrorKind("denied", KIND_PERMISSION_DENIED());
 
 Add context to errors while preserving the original cause:
 
-```rust
+```vex
 import { wrap, wrapf, unwrapMsg } from "errors";
 
 let original = newError("connection refused");
@@ -43,7 +43,7 @@ let innerMsg = unwrapMsg(wrapped);
 
 ## Error Comparison (`Is` / `Equals`)
 
-```rust
+```vex
 import { is, equals, hasCode } from "errors";
 
 let e = ErrNotFound();
@@ -72,7 +72,7 @@ Pre-defined common errors for fast comparison:
 
 ## Error Joining (Go 1.20+)
 
-```rust
+```vex
 import { join2, join3 } from "errors";
 let combined = join2(err1, err2);   // Merge two errors
 let combined = join3(e1, e2, e3);   // Merge three errors

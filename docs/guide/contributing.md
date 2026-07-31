@@ -9,7 +9,7 @@ This guide covers how to build Vex from source, run tests, debug the compiler, a
 | Dependency | Version | Notes                                      |
 | ---------- | ------- | ------------------------------------------ |
 | **Rust**   | 1.80+   | Install via [rustup.rs](https://rustup.rs) |
-| **LLVM**   | 21.1.8  | Required for codegen                       |
+| **LLVM**   | 22.1+   | Required for codegen                       |
 | **CMake**  | 3.20+   | Required by LLVM bindings                  |
 | **Clang**  | 16+     | For compiling the C runtime                |
 | **Git**    | 2.40+   | Version control                            |
@@ -18,10 +18,10 @@ This guide covers how to build Vex from source, run tests, debug the compiler, a
 
 ```bash
 # Install LLVM via Homebrew
-brew install llvm@21 cmake
+brew install llvm@22 cmake
 
 # Set LLVM path
-export LLVM_SYS_210_PREFIX=$(brew --prefix llvm@21)
+export LLVM_SYS_220_PREFIX=$(brew --prefix llvm@22)
 
 # Build
 git clone https://github.com/meftunca/vex
@@ -236,7 +236,7 @@ All ~812 tests must pass. Check `docs/PROJECT_STATUS.md` for current test status
 
 ### Rust (Compiler)
 
-```rust
+```vex
 // Use Result for fallible operations
 fn parse_tokens(tokens: &[Token]) -> Result<Ast, ParseError> {
     let header = parse_header(tokens)?;

@@ -18,7 +18,7 @@ The `time` module provides comprehensive time and date functionality, inspired b
 
 ## Quick Start
 
-```rust
+```vex
 import { Time, now, Duration, sleep, SECOND, MILLISECOND } from "time";
 
 // Current time

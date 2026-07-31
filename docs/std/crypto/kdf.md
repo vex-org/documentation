@@ -4,7 +4,7 @@
 
 The winner of the Password Hashing Competition. Memory-hard, parallelizable, and resistant to GPU/ASIC attacks.
 
-```rust
+```vex
 import { Argon2id } from "crypto";
 
 let password = "my_secure_password".asBytes();
@@ -23,7 +23,7 @@ println(hash.toHex());
 
 Legacy-compatible password derivation. Use Argon2id for new applications.
 
-```rust
+```vex
 import { pbkdf2_sha256 } from "crypto";
 let key = pbkdf2_sha256(password, salt, iterations, keyLen);
 ```
@@ -32,7 +32,7 @@ let key = pbkdf2_sha256(password, salt, iterations, keyLen);
 
 Key extraction and expansion (RFC 5869). Used for deriving session keys from shared secrets.
 
-```rust
+```vex
 import { hkdf_sha256_extract, hkdf_sha256_expand } from "crypto";
 let prk = hkdf_sha256_extract(salt, input_key);
 let derived = hkdf_sha256_expand(prk, info, outputLen);
@@ -42,7 +42,7 @@ let derived = hkdf_sha256_expand(prk, info, outputLen);
 
 High-speed, high-security EdDSA public-key signatures over Curve25519.
 
-```rust
+```vex
 import { ed25519_keygen, ed25519_sign, ed25519_verify } from "crypto";
 
 let (pubKey, privKey) = ed25519_keygen(seed);
@@ -54,14 +54,14 @@ let valid = ed25519_verify(pubKey, message, signature);
 
 Elliptic-curve Diffie-Hellman over Curve25519 for establishing shared secrets.
 
-```rust
+```vex
 import { x25519 } from "crypto";
 let sharedSecret = x25519(myPrivateKey, theirPublicKey);
 ```
 
 ## Encoding Utilities
 
-```rust
+```vex
 import { toHex, fromHex, toBase64, fromBase64 } from "crypto";
 
 let hex = toHex(bytes);

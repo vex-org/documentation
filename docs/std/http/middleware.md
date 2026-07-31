@@ -4,7 +4,7 @@ The `http/fiber` framework revolves entirely around an asynchronous array of mid
 
 This modular architecture allows you to easily inject utilities right into the HTTP lifecycle:
 
-```rust
+```vex
 import { logger, cors, recover, staticFiles } from "http/middleware";
 ```
 
@@ -12,7 +12,7 @@ import { logger, cors, recover, staticFiles } from "http/middleware";
 
 Automatically intercepts all socket requests and logs the timestamp, method, execution path, and outbound status code.
 
-```rust
+```vex
 app.use(logger);
 
 // Output:
@@ -23,7 +23,7 @@ app.use(logger);
 
 Secures API boundaries effortlessly. Automatically intercepts preflight `OPTIONS` requests natively from modern browsers.
 
-```rust
+```vex
 app.use(cors);                        // Blanket access (Allow all Origins)
 app.use(corsWithOrigin("https://example.com")); // Strict environment policy
 ```
@@ -32,7 +32,7 @@ app.use(corsWithOrigin("https://example.com")); // Strict environment policy
 
 Wraps subsequent endpoints and handles catastrophic faults such as array out of bounds, divisions by zero, or memory leaks without entirely crashing the Vex Server daemon.
 
-```rust
+```vex
 app.use(recover);
 
 app.get("/buggy-endpoint", fn(c: &Ctx!) {
@@ -47,7 +47,7 @@ app.get("/buggy-endpoint", fn(c: &Ctx!) {
 
 Out-of-the-box static resource deployment built using raw Vex stream utilities (`fs`). Features real-time automatic MIME expansion detection without any manual JSON configurations. 
 
-```rust
+```vex
 // Matches `GET /static/...` and directs socket streams down into `./public/...`
 app.use(fn(c: &Ctx!) {
     staticFiles(c, "./public", "/static");

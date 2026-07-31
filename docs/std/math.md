@@ -6,7 +6,7 @@ Vex's standard math library (`math`) is not just a wrapper around `libm`. It is 
 
 All functions within `math` have been modeled with the ability to "lift" them into vectors via `Tensor` Promotion. By defining components inside compiler intrinsics, mathematical routines automatically vectorize when provided with arrays or multi-element bounds.
 
-```rust
+```vex
 // Calling on scalar
 let a = 4.0;
 let res = Math.sqrt(a); // Maps directly to llvm.sqrt.f64

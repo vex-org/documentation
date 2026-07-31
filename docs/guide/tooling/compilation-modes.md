@@ -28,6 +28,7 @@ vex run --emit-llvm main.vx  # also emit LLVM IR during run
 
 ```bash
 vex compile main.vx                    # AOT compile to executable
+vex compile --shared lib.vx            # AOT compile to shared library (.dylib/.so/.dll)
 vex compile --emit-llvm main.vx        # Emit LLVM IR (.ll file)
 vex compile --emit-asm main.vx         # Emit assembly (.s file)
 vex compile --emit-obj main.vx         # Emit object file (.o)

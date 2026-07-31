@@ -1,33 +1,62 @@
 # Freestanding Mode
 
-Vex supports freestanding compilation for bare-metal environments, operating systems, bootloaders, and embedded systems - all without a standard library.
+> **Vex without standard library.** Bare-metal, OS kernels, bootloaders, embedded.
 
 ## What is Freestanding?
 
-Freestanding mode compiles Vex code without:
-
+Freestanding mode compiles Vex code **without**:
 - Standard library (`std`)
 - Operating system
-- Dynamic memory allocation (by default)
+- Dynamic memory allocation (default)
 - Runtime support
 
-This enables:
-
-- OS kernels and Bootloaders
-- Embedded firmware
-- UEFI applications
+**Use cases:** OS kernels, bootloaders, embedded firmware, UEFI applications.
 
 ## Enabling Freestanding
 
-### Code Configuration
-
 ```vex
-// Use no_std and no_main keywords
 no_std        // Don't link standard library
 no_main       // Don't expect a standard main function
 
-// Required: Panic handler function
+// Required: Panic handler
 fn panic_handler(info: &PanicInfo): never {
+    loop {}
+}
+
+// Optional: Custom allocator
+global_allocator: MyAllocator
+```
+
+## Memory
+
+Without `std`, you have no heap by default:
+
+```vex
+// Stack allocation only
+let x: i32 = 42;
+let arr: [u8; 1024] = [0; 1024];  // stack, if fits
+
+// Custom allocator for Box/Vec
+impl $Allocator for MyAllocator {
+    fn alloc(size: u64): *void { ... }
+    fn free(ptr: *void): void { ... }
+}
+```
+
+## Supported Targets
+
+| Target | Freestanding | Standard Library |
+|--------|:------------:|:----------------:|
+| x86_64-unknown-none | ✅ | ❌ |
+| aarch64-unknown-none | ✅ | ❌ |
+| riscv64-unknown-none | ✅ | ❌ |
+| x86_64-linux | ❌ | ✅ |
+| aarch64-macos | ❌ | ✅ |
+
+## Related
+
+- [FFI](../guide/ffi.md) — C interop
+- [Platform Support](../guide/platform-support.md)
     loop {}
 }
 

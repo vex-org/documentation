@@ -6,7 +6,7 @@ Vex ships with a powerful GORM-style ORM. All struct-to-column mapping is resolv
 
 Use `db:` tags to map struct fields to column names, and `pk:` for primary keys:
 
-```rust
+```vex
 struct User {
     id: i64       `db:"id"   pk:"true"`
     name: string  `db:"name"`
@@ -17,7 +17,7 @@ struct User {
 
 ## Basic CRUD
 
-```rust
+```vex
 import { Connection, Db } from "db";
 
 let conn = Connection.sqlite(":memory:");
@@ -70,7 +70,7 @@ Every modifier returns `&Db&lt;T&gt;!` for clean chaining:
 
 ## Transactions in ORM
 
-```rust
+```vex
 db.begin();
 db.create(&newUser);
 db.filter1("id = ?", "1").update("balance", "50");
@@ -79,7 +79,7 @@ db.commit();
 
 ## Legacy Helpers
 
-```rust
+```vex
 import { ormInsert, ormFindById } from "db";
 
 ormInsert<User>(conn, "users", &user);

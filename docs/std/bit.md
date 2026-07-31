@@ -8,7 +8,7 @@ Vex's `Bit.*` functions map directly to single CPU instructions (e.g. `POPCNT`, 
 
 ### Population Count
 Counts the total number of set `1` bits in a binary representation.
-```rust
+```vex
 let val: u32 = 0b1011;
 println(Bit.popcnt32(val)); // 3
 ```
@@ -16,20 +16,20 @@ Maps to `llvm.ctpop.i32`
 
 ### Leading & Trailing Zeros
 Calculates the number of `0` bits preceding the highest set bit, or following the lowest set bit. Helpful for finding alignment offsets and mask calculation.
-```rust
+```vex
 Bit.lzcnt32(0b0100) // 29
 Bit.tzcnt64(0b1000) // 3
 ```
 
 ### Endian Reversal (Byte Swap)
 Reverses the endianness of an integer. Required for networking stacks or unpacking foreign buffer structures.
-```rust
+```vex
 let rev = Bit.bswap32(0x12345678); // 0x78563412
 ```
 
 ### Rotating Values
 Rotates bits left or right, carrying them over to the overflow bounds. Crucial in hashing configurations (e.g. xxHash, WyHash).
-```rust
+```vex
 Bit.rotl64(val, 3);
 Bit.rotr32(val, 2);
 ```

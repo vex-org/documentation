@@ -63,7 +63,7 @@ fn runQuery() {
 
 ## Transactions
 
-```rust
+```vex
 conn.begin();
 conn.exec("INSERT INTO orders VALUES (1, 'pending')");
 conn.exec("UPDATE inventory SET stock = stock - 1 WHERE id = 42");
@@ -76,7 +76,7 @@ if success {
 
 ## Parameterized Queries
 
-```rust
+```vex
 let! params = Vec.new<string>();
 params.push("Alice");
 params.push("30");

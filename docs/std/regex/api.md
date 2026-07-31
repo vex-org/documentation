@@ -35,7 +35,7 @@
 
 ## Examples
 
-```rust
+```vex
 import { Regex, Match } from "regex";
 
 // Case-insensitive

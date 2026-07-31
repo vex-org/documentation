@@ -20,7 +20,7 @@ MessagePack is a compact binary serialization format. It's significantly smaller
 
 ## Encoding
 
-```rust
+```vex
 import { encode } from "serde/msgpack";
 
 struct Sensor {
@@ -36,7 +36,7 @@ let bytes = encode<Sensor>(&data);
 
 ## Decoding
 
-```rust
+```vex
 import { decode } from "serde/msgpack";
 
 let! sensor = Sensor { };

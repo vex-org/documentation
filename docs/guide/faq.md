@@ -4,7 +4,7 @@
 
 ### What is Vex?
 
-Vex is a modern systems programming language that combines Rust's memory safety with Go's simplicity and Mojo's automatic SIMD/GPU acceleration. It compiles to native code via LLVM 21.
+Vex is a modern systems programming language that combines Rust's memory safety with Go's simplicity and Mojo's automatic SIMD/GPU acceleration. It compiles to native code via LLVM 22.
 
 ### Is Vex ready for production?
 

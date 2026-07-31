@@ -8,7 +8,7 @@ All client operations utilize Vex's native TCP socket layer (`net/socket`) and a
 
 For common HTTP verbs, Vex provides instant helpers that handle connection setup, request serialization, response parsing, and socket teardown in a single call:
 
-```rust
+```vex
 import { httpGet, httpPost, httpPostJSON, httpPatch, httpDelete } from "http";
 
 // GET
@@ -34,7 +34,7 @@ let res = httpDelete("api.example.com", 8080, "/users/99");
 
 For full control, construct a `ClientRequest` manually. Every setter returns `&ClientRequest!`, enabling clean chaining:
 
-```rust
+```vex
 import { ClientRequest } from "http";
 
 let! req = ClientRequest.new("PUT", "api.internal.io", 8080, "/sync/worker-1");
@@ -102,7 +102,7 @@ When `send()` executes, Vex reads up to 64KB from the socket and parses the HTTP
 
 All response headers are automatically extracted during `readResponse()` using the same zero-copy byte scanner used by the server-side parser. Headers are stored in a `Headers` collection supporting:
 
-```rust
+```vex
 let res = httpGet("example.com", 80, "/");
 
 // Case-insensitive access

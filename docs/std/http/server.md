@@ -4,7 +4,7 @@ While most users will build APIs with the `http/fiber` framework, `http/server` 
 
 ## Minimal Hello World
 
-```rust
+```vex
 import { Server, Request, Response } from "http";
 
 fn main(): i32 {
@@ -42,7 +42,7 @@ Every incoming connection is consumed by the zero-copy `parseRequest(fd)` functi
 
 ### Request Accessor Methods
 
-```rust
+```vex
 req.header("Authorization")    // Get header value (case-insensitive)
 req.hasHeader("X-Custom")      // Check if header exists
 req.isMethod("POST")           // Match method (case-sensitive)
@@ -55,7 +55,7 @@ req.isJSON()                   // true if Content-Type == "application/json"
 
 For goroutine-per-connection servers, use the non-blocking parser:
 
-```rust
+```vex
 let req = parseRequestAsync(fd);  // yields to scheduler on EAGAIN
 ```
 
@@ -85,7 +85,7 @@ The `cookie.vx` module provides full HTTP cookie parsing and `Set-Cookie` header
 
 ### Building Cookies
 
-```rust
+```vex
 import { Cookie } from "http";
 
 // Simple session cookie
@@ -106,7 +106,7 @@ res.header("Set-Cookie", session.toString());
 
 ### Parsing Incoming Cookies
 
-```rust
+```vex
 import { parseCookies } from "http";
 
 let pairs = parseCookies(req.header("Cookie"));
@@ -131,7 +131,7 @@ let pairs = parseCookies(req.header("Cookie"));
 
 ## Response Builder
 
-```rust
+```vex
 import { Response, respondText, respondJSON, respondError, respondRedirect } from "http";
 
 // Builder pattern

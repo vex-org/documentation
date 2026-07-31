@@ -4,7 +4,7 @@ Industry-standard compression for HTTP responses, `.gz` archives, and legacy fil
 
 ## Usage
 
-```rust
+```vex
 import { gzipCompress, gzipDecompress, crc32, crc32Update } from "compress/gzip";
 
 let data = "Gzip in pure Vex!";

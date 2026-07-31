@@ -1,33 +1,51 @@
-# Type Aliases & Conditional Types
+# Type Aliases
 
-Vex supports type aliases today, and it reserves a broader compile-time type algebra for the roadmap. In particular, **conditional types**, `infer`, and **mapped types** are planned Vex features, but should be treated as roadmap items unless explicitly marked as implemented in the compiler status docs.
+> **Create new names for existing types.** Type aliases improve readability without creating new types.
 
-::: warning Roadmap Status
-The examples in the **Conditional Types**, `infer`, and **Mapped types** sections describe the intended Vex direction.
-
-- **Type aliases** and **generic aliases** are current language features.
-- **Conditional types / infer / mapped types / keyof-style transforms** are part of the roadmap.
-
-If you are writing production Vex code today, prefer plain aliases, generic aliases, contracts, associated types, and comptime facilities.
-:::
-
-## Type Aliases
-
-Create new names for existing types:
+## Basic Aliases
 
 ```vex
-// Simple type alias
+// Simple alias
 type UserId = u64
 type Email = string
-type Score = f64
 
-// Pointer type aliases
+// Pointer aliases
 type IntPtr = *i32
-type MutPtr = *i32!
 type VoidPtr = *void
 
 // Function type alias
 type Handler = fn(i32): bool
+```
+
+## Generic Aliases
+
+```vex
+type Result<T> = std::result::Result<T, Error>
+type Callback<T> = fn(T): bool
+type Pair<A, B> = (A, B)
+```
+
+## Usage
+
+```vex
+fn get_user(id: UserId): Option<User> { ... }
+// Equivalent to: fn get_user(id: u64): Option<User>
+
+let handler: Callback<i32> = |x| x > 0;
+```
+
+## When to Use
+
+| Use Case | Alias | Example |
+|----------|-------|---------|
+| Improve readability | ✅ | `UserId` vs `u64` |
+| Reduce repetition | ✅ | `Result<T>` vs `Result<T, Error>` |
+| Create a new type | ❌ | Use `struct` instead |
+| Add methods | ❌ | Use `struct` instead |
+
+> **Note:** Aliases are transparent — `UserId` and `u64` are the same type at
+> compile time. Use `struct` if you need type safety (e.g., prevent mixing
+> `UserId` and `OrderId`).
 type Callback = fn(string, i32): void
 
 // Generic type alias

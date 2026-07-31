@@ -61,6 +61,9 @@ vex compile -g main.vx                # DWARF debug info
 # Output file
 vex compile -o mybinary main.vx
 
+# Compile as a dynamic/shared library (.dylib, .so, or .dll)
+vex compile --shared lib.vx
+
 # JSON diagnostics (for IDE integration)
 vex compile --json main.vx
 

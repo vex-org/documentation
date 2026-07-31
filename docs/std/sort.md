@@ -4,7 +4,7 @@ Hybrid sorting with Introsort (Quicksort + Heapsort + Insertion Sort) and binary
 
 ## Sorting
 
-```rust
+```vex
 import { sort, sortDesc } from "sort";
 
 let! arr = [5, 3, 8, 1, 9, 2];
@@ -14,7 +14,7 @@ sortDesc(&arr);     // [9, 8, 5, 3, 2, 1]
 
 ## Binary Search
 
-```rust
+```vex
 import { binarySearch } from "sort";
 
 let arr = [1, 3, 5, 7, 9, 11];

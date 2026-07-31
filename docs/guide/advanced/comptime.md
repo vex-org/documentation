@@ -217,6 +217,32 @@ let default_i32 = #default<i32>()
 let zeroed_user = #zeroed<User>()
 ```
 
+## Target Introspection
+
+```vex
+#if #targetOs() == "macos" {
+    // Darwin-specific
+} elif #targetArch() == "arm64" {
+    // Apple Silicon path
+}
+```
+
+- `#targetOs()` → `"macos"`, `"linux"`, `"windows"`
+- `#targetArch()` → `"arm64"`, `"x86_64"`, `"x86"`
+- `#targetEndian()` → `"little"`, `"big"`
+- `#targetPointerWidth()` → `64` or `32`
+
+## Source-Location
+
+```vex
+$println("Debug: {}:{} in {}", #line(), #column(), #fileName());
+```
+
+- `#line()` → current line (i64)
+- `#column()` → current column (i64)
+- `#fileName()` / `#file()` → source file path (str)
+- `#module()` → module name without extension (str)
+
 ## Practical Guidance
 
 1. Prefer `#typeInfo<T>()` when you need structured field iteration instead of parsing `#fieldNames<T>()` strings yourself.
