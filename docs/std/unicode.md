@@ -1,78 +1,91 @@
 # unicode
 
-The `unicode` module provides extensive tooling for querying Unicode character properties, converting case, and classifying tokens. It powers Vex's core compiler features (like lexing) and offers high-performance Unicode validation for applications.
+`unicode` is Vex's Unicode 15.1 scalar-property and caseless-matching package.
+It uses the same freestanding, generated VexArch engine as the built-in `char`
+and `string` APIs, so category and casing semantics have one source of truth.
+No ICU or libc dependency is introduced.
 
-## Performance Story
-
-Unlike many standard libraries that depend on massive, multi-megabyte C libraries (like ICU) for Unicode operations, Vex implements its own **highly compressed, generated tables** directly in Vex code. Operations use binary search to quickly traverse these tables, mapping characters to their properties or folded cases in a matter of nanoseconds.
-
-When dealing with ASCII-range characters, `unicode` uses a **zero-table fast path**, achieving completely free (0ns/op) bounds checks via compiler inlining.
-
-**Metrics:**
-- **ASCII Letter/Number Check:** `0.00 ns/op` (Inlined branch)
-- **Unicode Alphabetic Query:** `1,216 ns/op` (822k ops/s)
-- **ASCII toUpper/toLower:** `0.00 ns/op`
-- **Unicode Case Folding:** `1,534 ns/op` (650k ops/s)
-
-## Usage
-
-You can import properties directly from `unicode`:
+## Character properties
 
 ```vex
-import { 
-    isAlphabetic, 
-    isDigit, 
-    isWhitespace, 
-    isLowercase,
-    isUppercase,
+import {
     category,
-    toLower,
-    toUpper
-} from "unicode/char";
+    isAlphabetic,
+    isDigit,
+    isLowercase,
+    isPunctuation,
+    isUppercase,
+    isWhitespace,
+    CAT_LU
+} from "unicode";
+
+$assert(isAlphabetic('Ω'), "Greek omega is alphabetic");
+$assert(isWhitespace('\u{2003}'), "EM SPACE is whitespace");
+$assert(category('A') == CAT_LU, "exact General_Category");
 ```
 
-### Character Categories
+`isAlphabetic`, `isUppercase`, and `isLowercase` use the normative properties
+from Unicode's
+[`DerivedCoreProperties.txt`](https://www.unicode.org/Public/15.1.0/ucd/DerivedCoreProperties.txt).
+They are not approximated from `General_Category`; this distinction matters for
+combining marks and enclosed letters.
 
-Query the exact `General_Category` using the `category` function, which maps back to the `CAT_*` constants.
+`category(char)` returns an exact `CAT_*` General_Category identifier. The
+package exports the letter, mark, number, punctuation, symbol, separator,
+control, surrogate, private-use, and unassigned category constants.
+
+## Simple case mapping
 
 ```vex
-import { category, CAT_LU, CAT_LL } from "unicode";
+import { toLower, toUpper } from "unicode";
 
-let cp = 'A';
-if category(cp) == CAT_LU {
-    println("Uppercase Letter!");
-}
+$assert(toLower('Ş') == 'ş', "one-scalar lowercase mapping");
+$assert(toUpper('ω') == 'Ω', "one-scalar uppercase mapping");
 ```
 
-Available category categories follow the Unicode Standard:
-* **Letter**: `CAT_LU` (Uppercase), `CAT_LL` (Lowercase), `CAT_LT` (Titlecase), `CAT_LM` (Modifier), `CAT_LO` (Other)
-* **Number**: `CAT_ND` (Decimal), `CAT_NL` (Letter), `CAT_NO` (Other)
-* **Punctuation**: `CAT_PC`, `CAT_PD`, `CAT_PE`, `CAT_PF`, `CAT_PI`, `CAT_PO`, `CAT_PS`
-* **Symbol**: `CAT_SM` (Math), `CAT_SC` (Currency), `CAT_SK` (Modifier), `CAT_SO` (Other)
-* **Whitespace**: `CAT_ZS` (Space), `CAT_ZL` (Line), `CAT_ZP` (Paragraph)
-* **Control**: `CAT_CC` (Control), `CAT_CF` (Format), `CAT_CN` (Unassigned), `CAT_CO` (Private)
+These APIs accept and return one `char`, so they deliberately implement Unicode
+simple casing only. They never pretend a multi-scalar mapping fits in a scalar.
 
-### Validation Functions
+## Full case folding
 
-Vex provides simple boolean returns for common subsets of characters:
+Use full folding to create keys for Unicode caseless comparison:
 
 ```vex
-let smiley = '😀';
-isAlphabetic(smiley);  // false
-isUppercase('H');      // true
-isLowercase('h');      // true
-isDigit('5');          // true
-isWhitespace('\n');    // true
-isPunctuation(',');    // true
+import { caseFold, caseFoldTurkic } from "unicode";
+
+$assert(caseFold("Straße") == caseFold("STRASSE"), "full fold expands ß");
+$assert(caseFold("\u{FB03}") == "ffi", "ligature expands to three scalars");
+$assert(caseFoldTurkic("Iİ") == "ıi", "explicit Turkic overrides");
 ```
 
-### Case Mapping
+`caseFold` implements the Unicode 15.1 `C + F` mappings from the official
+[`CaseFolding.txt`](https://www.unicode.org/Public/15.1.0/ucd/CaseFolding.txt).
+`caseFoldTurkic` applies its two `T` overrides. Folding is not lowercasing and
+does not preserve normalization forms; normalization is a separate API layer.
+Both functions return an owned `string`, making their allocation effect visible.
 
-Use `toLower` and `toUpper` to do Simple Case Folding over a single `char` Code Point.
+## Runtime and performance model
 
-```vex
-let folded = toLower('Ü');
-let upper = toUpper('ñ');
-```
+- Scalar property and simple-case queries allocate nothing.
+- ASCII queries take constant-time table-free paths.
+- Non-ASCII category and derived-property queries use compact page directories
+  followed by bounded binary searches.
+- Full fold mappings store sorted scalar keys and up to three packed output
+  scalars; a scalar-page directory bounds the default-fold binary search.
+- Runtime fusion includes only reachable Unicode lookup families and tables;
+  programs that do not use them carry none of the data.
+- ASCII folding uses the dedicated `toLowerAscii()` primitive on both borrowed
+  `str` views and owned `string` values. It preserves non-ASCII bytes and does
+  not pull the unrelated Unicode simple-case table into the fused program.
 
-For full strings or byte buffers, look at `string` where the vectorizer speeds up bulk ASCII manipulation.
+The package benchmark suite measures scalar queries with `0 B/op` and
+`0 allocs/op` separately from owning fold operations. On the 2026-08-10 macOS
+arm64 development machine, the 10-byte ASCII SSO fold measured about 1.62 µs
+with zero allocations; an expanding non-ASCII fold measured about 11.2 µs,
+72 bytes, and two allocations. These are regression baselines, not portable
+performance guarantees. The expanding path also has a 100,000-iteration
+AddressSanitizer stress gate.
+
+Full context/locale-sensitive upper/lower/title casing, normalization, and
+extended grapheme segmentation remain separate production milestones and are
+not silently approximated by the current API.

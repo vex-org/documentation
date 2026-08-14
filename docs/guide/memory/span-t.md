@@ -14,7 +14,7 @@ fn main() {
     nums.push(10); nums.push(20); nums.push(30); nums.push(40); nums.push(50);
     
     // Create a span view (zero-copy)
-    let view = Span.ofVec<i32>(nums.data as *i32, nums.len());
+    let view = Span.ofVec<i32>(nums.data as Ptr<i32>, nums.len());
     
     // Bounds-checked access
     match view.get(2) {
@@ -32,7 +32,7 @@ fn main() {
 
 ```vex
 struct Span<T> {
-    data: *T,
+    data: Ptr<T>,
     length: usize
 }
 ```
@@ -47,7 +47,7 @@ struct Span<T> {
 let! v = Vec.new<i32>();
 v.push(1); v.push(2); v.push(3);
 
-let s = Span.ofVec<i32>(v.data as *i32, v.len());
+let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
 ```
 
 ### From Ptr
@@ -57,7 +57,7 @@ let! p = Ptr.allocN<i32>(5);
 p.writeAt(0, 10);
 p.writeAt(1, 20);
 
-let s = Span.ofPtr<i32>(p.asRaw(), 5);
+let s = Span.ofPtr<i32>(p, 5);
 ```
 
 ### From Raw Pointer
@@ -79,7 +79,7 @@ empty.len();      // 0
 ### Bounds-Checked (Safe)
 
 ```vex
-let s = Span.ofVec<i32>(v.data as *i32, v.len());
+let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
 
 // Returns Option<T>
 match s.get(0) {
@@ -132,7 +132,7 @@ let val = s[2];  // equivalent to s.getUnchecked(2)
 All slicing operations return new `Span<T>` values that share the same underlying memory — no copies:
 
 ```vex
-let s = Span.ofVec<i32>(v.data as *i32, v.len());
+let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
 // v = [10, 20, 30, 40, 50]
 
 // Sub-range [start, end)
@@ -157,7 +157,7 @@ let empty = s.skip(100);      // [] (empty span)
 ## Search
 
 ```vex
-let s = Span.ofVec<i32>(v.data as *i32, v.len());
+let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
 
 // Contains check
 if s.contains(30) {
@@ -183,7 +183,7 @@ fn is_even(x: i32): bool {
 fn main() {
     let! v = Vec.new<i32>();
     v.push(1); v.push(3); v.push(4); v.push(7);
-    let s = Span.ofVec<i32>(v.data as *i32, v.len());
+    let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
     
     match s.find(is_even) {
         Some(val) => $println("First even: {}", val),  // 4
@@ -195,8 +195,8 @@ fn main() {
 ## Comparison
 
 ```vex
-let s1 = Span.ofVec<i32>(v1.data as *i32, v1.len());
-let s2 = Span.ofVec<i32>(v2.data as *i32, v2.len());
+let s1 = Span.ofVec<i32>(v1.data as Ptr<i32>, v1.len());
+let s2 = Span.ofVec<i32>(v2.data as Ptr<i32>, v2.len());
 
 if s1.equals(&s2) {
     $println("spans are equal");
@@ -208,7 +208,7 @@ if s1.equals(&s2) {
 Create an owned copy:
 
 ```vex
-let s = Span.ofVec<i32>(v.data as *i32, v.len());
+let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
 let sub = s.slice(1, 3);
 
 // Deep copy into a new Vec
@@ -219,7 +219,7 @@ let! owned = sub.toVec();
 ## Iteration
 
 ```vex
-let s = Span.ofVec<i32>(v.data as *i32, v.len());
+let s = Span.ofVec<i32>(v.data as Ptr<i32>, v.len());
 let! it = s.iter();
 let! sum = 0;
 
@@ -235,8 +235,8 @@ $println("sum: {}", sum);
 ## Raw Access
 
 ```vex
-let rawPtr: *i32 = s.asPtr();     // underlying raw pointer
-let typed: Ptr<i32> = s.toPtr();   // convert to Ptr<T>
+let rawPtr: Ptr<i32> = s.asPtr();  // canonical raw pointer
+let typed: Ptr<i32> = s.toPtr();   // equivalent typed view
 ```
 
 ## In-Place Mutation
@@ -247,7 +247,7 @@ Mutating spans require `let!` (mutable binding):
 
 ```vex
 let! p = Ptr.allocN<i32>(5);
-let! span = Span.of<i32>(p.asRaw(), 5);
+let! span = Span.of<i32>(p, 5);
 
 span.fill(42);  // all 5 elements are now 42
 ```
@@ -255,8 +255,8 @@ span.fill(42);  // all 5 elements are now 42
 ### Copy From Another Span
 
 ```vex
-let src = Span.ofVec<i32>(srcVec.data as *i32, srcVec.len());
-let! dst = Span.of<i32>(dstPtr.asRaw(), 10);
+let src = Span.ofVec<i32>(srcVec.data as Ptr<i32>, srcVec.len());
+let! dst = Span.of<i32>(dstPtr, 10);
 
 dst.copyFromSpan(&src);  // copies min(dst.len, src.len) elements
 ```
@@ -268,7 +268,7 @@ let! p = Ptr.allocN<i32>(5);
 p.writeAt(0, 1); p.writeAt(1, 2); p.writeAt(2, 3);
 p.writeAt(3, 4); p.writeAt(4, 5);
 
-let! span = Span.of<i32>(p.asRaw(), 5);
+let! span = Span.of<i32>(p, 5);
 span.reverse();  // [5, 4, 3, 2, 1]
 ```
 
@@ -279,9 +279,9 @@ span.reverse();  // [5, 4, 3, 2, 1]
 | Method | Description |
 |--------|-------------|
 | `Span.empty<T>()` | Empty span |
-| `Span.of<T>(ptr, len)` | From raw pointer + length |
+| `Span.of<T>(ptr, len)` | From canonical `Ptr<T>` + length |
 | `Span.ofVec<T>(data, len)` | From Vec's data pointer + length |
-| `Span.ofPtr<T>(rawPtr, len)` | From Ptr's raw pointer + length |
+| `Span.ofPtr<T>(rawPtr, len)` | From `Ptr<T>` + length |
 
 ### Properties
 
@@ -333,7 +333,7 @@ span.reverse();  // [5, 4, 3, 2, 1]
 |--------|-------------|
 | `.equals(&other)` | Element-wise equality |
 | `.toVec()` | Deep copy into new `Vec<T>` |
-| `.asPtr()` | Get raw `*T` |
+| `.asPtr()` | Get canonical `Ptr<T>` |
 | `.toPtr()` | Convert to `Ptr<T>` |
 | `.iter()` | Iterator over elements |
 
@@ -341,5 +341,5 @@ span.reverse();  // [5, 4, 3, 2, 1]
 
 - [RawBuf](./rawbuf) — Zero-cost byte-level memory accessor
 - [Ptr\<T\>](./ptr-t) — Generic typed pointer
-- [Raw Pointers](/guide/advanced/pointers) — Legacy raw `*T` documentation
+- [Canonical Raw Pointers](/guide/types/raw-pointers) — Pointer representation and safety
 - [VUMM](./vumm) — Automatic ownership with `Box<T>`

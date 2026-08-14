@@ -6,11 +6,11 @@ High-performance compression and decompression utilities, implemented entirely i
 
 | Algorithm | Compression | Decompression | Standard | Best For |
 |-----------|:-----------:|:-------------:|----------|----------|
-| **LZ4** | ✅ | ✅ | Block Format | Ultra-fast real-time streaming |
-| **Zstd** | ✅ | ✅ | RFC 8878 | Best ratio-to-speed balance |
-| **Gzip/Deflate** | ✅ | ✅ | RFC 1952/1951 | HTTP, archives, universal compat |
-| **Brotli** | ✅ | ✅ | RFC 7932 | Web content, WOFF2, HTTP |
-| **Zlib** | ✅ | ✅ | RFC 1950 | PNG, legacy protocols |
+| **LZ4** | Yes | Yes | Block Format | Ultra-fast real-time streaming |
+| **Zstd** | Yes | Yes | RFC 8878 | Best ratio-to-speed balance |
+| **Gzip/Deflate** | Yes | Yes | RFC 1952/1951 | HTTP, archives, universal compat |
+| **Brotli** | Yes | Yes | RFC 7932 | Web content, WOFF2, HTTP |
+| **Zlib** | Yes | Yes | RFC 1950 | PNG, legacy protocols |
 
 ## Lines of Code: Vex vs C
 

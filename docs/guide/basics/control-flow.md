@@ -1,166 +1,166 @@
 # Control Flow
 
-Vex provides comprehensive control flow constructs including conditionals, pattern matching, and various loop types. Most of these are **expressions** that return values.
+Vex provides conditional expressions, pattern matching, and several loop forms. The compiler's current surface favors readable block-based control flow.
 
-## Conditional Expressions
+## if, elif, and else
 
-### if / else / elif
-
-```vex
-// Basic if
-if condition {
-    do_something()
-}
-
-// if-else
-if x > 0 {
-    $println("Positive")
-} else {
-    $println("Non-positive")
-}
-
-// if-elif-else chain
-if score >= 90 {
-    $println("A")
-} elif score >= 80 {
-    $println("B")
-} else {
-    $println("F")
-}
-```
-
-### if as Expression
-
-Since `if` is an expression, it returns a value:
-
-```vex
-let max = if a > b { a } else { b }
-```
-
-### Ternary Operator
-
-Vex supports the classic C-style ternary operator `? :` for concise conditionals:
-
-```vex
-let max = a > b ? a : b
-```
-
-### Conditional Binding
-
-```vex
-// if-let for Option/Result
-if let Some(value) = optional_value {
-    $println(f"Got: {value}")
-}
-
-if let Ok(data) = fetch_result {
-    process(data)
-}
-```
-
-## Pattern Matching
-
-### match Expression
-
-The `match` expression is Vex's most powerful control flow construct. It is **exhaustive**, meaning all cases must be covered.
-
-```vex
-let result = match value {
-    0 => "zero",
-    1 => "one",
-    _ => "many"  // _ is the wildcard pattern
-}
-```
-
-### Pattern Types
-
-```vex
-// Literal and OR patterns
-match x {
-    0 => "zero",
-    1 | 2 | 3 => "small",
-    _ => "large"
-}
-
-// Enum patterns
-match result {
-    Ok(value) => $println(f"Success: {value}"),
-    Err(e) => $println(f"Error: {e.msg}")
-}
-
-// Tuple patterns
-let pair = (1, 2)
-match pair {
-    (0, 0) => "origin",
-    (x, y) => f"at ({x}, {y})"
-}
-```
-
-### Guards
-
-Add conditions to patterns:
-
-```vex
-match number {
-    n if n < 0 => "negative",
-    n => "positive or zero"
-}
-```
-
-## Loops
-
-### for Loop
-
-Iterate over collections and ranges:
-
-```vex
-// Range iteration
-for i in 0..10 {
-    $println(i)  // 0 to 9
-}
-
-// Collection iteration
-let numbers = [1, 2, 3]
-for num in numbers {
-    $println(num)
-}
-```
-
-### while Loop
-
-```vex
-let! count = 0
-while count < 10 {
-    $println(count)
-    count += 1
-}
-```
-
-### loop (Infinite Loop)
-
-```vex
-loop {
-    if should_stop() {
-        break
+~~~vex
+fn classify(value: i32): i32 {
+    if value < 0 {
+        return -1;
+    } elif value == 0 {
+        return 0;
+    } else {
+        return 1;
     }
 }
-```
 
-## Defer
-
-Execute code when leaving the current scope (Go-style RAII):
-
-```vex
-fn process() {
-    let file = open("data.txt")
-    defer file.close() // Executes when function returns
-    
-    // ... work ...
+fn main(): i32 {
+    return classify(12);
 }
-```
+~~~
 
-## Next Steps
+An if expression can produce a value when both branches have compatible types:
 
-- [Functions](/guide/basics/functions) - Defining behavior
-- [Error Handling](/guide/error-handling) - Result and Option
-- [Concurrency](/guide/concurrency/async) - Async, Await, and Channels
+~~~vex
+fn main(): i32 {
+    let left = 20;
+    let right = 22;
+    let larger = if left > right { left } else { right };
+    return larger;
+}
+~~~
+
+Keep the branches simple. If a branch needs several statements, use a block with an explicit return or assign the result inside the block.
+
+## match
+
+match is an exhaustive expression for selecting between patterns:
+
+~~~vex
+fn label(value: i32): i32 {
+    return match value {
+        0 => 100,
+        1 | 2 | 3 => 200,
+        _ => 300,
+    };
+}
+
+fn main(): i32 {
+    return label(2);
+}
+~~~
+
+Constructor patterns bind enum payloads:
+
+~~~vex
+enum State {
+    Ready,
+    Failed(i32),
+}
+
+fn state_code(state: State): i32 {
+    return match state {
+        State.Ready => 0,
+        State.Failed(code) => code,
+    };
+}
+
+fn main(): i32 {
+    return state_code(State.Failed(7));
+}
+~~~
+
+Use a wildcard only when all remaining values truly share the same behavior. A wildcard can hide a newly added enum variant from review.
+
+## for loops
+
+The range form is the normal counted loop:
+
+~~~vex
+fn main(): i32 {
+    let! total = 0;
+    for value in 0..10 {
+        total += value;
+    }
+    return total;
+}
+~~~
+
+The upper bound of 0..10 is exclusive. Use 0..=10 when the upper bound is inclusive. Collection iteration uses the same in form:
+
+~~~text
+for item in values {
+    process(item)
+}
+~~~
+
+C-style for loops are not part of the supported Vex syntax. Use a range, collection iteration, or while loop.
+
+## while loops
+
+Use while when the next iteration depends on mutable state:
+
+~~~vex
+fn sum_to(limit: i32): i32 {
+    let! current = 0;
+    let! total = 0;
+    while current <= limit {
+        total += current;
+        current += 1;
+    }
+    return total;
+}
+
+fn main(): i32 {
+    return sum_to(10);
+}
+~~~
+
+Make progress toward the loop condition explicit. The compiler can check types and ownership, but it cannot prove that an arbitrary loop terminates.
+
+## loop, break, and continue
+
+loop creates an unbounded loop. break exits it and continue starts the next iteration:
+
+~~~vex
+fn first_multiple_of_seven(limit: i32): i32 {
+    let! value = 1;
+    loop {
+        if value > limit {
+            break;
+        }
+        if value % 7 == 0 {
+            return value;
+        }
+        value += 1;
+        continue;
+    }
+    return -1;
+}
+
+fn main(): i32 {
+    return first_multiple_of_seven(50);
+}
+~~~
+
+## defer
+
+defer schedules a cleanup expression for the current scope. It is useful for resource-management code, but the exact runtime behavior depends on the resource type and backend. Keep the deferred expression simple and use the standard-library resource APIs described by their own documentation.
+
+~~~text
+fn process() {
+    let resource = acquire()
+    defer resource.close()
+    use(resource)
+}
+~~~
+
+The fragment is intentionally shown as text because acquire, use, and close are library-specific names.
+
+## Next steps
+
+- [Loops and Labels](/guide/basics/loops)
+- [Pattern Matching](/guide/types/pattern-matching)
+- [Error Handling](/guide/error-handling)
+- [Concurrency Overview](/guide/concurrency/overview)

@@ -46,11 +46,11 @@ LLVM IR'de tagged struct olarak temsil edilir. `tag` hangi variant'ın aktif old
 
 | Feature | Union (`A \| B`) | Enum |
 |---------|:----------------:|:----:|
-| Named variants | ❌ | ✅ |
-| Payload types | ✅ | ✅ |
-| Exhaustive check | ✅ | ✅ |
-| Zero-cost | ❌ (tag) | ✅ (niche opt.) |
-| Third-party types | ✅ | ❌ |
+| Named variants | No | Yes |
+| Payload types | Yes | Yes |
+| Exhaustive check | Yes | Yes |
+| Zero-cost | No (tag) | Yes (niche opt.) |
+| Third-party types | Yes | No |
 
 ## See Also
 

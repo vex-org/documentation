@@ -1,140 +1,135 @@
-# Variables & Constants
+# Variables and Constants
 
-Vex provides three ways to declare bindings: `let` for immutable variables, `let!` for mutable variables, and `const` for compile-time constants.
+Vex makes mutation explicit. A binding created with let cannot be reassigned; use let! when the binding itself must change. Constants use const and require a type annotation.
 
-## Immutable Variables (`let`)
+## Immutable bindings
 
-By default, variables in Vex are **immutable**. Once assigned, their value cannot be changed:
+~~~vex
+fn main(): i32 {
+    let count = 42;
+    let name = "Vex";
+    $println(name);
+    return count;
+}
+~~~
 
-```vex
-let x = 42
-let name = "Vex"
-let pi = 3.14159
+Reassigning count or name would be a compiler error. Immutability applies to the binding; it does not mean that every value reachable through a reference is immutable.
 
-// x = 100  // ERROR: Cannot assign to immutable variable
-```
+## Mutable bindings
 
-::: tip Why Immutable by Default?
-Immutable bindings make code easier to reason about, enable better optimizations, and prevent accidental mutations. This is a key principle in Vex's safety model.
-:::
+~~~vex
+fn main(): i32 {
+    let! total = 0;
+    total += 10;
+    total += 32;
+    return total;
+}
+~~~
 
-## Mutable Variables (`let!`)
+The exclamation mark is part of the declaration syntax. It is not a general mut keyword.
 
-When you need to modify a variable, use `let!`:
+## Constants
 
-```vex
-let! counter = 0
-counter = counter + 1  // OK
-counter += 1           // OK
+Constants are declared at module scope with an explicit type:
 
-let! buffer = Vec<u8>()
-buffer.push(42)        // OK - mutation allowed
-```
+~~~vex
+const MAX_RETRIES: i32 = 3;
 
-The `!` suffix serves as a visual marker that this variable can change, making mutation explicit and intentional.
+fn main(): i32 {
+    return MAX_RETRIES;
+}
+~~~
 
-## Constants (`const`)
+Use a constant for a named value that should be available without allocating a mutable binding. Keep runtime configuration in ordinary bindings or in a configuration type.
 
-Constants are evaluated at **compile time** and must have an explicit type annotation:
+## Type annotations and inference
 
-```vex
-const MAX_SIZE: i32 = 1024
-const PI: f64 = 3.14159265358979
-const APP_NAME: string = "MyApp"
-const BUFFER_SIZE: usize = 2048
-```
+An annotation follows the binding name:
 
-### Const vs Let
+~~~vex
+fn main(): i32 {
+    let inferred = 42;
+    let explicit: i64 = 42;
+    let ratio: f64 = 3.5;
+    let enabled: bool = true;
+    return inferred;
+}
+~~~
 
-| Feature | `let` | `const` |
-|---------|-------|---------|
-| Evaluation | Runtime | Compile-time |
-| Type annotation | Optional | Required |
-| Memory | Stack/Heap | Inlined |
-
-## Type Annotations
-
-Type annotations are optional when the type can be inferred:
-
-```vex
-// Inferred types
-let x = 42          // i64 (default integer type)
-let y = 3.14        // f64 (default float type)
-let z = true        // bool
-let s = "hello"     // string
-
-// Explicit types
-let a: i64 = 42
-let b: f32 = 3.14
-let c: u8 = 255
-```
+Unsuffixed integer literals default to i32 when there is no expected type. Function parameters, return types, field declarations, and explicit annotations can provide that expected type. Use an annotation when numeric width or ABI compatibility matters.
 
 ## Shadowing
 
-You can redeclare a variable with the same name, which **shadows** the previous binding:
+A later let can introduce a new binding with the same name. The new binding hides the old one in the current scope:
 
-```vex
-let x = 5
-let x = x * 2      // x is now 10
-let x = "hello"    // x is now a string (type can change)
-
-fn example() {
-    let value = 10
-    {
-        let value = 20  // Shadows outer `value`
-        $println(value)  // Prints: 20
-    }
-    $println(value)      // Prints: 10 (original)
+~~~vex
+fn main(): i32 {
+    let value = 10;
+    let value = value + 5;
+    return value;
 }
-```
+~~~
+
+Shadowing is useful when a value changes representation during a sequence of transformations. Use distinct names when shadowing would obscure ownership or lifetime behavior.
 
 ## Destructuring
 
-Variables can be declared using pattern destructuring:
+Tuple patterns can bind several values at once:
 
-### Tuple Destructuring
+~~~vex
+fn pair(): (i32, i32) {
+    return (3, 4);
+}
 
-```vex
-let (x, y) = (10, 20)
-let (first, _, third) = (1, 2, 3)  // _ ignores a value
-```
+fn main(): i32 {
+    let (left, right) = pair();
+    return left + right;
+}
+~~~
 
-### Struct Destructuring
+Struct patterns are available for data models that expose their fields:
 
-```vex
-struct Point { x: f64, y: f64 }
+~~~text
+struct Point {
+    public:
+    x: i32,
+    y: i32,
+}
 
-let point = Point { x: 3.0, y: 4.0 }
+let point = Point { x: 3, y: 4 }
 let Point { x, y } = point
-```
+~~~
 
-## Late Initialization
+Patterns participate in ownership and visibility checks just like ordinary bindings. See [Pattern Matching](/guide/types/pattern-matching) for match arms and [Ownership](/guide/memory/ownership) for move behavior.
 
-Variables can be declared without initialization and assigned later:
+## Scope
 
-```vex
-let x: i32           // Declared but not initialized
-// $println(x)       // ERROR: Use of uninitialized variable
+A binding is visible from its declaration to the end of its enclosing block, subject to shadowing:
 
-x = 10               // Now initialized
-$println(x)          // OK
-```
+~~~vex
+fn main(): i32 {
+    let outer = 10;
+    let inner = {
+        let nested = 32;
+        outer + nested
+    };
+    return inner;
+}
+~~~
 
-::: tip Constructors
-Both `Vec<T>()` and `Vec.new<T>()` are used in real code. For simple examples, constructor-style calls like `Vec<u8>()` are often easier to read.
-:::
+Use narrow scopes for temporary values. This makes the lifetime of owned data easier to see and gives the checker more opportunities to end a borrow before the next operation.
 
-The borrow checker ensures you never use an uninitialized variable.
+## Common mistakes
 
-## Best Practices
+- Use let! only for a binding that will actually be reassigned.
+- Do not assume that a mutable binding makes a value passed by reference mutable; the reference type must also allow mutation.
+- Add explicit types at FFI boundaries and for platform-sized values.
+- Do not use an integer sentinel where Option or Result communicates the state directly.
+- Check examples against the same compiler version used by your project.
 
-1. **Prefer `let` over `let!`**: Only use mutation when necessary.
-2. **Use meaningful names**: `user_count` instead of `n`.
-3. **Scope variables tightly**: Declare variables close to their first use.
-4. **Use `const` for configuration**: Makes intent and compile-time nature clear.
+## Next steps
 
-## Next Steps
-
-- [Primitive Types](/guide/types/primitives) - All built-in types
-- [Functions](/guide/basics/functions) - Working with functions
-- [Ownership](/guide/memory/ownership) - How variables own data
+- [Primitive Types](/guide/types/primitives)
+- [Functions](/guide/basics/functions)
+- [Ownership](/guide/memory/ownership)
+- [Borrowing](/guide/memory/borrowing)

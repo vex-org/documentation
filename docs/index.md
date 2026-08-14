@@ -2,47 +2,53 @@
 layout: home
 hero:
   name: Vex
-  text: Parallelism-First Systems Programming
-  tagline: "Every Cycle, Every Core, Every Time"
+  text: Systems programming with parallelism in the language
+  tagline: "Explicit ownership, practical concurrency, and a path to accelerated code."
   actions:
     - theme: brand
       text: Get Started
       link: /guide/introduction
     - theme: alt
-      text: Architecture
-      link: /architecture/
+      text: Install Vex
+      link: /guide/installation
     - theme: alt
-      text: CLI Reference
-      link: /references/vex-cli-reference
+      text: Check language status
+      link: /guide/language-status
 features:
-  - title: LLVM 22 Toolchain
-    details: "Native AOT codegen built on LLVM 22.1.6 with cross-compilation and LTO support."
+  - title: A systems language with a small core
+    details: "Functions, immutable bindings, explicit mutation, structs, enums, pattern matching, and typed low-level access share one consistent model."
   - title: Memory-Safe Systems Model
-    details: "Ownership, borrowing, NLL-style analysis, and VUMM-backed heap management without GC."
-  - title: SIMD, Tensor, and SIR
-    details: "Arrays, tensors, masks, fusion, and backend lowering to SIMD, SPIR-V, WGSL, and Metal."
-  - title: Concurrency Built In
-    details: "go blocks, async workflows, channels, and a runtime scheduler designed for real workloads."
-  - title: Typed Low-Level Access
-    details: "Ptr<T>, Span<T>, RawBuf, FFI, and freestanding workflows for systems code."
-  - title: Full Tooling Loop
-    details: "vex run, vex compile, vex test, diagnostics, formatter, docs tooling, and editor support."
+    details: "Ownership, borrowing, non-lexical lifetime analysis, and explicit unsafe boundaries are part of the language rather than library conventions."
+  - title: Concurrency as a language feature
+    details: "go blocks, async functions, await, and channels are designed to work with the same type and ownership checks as synchronous code."
+  - title: Data-parallel foundations
+    details: "Arrays, tensor-oriented operations, reductions, and the Silicon IR pipeline provide an experimental path to SIMD and accelerator backends."
+  - title: Direct systems interop
+    details: "Typed pointers, spans, raw buffers, FFI declarations, and freestanding builds cover the cases where a runtime abstraction is not enough."
+  - title: A toolchain that explains itself
+    details: "The compiler, checker, formatter, test runner, documentation generator, LSP, and package tools are documented separately and honestly."
+  - title: Typed compile-time programming
+    details: "Strict CTFE, typed reflection, partial evaluation, and structural declaration generation reuse ordinary Vex semantics without token macros or a second runtime model."
 ---
 
-## Documentation Map
+## Start with the language
 
-- [Guide](/guide/introduction): language model, syntax, ownership, concurrency, SIMD/SIR, and tooling.
-- [Architecture](/architecture/): compiler pipeline, crate layout, and where major subsystems live.
-- [Reference](/references/): command-level and toolchain-level behavior for CLI, test runner, docs, and package management.
+The guide is organized as a progression rather than a catalogue of isolated features:
 
-## What This Site Covers
+1. Read the [introduction](/guide/introduction) to understand Vex's design and the current implementation boundary.
+2. Follow [installation](/guide/installation) to build the compiler and run a first program.
+3. Learn the core language through [syntax](/guide/basics/syntax), [variables](/guide/basics/variables), [functions](/guide/basics/functions), and [control flow](/guide/basics/control-flow).
+4. Continue with [types](/guide/types/primitives), [enums](/guide/types/enums), [ownership](/guide/memory/ownership), and [error handling](/guide/error-handling).
+5. Use the specialist sections for [concurrency](/guide/concurrency/overview), [SIMD and tensors](/guide/simd/), [GPU and SIR](/guide/gpu/), [FFI](/guide/ffi), and [tooling](/guide/tooling/full-toolchain).
+6. Continue with [compile-time evaluation](/guide/advanced/comptime) and
+   [structural declaration generation](/guide/advanced/comptime-declarations)
+   when you need typed metaprogramming.
 
-This documentation focuses on the Vex language, compiler model, execution pipeline, and developer workflows. Standard library module references live under `/std/`, but the main guide is where language semantics, memory model, concurrency, SIMD/SIR, and error handling are explained.
+Every language example is intended to be small enough to copy into a file. When a feature is not ready for general use, the page labels that fact and points to the relevant limitation instead of presenting a design sketch as production behavior.
 
-## Suggested Path
+## Find the right reference
 
-1. Start with [Introduction](/guide/introduction).
-2. Set up the toolchain with [Installation](/guide/installation).
-3. Learn the core language in [Syntax](/guide/basics/syntax), [Functions](/guide/basics/functions), and [Control Flow](/guide/basics/control-flow).
-4. Move to [Enums](/guide/types/enums), [Ownership](/guide/memory/ownership), and [Error Handling](/guide/error-handling).
-5. Finish with [SIMD](/guide/simd/), [GPU & SIR](/guide/gpu/), and [Testing](/guide/tooling/testing).
+- [Language status](/guide/language-status) explains what is verified, experimental, or still planned.
+- [Architecture](/architecture/) describes the compiler pipeline, runtime, and intermediate representations.
+- [Reference](/references/) documents command behavior for the CLI, test runner, documentation generator, and package tools.
+- [Standard library](/std/) is the API reference generated from the library source.

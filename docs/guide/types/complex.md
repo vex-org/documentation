@@ -175,7 +175,7 @@ let complex_val: Complex<f64> = Complex.new(3.0, 4.0)
 let array_val: [f64; 2] = [3.0, 4.0]
 
 // Can be passed to C functions expecting _Complex double
-extern "C" {
+extern "LIBC" {
     fn cabs(z: Complex<f64>): f64
 }
 ```

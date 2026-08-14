@@ -105,7 +105,7 @@ Common working paths in the current tree include:
 Use this page as the current contract for non-stdlib autograd syntax:
 
 - Prefer `@param`, `@val`, `@grad`, and `@detach`
-- Treat `$param`, `$val`, `$grad`, and `$detach` as legacy aliases, not the documented primary form
+- Do not use legacy `$` spellings; autograd transforms use the `@` phase
 - Use `Math.*` calls for differentiable math operations
 - Keep autograd scopes small and explicit so the seeded derivative path is obvious
 

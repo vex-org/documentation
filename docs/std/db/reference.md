@@ -10,7 +10,7 @@
 
 ## Constants
 
-### <a id="SQLITE"></a>`SQLITE` `🔓 export`
+### <a id="SQLITE"></a>`SQLITE` ` export`
 
 &gt; 📄 `lib.vx` L26-26
 
@@ -22,7 +22,7 @@ export const SQLITE: i32=0;
 
 ---
 
-### <a id="POSTGRES"></a>`POSTGRES` `🔓 export`
+### <a id="POSTGRES"></a>`POSTGRES` ` export`
 
 &gt; 📄 `lib.vx` L27-27
 
@@ -34,7 +34,7 @@ export const POSTGRES: i32=1;
 
 ---
 
-### <a id="MYSQL"></a>`MYSQL` `🔓 export`
+### <a id="MYSQL"></a>`MYSQL` ` export`
 
 &gt; 📄 `lib.vx` L28-28
 
@@ -46,7 +46,7 @@ export const MYSQL: i32=2;
 
 ---
 
-### <a id="REDIS"></a>`REDIS` `🔓 export`
+### <a id="REDIS"></a>`REDIS` ` export`
 
 &gt; 📄 `lib.vx` L29-29
 
@@ -58,7 +58,7 @@ export const REDIS: i32=3;
 
 ---
 
-### <a id="MONGO"></a>`MONGO` `🔓 export`
+### <a id="MONGO"></a>`MONGO` ` export`
 
 &gt; 📄 `lib.vx` L30-30
 
@@ -72,7 +72,7 @@ export const MONGO: i32=4;
 
 ## Structs
 
-### <a id="Connection"></a>`Connection` `🔓 export`
+### <a id="Connection"></a>`Connection` ` export`
 
 &gt; 📄 `lib.vx` L83-87
 
@@ -90,8 +90,8 @@ Automatically closes the database connection when dropped (Drop).
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `handle` | `ptr` | 🔓 public |  |
-| `driver` | `i32` | 🔓 public |  |
+| `handle` | `ptr` |  public |  |
+| `driver` | `i32` |  public |  |
 
 **Methods:**
 
@@ -118,7 +118,7 @@ Automatically closes the database connection when dropped (Drop).
 
 ---
 
-### <a id="QueryResult"></a>`QueryResult` `🔓 export`
+### <a id="QueryResult"></a>`QueryResult` ` export`
 
 &gt; 📄 `lib.vx` L272-275
 
@@ -136,7 +136,7 @@ Automatically frees the result set handle when dropped (Drop).
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `result` | `ptr` | 🔓 public |  |
+| `result` | `ptr` |  public |  |
 
 **Methods:**
 
@@ -156,7 +156,7 @@ Automatically frees the result set handle when dropped (Drop).
 
 ---
 
-### <a id="Db"></a>`Db` `🔓 export`
+### <a id="Db"></a>`Db` ` export`
 
 &gt; 📄 `orm.vx` L38-55
 
@@ -168,19 +168,19 @@ export struct Db<T>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `db_handle` | `ptr` | 🔓 public |  |
-| `db_driver` | `i32` | 🔓 public |  |
-| `table_name` | `string` | 🔓 public |  |
-| `where_clauses` | `Vec&lt;string&gt;` | 🔓 public |  |
-| `where_args` | `Vec&lt;string&gt;` | 🔓 public |  |
-| `order_clause` | `string` | 🔓 public |  |
-| `limit_val` | `i64` | 🔓 public |  |
-| `offset_val` | `i64` | 🔓 public |  |
-| `select_cols` | `string` | 🔓 public |  |
-| `joins` | `Vec&lt;string&gt;` | 🔓 public |  |
-| `preloads` | `Vec&lt;string&gt;` | 🔓 public |  |
-| `group_clause` | `string` | 🔓 public |  |
-| `having_clauses` | `Vec&lt;string&gt;` | 🔓 public |  |
+| `db_handle` | `ptr` |  public |  |
+| `db_driver` | `i32` |  public |  |
+| `table_name` | `string` |  public |  |
+| `where_clauses` | `Vec&lt;string&gt;` |  public |  |
+| `where_args` | `Vec&lt;string&gt;` |  public |  |
+| `order_clause` | `string` |  public |  |
+| `limit_val` | `i64` |  public |  |
+| `offset_val` | `i64` |  public |  |
+| `select_cols` | `string` |  public |  |
+| `joins` | `Vec&lt;string&gt;` |  public |  |
+| `preloads` | `Vec&lt;string&gt;` |  public |  |
+| `group_clause` | `string` |  public |  |
+| `having_clauses` | `Vec&lt;string&gt;` |  public |  |
 
 **Type Parameters:**
 
@@ -250,7 +250,7 @@ fn dbWriteI32(p: Ptr<i32>, i: usize, v: i32)
 
 ---
 
-### <a id="scanRow"></a>`scanRow` `🔓 export`
+### <a id="scanRow"></a>`scanRow` ` export`
 
 &gt; 📄 `scanner.vx` L15-53
 
@@ -271,7 +271,7 @@ export fn scanRow(rs: &QueryResult, out: &T!)
 
 ---
 
-### <a id="executePreloads"></a>`executePreloads` `🔓 export`
+### <a id="executePreloads"></a>`executePreloads` ` export`
 
 &gt; 📄 `scanner.vx` L58-102
 
@@ -293,7 +293,7 @@ export fn executePreloads(conn: Connection, out: &Vec<T>!, preloads: &Vec<string
 
 ---
 
-### <a id="buildColumnList"></a>`buildColumnList` `🔓 export`
+### <a id="buildColumnList"></a>`buildColumnList` ` export`
 
 &gt; 📄 `query.vx` L18-26
 
@@ -309,7 +309,7 @@ export fn buildColumnList(): string
 
 ---
 
-### <a id="buildInsertSQL"></a>`buildInsertSQL` `🔓 export`
+### <a id="buildInsertSQL"></a>`buildInsertSQL` ` export`
 
 &gt; 📄 `query.vx` L29-57
 
@@ -333,7 +333,7 @@ export fn buildInsertSQL(table: string, value: &T, out_params: &Vec<string>!): s
 
 ---
 
-### <a id="buildSelectSQL"></a>`buildSelectSQL` `🔓 export`
+### <a id="buildSelectSQL"></a>`buildSelectSQL` ` export`
 
 &gt; 📄 `query.vx` L60-162
 
@@ -365,7 +365,7 @@ export fn buildSelectSQL(table: string, select_cols: string, wheres: &Vec<string
 
 ---
 
-### <a id="buildCountSQL"></a>`buildCountSQL` `🔓 export`
+### <a id="buildCountSQL"></a>`buildCountSQL` ` export`
 
 &gt; 📄 `query.vx` L166-218
 
@@ -389,7 +389,7 @@ export fn buildCountSQL(table: string, wheres: &Vec<string>, where_args: &Vec<st
 
 ---
 
-### <a id="buildUpdateSQL"></a>`buildUpdateSQL` `🔓 export`
+### <a id="buildUpdateSQL"></a>`buildUpdateSQL` ` export`
 
 &gt; 📄 `query.vx` L221-247
 
@@ -412,7 +412,7 @@ export fn buildUpdateSQL(table: string, field: string, value: &string, wheres: &
 
 ---
 
-### <a id="buildDeleteSQL"></a>`buildDeleteSQL` `🔓 export`
+### <a id="buildDeleteSQL"></a>`buildDeleteSQL` ` export`
 
 &gt; 📄 `query.vx` L250-274
 
@@ -433,7 +433,7 @@ export fn buildDeleteSQL(table: string, wheres: &Vec<string>, where_args: &Vec<s
 
 ---
 
-### <a id="buildCreateTableSQL"></a>`buildCreateTableSQL` `🔓 export`
+### <a id="buildCreateTableSQL"></a>`buildCreateTableSQL` ` export`
 
 &gt; 📄 `query.vx` L278-293
 
@@ -456,7 +456,7 @@ export fn buildCreateTableSQL(table: string, driver_id: i32): string
 
 ---
 
-### <a id="get_dialect_type"></a>`get_dialect_type` `🔓 export`
+### <a id="get_dialect_type"></a>`get_dialect_type` ` export`
 
 &gt; 📄 `dialect.vx` L4-44
 
@@ -519,7 +519,7 @@ fn orm_append_copy(out: &Vec<T>!, value: &T)
 
 ---
 
-### <a id="ormInsert"></a>`ormInsert` `🔓 export`
+### <a id="ormInsert"></a>`ormInsert` ` export`
 
 &gt; 📄 `orm.vx` L330-333
 
@@ -543,7 +543,7 @@ export fn ormInsert(conn: Connection, table: string, value: &T): bool
 
 ---
 
-### <a id="ormFindById"></a>`ormFindById` `🔓 export`
+### <a id="ormFindById"></a>`ormFindById` ` export`
 
 &gt; 📄 `orm.vx` L336-353
 

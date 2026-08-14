@@ -19,20 +19,12 @@ fn runForever(): never {
 }
 ```
 
-**Panic / Abort:**
+**Panic:**
 
 ```vex
 fn die(msg: string): never {
     $panic(msg)
     // Unreachable -- $panic never returns
-}
-```
-
-**Early exit:**
-
-```vex
-fn exitWithCode(code: i32): never {
-    $abort(code)
 }
 ```
 
@@ -104,14 +96,16 @@ fn doNothing(): () {
 
 ### Unit in Generics
 
-Unit is commonly used as a type parameter meaning "I don't care about this":
+The `unit` keyword is the canonical spelling in generic and other nested value
+type positions. It denotes the same unit type as `()` but avoids ambiguity in
+generic grammar:
 
 ```vex
-// Set<T> is essentially Map<T, ()>
+// Set<T> is essentially Map<T, unit>
 // The value type is unit because we only care about keys
 
 // A callback that takes no useful data
-fn onEvent(callback: fn(()): ()) {
+fn onEvent(callback: fn(unit): ()) {
     callback(())
 }
 ```
@@ -122,7 +116,7 @@ fn onEvent(callback: fn(()): ()) {
 
 ```vex
 // Type-level counter: Vec<()> is just a length
-let! counter = Vec.new<()>()
+let! counter = Vec.new<unit>()
 counter.push(())  // only increments length
 counter.push(())
 let count = counter.len()  // 2
@@ -134,7 +128,7 @@ In C, `void` means "no type at all" -- you cannot have a variable of type `void`
 
 ```vex
 let x: () = ()          // Valid: x is a real value
-let items: [(); 3] = [(), (), ()]  // Array of three unit values, zero size
+let items: [unit; 3] = [(), (), ()]  // Array of three unit values, zero size
 ```
 
 ## Comparison Table
@@ -153,5 +147,5 @@ let items: [(); 3] = [(), (), ()]  // Array of three unit values, zero size
 
 1. Annotate diverging functions with `: never` return type for clarity and better compiler diagnostics.
 2. Use `()` as the return type when a function performs side effects and has no meaningful return value -- or just omit the return type entirely.
-3. Use `()` as a generic placeholder when only one type parameter matters (e.g., `Map<K, ()>` acts as a `Set<K>`).
+3. Use `unit` as a generic or nested type placeholder when only one type parameter matters (for example, `Map<K, unit>` acts as a `Set<K>`).
 4. Remember that `never` coercions make early-return and panic patterns safe in expression contexts -- no need for awkward `unreachable!()` markers.

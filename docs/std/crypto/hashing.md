@@ -1,6 +1,6 @@
 # Hashing (`crypto` Hashes)
 
-Vex provides production-grade hash functions covering both legacy standards and modern alternatives.
+Vex documents hash-function bindings for legacy standards and modern alternatives. Verify the implementation, constant-time properties, and native backend on the target before using them for security-sensitive work.
 
 ## SHA-256 / SHA-512
 

@@ -1,33 +1,47 @@
 # Builtins and Intrinsics
 
-Vex provides a robust, always-available set of builtin and intrinsic helpers covering:
+Vex intrinsic names expose two properties directly in source: **when** an
+operation runs and **which subsystem** owns it. This is a language contract,
+not a naming convention.
 
-- Runtime I/O and debugging
-- Panic and development traps
-- Low-level memory access
-- Timing helpers
-- Compile-time reflection and diagnostics
-- Autograd intrinsics
+## Phase prefixes
 
-This page documents the stable builtins and their prefix conventions.
+| Prefix | Phase | Runtime cost | Examples |
+| --- | --- | --- | --- |
+| `#` | compile time | none | `#Type.sizeOf<T>()`, `#Target.os()` |
+| `$` | runtime | possible | `$println(value)`, `$monotonicNow()` |
+| `@` | compiler transform / autograd | generated program dependent | `@param(x)`, `@grad(y)` |
 
----
+Compile-time intrinsics use an UpperCamel namespace and lowerCamel member,
+with the sigil written once: `#Type.sizeOf`, `#Reflect.getField`,
+`#Diag.compileError`. Runtime and autograd builtins use lowerCamel names.
+Legacy flat, PascalCase, and snake_case spellings are not aliases.
 
-## Prefix Families
-
-Builtin names fall into three distinct groups:
-
-- `#...` for **Compile-Time** helpers (zero runtime cost).
-- `$...` for **Runtime** helpers (has runtime execution cost).
-- `@...` for **Autograd** helpers.
-
-::: tip Design Principle: No Runtime Cost
-All compile-time features are prefixed with `#` (e.g., `#sizeof`, `#alignof`, `#typeName`, `#if`, `#for`). The `$` prefix is reserved exclusively for runtime features that call compiler-internal runtime helper intrinsics (such as `$print`, `$println`, and `$now`), indicating they have a runtime execution cost.
+::: warning Phase is semantic
+An operation that emits a runtime load, store, allocation, clock read, or I/O
+cannot become compile-time merely by receiving a `#` name. The prefix describes
+the operation's real execution phase.
 :::
 
----
+## Access levels
 
-## Runtime I/O and Debugging
+Not every compiler primitive is a public language API.
+
+| Access | Who may call it? | Purpose |
+| --- | --- | --- |
+| Public | normal Vex source | stable supported API |
+| Prelude-only | embedded VexArch prelude | implements `Ptr<T>`, `Span<T>`, `RawBuf`, and ownership helpers |
+| Compiler-only | compiler transforms | values or operations that source code cannot spell |
+| Syntax-only | dedicated syntax | operands inside constructs such as `asm!` |
+
+Raw load/store, pointer-offset, pointer-to-slice, and ownership primitives are
+prelude-only. Application and library code should use the typed prelude APIs;
+this keeps unsafe invariants in one audited layer and leaves the compiler free
+to improve their lowering.
+
+## Public runtime core
+
+### I/O, formatting, and debugging
 
 ```vex
 $print("partial line")
@@ -39,194 +53,111 @@ let rendered = $format("{0}:{1}", host, port)
 let value = $dbg(rendered)
 ```
 
-The runtime builtins include:
+`$format` is a runtime operation. The compiler may pre-parse a constant format
+string, but producing a result from runtime arguments still has runtime
+semantics.
 
-- `$print`
-- `$println`
-- `$eprint`
-- `$eprintln`
-- `$format`
-- `$dbg` (prints expression and value, then returns it)
-
----
-
-## Runtime Traps and Development Helpers
+### Control and assertions
 
 ```vex
+$assert(index < length)
+$assertEq(actual, expected)
 $panic("fatal error")
 $todo("finish this branch")
 $unreachable()
-$assertEq(left, right)
 ```
 
-- `$panic` aborts execution immediately.
-- `$todo` marks unfinished runtime paths.
-- `$unreachable` signals to the compiler that this code path is impossible.
-- `$assertEq` is a runtime equality assertion with structured failure output.
+`$panic`, `$todo`, and `$unreachable` return `never`. Use `$unreachable` only
+when reaching the path would be a program bug; a false claim can invalidate
+optimizer assumptions.
 
----
-
-## Memory and Low-Level Helpers
+### Timing
 
 ```vex
-$drop(resource)
-
-let value = $load(ptr)
-$store(ptr_mut, value)
-
-let slice = $ptrToSlice(raw_ptr, len)
-```
-
-- Prefer `Ptr<T>`, `Span<T>`, and `RawBuf` over raw pointer helpers.
-- Treat `$load`, `$store`, and `$ptrToSlice` as unsafe building blocks.
-- Use `$drop` only when early destruction is required.
-
----
-
-## Timing
-
-```vex
-let start = $now()
+let start = $monotonicNow()
 work()
-let end = $now()
+let elapsed = $monotonicNow() - start
 ```
 
-Both `$monotonicNow()` and `$now()` resolve to the same high-resolution monotonic timing helper in the runtime.
+`$monotonicNow()` is the canonical high-resolution monotonic clock builtin.
+Wall-clock/calendar time belongs to the standard library, not this intrinsic.
 
----
+### Runtime shape, math, and bit operations
 
-## Layout, Shape, and Reflection
+Runtime-dependent values use the `$` family:
+
+- shape: `$len`, `$rank`, `$shape`
+- math: `$pow`, `$abs`, `$min`, `$max`, `$clamp`, `$log2`, `$sqrt`
+- transcendental: `$cos`, `$sin`, `$tanh`, `$exp`, `$exp2`, `$log`
+- bits: `$bitCount`, `$leadingZeros`, `$trailingZeros`,
+  `$isPowerOfTwo`, `$nextPowerOfTwo`, `$byteSwap`
+
+Use the equivalent `#Math` or `#Bit` operation only when the input is required
+to be evaluated at compile time.
+
+## Public compile-time namespaces
+
+| Namespace | Responsibility | Examples |
+| --- | --- | --- |
+| `#Type` | layout, integer domains, type identity, predicates | `sizeOf`, `minValue`, `maxValue`, `info`, `isCopy` |
+| `#Reflect` | field and variant reflection | `getField`, `setField`, `hasVariant` |
+| `#Value` | default and zeroed values | `default`, `zeroed` |
+| `#Text` | compile-time text/source conversion | `concat`, `stringify`, `concatIdents` |
+| `#Build` | build environment | `env` |
+| `#Target` | target triple properties | `os`, `arch`, `endian`, `pointerWidth` |
+| `#Source` | current source location | `line`, `column`, `fileName`, `module` |
+| `#Embed` | compile-time file embedding | `string`, `bytes` |
+| `#Diag` | compile-time diagnostics | `staticAssert`, `compileError`, `compileWarning` |
+| `#Const` | forced constant evaluation | `eval` |
+| `#Math` | compile-time arithmetic | `pow`, `abs`, `gcd`, `sqrt` |
+| `#Bit` | compile-time bit operations | `count`, `isPowerOfTwo`, `byteSwap` |
+| `#DeclSet` | invocation-authorized declarations | `empty`, `addFunction`, `addStruct`, `addContractImpl` |
+| `#DeclExpr` | typed generated expression plans | `value`, `param`, `call`, `matchPattern` |
+| `#DeclPattern` | typed generated pattern plans | `value`, `tuple`, `variant`, `anyOf` |
+| `#DeclConstraint` | exact generated requirements | `contract` |
 
 ```vex
-let size = #sizeof<i64>()
-let align = #alignof<f64>()
-let ty_name = #typeName<Vec<i32>>()
+let bytes = #Type.sizeOf<Header>()
+let largest = #Type.maxValue<usize>()
+let target = #Target.os()
+let mask = #Bit.nextPowerOfTwo(17)
 
-let len = $len(v)
-let rank = $rank(tensor)
-let shape = $shape(tensor)
+#Diag.staticAssert(
+    #Type.fieldCount<Header>() > 0,
+    "Header must not be empty"
+)
 ```
 
-Compile-time reflection helpers also include:
+See [Compile-Time Evaluation](/guide/advanced/comptime) for the complete
+namespace reference and structured reflection examples.
 
-- `#typeInfo<T>()`
-- `#getField(value, field)`
-- `#setField(target, field, value)`
-- `#fieldCount<T>()`
-- `#variantCount<E>()`
-- `#len<T>()` / `#length<T>()` (static length)
-- `#rank<T>()` / `#ndim<T>()` (tensor dimensions)
-- `#shape<T>()` (static shape tuple)
-- `#tupleLen<T>()` / `#arrayLen<T>()` (tuple/array lengths)
-- `#elementType<T>()` / `#implements<T, Contract>()` (element/contract query)
-- `#isPowerOf2<T>(val)` / `#isPowerOfTwo<T>(val)` (checks if val is power of 2)
-- `#offset_ptr_idx(base, index, stride)` (computes raw pointer offset)
-- `#ptr_write(ptr, value)` (writes value directly to raw address)
-- `#format(fmt, ...)` (compile-time formatting parsing helper)
+The declaration namespaces are public only inside an authorized module
+generator invocation. See
+[Structural Declaration Generation](/guide/advanced/comptime-declarations).
 
-### Compile-Time Type Predicates
-- `#isStruct<T>()`, `#isEnum<T>()`, `#isPrimitive<T>()`
-- `#isInteger<T>()`, `#isFloat<T>()`, `#isSigned<T>()`
-- `#isPointer<T>()`, `#isArray<T>()`, `#isTuple<T>()`
-- `#isCopy<T>()`, `#needsDrop<T>()`, `#isReference<T>()`
-- `#isFunction<T>()`, `#isGeneric<T>()`, `#sameType<T, U>()`
-- `#isTensor<T>()`, `#isDynTensor<T>()` — static/dynamic tensor types
-- `#isMask<T>()`, `#isDynMask<T>()` — SIMD mask types
-- `#isOption<T>()`, `#isResult<T>()` — stdlib type checks
-- `#isSlice<T>()` — borrowed view type check
+## Memory and explicit destruction
 
-If you are doing compile-time code generation or reflection work, see [Comptime](/guide/advanced/comptime).
-
----
-
-## Compile-Time Diagnostics and Embedding
+The public low-level boundary is method based:
 
 ```vex
-#staticAssert(#fieldCount<User>() > 0, "User must stay non-empty")
-#warning("legacy path compiled")
+let! p = Ptr.allocWith<i32>(42)
+let value = unsafe { p.read() }
+unsafe { p.free() }
 
-let home = #env("HOME")
-let text = #includeStr("banner.txt")
-let bytes = #includeBytes("blob.bin")
-let expr = #debugExpr(5 + 3)
-let joined = #concat("hello", " ", "vex")
-let name = #concatIdents(foo, bar)
+Mem.drop(ownedValue)
 ```
 
-- `#staticAssert`
-- `#compileError`
-- `#compileWarning`
-- `#warning`
-- `#debugExpr`
-- `#debugType`
-- `#env`
-- `#includeStr`
-- `#includeBytes`
-- `#concat`
-- `#stringify`
-- `#concatIdents`
+- Prefer references and owned containers for ordinary code.
+- Use `Span<T>` for bounds-aware non-owning views.
+- Use `Ptr<T>` for typed raw handles.
+- Use `RawBuf` for byte-oriented layouts.
+- Use `Mem.drop(value)` only for intentional early destruction; normal RAII
+  destruction remains automatic.
 
----
+The compiler-owned primitives beneath these APIs are intentionally unavailable
+to normal developer code.
 
-## Target Introspection
-
-```vex
-#if #targetOs() == "macos" {
-    // Darwin-specific path
-} elif #targetArch() == "arm64" {
-    // ARM-specific optimization
-}
-```
-
-- `#targetOs()` → `"macos"`, `"linux"`, `"windows"`
-- `#targetArch()` → `"arm64"`, `"x86_64"`, `"x86"`
-- `#targetEndian()` → `"little"`, `"big"`
-- `#targetPointerWidth()` → `64` or `32`
-
-All resolved at compile-time with zero runtime cost.
-
----
-
-## Source-Location Intrinsics
-
-```vex
-$println("At {}:{} in {}", #line(), #column(), #fileName());
-```
-
-- `#line()` → current line number (i64)
-- `#column()` → current column number (i64)
-- `#fileName()` / `#file()` → current file path (str)
-- `#module()` → current module name (str)
-
-Useful for debugging, logging, and `#staticAssert` error messages.
-
----
-
-## Compile-Time Math
-
-```vex
-let abs_val = #abs(-5)
-let pow_val = #constPow(2, 10)
-let gcd_val = #gcd(48, 18)
-```
-
-- `#abs`, `#min`, `#max`, `#clamp` — basic math
-- `#pow`, `#sqrt` — power and square root
-- `#constAbs`, `#constMin`, `#constMax`, `#constClamp` — comptime-only variants
-- `#constPow`, `#constSqrt`, `#constLog2`, `#constEval` — comptime power/log/eval
-- `#gcd`, `#lcm`, `#constGcd`, `#constLcm` — number theory
-- `#bitCount` / `#popcount` — population count
-- `#leadingZeros` / `#clz`, `#trailingZeros` / `#ctz` — bit scan
-- `#bswap` / `#reverseBytes` — byte swap
-- `#isPowerOf2` / `#isPowerOfTwo`, `#nextPowerOf2` / `#nextPow2`, `#log2` — power-of-2 utilities
-- `#typeof(x)` — returns the type name of an expression as a string
-- `#typeBaseName<T>()` — base type name without generic parameters
-
----
-
-## Autograd Builtins
-
-Autograd uses `@...` as the primary syntax:
+## Autograd transforms
 
 ```vex
 let x = @param(2.0)
@@ -234,24 +165,25 @@ let y = Math.sin(x)
 
 $println(@val(y))
 $println(@grad(y))
+let constant = @detach(y)
 ```
 
-- `@param`
-- `@val`
-- `@grad`
-- `@detach`
-
----
+The public autograd transform family is `@param`, `@val`, `@grad`, and
+`@detach`.
 
 ## Guidance
 
-1. Prefer ordinary language constructs first and reach for builtins only when necessary.
-2. Prefer `Ptr<T>`, `Span<T>`, and `RawBuf` over `$load`, `$store`, and `$ptrToSlice`.
-3. Keep `$dbg` and `$todo` temporary.
-4. Prefer `#...` spellings for all compile-time helpers.
+1. Choose ordinary language or prelude APIs before reaching for an intrinsic.
+2. Treat the prefix as a phase guarantee, not decoration.
+3. Do not depend on legacy spellings; there are no compatibility aliases.
+4. Keep raw memory access behind `Ptr<T>`, `Span<T>`, `RawBuf`, or `Mem`.
+5. Remove `$dbg` and `$todo` from production paths.
 
 ## Related
 
-- [Comptime](/guide/advanced/comptime)
+- [Compile-Time Evaluation](/guide/advanced/comptime)
+- [Structural Declaration Generation](/guide/advanced/comptime-declarations)
+- [Pointers and Low-Level Memory](/guide/advanced/pointers)
+- [Memory Prelude](/guide/memory/mem-prelude)
 - [Assembly](/guide/advanced/assembly)
 - [Unsafe](/guide/advanced/unsafe)

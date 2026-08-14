@@ -147,7 +147,8 @@ fn checksumData(data: RawBuf, len: i64): u32 {
 
 ## Secure Random
 
-Cryptographically secure random number generation using hardware entropy.
+Cryptographically secure random number generation using the operating system's
+CSPRNG capability.
 
 | Function              | Signature | Description         |
 | --------------------- | --------- | ------------------- |
@@ -155,9 +156,14 @@ Cryptographically secure random number generation using hardware entropy.
 
 ### Platform Mapping
 
-| x86               | ARM / macOS                  |
-| ----------------- | ---------------------------- |
-| `RDRAND` (HW RNG) | `arc4random` (kernel CSPRNG) |
+| Platform | Entropy boundary |
+| --- | --- |
+| Linux | Direct `getrandom` syscall with EINTR/short-read handling; no libc dependency |
+| macOS | Supported libSystem `arc4random_buf` API |
+| Windows | `BCryptGenRandom` with the system-preferred provider |
+
+The operation fails closed if the OS cannot supply all 64 bits. It never falls
+back to time, PID, pointer addresses, or a predictable PRNG.
 
 > For non-cryptographic randomness (games, simulations), use [`Math.random()`](/guide/math#random-numbers) instead — it's faster.
 
@@ -168,7 +174,7 @@ fn generateKey(): [u8; 32] {
     while i < 4 {
         let rand = Crypto.secureRand();
         // Store 8 bytes from each u64
-        let rb = RawBuf.of(&key as ptr);
+        let rb = RawBuf.of(&key as Ptr<Opaque!>);
         rb.store<u64>(i * 8, rand);
         i = i + 1;
     }
@@ -178,17 +184,21 @@ fn generateKey(): [u8; 32] {
 
 ## Hardware Support
 
-All `Crypto.*` functions require hardware support. The compiler automatically selects the right instruction for the target architecture.
+Instruction-oriented `Crypto.*` functions select a legal hardware lowering
+when target features prove support. Operations with a software implementation,
+such as CRC-32C, remain portable. `Crypto.secureRand()` uses the OS CSPRNG and
+does not depend on CPU `RDRAND`.
 
 | Feature    | x86               | ARM              | Apple Silicon |
 | ---------- | ----------------- | ---------------- | ------------- |
-| AES rounds | AES-NI (2010+)    | ARMv8 Crypto     | ✅ M1+        |
-| SHA-256    | SHA-NI (2016+)    | ARMv8 SHA2       | ✅ M1+        |
-| CLMUL      | PCLMULQDQ (2010+) | PMULL (ARMv8)    | ✅ M1+        |
-| CRC-32C    | SSE4.2 (2008+)    | CRC32 (ARMv8.1+) | ✅ M1+        |
-| Secure RNG | RDRAND (2012+)    | arc4random       | ✅ Always     |
+| AES rounds | AES-NI (2010+)    | ARMv8 Crypto     | Yes M1+        |
+| SHA-256    | SHA-NI (2016+)    | ARMv8 SHA2       | Yes M1+        |
+| CLMUL      | PCLMULQDQ (2010+) | PMULL (ARMv8)    | Yes M1+        |
+| CRC-32C    | SSE4.2 (2008+)    | CRC32 (ARMv8.1+) | Yes M1+        |
+| Secure RNG | OS CSPRNG         | OS CSPRNG        | OS CSPRNG      |
 
-> **If hardware is not available**, the compiler will emit an error at compile time. Use the pure Vex implementations from `lib/crypto` as a portable fallback.
+> Cryptographic algorithms still need portable implementations or explicit
+> target-feature handling where no legal hardware lowering exists.
 
 ## Next Steps
 

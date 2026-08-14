@@ -79,7 +79,9 @@ Types implementing `SuspendSafe` are guaranteed to remain valid across suspensio
 
 ## Pin and Async
 
-Self-referential state machines require immovability. When a function body contains references to its own local variables, the compiler wraps the state machine in `Pin<T>` to prevent moves:
+Self-referential state machines require immovability. When a function body
+contains references to its own locals, the compiler applies the `Pin` move
+restriction to the generated state-machine type:
 
 ```vex
 async fn selfReferential() {
@@ -124,7 +126,9 @@ Runtime:       Task pushed to worker's local deque
 
 ### Key Runtime Functions
 
-The generated state machine calls into the C runtime at each `await` boundary. The exact function signatures are compiler internals; the table below shows the conceptual interface:
+The generated state machine cooperates with VexArch at each suspending `await`
+boundary. A ready await may continue inline; suspension saves state and hands the
+task back to the scheduler. The exact ABI is compiler/runtime-internal:
 
 | Concept | Purpose |
 |---------|---------|
@@ -133,7 +137,8 @@ The generated state machine calls into the C runtime at each `await` boundary. T
 | Task resume | Re-queue a suspended task |
 | Poller wait | Block on I/O events (kqueue/epoll/IOCP) |
 
-> **Implementation detail:** See `lib/runtime/runtime/src/async/` for the actual C runtime API.
+> **Implementation detail:** See `lib/runtime/VexArch/src/async/` for the runtime
+> implementation. Its reserved `extern "VEX"` ABI is not application API.
 
 ## Async Function Rules
 
@@ -141,14 +146,14 @@ The generated state machine calls into the C runtime at each `await` boundary. T
 
 - Mutable borrows (`&T!`) across `await` -- data could be mutated during suspension
 - Holding locks across `await` -- causes deadlocks
-- `extern "C"` async functions -- C cannot call Vex async functions
+- C-ABI-exported async functions -- a native caller cannot drive a Vex async state machine directly
 - Recursive `async fn` without boxing -- state machine would be infinite
 
 ### Allowed
 
 - Owned values (moved into state machine)
 - Immutable references (`&T`, if `T: SuspendSafe`)
-- `Box<T>` and `Pin<T>` values
+- `Box<T>` values and compiler-pinned async frames
 - Calling other `async fn` with `await`
 - `go { }` blocks (fire-and-forget from async context)
 

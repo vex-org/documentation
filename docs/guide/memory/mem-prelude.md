@@ -1,171 +1,149 @@
-# Memory Allocation API (Mem Prelude)
+# Memory Prelude (`Mem`)
 
-The `Mem` prelude module provides raw memory allocation primitives. These are the building blocks for `Box<T>`, `Vec<T>`, `Map<K,V>`, and all other heap-allocated types. Most Vex code should use those safe abstractions; direct use of `Mem` is for systems programming and building new safe abstractions.
+`Mem` is VexArch's single prelude boundary for allocation, reallocation, byte
+movement, and explicit destruction. It is available without an import, but it
+is intended for runtime, standard-library, allocator, and data-structure code.
+Most applications should use `Box<T>`, `Vec<T>`, `string`, or another owning
+type.
 
-## Core Functions
+`Mem` does not make raw memory safe. Every caller remains responsible for
+allocation extent, alignment, initialization, aliasing, and allocator pairing.
 
-All `Mem` functions are available without imports (prelude).
+## Core allocation API
 
-### Allocation
+| Function | Purpose |
+| --- | --- |
+| `Mem.alloc(size: usize): Ptr<Opaque!>` | allocate `size` bytes, 16-byte aligned |
+| `Mem.allocAligned(size: usize, align: usize): Ptr<Opaque!>` | allocate with a power-of-two alignment |
+| `Mem.realloc(p, oldSize, newSize): Ptr<Opaque!>` | resize a block while preserving the common prefix |
+| `Mem.free(p, size): ()` | free a block with its exact allocation size |
 
 ```vex
-// Allocate raw memory (uninitialized)
-let ptr: ptr = vex_malloc(1024)     // allocate 1024 bytes
-let aligned: ptr = vex_malloc(64)   // 16-byte aligned by default
+let size = #Type.sizeOf<Header>() as usize
+let memory = Mem.alloc(size)
+let! header = RawBuf.of(memory)
 
-// Allocate zero-initialized memory
-let zeroed: ptr = vex_calloc(100, 8)  // 100 elements of 8 bytes each, zeroed
+header.zero(size)
+header.store<u32>(0, 0x56455821)
 
-// Reallocate
-let grown: ptr = vex_realloc(ptr, 2048)  // resize to 2048 bytes
-
-// Free
-vex_free(ptr)  // ptr becomes dangling after this
+Mem.free(memory, size)
 ```
 
-### Memory Operations
+`Mem.free` expects the exact allocation size. For `Ptr.allocN<T>(count)`, use
+`Ptr.freeN(count)` so the element count is converted to the correct byte size.
+
+For checked dynamic layouts, `Layout` and its owning `Block` are also prelude
+types. They require no package import. `Block` records the exact size and
+alignment, frees itself through `Drop`, supports transactional `resize`, and
+can transfer ownership as a `(pointer, layout)` pair through `release`.
+
+## Heap- and region-bound allocation
+
+VexArch distinguishes temporary arena allocation from storage that must survive
+an arena reset.
+
+| Function | Purpose |
+| --- | --- |
+| `Mem.heapAlloc(size)` | allocate from the persistent slab/large heap |
+| `Mem.heapRealloc(p, oldSize, newSize)` | resize persistent heap storage |
+| `Mem.currentRegion()` | return the active allocator region, or null |
+| `Mem.regionAlloc(region, size)` | allocate through a captured region; null selects heap behavior |
+| `Mem.regionRealloc(region, p, oldSize, newSize)` | resize through the same captured region |
+
+Containers capture `Mem.currentRegion()` when they are created and route their
+backing-buffer growth through that captured region. This prevents a container
+from silently changing allocator lifetime after construction.
+
+These functions are public so prelude and low-level library types can share the
+same allocator contract. Application code should not select an arena/heap path
+manually unless it is implementing an owning abstraction.
+
+## Byte operations
+
+| Function | Semantics |
+| --- | --- |
+| `Mem.copy(dst, src, n)` | copy `n` bytes; regions must not overlap |
+| `Mem.move(dst, src, n)` | copy `n` bytes; overlapping regions are supported |
+| `Mem.set(dst, value, n)` | fill `n` bytes with the low byte of `value` |
+| `Mem.compare(a, b, n): i32` | bytewise comparison |
+| `Mem.equals(a, b, n): bool` | equality over `n` bytes |
+| `Mem.zero(dst, n)` | fill `n` bytes with zero |
+
+Prefer `RawBuf` or `Ptr<T>` methods when they better express the offset unit and
+element type. `Mem` is the shared primitive boundary beneath those wrappers.
+
+## Explicit destruction
 
 ```vex
-let dest = vex_malloc(64)
-let src = vex_malloc(64)
+let owned = acquireResource()
 
-// Copy memory: dest = src for N bytes
-vex_memcpy(dest, src, 64)
-
-// Move memory (handles overlapping regions correctly)
-vex_memmove(dest, src, 64)
-
-// Set memory to a byte value
-vex_memset(dest, 0, 64)  // zero out 64 bytes
-vex_memset(dest, 0xFF, 16)  // fill 16 bytes with 0xFF
-
-// Compare memory
-let cmp = vex_memcmp(dest, src, 64)
-// returns 0 if equal, <0 if dest < src, >0 if dest > src
+// End this value's lifetime before the surrounding scope exits.
+Mem.drop(owned)
 ```
 
-### Query Functions
+`Mem.drop<T>(value)` consumes the value and runs its ownership-aware destruction
+path. Use it only for intentional early destruction. Values are otherwise
+dropped automatically at scope exit; calling `Mem.drop` and then using the
+moved value is invalid.
+
+The raw ownership primitive used to implement `Mem.drop` is compiler-owned and
+prelude-only. It is not a developer-facing intrinsic.
+
+## Size-metadata compatibility path
+
+`Mem.allocCompat(size)`, `Mem.allocZeroedCompat(count, elementSize)`,
+`Mem.freeCompat(p)`, and `Mem.reallocCompat(p, newSize)` form the canonical path
+for APIs that cannot carry allocation size metadata to deallocation. They use
+an inline size header and therefore give up the faster exact-size path. New
+owning abstractions should preserve a `Layout` and use `Block` or
+`Mem.alloc/realloc/free`.
+
+There is no `std/mem` package and no parallel set of free functions. `Mem.*` is
+the single source of truth across the compiler prelude, VexArch, standard
+library, and application code.
+
+## Unbounded loops and arena safety
+
+`Mem.unboundedLoop()` is a zero-runtime-cost compiler hint for a loop whose exit
+depends on runtime state and cannot be proven bounded:
 
 ```vex
-// Get allocation size (platform-dependent, may return original requested size or block size)
-let size = vex_malloc_usable_size(ptr)
-```
-
-## Complete API Reference
-
-| Function                 | Signature                              | Description                                     |
-| ------------------------ | -------------------------------------- | ----------------------------------------------- |
-| `vex_malloc`             | `(size: usize): ptr`                   | Allocate `size` bytes, uninitialized            |
-| `vex_calloc`             | `(count: usize, size: usize): ptr`     | Allocate `count * size` bytes, zero-initialized |
-| `vex_realloc`            | `(ptr: ptr, size: usize): ptr`         | Resize allocation to `size` bytes               |
-| `vex_free`               | `(ptr: ptr)`                           | Free an allocation                              |
-| `vex_memcpy`             | `(dest: ptr, src: ptr, n: usize): ptr` | Copy `n` bytes from `src` to `dest`             |
-| `vex_memmove`            | `(dest: ptr, src: ptr, n: usize): ptr` | Move `n` bytes (safe for overlap)               |
-| `vex_memset`             | `(dest: ptr, val: i32, n: usize): ptr` | Set `n` bytes to byte value `val`               |
-| `vex_memcmp`             | `(a: ptr, b: ptr, n: usize): i32`      | Compare `n` bytes, returns 0 if equal           |
-| `vex_malloc_usable_size` | `(ptr: ptr): usize`                    | Get allocation size                             |
-
-## Alignment
-
-Allocations from `vex_malloc` are aligned to at least 16 bytes (suitable for 128-bit SIMD). For larger alignments, use the alignment-aware variant:
-
-```vex
-// Allocate 64 bytes aligned to 64-byte boundary (cache line)
-let cache_line: ptr = vex_aligned_alloc(64, 64)
-
-// Free aligned allocations with vex_free (same as normal)
-vex_free(cache_line)
-```
-
-## Safety and `unsafe`
-
-All direct use of `Mem` functions requires `unsafe` blocks:
-
-```vex
-unsafe {
-    let buf = vex_malloc(1024) as *u8!
-
-    // Write data
-    for i in 0..1024 {
-        buf[i] = i as u8
-    }
-
-    // Read data
-    let first = buf[0]
-
-    // Always free
-    vex_free(buf as ptr)
+while keepRunning {
+    Mem.unboundedLoop()
+    processNextEvent()
 }
 ```
 
-## Memory Lifetime Rules
+The compiler already recognizes `loop {}` and statically true `while`
+conditions. Use the hint only when a genuinely runtime-gated loop would
+otherwise look bounded. It prevents scope-root arena allocation from
+accumulating indefinitely in a loop that may never exit.
 
-1. **Every `vex_malloc` must have a matching `vex_free`** -- Vex does NOT garbage-collect raw allocations.
-2. **Use-after-free is undefined behavior** -- the compiler cannot detect this.
-3. **Double-free is undefined behavior** -- set pointers to `null_ptr` after freeing.
-4. **Uninitialized reads are undefined behavior** -- always initialize memory before reading.
-5. **Alignment matters** -- misaligned access may crash on some architectures (ARM).
+## Freestanding boundary
 
-## Comparison with Safe Types
+`Mem` is a VexArch API, not a promise that Vex source depends on host libc
+allocation. Its platform implementation may use OS/native system services, a
+custom allocator, or a freestanding backend. Prelude and standard-library code
+remain expressed against the same `Mem` contract instead of importing
+`malloc/free` directly.
 
-| Raw Mem                        | Safe Alternative      | When to Use Raw                 |
-| ------------------------------ | --------------------- | ------------------------------- |
-| `vex_malloc` + `vex_free`      | `Box.new()`           | Building custom allocators      |
-| `vex_malloc` + manual indexing | `Vec.new()`           | Building custom data structures |
-| `vex_memcpy`                   | `Ptr<T>.copyFrom()`   | FFI, byte-level protocols       |
-| `vex_memset`                   | `Ptr<T>.writeBytes()` | FFI, clearing sensitive data    |
-| `vex_memcmp`                   | `Ptr<T>.compare()`    | FFI, binary comparison          |
+This separation is essential for freestanding builds: platform-specific memory
+provision lives below VexArch, while Vex ownership and container code remains
+portable above it.
 
-## Example: Custom Allocator Wrapper
+## Safety checklist
 
-```vex
-struct Arena: Drop {
-    base: ptr,
-    offset: usize,
-    capacity: usize,
-}
+1. Preserve the exact size and allocator/region that created each block.
+2. Do not read uninitialized bytes or access memory after free.
+3. Use `Mem.move` when source and destination may overlap.
+4. Validate alignment before constructing typed or SIMD views.
+5. Prefer RAII owners; expose raw `Mem` operations only inside a small audited
+   implementation.
 
-fn Arena(capacity: usize): Arena {
-    let base = unsafe { vex_malloc(capacity) }
-    return Arena { base: base, offset: 0, capacity: capacity }
-}
+## Related
 
-fn (self: &Arena!) alloc!(size: usize, alignment: usize): ptr {
-    // Align offset
-    let aligned = (self.offset + alignment - 1) & !(alignment - 1)
-    if aligned + size > self.capacity {
-        $panic("Arena out of memory")
-    }
-    self.offset = aligned + size
-    return self.base + aligned
-}
-
-fn (self: &Arena!) drop() {
-    unsafe { vex_free(self.base) }
-}
-
-// Usage
-let! arena = Arena.new(4096)
-let p1 = arena.alloc!(256, 8)
-let p2 = arena.alloc!(128, 16)
-// All memory freed when arena goes out of scope
-```
-
-## Best Practices
-
-1. **Don't use raw `Mem` functions directly** unless you're writing low-level systems code or building new abstractions.
-2. **Always pair `malloc` with `free`** -- use `defer` or `Drop` to ensure cleanup.
-3. **Use `calloc` when you need zeroed memory** -- it avoids bugs from uninitialized reads.
-4. **Prefer `memmove` over `memcpy`** when source and destination might overlap.
-5. **Set freed pointers to `null_ptr`** to catch use-after-free bugs early.
-6. **Use the safe abstractions** (`Box`, `Vec`, `Ptr<T>`, `Span<T>`) for 99% of code.
-
-## Related Pages
-
-- [Ownership](/guide/memory/ownership) -- how values are owned and moved
-- [Borrowing](/guide/memory/borrowing) -- references and borrow rules
-- [Box](/guide/memory/box) -- heap allocation with VUMM
-- [Ptr\<T\>](/guide/memory/ptr-t) -- safe typed pointer wrapper
-- [Span\<T\>](/guide/memory/span-t) -- bounds-checked fat pointer
-- [Raw Pointers](/guide/types/raw-pointers) -- `ptr`, `*T`, `*T!`
-- [Memory Safety](/guide/memory/safety) -- safety rules and unsafe blocks
+- [`Ptr<T>`](/guide/memory/ptr-t)
+- [`Span<T>`](/guide/memory/span-t)
+- [RawBuf](/guide/memory/rawbuf)
+- [Ownership](/guide/memory/ownership)
+- [Freestanding](/guide/freestanding)

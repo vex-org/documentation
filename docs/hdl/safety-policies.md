@@ -4,7 +4,7 @@ layout: doc
 title: Safety, Verification, and Policies
 ---
 
-> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> **Warning Concept Stage:** This page describes a planned VexHDL feature.
 > Implementation has not begun. Details may change.
 
 

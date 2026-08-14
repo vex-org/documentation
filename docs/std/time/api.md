@@ -29,6 +29,13 @@ Internal representation: nanoseconds since Unix epoch (`i64`).
 |--------|-------------|
 | `.unix(): i64` | Seconds since epoch |
 | `.unixNano(): i64` | Nanoseconds since epoch |
+| `.unixMilli(): i64` | Milliseconds since epoch |
+| `.unixMicro(): i64` | Microseconds since epoch |
+| `.nanosecond(): i64` | Nanosecond component within the current second (`0..999_999_999`) |
+
+Unix conversion methods use floor semantics for instants before 1970. For
+example, an instant 500 ms before the epoch has `unix() == -1`,
+`unixMilli() == -500`, and `nanosecond() == 500_000_000`.
 
 ### Arithmetic
 

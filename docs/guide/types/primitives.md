@@ -31,6 +31,59 @@ Vex provides primitive types for integers, floats, booleans, characters, strings
 | `isize` | Platform | Pointer-sized signed integer   |
 | `usize` | Platform | Pointer-sized unsigned integer |
 
+### Integer limits
+
+The auto-imported Prelude exposes typed integer bounds through `Limits`:
+
+```vex
+let byteMax: u8 = Limits.u8Max
+let signedMin: i64 = Limits.i64Min
+let indexMax: usize = Limits.usizeMax
+let wideMax: u128 = Limits.u128Max
+```
+
+Each signed and unsigned integer type has `Min` and `Max` members. The
+`isize`/`usize` values follow the selected compilation target, including during
+cross-compilation; they are not based on the machine running the compiler.
+`Limits.*` values are compile-time constants and do not emit a runtime lookup.
+
+For generic metaprogramming, the underlying typed operations are
+`#Type.minValue<T>()` and `#Type.maxValue<T>()`. Ordinary code should prefer
+the readable `Limits.*` surface.
+
+### Integer representation helpers
+
+Integer helpers are grouped under `IntegerLimits`; primitive namespaces stay
+small and constants remain under `Limits`:
+
+```vex
+let value: u32 = 0x01020304
+
+let little = IntegerLimits.toLe<u32>(value)
+let big = IntegerLimits.toBe<u32>(value)
+let native = IntegerLimits.fromBe<u32>(big)
+let swapped = IntegerLimits.swapBytes<u32>(value)
+let ones = IntegerLimits.countOnes<u32>(value)
+let leading = IntegerLimits.leadingZeros<u32>(value)
+let trailing = IntegerLimits.trailingZeros<u32>(value)
+let rounded = IntegerLimits.nextPowerOfTwo<u32>(value)
+let power = IntegerLimits.isPowerOfTwo<u32>(value)
+
+let bytes: [u8; 4] = IntegerLimits.toLeBytes(value)
+let networkBytes: [u8; 4] = IntegerLimits.toBeBytes(value)
+```
+
+Endian selection is resolved at compile time. Conversion becomes either the
+identity operation or one LLVM byte-swap instruction; there is no runtime
+endianness branch.
+
+`toLeBytes` and `toBeBytes` are statically selected overload families returning the exact array
+width (`[u8; 1]`, `[u8; 2]`, `[u8; 4]`, `[u8; 8]`, or `[u8; 16]`). It does not
+allocate and does not return a tagged or dynamically sized wrapper.
+
+Generic integer APIs can share the Prelude type sets
+`SIGNED_INTEGER_TYPES`, `UNSIGNED_INTEGER_TYPES`, and `INTEGER_TYPES`.
+
 ### Usage
 
 ```vex
@@ -102,22 +155,6 @@ let weights: [f16; 1024] = load_model_weights()
 let result = neural_network.forward(weights)
 ```
 
-## Boolean Type
-
-```vex
-let yes: bool = true
-let no: bool = false
-
-// Boolean operations
-let and_result = true && false   // false
-let or_result = true || false    // true
-let not_result = !true           // false
-
-// Comparison results
-let is_equal = (5 == 5)          // true
-let is_greater = (10 > 5)        // true
-```
-
 ## Character Type
 
 `char` is the single-character primitive type.
@@ -181,12 +218,12 @@ fn spin(): never {
 
 ## Pointers and raw pointer-like primitives
 
-Low-level code also uses pointer primitives:
+Low-level code uses the canonical `Ptr<T>` family. `Ptr<Opaque>` models an
+opaque C pointer and `Ptr<T!>` carries writable-pointee capability. The old
+`ptr`, `*T`, and `*T!` spellings are rejected after lint-assisted migration.
 
-- `ptr` for opaque untyped pointers
-- `*T` and `*T!` for raw typed pointers
-
-Most code should prefer higher-level wrappers such as `Ptr<T>`, `Span<T>`, and `RawBuf`. See [Pointers](../advanced/pointers).
+Most code should prefer references, `Span<T>`, and owned containers. See
+[Pointers](/guide/advanced/pointers).
 
 ## Casting
 
@@ -209,6 +246,6 @@ let i: i32 = f as i32
 
 ## Next Steps
 
-- [Compound Types](/guide/types/compound) - Arrays, tuples, slices
-- [User-Defined Types](/guide/types/structs) - Structs and enums
+- [Arrays](/guide/types/arrays) - Fixed-size arrays and indexing
+- [Structs](/guide/types/structs) - Named data types and methods
 - [Generics](/guide/types/generics) - Type parameters

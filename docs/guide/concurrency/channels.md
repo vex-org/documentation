@@ -1,160 +1,109 @@
 # Channels
 
-Channels are the primary communication primitive between goroutines and async workflows.
+Channels provide typed communication between Vex tasks. A channel can be bounded, which makes the amount of queued work explicit and gives the producer a natural backpressure point.
 
-They provide explicit message passing instead of implicit shared-state coordination.
+The compiler, Prelude, and runtime share one typed message ownership protocol. A value accepted by a channel belongs to the receiver; rejected sends destroy the moved value exactly once.
 
-## Creating Channels
+## Create and use a channel
 
-```vex
-let! ch: Channel<i64> = Channel.new<i64>(10)
-let! messages: Channel<string> = Channel.new<string>(1)
+The constructor form is the simplest current example:
 
-// Constructor shorthand is also available
-let! jobs: Channel<Task> = Channel(16)
-```
+~~~vex
+fn main(): i32 {
+    let! channel: Channel<i64> = Channel(3);
 
-Capacity determines buffering behavior. Small capacities are good for backpressure; larger capacities are useful for bursty producers.
+    go {
+        channel.send(42);
+        channel.send(100);
+        channel.send(999);
+    };
 
-## Sending and Receiving
+    let first = <-channel;
+    let second = <-channel;
+    let third = <-channel;
 
-```vex
-ch.send(42)              // returns bool
-
-let value = <-ch         // blocking receive operator, returns T
-
-match ch.recv() {        // method form returns Option<T>
-    Some(v) => $println(v),
-    None => $println("channel closed or empty")
-}
-```
-
-There are two common receive styles:
-
-- `<-ch` when you want the blocking receive operator
-- `ch.recv()` when you want explicit `Option<T>` control flow
-
-## Non-Blocking Receive
-
-```vex
-if let Some(msg) = ch.tryRecv() {
-    process(msg)
-} else {
-    $println("No message available")
-}
-```
-
-`tryRecv()` is the right choice for polling loops and opportunistic work-stealing patterns.
-
-## `close()` and Channel Iteration
-
-Both are present in current repository tests:
-
-```vex
-go {
-    let! i = 0
-    while i < 10 {
-        ch.send(i)
-        i += 1
+    if first != 42 {
+        return 1;
     }
-    ch.close()
-};
-
-for val in ch {
-    $println(val)
-}
-```
-
-Closing is what makes channel iteration practical for producer-completes-then-consumer-drains workflows.
-
-## Worker-Pool Style Pattern
-
-```vex
-fn worker_pool(tasks: [Task], num_workers: i32) {
-    let! task_ch: Channel<Task> = Channel(tasks.len())
-    let! result_ch: Channel<Result> = Channel(tasks.len())
-
-    for _ in 0..num_workers {
-        go {
-            loop {
-                match task_ch.tryRecv() {
-                    Some(task) => {
-                        let result = process_task(task)
-                        result_ch.send(result)
-                    },
-                    None => break
-                }
-            }
-        };
+    if second != 100 {
+        return 2;
     }
+    if third != 999 {
+        return 3;
+    }
+    return 0;
 }
-```
+~~~
 
-This pattern scales well when:
+The channel type carries the element type. Sending a value of another type is a semantic error.
 
-- tasks are independent
-- workers can share the same input queue
-- results can be merged later or consumed by another coordinator
+## Capacity
 
-## Result-Carrying Channel APIs
+The integer passed to Channel is the buffer capacity:
 
-The current documented surface also includes result-returning forms:
+~~~text
+Channel<i64>(1)
+Channel<i64>(16)
+~~~
 
-```vex
-let send_ok = ch.sendResult(10);
-let recv_val = ch.recvResult();
-```
+A capacity of one is useful for hand-off or small bursts. A larger capacity allows a producer to get ahead temporarily, but it does not remove the need for a shutdown policy.
 
-Use these when the caller needs more detail than a bare `bool` or `Option<T>`.
+## Receive syntax
 
-## Common Patterns
+The receive operator is written `<-channel` and is intended for a blocking receive:
 
-### Producer-consumer
+~~~text
+let value = <-channel
+~~~
 
-```vex
-let! ch: Channel<i64> = Channel(3);
+`<-channel` returns `T` directly. If the channel is closed and fully drained, it returns `T`'s zero value, matching the single-value Go-style receive rule. Use the explicit APIs when closure must remain observable:
+
+~~~vex
+let maybe: Option<T> = channel.recv()
+let result: Result<T, string> = channel.recvResult()
+let ready: Option<T> = channel.tryRecv()
+~~~
+
+## Closing and shutdown
+
+A producer should close a channel only when it has finished sending. Consumers need a clear way to stop; otherwise a worker can wait forever for data that will never arrive.
+
+`close()` rejects future sends while allowing receivers to drain values that were already accepted. `recv()` returns `None` after the closed queue is drained; `recvResult()` returns `Err`; and `tryRecv()` returns `None` when no value is immediately available.
+
+## Ownership and captures
+
+A channel does not make arbitrary captured state safe to share. Values sent through a channel and values captured by a go block still follow Vex's ownership and escape rules:
+
+~~~text
+let! queue: Channel<Message> = Channel(8)
+let message = Message.Work
 
 go {
-    ch.send(1);
-    ch.send(2);
-    ch.send(3);
-    ch.close();
-};
-
-for value in ch {
-    $println(value);
+    queue.send(message)
 }
-```
+~~~
 
-### Request fan-out
+Whether this is accepted depends on whether the captured message is moved or borrowed safely. Prefer transferring ownership of a value that will no longer be used by the sender, or define a small message type that makes the transfer explicit.
 
-Spawn multiple workers and have them all pull from the same queue.
+## A practical design
 
-### Explicit shutdown
+For a producer-consumer pipeline:
 
-Call `close()` once the producing side is done so consumers can terminate cleanly.
+1. Choose the element type and capacity.
+2. Decide who owns the sending side.
+3. Define how the consumer learns that production is complete.
+4. Decide how errors are returned, usually through a Result value or a second channel.
+5. Test the shutdown path as carefully as the successful path.
 
-## Summary
+## Select and platform status
 
-| Operation                 | Current Surface                               |
-| ------------------------- | --------------------------------------------- |
-| Create                    | `Channel.new<T>(cap)` or `Channel(cap)`       |
-| Send                      | `ch.send(value)` → `bool`                     |
-| Send with error detail    | `ch.sendResult(value)` → `Result<(), string>` |
-| Blocking receive operator | `<-ch` → `T`                                  |
-| Method receive            | `ch.recv()` → `Option<T>`                     |
-| Receive with error detail | `ch.recvResult()` → `Result<T, string>`       |
-| Non-blocking receive      | `ch.tryRecv()` → `Option<T>`                  |
-| Close                     | `ch.close()`                                  |
+Blocking `select` is event-driven: each case owns an independent waiter, one atomic winner commits the operation, and losing waiters are removed before their storage is reused. Ready cases begin at a rotating per-thread index so a permanently-ready first case cannot starve later cases. A `default` arm makes the operation non-blocking.
 
-## Guidelines
+The macOS ARM64 path is covered by channel, scheduler, close-race, payload-ownership, fairness, and repeated waiter stress tests. Linux and Windows have cross-target object and symbol validation, but native execution on those hosts remains a CI validation item. Performance figures from internal benchmarks are not API guarantees.
 
-1. Use bounded channels to express backpressure intentionally.
-2. Prefer `recv()` or `recvResult()` when you want explicit termination handling.
-3. Use `<-ch` when a simple blocking receive keeps the code clear.
-4. Close producer-owned channels exactly once.
-
-## Next Steps
+## Next steps
 
 - [Concurrency Overview](/guide/concurrency/overview)
-- [Async/Await](/guide/concurrency/async)
+- [Async](/guide/concurrency/async)
+- [Borrowing](/guide/memory/borrowing)
+- [Error Handling](/guide/error-handling)

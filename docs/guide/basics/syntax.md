@@ -1,288 +1,154 @@
-# Syntax Overview
+# Syntax
 
-Vex syntax is designed to be familiar to developers coming from C, Rust, Go, or TypeScript while introducing unique features for parallelism and safety.
+This page introduces the syntax shared by most Vex programs. It focuses on forms accepted by the current compiler. Advanced operators, compiler directives, and backend-specific constructs have their own reference pages.
 
-## Basic Structure
+## Source files and comments
 
-### Comments
+Vex source files use the .vx extension. Comments use // for a line and /* ... */ for a block. Documentation comments use /// and are consumed by the documentation tool when attached to a public item.
 
-```vex
-// Single-line comment
+~~~text
+// A line comment
+/* A block comment */
+/// Documentation for the next public item
+~~~
 
-/* 
-   Multi-line comment 
-*/
+## Statements and automatic semicolons
 
-/// Documentation comment (generates docs)
-fn documented_function() {
-    // ...
+Vex accepts explicit semicolons and also inserts statement boundaries at suitable line breaks. Use one statement per line in normal code; add a semicolon when placing multiple statements on one line or when the grammar needs an unambiguous boundary.
+
+~~~vex
+fn main(): i32 {
+    let first = 10
+    let second = 20;
+    let total = first + second
+    $println(total);
+    return total;
 }
-```
+~~~
 
-### Statements and Semicolons
+Automatic insertion is intentionally conservative around operators, delimiters, and struct literals. Do not split an expression after an infix operator just because the line is long.
 
-Vex uses **automatic semicolon insertion (ASI)** similar to Go. Semicolons are optional at line endings:
+## Declarations
 
-```vex
-let x = 10      // Semicolon inserted automatically
-let y = 20      // Semicolon inserted automatically
+The core declaration forms are:
 
-// Explicit semicolons for multiple statements on one line
-let a = 1; let b = 2
-```
+~~~text
+fn name(parameter: Type): ReturnType { ... }
+struct Name { ... }
+enum Name { ... }
+contract Name { ... }
+const NAME: Type = value
+let name = value
+let! mutable_name = value
+~~~
 
-### Blocks
-
-Blocks are delimited by curly braces `{}`:
-
-```vex
-{
-    let x = 10
-    let y = 20
-    x + y  // Last expression is the block's value
-}
-```
+Bindings are covered in [Variables](/guide/basics/variables). Functions, methods, generics, and closures are covered in [Functions](/guide/basics/functions).
 
 ## Identifiers
 
-Valid identifiers:
-- Start with a letter or underscore
-- Contain letters, digits, or underscores
-- Case-sensitive
+Identifiers are case-sensitive. They normally begin with a letter or underscore and may contain letters, digits, and underscores. Keep type names distinct from value names; Vex uses the spelling and context of a path to resolve types, functions, constructors, and fields.
 
-```vex
-let myVariable = 10
-let _private = 20
-let camelCase = 30
-let snake_case = 40
-let Type123 = 50
-```
+~~~text
+counter
+user_name
+Point3
+_temporary
+~~~
 
-### Reserved Keywords
-
-```
-fn       let      let!     const    struct   enum     contract
-if       else     elif     for      while    loop
-match    return   break    continue defer    go       async
-await    import   export   from     as       type     where
-true     false    nil      self     unsafe   extern   public
-private  readonly
-```
-
-::: warning `impl`
-`impl` is not part of the current user-facing Vex surface syntax. Older notes or experimental examples may still mention it, but stable examples should use `struct X: Contract` plus external receiver methods.
-:::
+The language reserves keywords such as fn, let, struct, enum, contract, if, else, elif, for, while, loop, match, return, break, continue, defer, go, async, await, import, export, unsafe, extern, self, true, false, and nil.
 
 ## Literals
 
-### Numeric Literals
+Vex supports integer, floating-point, boolean, string, character, and null literals.
 
-```vex
-// Integers
-let decimal = 42
-let hex = 0xFF
-let octal = 0o77
-let binary = 0b1010
+~~~vex
+fn main(): i32 {
+    let decimal: i32 = 42;
+    let hexadecimal: i32 = 0x2a;
+    let binary: i32 = 0b101010;
+    let ratio: f64 = 3.5;
+    let enabled: bool = true;
+    let greeting = "hello";
+    $println(greeting);
+    if enabled && decimal == hexadecimal + binary - 42 {
+        return 0;
+    }
+    return 1;
+}
+~~~
 
-// Unsuffixed integer literals default to i64
-let default_int = 42
+Unsuffixed integer literals default to i32 when there is no expected type. An expected parameter or return type can guide inference. Add an explicit annotation when the width is part of the program's meaning or ABI.
 
-// With type suffix
-let byte: u8 = 255u8
-let big: i64 = 1000000i64
-let huge: i128 = 999999999999i128
+Numeric suffixes and the complete primitive type list are documented in [Primitive Types](/guide/types/primitives).
 
-// Floats
-let pi = 3.14159
-let scientific = 1.5e10
-let small = 2.0e-5
+## Strings and formatting
 
-// Imaginary (for complex numbers)
-let imag = 5i
-let complex_imag = 3.14i
-```
+Normal strings use double quotes and support escape sequences. Vex also has formatted string literals with an f prefix:
 
-### String Literals
+~~~vex
+fn main(): i32 {
+    let name = "Vex";
+    let message = f"Hello, {name}!";
+    $println(message);
+    return 0;
+}
+~~~
 
-```vex
-// Regular strings
-let hello = "Hello, World!"
+Backtick template literals and compile-time rendering are separate features. Read [Template Literals](/guide/basics/template-literals) before using them in generated output; the feature is still evolving.
 
-// Escape sequences
-let escaped = "Line 1\nLine 2\tTabbed"
+## Arrays, tuples, and blocks
 
-// Formatted strings (f-strings)
-let name = "Vex"
-let greeting = f"Hello, {name}!"
+Array and tuple literals are expressions. A block can be used as the body of a control-flow construct or function; use return when the value must be returned from the enclosing function.
 
-// Multi-line strings
-let multi = "Line 1
-Line 2
-Line 3"
+~~~vex
+fn first_pair(): (i32, i32) {
+    let values: [i32; 2] = [3, 4];
+    let pair = (values[0], values[1]);
+    return pair;
+}
 
-// Compile-Time Template Engine (Backticks)
-// Zero-overhead static string rendering with {{ expression }}
-let active = true
-let template = `
-    <div>
-        <h2>Welcome, {{ name }}!</h2>
-        <p>Status: {{ active ? "Online" : "Offline" }}</p>
-    </div>
-`
-```
+fn main(): i32 {
+    let (left, right) = first_pair();
+    return left + right;
+}
+~~~
 
-### Boolean and Nil
-
-```vex
-let yes = true       // bool
-let no = false       // bool
-
-// nil represents a NULL pointer (primarily for FFI)
-// For high-level code, use Option<T> instead.
-let nothing = nil    
-```
-
-## Output Intrinsics
-
-For core language examples, prefer the builtin output intrinsics:
-
-```vex
-$print("hello")
-$println("world")
-$println(f"name = {name}")
-```
-
-Some library layers may expose helper wrappers like `println`, but `$print` / `$println` are the stable builtin forms used throughout compiler and stdlib tests.
-
-### Array Literals
-
-```vex
-let numbers: [i32; 5] = [1, 2, 3, 4, 5]
-let zeros: [f64; 3] = [0.0, 0.0, 0.0]
-let mixed = [1, 2, 3]  // Type inferred as [i32; 3]
-```
-
-### Tuple Literals
-
-```vex
-let pair = (10, "hello")
-let triple: (i32, f64, bool) = (1, 2.5, true)
-
-// Access by index
-let first = pair.0   // 10
-let second = pair.1  // "hello"
-```
+See [Arrays](/guide/types/arrays) and [Tuples](/guide/types/tuples) for indexing, repetition, and ownership behavior.
 
 ## Operators
 
-### Arithmetic Operators
+The core operator groups are:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `+` | Addition | `a + b` |
-| `-` | Subtraction | `a - b` |
-| `*` | Multiplication | `a * b` |
-| `/` | Division | `a / b` |
-| `%` | Modulo | `a % b` |
-| `**` | Power | `a ** b` |
+| Group | Operators |
+| --- | --- |
+| Arithmetic | +, -, *, /, % |
+| Comparison | ==, !=, <, <=, >, >= |
+| Boolean | &&, ||, ! |
+| Bitwise | &, |, ^, ~, <<, >> |
+| Assignment | =, +=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>= |
+| Access | ., [], function call () |
+| Range | .., ..= |
+| Error flow | ?, ??, and !> where supported by the Result/Option APIs |
 
-### Comparison Operators
+SIMD-oriented operators are documented separately because their type rules depend on arrays, masks, tensors, or SIR lowering. Do not assume that a scalar operator is automatically vectorized.
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `==` | Equal | `a == b` |
-| `!=` | Not equal | `a != b` |
-| `<` | Less than | `a < b` |
-| `<=` | Less or equal | `a <= b` |
-| `>` | Greater than | `a > b` |
-| `>=` | Greater or equal | `a >= b` |
+## Expressions and control flow
 
-### Logical Operators
+if, match, and loops can appear inside functions. if and match can produce values when every branch has a compatible result:
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `&&` | Logical AND | `a && b` |
-| `\|\|` | Logical OR | `a \|\| b` |
-| `!` | Logical NOT | `!a` |
-
-### Bitwise Operators
-
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `&` | Bitwise AND | `a & b` |
-| `\|` | Bitwise OR | `a \| b` |
-| `^` | Bitwise XOR | `a ^ b` |
-| `~` | Bitwise NOT | `~a` |
-| `<<` | Left shift | `a << n` |
-| `>>` | Right shift | `a >> n` |
-
-### SIMD & Vector Operators
-
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `<<<` | Rotate left | `a <<< n` |
-| `>>>` | Rotate right | `a >>> n` |
-| `<?` | Element-wise min | `a <? b` |
-| `>?` | Element-wise max | `a >? b` |
-| `*+` | Fused multiply-add | `a *+ b` |
-| `+\|` | Saturating add | `a +\| b` |
-| `-\|` | Saturating sub | `a -\| b` |
-
-### Assignment Operators
-
-```vex
-let! x = 10
-
-x = 20        // Simple assignment
-x += 5        // Add and assign
-x -= 3        // Subtract and assign
-x *= 2        // Multiply and assign
-x /= 4        // Divide and assign
-x %= 3        // Modulo and assign
-x &= 0xFF     // Bitwise AND and assign
-x |= 0x0F     // Bitwise OR and assign
-x ^= 0xAA     // Bitwise XOR and assign
-x <<= 2       // Left shift and assign
-x >>= 1       // Right shift and assign
-```
-
-### Other Operators
-
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `? :` | Ternary conditional | `a > b ? a : b` |
-| `?` | Error propagation | `result?` |
-| `??` | Nil coalescing | `a ?? default` |
-| `\|>` | Pipeline | `x \|> fn1 \|> fn2` |
-| `..` | Range (exclusive) | `0..10` |
-| `..=` | Range (inclusive) | `0..=10` |
-| `.` | Member access | `obj.field` |
-
-## Expressions vs Statements
-
-In Vex, most constructs are **expressions** that return values:
-
-```vex
-// if is an expression
-let max = if a > b { a } else { b }
-
-// match is an expression
-let name = match value {
-    1 => "one",
-    2 => "two",
-    _ => "other"
+~~~vex
+fn label(value: i32): i32 {
+    return match value {
+        0 => 100,
+        1 | 2 => 200,
+        _ => 300,
+    };
 }
 
-// Blocks are expressions (return last value)
-let result = {
-    let x = compute()
-    let y = transform(x)
-    x + y  // This is the block's value
+fn main(): i32 {
+    let result = if label(1) == 200 { 1 } else { 0 };
+    return result;
 }
-```
+~~~
 
-## Next Steps
-
-- [Variables & Constants](/guide/basics/variables) - Learn about variable declaration
-- [Functions](/guide/basics/functions) - Function syntax and features
-- [Control Flow](/guide/basics/control-flow) - if, match, loops
+For detailed grammar and semantics, continue with [Control Flow](/guide/basics/control-flow), [Loops](/guide/basics/loops), and [Pattern Matching](/guide/types/pattern-matching).

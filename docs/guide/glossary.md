@@ -14,9 +14,9 @@ Key terms and concepts in the Vex ecosystem.
 
 **Borrowing** -- Creating a reference (`&T` or `&T!`) to a value without taking ownership. Governed by the borrow checker's NLL (Non-Lexical Lifetime) analysis.
 
-**Box\<T\>** -- Heap-allocated smart pointer. The VUMM system infers whether it becomes Unique (single-owner), SharedRc (reference-counted, single-thread), or AtomicArc (atomic reference-counted, multi-thread).
+**Box\<T\>** -- Compiler-managed heap ownership. VUMM automatically chooses the cheapest safe representation from ownership, escape, and concurrency facts; Vex does not expose separate reference-count or thread-sharing pointer types to developers.
 
-**Builtin** -- A compiler intrinsic function or type available without imports. Prefixed with `#` (e.g., `#sizeof<T>()`).
+**Builtin** -- A compiler-provided operation or prelude item available without imports. `#Type.sizeOf<T>()` is compile-time, while `$println(value)` has runtime semantics.
 
 ## C
 
@@ -36,9 +36,9 @@ Key terms and concepts in the Vex ecosystem.
 
 **Drop** -- The RAII cleanup mechanism. When a value implementing `Drop` goes out of scope, its `drop()` method is called automatically.
 
-**DynMask** -- Runtime-sized boolean mask for SIMD operations. Fat pointer: `{ ptr: *i8, len: i64 }`.
+**DynMask** -- Runtime-sized boolean mask for SIMD operations. Fat pointer: `{ ptr: Ptr<i8>, len: i64 }`.
 
-**DynTensor\<T\>** -- Runtime-sized tensor. Fat pointer: `{ ptr: *T, len: i64 }`. Used when tensor dimensions are not known at compile time.
+**DynTensor\<T\>** -- Runtime-sized tensor. Fat pointer: `{ ptr: Ptr<T>, len: i64 }`. Used when tensor dimensions are not known at compile time.
 
 ## E
 
@@ -48,9 +48,9 @@ Key terms and concepts in the Vex ecosystem.
 
 ## F
 
-**FFI (Foreign Function Interface)** -- Mechanism for calling C functions from Vex and vice versa. Uses `extern "C"` blocks.
+**FFI (Foreign Function Interface)** -- Mechanism for calling native functions from Vex and exporting Vex functions through a stable ABI. Imports use explicit `LIBC`, `SYSTEM`, `NATIVE`, or private `VEX` providers; outbound C ABI definitions use `export "C" fn`.
 
-**Freestanding** -- Mode where the standard library is not available (`#![no_std]`). Used for embedded/bare-metal programming.
+**Freestanding** -- Build policy with no implicit libc/CRT dependency. It is selected with `--no-runtime` or `native.useSystemLibC: false`, not a `#![no_std]` attribute.
 
 **Fusion (SIR Fusion)** -- Optimization that merges multiple tensor operations into a single kernel launch, reducing GPU overhead.
 
@@ -90,7 +90,7 @@ Key terms and concepts in the Vex ecosystem.
 
 ## N
 
-**never** -- The bottom type with no possible values. Return type of diverging functions (`$panic`, `$abort`, infinite `loop`). Coerces to any type.
+**never** -- The bottom type with no possible values. Return type of diverging expressions such as `$panic` and infinite `loop`. Coerces to any type.
 
 **NLL (Non-Lexical Lifetimes)** -- The borrow checker algorithm that computes liveness based on actual usage rather than lexical scope boundaries.
 
@@ -118,7 +118,7 @@ Key terms and concepts in the Vex ecosystem.
 
 **Range** -- Iterator type for numeric sequences. Syntax: `0..10` (exclusive), `0..=10` (inclusive), `..` (full range).
 
-**RawBuf** -- Zero-cost byte-level memory accessor for low-level/stdlib code. Wraps a `ptr` with typed `load<T>(offset)` and `store<T>(offset, value)`.
+**RawBuf** -- Zero-cost byte-level memory accessor for low-level/stdlib code. Wraps a `Ptr<Opaque>` with typed `load<T>(offset)` and `store<T>(offset, value)`.
 
 **Result\<T, E\>** -- Type representing either success (`Ok(T)`) or failure (`Err(E)`). Primary error handling mechanism with `?` operator for propagation and `!>` rescue operator for fallback values.
 
@@ -130,9 +130,9 @@ Key terms and concepts in the Vex ecosystem.
 
 **SIR (Silicon IR)** -- Vex's intermediate representation for GPU and accelerator computation. Write once, target Metal/CUDA/SPIR-V/WGSL/CPU SIMD.
 
-**Span\<T\>** -- Bounds-checked fat pointer (non-owning view): `{ data: *T, length: usize }`. Safe slice-like access without ownership.
+**Span\<T\>** -- Bounds-checked fat pointer (non-owning view): `{ data: Ptr<T>, length: usize }`. Safe slice-like access without ownership.
 
-**str (VexStr)** -- Borrowed string view (16 bytes, Copy): `{ data: ptr, length: usize }`. Used for string literals and borrowing string data.
+**str (VexStr)** -- Borrowed string view (16 bytes, Copy): `{ data: Ptr<Opaque>, length: usize }`. Used for string literals and borrowing string data.
 
 **string (VexString)** -- Owned heap-allocated string (16 bytes). Supports inline storage for short strings (SSO). Omni-string compatible with UTF-8, UTF-16, Latin-1.
 
@@ -152,9 +152,9 @@ Key terms and concepts in the Vex ecosystem.
 
 ## V
 
-**Vec\<T\>** -- Dynamic array with automatic growth. Fields: `{ data: *T!, length: usize, capacity: usize }`. Primary collection type.
+**Vec\<T\>** -- Dynamic array with automatic growth. Fields: `{ data: Ptr<T!>, length: usize, capacity: usize }`. Primary collection type.
 
-**VUMM (Vex Unified Memory Model)** -- Automatic ownership strategy inference for `Box<T>`. The compiler chooses Unique (single owner), SharedRc (reference counted, single thread), or AtomicArc (atomic reference count, multi-thread) based on usage analysis.
+**VUMM (Vex Unified Memory Model)** -- Automatic ownership and sharing inference for `Box<T>`. Application code uses one ownership type; the compiler selects and optimizes the required physical representation, including thread safety, without exposing reference-count strategy or thread-tracking ceremony to developers.
 
 ## W
 

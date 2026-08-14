@@ -1,170 +1,145 @@
 # Pointers and Low-Level Memory
 
-Vex supports raw pointers, but most code should prefer the safer prelude abstractions built on top of them.
+Vex exposes raw pointers for FFI, allocators, runtimes, and memory-mapped I/O.
+Most code should use ownership, references, and bounds-aware views instead.
 
-## Choose the right tool
+## Choose the narrowest abstraction
 
-| Tool         | Use it for                                             |
-| ------------ | ------------------------------------------------------ |
-| `*T` / `*T!` | FFI boundaries and truly raw interop                   |
-| `ptr`        | Opaque untyped pointer values                          |
-| `Ptr<T>`     | Typed low-level reads, writes, offsets, allocation     |
-| `Span<T>`    | Non-owning bounds-checked views over contiguous memory |
-| `RawBuf`     | Byte-level loads and stores                            |
+| Tool | Bounds | Ownership | Use it for |
+| --- | --- | --- | --- |
+| `&T` / `&T!` | one valid value | borrowed | ordinary safe access |
+| `Span<T>` | checked extent | borrowed | contiguous views and slicing |
+| `Ptr<T>` | unchecked | non-owning raw handle | typed FFI and allocator work |
+| `RawBuf` | unchecked byte offsets | non-owning raw handle | binary layouts and runtime internals |
+| `Ptr<Opaque>` | unchecked | non-owning raw handle | opaque C object-pointer boundaries |
 
-If you are writing ordinary Vex code, start with `Span<T>` or `Ptr<T>` before reaching for raw dereference syntax.
+`Ptr<T>` and `RawBuf` do not make invalid memory safe. They make units,
+mutability, and intent explicit while keeping the generated code zero-cost.
 
-## Raw pointers exist, but they are the sharp edge
+## Raw pointer forms
 
-Common raw pointer forms:
+- `Ptr<T>` is a readable raw pointer to `T`.
+- `Ptr<T!>` carries writable-pointee capability.
+- `Ptr<Opaque>` is an opaque object pointer, similar to C's `void*`.
 
-- `*T`
-- `*T!`
-- `ptr`
+Legacy Vex spellings `*T`, `*T!`, and `ptr` are rejected by normal semantic
+analysis. Existing source can be migrated with
+`vex lint --fix --only pointer_migration`.
 
-Dereferencing raw pointers is unsafe and should stay near FFI or runtime-facing code.
+Dereference requires an unsafe boundary:
 
 ```vex
-let value = 10;
-let raw: *i32 = &value as *i32;
-
-let loaded = unsafe { *raw };
+let value = 10
+let raw = &value as Ptr<i32>
+let loaded = unsafe { raw.read() }
 ```
 
-## Prefer `Ptr<T>` for typed low-level work
+The programmer must prove non-nullness, alignment, initialization, lifetime,
+aliasing validity, and sufficient allocation extent.
 
-The prelude `Ptr<T>` wrapper is the recommended typed pointer API.
-
-```vex
-let! p = Ptr.alloc<i32>();
-p.write(42);
-
-let x = p.read();
-$println(x);
-
-p.free();
-```
-
-Useful `Ptr<T>` operations include:
-
-- `Ptr.null<T>()`
-- `Ptr.of<T>(raw)`
-- `read()` / `write(value)`
-- `readAt(index)` / `writeAt(index, value)`
-- `offset(n)` / `add(n)` / `sub(n)`
-- `asRaw()` / `asOpaque()`
-
-## Prefer `Span<T>` for contiguous views
-
-When you have a collection or buffer and only need a non-owning view, `Span<T>` is usually the right choice.
+## Typed raw access with `Ptr<T>`
 
 ```vex
-let! v = Vec.new<i32>();
-v.push(1);
-v.push(2);
-v.push(3);
+let! values = Ptr.allocN<i32>(3)
 
-let view = v.asSpan();
-let first = view.get(0);
-let tail = view.slice(1, 3);
-```
+unsafe {
+    values.writeAt(0, 10)
+    values.writeAt(1, 20)
+    values.writeAt(2, 30)
 
-`Span<T>` gives you bounds-aware access without taking ownership.
-
-## Use `RawBuf` for byte offsets
-
-`RawBuf` is the byte-level tool for serializers, parsers, encoders, and runtime-oriented memory layouts.
-
-```vex
-let buf = RawBuf.of(mem_ptr);
-let tag = buf.load<u32>(0);
-buf.store<u8>(4, 1);
-```
-
-This is the preferred way to express byte-offset memory access.
-
-## Avoid manual pointer arithmetic
-
-Do not write documentation or user code around patterns like these:
-
-```vex
-let addr = base as i64 + index * 8;
-let val = *(addr as *i32);
-```
-
-Or byte stepping through integer casts:
-
-```vex
-let next = (ptr as usize + 1) as *u8;
-```
-
-In Vex, prefer:
-
-- `Ptr<T>.offset(n)`
-- `Ptr<T>.readAt(i)` / `writeAt(i, value)`
-- `RawBuf.at(offset)`
-- `RawBuf.load<T>(offset)` / `store<T>(offset, value)`
-
-That keeps pointer math explicit, typed where possible, and aligned with the compiler/runtime model used across the prelude.
-
----
-
-## Low-Level Compiler Intrinsics
-
-For runtime development or high-performance libraries, the compiler provides direct low-level intrinsics that bypass higher-level abstractions:
-
-* **`#offset_ptr_idx(base: ptr, index: i64 [, stride: i64]) -> ptr`**
-  Computes a raw byte offset from a base pointer. If `stride` is specified, the offset is computed as `index * stride` bytes.
-* **`#ptr_write(ptr: ptr, value: T) -> ()`**
-  Writes `value` directly to the address pointed to by `ptr` using the natural alignment of `T`. If `value` was bound to a local variable, it is marked as moved and its stack memory is zeroed out to enforce memory safety.
-
-
-## Null pointers
-
-For raw pointer values, null is typically written with `0 as *T` or `0 as ptr`.
-
-For typed wrapper code, prefer:
-
-```vex
-let p = Ptr.null<i32>();
-if p.isNull() {
-    $println("null");
+    $println(values.readAt(1))
+    values.freeN(3)
 }
 ```
+
+Pointer arithmetic is element-based: `values.add(2)` advances by two `i32`
+elements, not two bytes. `readAt`, `writeAt`, `offset`, `add`, `sub`, reference
+conversion, and deallocation remain unsafe because `Ptr<T>` carries no bounds
+or lifetime.
+
+## Bounds-aware views with `Span<T>`
+
+```vex
+let view = unsafe { values.asSpan(3) }
+let first = view.get(0)
+let tail = view.slice(1, 3)
+```
+
+Constructing a span from a raw pointer is unsafe; once a valid span exists, its
+public view operations retain the extent. Prefer a container's `asSpan()` over
+constructing one from raw memory yourself.
+
+## Byte-oriented access with `RawBuf`
+
+```vex
+let! buffer = RawBuf.of(memory)
+buffer.store<u32>(0, 0x56455821)
+buffer.store<u16>(4, 1)
+
+let magic = buffer.load<u32>(0)
+let version = buffer.load<u16>(4)
+```
+
+RawBuf offsets are bytes. `loadAt<T>(index)` and `storeAt<T>(index, value)` are
+the element-stride forms. RawBuf has no bounds metadata, so the same raw-memory
+proof obligations apply.
+
+## Compiler-owned memory primitives
+
+The embedded VexArch prelude implements these APIs using a small set of
+compiler-owned runtime primitives. Those primitives are **prelude-only** and
+normal Vex source must not call them directly.
+
+This boundary is deliberate:
+
+- application code receives typed, reviewable APIs;
+- ownership-sensitive writes stay centralized;
+- the compiler can change lowering without expanding the public surface;
+- unsafe code does not become a collection of unstructured intrinsic calls.
+
+If a missing operation seems to require direct compiler access, extend the
+appropriate prelude abstraction instead of bypassing it.
 
 ## FFI example
 
 ```vex
-extern "C" {
-    fn malloc(size: i64): ptr;
-    fn free(p: ptr);
+extern "LIBC" {
+    fn malloc(size: usize): Ptr<Opaque>
+    fn free(memory: Ptr<Opaque>)
 }
 
 fn main(): i32 {
-    let raw = malloc(#sizeof<i32>() as i64);
-    let! p = Ptr.of<i32>(raw as *i32);
+    let raw = unsafe { malloc(#Type.sizeOf<i32>() as usize) }
+    let! value = raw as Ptr<i32!>
 
-    p.write(42);
-    $println(p.read());
-
-    free(raw);
-    return 0;
+    unsafe {
+        value.write(42)
+        $println(value.read())
+        free(value.asOpaque())
+    }
+    return 0
 }
 ```
 
-This keeps the raw FFI call at the edge and uses `Ptr<T>` for the typed operations.
+Do not call `Ptr.free()` for memory owned by a foreign allocator unless that
+allocator is explicitly compatible with Vex's allocator. The allocator that
+creates a block must also destroy it.
 
-## Practical rule
+## Practical rules
 
-1. Use references for ordinary safe code.
-2. Use `Span<T>` for views.
-3. Use `Ptr<T>` for typed low-level access.
-4. Use `RawBuf` for byte-level layouts.
-5. Use raw `*T` and `ptr` only when you are truly at the unsafe boundary.
+1. Use references and owned containers in ordinary code.
+2. Use `Span<T>` when an extent is known.
+3. Use `Ptr<T>` for typed raw handles and element offsets.
+4. Use `RawBuf` for byte layouts.
+5. Keep raw pointers and allocator pairing at the boundary.
+6. Never manufacture addresses through integer arithmetic when a typed prelude
+   operation expresses the same intent.
 
 ## See also
 
-- [`Ptr<T>`](../memory/ptr-t)
-- [`Span<T>`](../memory/span-t)
-- [RawBuf](../memory/rawbuf)
-- [FFI](../ffi)
+- [`Ptr<T>`](/guide/memory/ptr-t)
+- [`Span<T>`](/guide/memory/span-t)
+- [RawBuf](/guide/memory/rawbuf)
+- [Memory Prelude](/guide/memory/mem-prelude)
+- [FFI](/guide/ffi)
+- [Unsafe](/guide/advanced/unsafe)

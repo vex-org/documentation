@@ -1,21 +1,21 @@
 # SIR Backends -- Complete Reference
 
-The Silicon IR (SIR) pipeline can target multiple GPU and accelerator backends from a single `graph fn` definition. This page catalogs all supported backends and their characteristics.
+The Silicon IR (SIR) pipeline is designed to target multiple GPU and accelerator backends from a single `graph fn` definition. This page catalogs the intended backend surface; availability and runtime completeness must be checked for the selected compiler revision and target.
 
 ## Backend Overview
 
 | Backend      | Target                       | Status     | Best For                              |
 | ------------ | ---------------------------- | ---------- | ------------------------------------- |
-| **Metal**    | Apple GPUs (M1-M4, A-series) | Production | macOS/iOS GPU compute                 |
-| **CUDA**     | NVIDIA GPUs                  | Production | HPC, ML training, NVIDIA hardware     |
-| **ROCm**     | AMD GPUs                     | Production | AMD GPU compute                       |
-| **SPIR-V**   | Vulkan/OpenCL                | Production | Universal GPU IR, cross-vendor        |
-| **WGSL**     | WebGPU (browser)             | Production | Web deployment, browser-based compute |
-| **Vulkan**   | Cross-platform GPU           | Beta       | Direct Vulkan compute                 |
-| **OpenCL**   | Cross-platform               | Stable     | Legacy GPU support                    |
-| **OpenVINO** | Intel accelerators           | Beta       | Intel CPU/GPU/VPU inference           |
-| **CoreML**   | Apple Neural Engine          | Beta       | On-device ML inference (Apple)        |
-| **CPU SIMD** | x86/ARM CPU                  | Production | Fallback, CPU vectorization           |
+| **Metal**    | Apple GPUs (M1-M4, A-series) | Experimental | macOS/iOS GPU compute                 |
+| **CUDA**     | NVIDIA GPUs                  | Experimental | HPC, ML training, NVIDIA hardware     |
+| **ROCm**     | AMD GPUs                     | Experimental | AMD GPU compute                       |
+| **SPIR-V**   | Vulkan/OpenCL                | Experimental | Universal GPU IR, cross-vendor        |
+| **WGSL**     | WebGPU (browser)             | Experimental | Web deployment, browser-based compute |
+| **Vulkan**   | Cross-platform GPU           | Experimental | Direct Vulkan compute                 |
+| **OpenCL**   | Cross-platform               | Experimental | Legacy GPU support                    |
+| **OpenVINO** | Intel accelerators           | Experimental | Intel CPU/GPU/VPU inference           |
+| **CoreML**   | Apple Neural Engine          | Experimental | On-device ML inference (Apple)        |
+| **CPU SIMD** | x86/ARM CPU                  | Experimental | Fallback, CPU vectorization           |
 
 ## Metal Backend
 
@@ -189,31 +189,17 @@ launch myKernel(data, &!result) with threads: 1024
 // Priority: Metal > CUDA > ROCm > Vulkan > SPIR-V > OpenCL > CPU SIMD
 ```
 
-### Explicit Selection
+### Selection and capability checks
 
-```vex
-// Force a specific backend
-#[backend(cuda)]
-launch myKernel(data, &!result) with threads: 1024
+Backend selection belongs to the SIR runtime/compiler dispatch policy. Vex does
+not expose a stable `#[backend(...)]` source attribute, and GPU availability is
+not a `#Target` property: a binary target and the accelerator present at runtime
+are different facts.
 
-#[backend(metal)]
-launch myKernel(data, &!result) with threads: 1024
-
-#[backend(cpu)]
-launch myKernel(data, &!result) with threads: 1024
-```
-
-### Feature Detection
-
-```vex
-#if target_feature == "cuda"
-    // CUDA-specific code path
-#elif target_feature == "metal"
-    // Metal-specific code path
-#else
-    // CPU fallback
-#endif
-```
+Keep graph code backend-independent. When an application must make a capability
+decision, use the relevant runtime accelerator API and retain a CPU/SIMD
+fallback. Use `#Target.os()` or `#Target.arch()` only for genuine compile-time
+target differences.
 
 ## SIR Optimization Passes
 
@@ -234,7 +220,7 @@ All backends benefit from SIR-level optimizations before backend-specific codege
 ## Best Practices
 
 1. Write `graph fn` once, let SIR handle the backend -- avoid backend-specific code.
-2. Use `#[backend(...)]` only when you need backend-specific optimizations.
+2. Keep backend selection in runtime/compiler policy rather than source attributes.
 3. Profile on target hardware -- workgroup sizes and shared memory limits vary per backend.
 4. Prefer `threadgroup` memory for shared data within workgroups (available on all backends).
 5. Test on CPU SIMD fallback first, then validate on GPU hardware.

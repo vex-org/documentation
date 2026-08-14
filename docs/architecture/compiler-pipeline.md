@@ -9,7 +9,10 @@ source (.vx)
   -> lexer
   -> parser / syntax tree
   -> HIR lowering
+  -> comptime generator discovery and canonical CTFE
+  -> sealed source/generated HIR snapshot
   -> type inference + borrow analysis + semantic checks
+  -> typed known/residual staging
   -> codegen selection
        -> LLVM/native path
        -> SIR graph path
@@ -42,6 +45,23 @@ Key responsibilities include:
 - contract-related checks
 - borrow and move analysis
 - enum, `Option`, and `Result` behavior
+
+## Comptime and expansion
+
+Canonical CTFE runs on HIR before backend codegen. It evaluates strict `#`
+boundaries and eligible ordinary `const fn` calls, expands authorized typed
+`DeclSet` module generators, and produces one sealed source/generated semantic
+snapshot for compiler, diagnostics, lint, and LSP.
+
+Staging classifies work as known, typed residual HIR, or an error. Runtime
+effects and runtime-dependent values remain in the ordinary pipeline; strict
+compile-time consumers never receive a runtime fallback.
+
+Generated declarations are not printed or reparsed and do not cross a separate
+bitcode boundary. Their typed HIR remains visible to monomorphization, VUMM,
+fusion, ABI lowering, and dead-code elimination.
+
+See [Comptime Pipeline](/architecture/comptime-pipeline) for the full flow.
 
 ## Memory-Safety Analysis
 
@@ -82,12 +102,14 @@ That means the operational pipeline is often:
 ```text
 vex run / vex compile / vex test
   -> compiler driver
-  -> runtime + linker integration
+  -> embedded VRI selection + semantic fusion
+  -> explicit target/native link plan
   -> execution or test reporting
 ```
 
 ## Related Pages
 
 - [SIR & Backends](/architecture/sir-and-backends)
+- [Comptime Pipeline](/architecture/comptime-pipeline)
 - [Runtime & Tooling](/architecture/runtime-and-tooling)
 - [CLI Reference](/references/vex-cli-reference)

@@ -12,7 +12,7 @@
 
 ## Constants
 
-### <a id="NANOSECOND"></a>`NANOSECOND` `🔓 export`
+### <a id="NANOSECOND"></a>`NANOSECOND` ` export`
 
 &gt; 📄 `constants.vx` L33-33
 
@@ -24,7 +24,7 @@ export const NANOSECOND: i64=1;
 
 ---
 
-### <a id="MICROSECOND"></a>`MICROSECOND` `🔓 export`
+### <a id="MICROSECOND"></a>`MICROSECOND` ` export`
 
 &gt; 📄 `constants.vx` L34-34
 
@@ -36,7 +36,7 @@ export const MICROSECOND: i64=1000 * NANOSECOND;
 
 ---
 
-### <a id="MILLISECOND"></a>`MILLISECOND` `🔓 export`
+### <a id="MILLISECOND"></a>`MILLISECOND` ` export`
 
 &gt; 📄 `constants.vx` L35-35
 
@@ -48,7 +48,7 @@ export const MILLISECOND: i64=1000 * MICROSECOND;
 
 ---
 
-### <a id="SECOND"></a>`SECOND` `🔓 export`
+### <a id="SECOND"></a>`SECOND` ` export`
 
 &gt; 📄 `constants.vx` L36-36
 
@@ -60,7 +60,7 @@ export const SECOND: i64=1000 * MILLISECOND;
 
 ---
 
-### <a id="MINUTE"></a>`MINUTE` `🔓 export`
+### <a id="MINUTE"></a>`MINUTE` ` export`
 
 &gt; 📄 `constants.vx` L37-37
 
@@ -72,7 +72,7 @@ export const MINUTE: i64=60 * SECOND;
 
 ---
 
-### <a id="HOUR"></a>`HOUR` `🔓 export`
+### <a id="HOUR"></a>`HOUR` ` export`
 
 &gt; 📄 `constants.vx` L38-38
 
@@ -84,7 +84,7 @@ export const HOUR: i64=60 * MINUTE;
 
 ---
 
-### <a id="DAY"></a>`DAY` `🔓 export`
+### <a id="DAY"></a>`DAY` ` export`
 
 &gt; 📄 `constants.vx` L39-39
 
@@ -96,7 +96,7 @@ export const DAY: i64=24 * HOUR;
 
 ---
 
-### <a id="RFC3339"></a>`RFC3339` `🔓 export`
+### <a id="RFC3339"></a>`RFC3339` ` export`
 
 &gt; 📄 `constants.vx` L42-42
 
@@ -110,7 +110,7 @@ export const RFC3339: string="2006-01-02T15:04:05Z07:00";
 
 ## Structs
 
-### <a id="Location"></a>`Location` `🔓 export`
+### <a id="Location"></a>`Location` ` export`
 
 &gt; 📄 `location.vx` L13-23
 
@@ -145,7 +145,7 @@ export struct Location
 
 ---
 
-### <a id="ScanResult"></a>`ScanResult` `🔓 export`
+### <a id="ScanResult"></a>`ScanResult` ` export`
 
 &gt; 📄 `parse.vx` L7-11
 
@@ -157,12 +157,12 @@ export struct ScanResult
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `i32` | 🔓 public |  |
-| `count` | `i32` | 🔓 public |  |
+| `value` | `i32` |  public |  |
+| `count` | `i32` |  public |  |
 
 ---
 
-### <a id="ScanResult64"></a>`ScanResult64` `🔓 export`
+### <a id="ScanResult64"></a>`ScanResult64` ` export`
 
 &gt; 📄 `parse.vx` L12-16
 
@@ -174,12 +174,12 @@ export struct ScanResult64
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `i64` | 🔓 public |  |
-| `count` | `i32` | 🔓 public |  |
+| `value` | `i64` |  public |  |
+| `count` | `i32` |  public |  |
 
 ---
 
-### <a id="Timer"></a>`Timer` `🔓 export`
+### <a id="Timer"></a>`Timer` ` export`
 
 &gt; 📄 `helpers.vx` L124-129
 
@@ -191,9 +191,9 @@ export struct Timer
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `deadline_ns` | `u64` | 🔓 public |  |
-| `fired` | `bool` | 🔓 public |  |
-| `active` | `bool` | 🔓 public |  |
+| `deadline_ns` | `u64` |  public |  |
+| `fired` | `bool` |  public |  |
+| `active` | `bool` |  public |  |
 
 **Methods:**
 
@@ -208,7 +208,7 @@ export struct Timer
 
 ---
 
-### <a id="Ticker"></a>`Ticker` `🔓 export`
+### <a id="Ticker"></a>`Ticker` ` export`
 
 &gt; 📄 `helpers.vx` L210-215
 
@@ -220,9 +220,9 @@ export struct Ticker
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `interval_ns` | `u64` | 🔓 public |  |
-| `last_tick_ns` | `u64` | 🔓 public |  |
-| `active` | `bool` | 🔓 public |  |
+| `interval_ns` | `u64` |  public |  |
+| `last_tick_ns` | `u64` |  public |  |
+| `active` | `bool` |  public |  |
 
 **Methods:**
 
@@ -253,7 +253,7 @@ struct DateParts
 
 ---
 
-### <a id="DateTimeParts"></a>`DateTimeParts` `🔓 export`
+### <a id="DateTimeParts"></a>`DateTimeParts` ` export`
 
 &gt; 📄 `time_type.vx` L35-44
 
@@ -287,7 +287,7 @@ export struct DateTimeParts
 
 ---
 
-### <a id="Time"></a>`Time` `🔓 export`
+### <a id="Time"></a>`Time` ` export`
 
 &gt; 📄 `time_type.vx` L85-88
 
@@ -301,7 +301,7 @@ export struct Time
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `ns` | `i64` | 🔓 public |  |
+| `ns` | `i64` |  public |  |
 
 **Methods:**
 
@@ -331,7 +331,7 @@ export struct Time
 
 ---
 
-### <a id="Duration"></a>`Duration` `🔓 export`
+### <a id="Duration"></a>`Duration` ` export`
 
 &gt; 📄 `duration.vx` L4-7
 
@@ -345,7 +345,7 @@ export struct Duration
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `ns` | `i64` | 🔓 public |  |
+| `ns` | `i64` |  public |  |
 
 **Methods:**
 
@@ -379,7 +379,7 @@ export struct Duration
 
 ## Enums
 
-### <a id="Month"></a>`Month` `🔓 export`
+### <a id="Month"></a>`Month` ` export`
 
 &gt; 📄 `constants.vx` L5-18
 
@@ -404,7 +404,7 @@ export enum Month
 
 ---
 
-### <a id="Weekday"></a>`Weekday` `🔓 export`
+### <a id="Weekday"></a>`Weekday` ` export`
 
 &gt; 📄 `constants.vx` L20-28
 
@@ -426,7 +426,7 @@ export enum Weekday
 
 ## Functions
 
-### <a id="UTC"></a>`UTC` `🔓 export`
+### <a id="UTC"></a>`UTC` ` export`
 
 &gt; 📄 `location.vx` L62-64
 
@@ -438,7 +438,7 @@ export fn UTC(): Location
 
 ---
 
-### <a id="Local"></a>`Local` `🔓 export`
+### <a id="Local"></a>`Local` ` export`
 
 &gt; 📄 `location.vx` L66-69
 
@@ -450,7 +450,7 @@ export fn Local(): Location
 
 ---
 
-### <a id="fixedZone"></a>`fixedZone` `🔓 export`
+### <a id="fixedZone"></a>`fixedZone` ` export`
 
 &gt; 📄 `location.vx` L71-73
 
@@ -469,7 +469,7 @@ export fn fixedZone(name: string, offsetSeconds: i64): Location
 
 ---
 
-### <a id="loadLocation"></a>`loadLocation` `🔓 export`
+### <a id="loadLocation"></a>`loadLocation` ` export`
 
 &gt; 📄 `location.vx` L82-98
 
@@ -487,7 +487,7 @@ export fn loadLocation(name: string): Result<Location, string>
 
 ---
 
-### <a id="EST"></a>`EST` `🔓 export`
+### <a id="EST"></a>`EST` ` export`
 
 &gt; 📄 `location.vx` L160-160
 
@@ -499,7 +499,7 @@ export fn EST(): Location
 
 ---
 
-### <a id="PST"></a>`PST` `🔓 export`
+### <a id="PST"></a>`PST` ` export`
 
 &gt; 📄 `location.vx` L161-161
 
@@ -511,7 +511,7 @@ export fn PST(): Location
 
 ---
 
-### <a id="CET"></a>`CET` `🔓 export`
+### <a id="CET"></a>`CET` ` export`
 
 &gt; 📄 `location.vx` L162-162
 
@@ -523,7 +523,7 @@ export fn CET(): Location
 
 ---
 
-### <a id="TRT"></a>`TRT` `🔓 export`
+### <a id="TRT"></a>`TRT` ` export`
 
 &gt; 📄 `location.vx` L163-163
 
@@ -535,7 +535,7 @@ export fn TRT(): Location
 
 ---
 
-### <a id="JST"></a>`JST` `🔓 export`
+### <a id="JST"></a>`JST` ` export`
 
 &gt; 📄 `location.vx` L164-164
 
@@ -647,7 +647,7 @@ fn parts_to_ns(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64): i64
 
 ---
 
-### <a id="parse"></a>`parse` `🔓 export`
+### <a id="parse"></a>`parse` ` export`
 
 &gt; 📄 `parse.vx` L81-130
 
@@ -666,7 +666,7 @@ export fn parse(layout: str, input: str): Result<Time, string>
 
 ---
 
-### <a id="parse_rfc3339"></a>`parse_rfc3339` `🔓 export`
+### <a id="parse_rfc3339"></a>`parse_rfc3339` ` export`
 
 &gt; 📄 `parse.vx` L132-166
 
@@ -684,7 +684,7 @@ export fn parse_rfc3339(input: str): Result<Time, string>
 
 ---
 
-### <a id="parse_duration"></a>`parse_duration` `🔓 export`
+### <a id="parse_duration"></a>`parse_duration` ` export`
 
 &gt; 📄 `parse.vx` L168-196
 
@@ -702,7 +702,7 @@ export fn parse_duration(input: str): Result<Duration, string>
 
 ---
 
-### <a id="now"></a>`now` `🔓 export`
+### <a id="now"></a>`now` ` export`
 
 &gt; 📄 `helpers.vx` L12-14
 
@@ -714,7 +714,7 @@ export fn now(): Time
 
 ---
 
-### <a id="sleep"></a>`sleep` `🔓 export`
+### <a id="sleep"></a>`sleep` ` export`
 
 &gt; 📄 `helpers.vx` L17-21
 
@@ -730,7 +730,7 @@ export fn sleep(d: i64)
 
 ---
 
-### <a id="monotonicNow"></a>`monotonicNow` `🔓 export`
+### <a id="monotonicNow"></a>`monotonicNow` ` export`
 
 &gt; 📄 `helpers.vx` L24-27
 
@@ -742,7 +742,7 @@ export fn monotonicNow(): u64
 
 ---
 
-### <a id="sleepDuration"></a>`sleepDuration` `🔓 export`
+### <a id="sleepDuration"></a>`sleepDuration` ` export`
 
 &gt; 📄 `helpers.vx` L30-34
 
@@ -758,7 +758,7 @@ export fn sleepDuration(d: Duration)
 
 ---
 
-### <a id="getLocalOffset"></a>`getLocalOffset` `🔓 export`
+### <a id="getLocalOffset"></a>`getLocalOffset` ` export`
 
 &gt; 📄 `helpers.vx` L37-39
 
@@ -770,7 +770,7 @@ export fn getLocalOffset(): i64
 
 ---
 
-### <a id="since"></a>`since` `🔓 export`
+### <a id="since"></a>`since` ` export`
 
 &gt; 📄 `helpers.vx` L49-52
 
@@ -788,7 +788,7 @@ export fn since(t: Time): Duration
 
 ---
 
-### <a id="until"></a>`until` `🔓 export`
+### <a id="until"></a>`until` ` export`
 
 &gt; 📄 `helpers.vx` L55-58
 
@@ -806,7 +806,7 @@ export fn until(t: Time): Duration
 
 ---
 
-### <a id="truncate"></a>`truncate` `🔓 export`
+### <a id="truncate"></a>`truncate` ` export`
 
 &gt; 📄 `helpers.vx` L61-65
 
@@ -825,7 +825,7 @@ export fn truncate(t: Time, d: Duration): Time
 
 ---
 
-### <a id="round"></a>`round` `🔓 export`
+### <a id="round"></a>`round` ` export`
 
 &gt; 📄 `helpers.vx` L68-75
 
@@ -844,7 +844,7 @@ export fn round(t: Time, d: Duration): Time
 
 ---
 
-### <a id="unix"></a>`unix` `🔓 export`
+### <a id="unix"></a>`unix` ` export`
 
 &gt; 📄 `helpers.vx` L78-80
 
@@ -863,7 +863,7 @@ export fn unix(sec: i64, nsec: i64): Time
 
 ---
 
-### <a id="unix_seconds"></a>`unix_seconds` `🔓 export`
+### <a id="unix_seconds"></a>`unix_seconds` ` export`
 
 &gt; 📄 `helpers.vx` L83-83
 
@@ -881,7 +881,7 @@ export fn unix_seconds(t: Time): i64
 
 ---
 
-### <a id="unix_nanosecond"></a>`unix_nanosecond` `🔓 export`
+### <a id="unix_nanosecond"></a>`unix_nanosecond` ` export`
 
 &gt; 📄 `helpers.vx` L84-84
 
@@ -899,7 +899,7 @@ export fn unix_nanosecond(t: Time): i64
 
 ---
 
-### <a id="unix_milli"></a>`unix_milli` `🔓 export`
+### <a id="unix_milli"></a>`unix_milli` ` export`
 
 &gt; 📄 `helpers.vx` L85-85
 
@@ -917,7 +917,7 @@ export fn unix_milli(t: Time): i64
 
 ---
 
-### <a id="unix_micro"></a>`unix_micro` `🔓 export`
+### <a id="unix_micro"></a>`unix_micro` ` export`
 
 &gt; 📄 `helpers.vx` L86-86
 
@@ -935,7 +935,7 @@ export fn unix_micro(t: Time): i64
 
 ---
 
-### <a id="compare"></a>`compare` `🔓 export`
+### <a id="compare"></a>`compare` ` export`
 
 &gt; 📄 `helpers.vx` L89-93
 
@@ -954,7 +954,7 @@ export fn compare(t1: Time, t2: Time): i32
 
 ---
 
-### <a id="before"></a>`before` `🔓 export`
+### <a id="before"></a>`before` ` export`
 
 &gt; 📄 `helpers.vx` L95-95
 
@@ -973,7 +973,7 @@ export fn before(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="after"></a>`after` `🔓 export`
+### <a id="after"></a>`after` ` export`
 
 &gt; 📄 `helpers.vx` L96-96
 
@@ -992,7 +992,7 @@ export fn after(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="equal"></a>`equal` `🔓 export`
+### <a id="equal"></a>`equal` ` export`
 
 &gt; 📄 `helpers.vx` L97-97
 
@@ -1011,7 +1011,7 @@ export fn equal(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="after"></a>`after` `🔓 export`
+### <a id="after"></a>`after` ` export`
 
 &gt; 📄 `helpers.vx` L100-107
 
@@ -1029,7 +1029,7 @@ export fn after(d: Duration): Channel<Time>
 
 ---
 
-### <a id="weekday"></a>`weekday` `🔓 export`
+### <a id="weekday"></a>`weekday` ` export`
 
 &gt; 📄 `helpers.vx` L110-110
 
@@ -1047,7 +1047,7 @@ export fn weekday(t: Time): Weekday
 
 ---
 
-### <a id="date"></a>`date` `🔓 export`
+### <a id="date"></a>`date` ` export`
 
 &gt; 📄 `helpers.vx` L112-114
 
@@ -1065,7 +1065,7 @@ export fn date(t: Time): (i32, Month, i32)
 
 ---
 
-### <a id="clock"></a>`clock` `🔓 export`
+### <a id="clock"></a>`clock` ` export`
 
 &gt; 📄 `helpers.vx` L116-118
 
@@ -1101,7 +1101,7 @@ fn normalized_delay_ns(d: Duration): u64
 
 ---
 
-### <a id="newTimer"></a>`newTimer` `🔓 export`
+### <a id="newTimer"></a>`newTimer` ` export`
 
 &gt; 📄 `helpers.vx` L148-150
 
@@ -1119,7 +1119,7 @@ export fn newTimer(d: Duration): Timer
 
 ---
 
-### <a id="newTicker"></a>`newTicker` `🔓 export`
+### <a id="newTicker"></a>`newTicker` ` export`
 
 &gt; 📄 `helpers.vx` L228-230
 
@@ -1137,7 +1137,7 @@ export fn newTicker(d: Duration): Ticker
 
 ---
 
-### <a id="afterDuration"></a>`afterDuration` `🔓 export`
+### <a id="afterDuration"></a>`afterDuration` ` export`
 
 &gt; 📄 `helpers.vx` L257-260
 
@@ -1191,7 +1191,7 @@ fn tz_pad4(n: i64): string
 
 ---
 
-### <a id="formatInLocation"></a>`formatInLocation` `🔓 export`
+### <a id="formatInLocation"></a>`formatInLocation` ` export`
 
 &gt; 📄 `helpers.vx` L280-283
 
@@ -1211,7 +1211,7 @@ export fn formatInLocation(t: Time, layout: str, loc: Location): string
 
 ---
 
-### <a id="toRFC3339InLocation"></a>`toRFC3339InLocation` `🔓 export`
+### <a id="toRFC3339InLocation"></a>`toRFC3339InLocation` ` export`
 
 &gt; 📄 `helpers.vx` L286-311
 
@@ -1230,7 +1230,7 @@ export fn toRFC3339InLocation(t: Time, loc: Location): string
 
 ---
 
-### <a id="inLocation"></a>`inLocation` `🔓 export`
+### <a id="inLocation"></a>`inLocation` ` export`
 
 &gt; 📄 `helpers.vx` L315-318
 
@@ -1249,7 +1249,7 @@ export fn inLocation(t: Time, loc: Location): Time
 
 ---
 
-### <a id="isDST"></a>`isDST` `🔓 export`
+### <a id="isDST"></a>`isDST` ` export`
 
 &gt; 📄 `helpers.vx` L321-323
 
@@ -1268,7 +1268,7 @@ export fn isDST(t: Time, loc: Location): bool
 
 ---
 
-### <a id="days_in_month"></a>`days_in_month` `🔓 export`
+### <a id="days_in_month"></a>`days_in_month` ` export`
 
 &gt; 📄 `time_type.vx` L13-21
 
@@ -1287,7 +1287,7 @@ export fn days_in_month(m: i32, year: i32): i32
 
 ---
 
-### <a id="ns_to_datetime"></a>`ns_to_datetime` `🔓 export`
+### <a id="ns_to_datetime"></a>`ns_to_datetime` ` export`
 
 &gt; 📄 `time_type.vx` L54-79
 
@@ -1305,7 +1305,7 @@ export fn ns_to_datetime(ns: i64): DateTimeParts
 
 ---
 
-### <a id="add"></a>`add` `🔓 export`
+### <a id="add"></a>`add` ` export`
 
 &gt; 📄 `time_type.vx` L149-151
 
@@ -1324,7 +1324,7 @@ export fn add(t: Time, d: Duration): Time
 
 ---
 
-### <a id="sub"></a>`sub` `🔓 export`
+### <a id="sub"></a>`sub` ` export`
 
 &gt; 📄 `time_type.vx` L153-155
 
@@ -1379,7 +1379,7 @@ fn pad4(n: i64): string
 
 ---
 
-### <a id="abs_date"></a>`abs_date` `🔓 export`
+### <a id="abs_date"></a>`abs_date` ` export`
 
 &gt; 📄 `conversations.vx` L5-24
 
@@ -1397,7 +1397,7 @@ export fn abs_date(abs_sec: i64): DateParts
 
 ---
 
-### <a id="is_leap"></a>`is_leap` `🔓 export`
+### <a id="is_leap"></a>`is_leap` ` export`
 
 &gt; 📄 `conversations.vx` L30-32
 
@@ -1415,7 +1415,7 @@ export fn is_leap(year: i32): bool
 
 ---
 
-### <a id="nsToDateTime"></a>`nsToDateTime` `🔓 export`
+### <a id="nsToDateTime"></a>`nsToDateTime` ` export`
 
 &gt; 📄 `conversations.vx` L36-69
 
@@ -1454,7 +1454,7 @@ Pad integer with zeros to width
 
 ---
 
-### <a id="format_layout"></a>`format_layout` `🔓 export`
+### <a id="format_layout"></a>`format_layout` ` export`
 
 &gt; 📄 `format.vxc` L29-107
 
@@ -1483,7 +1483,7 @@ Supported tokens: YYYY, MM, DD, HH, mm, ss, SSS, Z
 
 ---
 
-### <a id="utc"></a>`utc` `🔓 export`
+### <a id="utc"></a>`utc` ` export`
 
 &gt; 📄 `lib.vx` L6-6
 
@@ -1495,7 +1495,7 @@ export fn utc(): Location
 
 ---
 
-### <a id="local"></a>`local` `🔓 export`
+### <a id="local"></a>`local` ` export`
 
 &gt; 📄 `lib.vx` L7-7
 
@@ -1507,7 +1507,7 @@ export fn local(): Location
 
 ---
 
-### <a id="fixed_zone"></a>`fixed_zone` `🔓 export`
+### <a id="fixed_zone"></a>`fixed_zone` ` export`
 
 &gt; 📄 `lib.vx` L8-8
 
@@ -1526,7 +1526,7 @@ export fn fixed_zone(name: string, offset: i32): Location
 
 ---
 
-### <a id="load_location"></a>`load_location` `🔓 export`
+### <a id="load_location"></a>`load_location` ` export`
 
 &gt; 📄 `lib.vx` L9-9
 
@@ -1544,7 +1544,7 @@ export fn load_location(name: string): Result<Location, string>
 
 ---
 
-### <a id="seconds"></a>`seconds` `🔓 export`
+### <a id="seconds"></a>`seconds` ` export`
 
 &gt; 📄 `duration.vx` L38-40
 
@@ -1562,7 +1562,7 @@ export fn seconds(s: i64): Duration
 
 ---
 
-### <a id="milliseconds"></a>`milliseconds` `🔓 export`
+### <a id="milliseconds"></a>`milliseconds` ` export`
 
 &gt; 📄 `duration.vx` L42-44
 
@@ -1580,7 +1580,7 @@ export fn milliseconds(ms: i64): Duration
 
 ---
 
-### <a id="microseconds"></a>`microseconds` `🔓 export`
+### <a id="microseconds"></a>`microseconds` ` export`
 
 &gt; 📄 `duration.vx` L46-48
 
@@ -1598,7 +1598,7 @@ export fn microseconds(us: i64): Duration
 
 ---
 
-### <a id="nanoseconds"></a>`nanoseconds` `🔓 export`
+### <a id="nanoseconds"></a>`nanoseconds` ` export`
 
 &gt; 📄 `duration.vx` L50-52
 
@@ -1616,7 +1616,7 @@ export fn nanoseconds(ns: i64): Duration
 
 ---
 
-### <a id="minutes"></a>`minutes` `🔓 export`
+### <a id="minutes"></a>`minutes` ` export`
 
 &gt; 📄 `duration.vx` L54-56
 
@@ -1634,7 +1634,7 @@ export fn minutes(m: i64): Duration
 
 ---
 
-### <a id="hours"></a>`hours` `🔓 export`
+### <a id="hours"></a>`hours` ` export`
 
 &gt; 📄 `duration.vx` L58-60
 

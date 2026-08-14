@@ -1,155 +1,103 @@
 # Concurrency Overview
 
-Vex currently exposes two complementary concurrency models:
+Vex has two concurrency surfaces:
 
-1. **`go {}` goroutines** for parallel/background work
-2. **`async fn` + prefix `await`** for coroutine-style suspension
+1. go blocks for detached or background work;
+2. async functions and await for suspension-based workflows.
 
-## Quick Comparison
+Channels provide typed communication between tasks. The current runtime uses bounded MPMC queues, cooperative blocking progress, and event-driven multi-channel `select`; native Linux and Windows execution remains part of the platform validation matrix.
 
-| Model | Syntax | Good For |
-|-------|--------|----------|
-| Goroutines | `go { }` | CPU work, background tasks |
-| Async/Await | `async fn`, `await` | suspension points, async workflows |
-| Channels | `Channel<T>`, `<-ch` | communication between tasks |
+## Choose a model
 
-## Goroutines
+| Model | Use it for | Main syntax |
+| --- | --- | --- |
+| go block | Scheduling a block of work | go { ... } |
+| async function | A function that may suspend | async fn |
+| await | Waiting for an async result | await expression |
+| channel | Typed communication and backpressure | `Channel<T>`, `<-channel` |
 
-```vex
+Start with synchronous code. Add concurrency when the ownership boundary and shutdown behavior are clear.
+
+## go blocks
+
+A go block schedules its body independently of the current statement sequence:
+
+~~~vex
 fn main(): i32 {
     go {
-        $println("Hello from goroutine!")
-        do_heavy_work()
+        $println("background work");
     };
-
-    $println("Main continues immediately")
-    return 0
+    $println("main continues");
+    return 0;
 }
-```
+~~~
+
+The block does not make a synchronous function return a value. If the caller needs a result, use a channel or an explicit task handle provided by the relevant runtime API.
+
+Captured values still go through ownership and escape analysis. A borrowed local cannot be moved into a detached block if that would leave a dangling reference or create an unsafe shared mutation.
 
 ## Channels
 
-```vex
+Channels are typed queues. A bounded channel makes the producer and consumer relationship explicit:
+
+~~~vex
 fn main(): i32 {
-    let! ch: Channel<i64> = Channel.new(3)
+    let! channel: Channel<i64> = Channel(1);
 
     go {
-        ch.send(42)
-        ch.send(100)
-        ch.send(999)
+        channel.send(42);
     };
 
-    let val1 = <-ch
-    let val2 = <-ch
-    let val3 = <-ch
-
-    $println(f"Received: {val1}, {val2}, {val3}")
-    return 0
+    let value = <-channel;
+    $println(value);
+    return 0;
 }
-```
+~~~
 
-### Important Channel API Notes
+The receive operator is blocking and returns the element type directly. A drained closed channel produces that type's zero value. Use `recv()`, `recvResult()`, or `tryRecv()` when the caller must distinguish closure or non-readiness. See [Channels](/guide/concurrency/channels).
 
-```vex
-let! ch: Channel<string> = Channel.new(10)
+## async and await
 
-ch.send("message")        // returns bool
+An async function can be awaited from another async context:
 
-let msg = <-ch            // blocking receive operator, returns T
-
-match ch.recv() {         // method form returns Option<T>
-    Some(v) => process(v),
-    None => $println("channel closed or empty")
+~~~vex
+async fn fetch_value(): i32 {
+    return 42;
 }
 
-if let Some(msg) = ch.tryRecv() {
-    process(msg)
+async fn main(): i32 {
+    let value = await fetch_value();
+    $println(value);
+    return 0;
 }
-```
+~~~
 
-## Async / Await
+Await is not valid in an ordinary synchronous function. An async function's runtime behavior depends on the runtime support available for the target and the operation being awaited.
 
-```vex
-async fn fetch_data(id: i32): i32 {
-    $println(f"Fetching data for ID: {id}")
-    await async_delay(100)
-    return id * 2
+## Ownership at concurrency boundaries
+
+Concurrency does not disable the ownership model. The compiler checks captures at a go or async boundary:
+
+~~~text
+let! values = Vec.new<i32>()
+let borrowed = &values
+
+go {
+    use(borrowed)
 }
+~~~
 
-async fn process_items(): i32 {
-    let result = await fetch_data(10)
-    $println(f"Got result: {result}")
-    return result
-}
-```
+Whether a capture is accepted depends on the lifetime and capture kind. Prefer moving an owned value into a task, borrowing only when the task is guaranteed to remain within the borrow's lifetime, and communicating results through a channel.
 
-## `select` Statement
+## Runtime status
 
-`select` waits on multiple channel operations, executing the first one that becomes ready. Fully implemented with codegen + runtime backing (`vex_async_channel_select`).
+The macOS ARM64 development runtime covers scheduler ownership, channel close/drain behavior, same-worker blocking progress, and event-driven select regressions. Cross-target objects and internal-symbol checks cover Linux and Windows; native execution on those operating systems remains a CI validation item.
 
-```vex
-// Receive from whichever channel gets data first
-select {
-    val = <-ch1 => $println(f"From ch1: {val}"),
-    msg = <-ch2 => $println(f"From ch2: {msg}"),
-}
+Do not use benchmark numbers from design notes as guarantees. Measure the workload, target, and runtime configuration you intend to deploy.
 
-// Send with timeout
-select {
-    ch <- value => $println("Sent"),
-    after 1.second() => $println("Timeout"),
-}
-
-// Non-blocking check with default
-select {
-    msg = <-ch => $println(f"Got: {msg}"),
-    default => $println("Nothing ready"),
-}
-```
-
-> **Fairness:** `select` picks randomly among ready cases to prevent starvation.
-
-## Next Steps
+## Next steps
 
 - [Channels](/guide/concurrency/channels)
-- [Async/Await](/guide/concurrency/async)
-- [Memory Safety](/guide/memory/borrowing)
-
-Vex's ownership system prevents data races at compile time:
-
-```vex
-let! data = [1, 2, 3]
-
-// ERROR: Cannot move data into multiple goroutines
-go { data.push(4) };
-go { data.push(5) };
-
-// OK: Use Box for shared ownership (VUMM auto-selects AtomicArc)
-let data = Box(Mutex.new([1, 2, 3]))
-
-go {
-    let data = data.clone()
-    data.lock().push(4)
-};
-
-go {
-    let data = data.clone()
-    data.lock().push(5)
-};
-```
-
-## Performance Notes
-
-| Operation | Approximate Throughput |
-|-----------|------------------------|
-| Goroutine spawn | ~500K/sec |
-| Channel send/recv | ~10M/sec |
-| Async task spawn | ~1M/sec |
-| Mutex lock/unlock | ~50M/sec |
-| Atomic operation | ~100M/sec |
-
-## Next Steps
-
-- [Async/Await](/guide/concurrency/async) - Deep dive into coroutines
-- [Channels](/guide/concurrency/channels) - Advanced channel patterns
-- [Synchronization](/guide/concurrency/sync) - Locks and atomics
+- [Async](/guide/concurrency/async)
+- [Borrowing](/guide/memory/borrowing)
+- [Language Status](/guide/language-status)

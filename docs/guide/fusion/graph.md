@@ -1,6 +1,6 @@
 # Graph Functions
 
-Graph functions compile **entire function bodies** as optimized compute graphs. The compiler automatically fuses operations, eliminates intermediate allocations, and dispatches to the optimal hardware — GPU or SIMD.
+Graph functions describe compute-graph candidates. The compiler may fuse supported operations, remove intermediate work, and select an available CPU or accelerator path; graph lowering and runtime dispatch remain experimental.
 
 ## Quick Start
 
@@ -128,7 +128,7 @@ graph fn attention(q: [f32; N], k: [f32; N], v: [f32; N]): [f32; N] {
 
 ## Hardware Dispatch
 
-The compiler automatically selects the best execution target:
+The compiler can select an execution target when the relevant backend and runtime path are available:
 
 | Data Size | Target | Why |
 |-----------|--------|-----|
@@ -215,4 +215,3 @@ Output:
 [Metal] Kernel 2: fused softmax → buffer_1
 [Metal] Kernel 3: matmul → readback
 ```
-

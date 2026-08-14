@@ -273,11 +273,11 @@ let scaled = v.mul_scalar(2.5)
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
-| Same-type arithmetic operators | ✅ | Covered by operator regression tests |
-| Cross-type RHS operator dispatch | ✅ | Covered by `operator_default_rhs_001.vx` |
-| Exact-match numeric preference | ✅ | Covered by `numeric_exact_001.vx` |
-| Complex user-defined operator contracts | ✅ | Covered by `tests/07_contracts/operators/complex_arith_001.vx` |
-| Exhaustive generic/default/variadic interaction with operators | ⚠️ Partial | Operator core is stable, but the full interaction matrix is not yet exhaustive |
+| Same-type arithmetic operators | Yes | Covered by operator regression tests |
+| Cross-type RHS operator dispatch | Yes | Covered by `operator_default_rhs_001.vx` |
+| Exact-match numeric preference | Yes | Covered by `numeric_exact_001.vx` |
+| Complex user-defined operator contracts | Yes | Covered by `tests/07_contracts/operators/complex_arith_001.vx` |
+| Exhaustive generic/default/variadic interaction with operators | Warning Partial | Operator core is stable, but the full interaction matrix is not yet exhaustive |
 
 ::: warning Scope Note
 The operator overloading core is solid, but the repository does **not** yet claim exhaustive coverage for every overload interaction involving **generic constraints**, **variadics**, and **default parameters**.

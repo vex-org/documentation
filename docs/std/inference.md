@@ -11,6 +11,6 @@ If `ml` is the raw linear algebra, `inference` is the architecture. It maps mode
 - **K/V Cache Management**: Allocates and updates Key-Value caches representing sequence contexts automatically.
 - **Transformer Pipelines**: Ready-to-go `graph fn` implementations representing full decoder layers.
 
-## The Objective: 100% Graph Inference
+## Direction: Graph-Based Inference
 
-Because the standard inference library natively links to Vex SIR (Silicon Intermediate Representation), evaluating a token for models like TinyLlama or Llama-3 skips overhead entirely, streaming operations parallel directly across Metal / WebGPU pipelines.
+The inference library is intended to lower compatible workloads through Vex SIR and available accelerator backends. Actual model coverage, generated code, and runtime performance depend on the current compiler, backend, model format, and target platform; treat this page as an implementation direction rather than a performance guarantee.

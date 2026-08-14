@@ -9,7 +9,9 @@ source (.vx)
   -> lexer
   -> parser / syntax tree
   -> HIR lowering
-  -> type inference + borrow analysis + semantic checks
+  -> comptime declaration expansion + canonical CTFE
+  -> sealed source/generated HIR snapshot
+  -> type inference + borrow analysis + semantic checks + typed staging
   -> codegen path selection
     -> LLVM/native path
     -> SIR path for data-parallel graphs
@@ -89,6 +91,7 @@ Outside the language crates, the repository also includes:
 ## Architecture Pages
 
 - [Compiler Pipeline](/architecture/compiler-pipeline): source to HIR to native/SIR lowering
+- [Comptime Pipeline](/architecture/comptime-pipeline): CTFE, typed residualization, declaration expansion, caching, and fusion
 - [SIR & Backends](/architecture/sir-and-backends): graph path, backend maturity, and acceleration routing
 - [Runtime & Tooling](/architecture/runtime-and-tooling): runtime model, CLI, tests, docs, and editor tooling
 
@@ -396,54 +399,29 @@ impl Autograd {
 
 ## Runtime
 
-### C Runtime Layer
+### VexArch Runtime Layer
 
-```
+```text
 lib/runtime/
-├── runtime/
-│   └── src/
-│       ├── alloc/
-│       │   ├── slab.c      # Slab allocator
-│       │   ├── arena.c     # Arena allocator
-│       │   └── vumm.c      # VUMM runtime support
-│       ├── platform/
-│       │   ├── syscall.c   # Raw syscalls
-│       │   └── thread.c    # Threading primitives
-│       └── core/
-│           ├── panic.c     # Panic handling
-│           └── print.c     # Basic I/O
+├── VexArch/
+│   ├── src/
+│   │   ├── async/       # Scheduler, channels, poller integration
+│   │   ├── io/          # Runtime I/O services
+│   │   ├── mem/         # Allocation and memory primitives
+│   │   ├── sync/        # Synchronization primitives
+│   │   └── unwind/      # Panic and unwind support
+│   └── native/            # Explicit platform/native artifacts
+└── src/                   # Optional Rust runtime-core integration
 ```
 
-### Slab Allocator
+VexArch is the production runtime written in Vex. Target-specific `.vxc`
+selection follows `os.arch → os → arch → generic`, so public modules do
+not hard-code a platform backend. Imported symbols use explicit `LIBC`, `SYSTEM`,
+`VEX`, or `NATIVE` providers; a freestanding build does not gain a hidden libc
+dependency merely by importing a standard-library module.
 
-```c
-typedef struct slab {
-    void* memory;
-    size_t object_size;
-    size_t capacity;
-    uint64_t* bitmap;
-    struct slab* next;
-} slab_t;
-
-typedef struct slab_cache {
-    slab_t* partial;
-    slab_t* full;
-    slab_t* empty;
-    size_t object_size;
-    pthread_mutex_t lock;
-} slab_cache_t;
-```
-
-### Thread-Local Caching
-
-```c
-typedef struct thread_cache {
-    void* free_list[SIZE_CLASSES];
-    size_t free_count[SIZE_CLASSES];
-} thread_cache_t;
-
-__thread thread_cache_t* tlc = NULL;
-```
+See [Runtime Architecture](./runtime-architecture.md) for the provider model,
+memory boundary, scheduler, and link-plan rules.
 
 ## Diagnostics (vex-diagnostics)
 
@@ -528,6 +506,6 @@ pub fn compile_crate(files: Vec<FileId>) -> Result<(), Error> {
 
 ## Next Steps
 
-- [Language Reference](/reference) - Complete syntax reference
-- [Contributing](/contributing) - How to contribute
-- [API Documentation](/api) - Internal API docs
+- [Language Guide](/guide/introduction) - Language syntax and semantics
+- [Contributing](/guide/contributing) - How to contribute
+- [Reference](/references/) - CLI, test, package, and documentation tools

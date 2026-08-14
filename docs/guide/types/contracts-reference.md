@@ -281,17 +281,47 @@ fn (self: &File!) drop() {
 }
 ```
 
-### `Hash` -- Hash Value
+### `Hash`, `Hasher`, and `BuildHasher` -- Collection Hashing
 
-Used by `Map` and `Set` for key hashing. Uses AHash algorithm (fast + DoS-resistant).
+`Hash` values feed equality-relevant data into the state selected by a `Map`
+or `Set`. The value does not finalize its own hash. This lets each hosted
+container use an independent random key while deterministic tools select an
+explicit reproducible builder.
 
-**Rule:** `a == b` implies `hash(a) == hash(b)`.
+**Rule:** `a == b` implies identical feeds, in identical order, for every
+`Hasher` implementation.
 
 ```vex
+contract Hasher {
+    fn writeBytes(bytes: Span<u8>)!
+    fn writeU32(value: u32)!
+    fn writeU64(value: u64)!
+    fn finish(): u64
+}
+
 contract Hash {
-    fn hash(): u64
+    fn hashInto<H: Hasher>(state: &H!)
+}
+
+contract BuildHasher {
+    type State: Hasher
+    fn build(): Self.State
+}
+
+struct UserId: Eq, Hash {
+    public:
+    value: u64,
+}
+
+fn (self: &UserId) hashInto<H: Hasher>(state: &H!) {
+    self.value.hashInto(state)
 }
 ```
+
+The default table policy is a keyed implementation detail, not a stable file
+format. Use the named `hash` package algorithms when output bytes must remain
+stable. Floating-point values do not implement `Hash` until their equality and
+NaN policy is defined consistently.
 
 ### `Bytes` -- Binary Serialization
 
@@ -585,36 +615,13 @@ contract Growable: Collection {
 }
 ```
 
-### Memory Management Contracts
+### Ownership and memory contracts
 
-#### `SmartPointer<T>`
-
-```vex
-contract SmartPointer<T> {
-    op(value: T): Self
-    get(): &T
-    get_mut()!: &T!
-}
-```
-
-#### `RefCounted`
-
-```vex
-contract RefCounted {
-    clone(): Self
-    strong_count(): usize
-}
-```
-
-#### `Drop` -- Standard Library Drop
-
-```vex
-contract Drop {
-    drop()!
-}
-```
-
-Note: This is the standard library `Drop`, distinct from the prelude `Drop`. Both trigger RAII cleanup but `Drop` is compiler-enforced.
+Ownership contracts such as `Drop` and `Owner` are canonical language
+contracts from the prelude; `std/contracts` does not define parallel versions.
+Heap ownership uses `Box<T>`. The compiler and VUMM choose unique, shared, or
+thread-safe storage internally—there are no public `Rc`, `Arc`, reference-count,
+retain, or release APIs for application code.
 
 #### `Owner` -- Ownership Marker
 
@@ -656,21 +663,34 @@ contract Dealloc {
 
 ### `PackedType` Contract
 
-Ensures a type has no padding bytes -- all bytes are meaningful. Used for binary protocols and serialization.
+Describes a custom block-encoded representation that can be decoded to and
+encoded from a logical element type. It is used by quantized ML formats and
+other packed-domain formats; it does not change a struct's native layout.
 
 ```vex
-contract PackedType { }
-```
-
-```vex
-#[repr(packed)]
-struct NetworkHeader: PackedType {
-    public:
-    version: u8,
-    length: u16,
-    crc: u32,
+contract PackedType<T> {
+    name(): str
+    blockSize(): usize
+    blockBytes(): usize
+    bitsPerElement(): u8
+    decodeBlock(raw: Span<u8>): Tensor<T>
+    encodeBlock(input: &Span<T>): Tensor<u8>
 }
 ```
+
+```vex
+struct Q4: PackedType<f32> {}
+
+fn (self: Q4) name(): str { "Q4" }
+fn (self: Q4) blockSize(): usize { 32 }
+fn (self: Q4) blockBytes(): usize { 16 }
+fn (self: Q4) bitsPerElement(): u8 { 4 }
+// decodeBlock / encodeBlock define the representation transform.
+```
+
+For wire structs or C ABI layout, verify `#Type.sizeOf`, `#Type.alignOf`, and
+`#Type.offsetOf` explicitly. `PackedType<T>` is a behavior contract, not a
+`packed` layout attribute.
 
 ---
 

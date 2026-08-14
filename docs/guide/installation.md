@@ -1,152 +1,136 @@
-# Installation & Setup
+# Installation
 
-## Toolchain Requirements
+The current documented workflow builds Vex from source. Prebuilt release packages and platform-specific distribution are tracked separately from the compiler source, so use the repository build when you need a version that matches the checked examples.
 
-### Supported Platforms
+## Requirements
 
-| Platform | Architecture          | Status          |
-| -------- | --------------------- | --------------- |
-| Linux    | x86_64, aarch64       | ✅ Full Support |
-| macOS    | x86_64, Apple Silicon | ✅ Full Support |
-| Windows  | x86_64                | ✅ Full Support |
-| FreeBSD  | x86_64                | ✅ Full Support |
+You need:
 
-### Dependencies
+- a recent Rust toolchain with Cargo;
+- LLVM and Clang development tools required by the selected backend;
+- a native linker for your operating system;
+- Git to obtain the repository.
 
-- **LLVM 22.1+** - backend code generation used by the main toolchain
-- **Clang / platform C toolchain** - runtime and native linking support
-- **Rust toolchain** - required to build the compiler and tools from source today
+The repository's workspace manifest is the authoritative source for compiler and tool versions. Vex is currently 0.4.0-rc.39 and remains pre-1.0.
 
-## Building from Source
+## Build from source
 
-### 1. Clone the Repository
-
-```bash
+~~~bash
 git clone https://github.com/meftunca/vex_lang.git
 cd vex_lang
-```
-
-### 2. Build the Compiler
-
-```bash
-# Debug build
-cargo build
-
-# Release build
 cargo build --release
-```
+~~~
 
-### 3. Verify Installation
+The release binary is target/release/vex. Confirm the build before using it:
 
-```bash
-# Compiler binary
-~/.cargo/target/debug/vex --version
+~~~bash
+target/release/vex --version
+target/release/vex --help
+~~~
 
-# Run a sample program
-~/.cargo/target/debug/vex run examples/hello.vx
+For a faster edit-check cycle, use the debug build instead:
 
-# Run the repo test suite
-./test_all.sh
-```
+~~~bash
+cargo build
+target/debug/vex lint examples/01_basics/hello_world.vx
+~~~
 
-The debug binary path above is the canonical development path used throughout the repository.
+## Run a first program
 
-## Editor/IDE Setup
+Create hello.vx:
 
-### VS Code (Recommended)
-
-1. Install the **Vex Language** extension from the marketplace
-2. The extension provides:
-   - Syntax highlighting
-   - LSP integration (diagnostics, completion, go-to-definition)
-   - Code formatting
-   - Snippets
-
-### Manual LSP Setup
-
-For other editors that support LSP:
-
-```bash
-# Build the LSP server
-cargo build --release -p vex-lsp
-
-# Binary path
-~/.cargo/target/release/vex-lsp
-```
-
-Configure your editor to use `vex-lsp` as the language server for `.vx` files.
-
-## Typical Workspace Layout
-
-A typical Vex project looks like:
-
-```
-my_project/
-├── vex.json          # Project manifest
-├── src/
-│   ├── main.vx       # Entry point
-│   └── lib/          # Library modules
-├── tests/            # Test files
-└── examples/         # Example code
-```
-
-## First Program
-
-Create a file `hello.vx`:
-
-```vex
+~~~vex
 fn main(): i32 {
-    $println("Hello, Vex!")
+    $println("Hello, Vex!");
     return 0;
 }
-```
+~~~
 
-Run it:
+Then check and run it:
 
-```bash
-~/.cargo/target/debug/vex run hello.vx
-```
+~~~bash
+target/release/vex lint hello.vx
+target/release/vex run hello.vx
+~~~
 
-## Common Commands
+Use lint while writing code. It performs correctness and configured lint analysis without creating a final executable. Use run when you want the compiler to build a temporary executable and launch it.
 
-| Command              | Description            |
-| -------------------- | ---------------------- |
-| `vex run <file>`     | Compile and run        |
-| `vex compile <file>` | Compile and link       |
-| `vex test`           | Discover and run tests |
+::: warning Native execution is a separate gate
+`vex lint` does not emit an object, link, or execute the program. `vex run`
+uses the fused embedded VexArch image plus the requested target's native
+support and system ABI, so validate that path on the exact deployment target.
+:::
 
-## Useful Development Notes
+## Command-line tools
 
-- `vex run` compiles to a temporary executable and executes it as a subprocess.
-- `vex compile` is the right entry point when you want persistent artifacts or LLVM output.
-- Examples in this repository often use `~/.cargo/target/debug/vex` directly during compiler development.
+The compiler currently exposes these high-level commands:
+
+| Command | Purpose |
+| --- | --- |
+| `vex lint [target]` | Run correctness analysis, semantic lints and verified fixes without code generation. |
+| `vex run <file>` | Compile and run a source file. |
+| `vex compile <file>` | Compile and link a persistent artifact. |
+| vex build | Build a Vex package or project. |
+| vex test | Discover and run Vex tests. |
+| vex format | Format Vex source. |
+| vex doc | Generate API documentation from Vex source. |
+| vex view | Inspect compiler representations and analyses. |
+| vex new / vex init | Create or initialize a project. |
+| vex mod / vex workspace | Manage module and workspace workflows. |
+| vex env / vex setup | Inspect or initialize the Vex environment. |
+
+Run `vex <command> --help` for the options supported by the binary you built. The [CLI reference](/references/vex-cli-reference) describes the command surface in more detail.
+
+## Project layout
+
+A conventional project keeps the manifest and source tree separate:
+
+~~~text
+my-project/
+├── vex.json
+├── src/
+│   └── main.vx
+├── tests/
+└── examples/
+~~~
+
+The exact manifest fields depend on whether the project uses local modules, native artifacts, or package dependencies. Start with the [package manager reference](/references/vex-pm-reference) instead of copying an outdated manifest from a design note.
+
+## Editor support
+
+The repository includes an LSP implementation and a VS Code extension under editors/vscode. Build the LSP server with:
+
+~~~bash
+cargo build --release -p vex-lsp
+~~~
+
+The resulting binary is target/release/vex-lsp. Configure your editor to start it for .vx files. LSP capabilities and editor integration are evolving alongside the compiler, so treat advanced refactoring features as experimental.
 
 ## Troubleshooting
 
-### LLVM Not Found
+### LLVM or Clang is not found
 
-```bash
-# macOS
-brew install llvm
+Install the development packages for your operating system and ensure the compiler can find them through the environment used by Cargo. On macOS, the Xcode Command Line Tools are usually required. On Linux, install the distribution's LLVM, Clang, and development packages.
 
-# Ubuntu/Debian
-sudo apt install llvm-dev libclang-dev
+### The compiler accepts a file but linking fails
 
-# Fedora
-sudo dnf install llvm-devel clang-devel
-```
+check and compile exercise different parts of the toolchain. A successful check proves that the source passed parsing and semantic analysis; it does not prove that the target linker, runtime libraries, or native dependencies are available. Re-run with the full compiler output and record the target triple when reporting the problem.
 
-### Linker Errors
+### An example does not match your checkout
 
-LLD is recommended when available.
+Check the compiler version first:
 
-```bash
-# macOS
-brew install lld
-```
+~~~bash
+target/release/vex --version
+git rev-parse --short HEAD
+~~~
 
-## Next Steps
+The documentation site follows the repository's current development line. Pin both the compiler revision and the documentation revision in CI when reproducibility matters.
 
-- [Syntax Overview](/guide/basics/syntax) - Learn Vex syntax
-- [Functions](/guide/basics/functions) - Understand declarations and receivers
-- [Testing](/guide/tooling/testing) - Learn the test runner
+## Next steps
+
+- [Introduction](/guide/introduction)
+- [Language Status](/guide/language-status)
+- [Syntax](/guide/basics/syntax)
+- [Testing](/guide/tooling/testing)
+- [CLI Reference](/references/vex-cli-reference)

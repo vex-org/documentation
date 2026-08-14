@@ -6,7 +6,7 @@ description: Concept — VexHDL Hardware Description Language (Future Work)
 
 # VexHDL (Concept / Future Work)
 
-> **⚠️ Concept Stage:** VexHDL is a planned hardware description language extension
+> **Warning Concept Stage:** VexHDL is a planned hardware description language extension
 > for Vex. The following pages describe a design vision. Implementation has not
 > begun. Syntax and features may change significantly.
 
@@ -16,7 +16,7 @@ By pairing a Rust-inspired compiler backend (`vex-hdl-compiler`) with a lightwei
 
 ---
 
-## 🚀 Key Value Propositions (VexHDL vs. Legacy HDLs)
+##  Key Value Propositions (VexHDL vs. Legacy HDLs)
 
 ### 1. Compile-Time Safety via V-VUMM (Value & Usage Memory Manager)
 Traditional hardware design allows dangerous race conditions and driver conflicts that are only caught during expensive physical hardware runs. VexHDL adapts the memory-safety concepts of software languages (like Rust) to signals:

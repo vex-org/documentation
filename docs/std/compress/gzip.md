@@ -8,7 +8,7 @@ Industry-standard compression for HTTP responses, `.gz` archives, and legacy fil
 import { gzipCompress, gzipDecompress, crc32, crc32Update } from "compress/gzip";
 
 let data = "Gzip in pure Vex!";
-let ptr = data.as_ptr() as *void;
+let ptr = data.asPtr() as Ptr<Opaque>;
 let len = data.len() as i64;
 
 let outCap = len + (len / 65535 + 1) * 5 + 18;

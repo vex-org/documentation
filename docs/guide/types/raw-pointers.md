@@ -1,163 +1,129 @@
-# Raw Pointers
+# Canonical Raw Pointers
 
-Raw pointers (`ptr` and `*T`) are low-level, unchecked memory addresses. They are the foundation upon which safe abstractions like `Ptr<T>`, `Span<T>`, and `Box<T>` are built. Most Vex code should use those safe abstractions; raw pointers are for FFI, systems programming, and building new safe abstractions.
+Raw pointers are unchecked addresses used at FFI, allocator, runtime, and
+hardware boundaries. Vex has one source-level raw-pointer family: `Ptr<T>`.
+The old `ptr`, `*T`, `*T!`, `Ptr.of`, and `asRaw` spellings are not part of the
+language surface.
 
-## Pointer Types
+Most application code should still prefer references, owned containers, or
+`Span<T>`.
 
-| Syntax | Name                    | Description                                   |
-| ------ | ----------------------- | --------------------------------------------- |
-| `ptr`  | Untyped opaque pointer  | A raw memory address with no type information |
-| `*T`   | Typed immutable pointer | Points to a value of type `T`, read-only      |
-| `*T!`  | Typed mutable pointer   | Points to a value of type `T`, read-write     |
+## Pointer types
+
+| Syntax | Meaning |
+| --- | --- |
+| `Ptr<T>` | readable pointer to `T` |
+| `Ptr<T!>` | pointer with writable-pointee capability |
+| `Ptr<Opaque>` | opaque C-compatible pointer |
+| `Ptr<Opaque!>` | opaque pointer with writable-pointee capability |
+
+`Ptr<T>` lowers directly to the target pointer representation. `Opaque` is a
+pointee marker, not a value type and not a hidden allocation.
 
 ```vex
-let raw: ptr = vex_malloc(64)         // untyped pointer
-let typed: *i32 = raw as *i32          // cast to typed
-let mut_ptr: *i32! = raw as *i32!      // mutable typed pointer
+let raw = Mem.alloc(64)                // Ptr<Opaque!>
+let typed = raw as Ptr<i32>
+let writable = raw as Ptr<i32!>
+
+Mem.free(raw, 64)
 ```
 
-## Obtaining Pointers
+A pointer does not own its allocation and carries no length or lifetime. The
+code that allocates memory must preserve the allocator and byte size required
+to release it.
 
-### From Allocations
+## Obtaining pointers
+
+From a reference:
 
 ```vex
-let p = vex_malloc(1024) as *u8      // from raw allocation
-let box_ptr = Box.new(42)             // Box manages the pointer for you
+let value = 42
+let raw = &value as Ptr<i32>
 ```
 
-### From References
+From the typed prelude:
 
 ```vex
-let x = 42
-let ref_to_x: &i32 = &x
-let ptr_to_x: *i32 = ref_to_x as *i32
+let! values = Ptr.allocN<i32>(4)
+let opaque = values.asOpaque()
 ```
 
-### From Arrays and Slices
+Null pointers use typed constructors:
 
 ```vex
-let arr = [1, 2, 3, 4]
-let first_ptr: *i32 = &arr[0]             // pointer to first element
-let array_ptr: *i32 = arr.as_ptr()        // pointer to array data
+let readable = Ptr.null<i32>()
+let writable = Ptr.nullMut<i32>()
+let opaque = Ptr.null<Opaque>()
 ```
 
-### Null Pointers
+## Reading and writing
+
+Raw access is unsafe because the compiler cannot prove address validity:
 
 ```vex
-let null_i32: *i32 = null_ptr             // null typed pointer
-let null_raw: ptr = null_ptr              // null untyped pointer
-```
-
-## Reading and Writing Through Pointers
-
-Reading and writing through raw pointers requires `unsafe` blocks:
-
-```vex
-unsafe {
-    let p = vex_malloc(4) as *i32!
-    p.write(42)           // write value
-    let val = p.read()    // read value (returns 42)
-}
-```
-
-Without `unsafe`, raw pointer dereference is a compile error:
-
-```vex
-let p: *i32 = somePointer
-// let val = p.read()    // ERROR: raw read requires unsafe
-```
-
-## Pointer Arithmetic
-
-**WARNING:** Do NOT perform manual pointer arithmetic using integer casts (`ptr as i64 + offset`). This is unsafe, unportable, and defeats alignment guarantees. Use the safe builtin types instead.
-
-### The Correct Way: Use `Ptr<T>`, `Span<T>`, or `RawBuf`
-
-```vex
-// WRONG -- never do this
-// let addr = raw_ptr as i64 + index * sizeof_i32
-// let val = *(addr as *i32)
-
-// CORRECT -- use Ptr<T>
-let p = Ptr.of(base_ptr)
-p.writeAt(3, 100)           // write to element 3 (stride computed automatically)
-let val = p.readAt(3)       // read from element 3
-
-// CORRECT -- use RawBuf for byte-level access
-let buf = RawBuf.of(raw_ptr)
-buf.store<i32>(offset, 42)  // typed store at byte offset
-let val = buf.load<i32>(offset)
-```
-
-## Casting Between Pointer Types
-
-```vex
-let raw: ptr = vex_malloc(64)
-
-// Cast to typed pointers
-let bytes: *u8 = raw as *u8
-let ints: *i32 = raw as *i32
-let mutable: *i32! = raw as *i32!
-
-// Cast back to untyped
-let opaque: ptr = ints as ptr
-
-// Cast to integer (for debugging, logging)
-let addr: i64 = raw as i64
-```
-
-### Alignment Requirements
-
-When casting between pointer types, ensure the pointer satisfies the alignment requirements of the target type:
-
-```vex
-let raw = vex_malloc(64)  // 16-byte aligned on most platforms
-
-// Safe: u8 has no alignment requirement
-let bytes: *u8 = raw as *u8
-
-// Potentially unsafe: i32 requires 4-byte alignment
-// vex_malloc returns 16-byte aligned, so this is fine
-let ints: *i32 = raw as *i32
-```
-
-## FFI and Raw Pointers
-
-Raw pointers are the primary mechanism for C interop:
-
-```vex
-extern "C" {
-    fn memcpy(dest: ptr, src: ptr, n: usize): ptr
-    fn strlen(s: *u8): usize
-}
+let! value = 0
+let raw = &value as Ptr<i32!>
 
 unsafe {
-    let src = "hello" as *u8
-    let len = strlen(src)         // 5
-    let buf = vex_malloc(64)
-    memcpy(buf, src, 6)            // copy including null terminator
+    raw.write(42)
+    $println(raw.read())
 }
 ```
 
-## Safety Rules
+Before access, prove that the pointer is non-null, aligned, live, initialized
+for reads, within allocation bounds, and valid under Vex's aliasing rules.
 
-1. **Always use `unsafe` blocks** for raw pointer dereference.
-2. **Never do integer-based pointer arithmetic** (`ptr as i64 + N`). Use `Ptr<T>`, `Span<T>`, or `RawBuf`.
-3. **Ensure alignment** when casting between pointer types.
-4. **Ensure the pointed-to memory is live** when reading/writing.
-5. **Free allocated memory** when done -- raw pointers have no automatic cleanup.
-6. **Prefer safe abstractions** (`Box<T>`, `Ptr<T>`, `Span<T>`) over raw pointers whenever possible.
+## Pointer arithmetic
 
-## When to Use Raw Pointers
+Do not convert a pointer to an integer merely to perform element arithmetic.
+Prefer:
 
-- FFI with C libraries
-- Building new safe abstractions (writing the internals of `Vec<T>`, `Box<T>`, etc.)
-- Systems programming with memory-mapped I/O
-- Interfacing with hardware
+- `offset(index)`, `add`, `sub`, `readAt`, and `writeAt` for element units;
+- `RawBuf.at(offset)`, `load<T>`, and `store<T>` for byte units;
+- `Span<T>` when the extent is known and should be checked.
 
-## When NOT to Use Raw Pointers
+```vex
+let item = unsafe { typed.readAt(3) }
 
-- General application code -- use `Box<T>`, `Vec<T>`, `Ptr<T>`, `Span<T>`
-- Array access -- use `Span<T>` or `Vec<T>`
-- Dynamic allocation -- use `Box.new()` or `Vec.new()`
-- Pointer arithmetic -- use `Ptr<T>.readAt()` or `RawBuf.load<T>()`
+let! bytes = RawBuf.of(raw.asOpaque())
+bytes.store<u32>(12, 99)
+```
+
+## Casting and alignment
+
+```vex
+let memory = Mem.allocAligned(64, 32)
+let words = memory as Ptr<u32!>
+
+unsafe { words.write(7) }
+Mem.free(memory, 64)
+```
+
+An explicit `as Ptr<U>` cast changes the compiler's pointee contract, not the
+underlying allocation. It cannot repair alignment, extend a lifetime,
+initialize bytes, or transfer ownership. Pointee erasure remains visible as
+`asOpaque()`.
+
+## FFI ownership
+
+```vex
+extern "NATIVE" from "foreign_objects" {
+    fn foreignCreate(): Ptr<Opaque>
+    fn foreignDestroy(value: Ptr<Opaque>)
+}
+
+let handle = unsafe { foreignCreate() }
+unsafe { foreignDestroy(handle) }
+```
+
+Always destroy memory with the allocator that created it. Do not pass a C block
+to `Mem.free`, and do not pass a VexArch block to C `free`, unless the API
+explicitly guarantees allocator compatibility.
+
+## Safety checklist
+
+1. Keep raw pointer scopes short and audited.
+2. Preserve allocation size and allocator identity.
+3. Check nullness, extent, alignment, and initialization.
+4. Keep capability changes and pointee casts explicit.
+5. Convert a valid raw range to `Span<T>` as early as possible.

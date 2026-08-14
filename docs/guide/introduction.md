@@ -1,123 +1,148 @@
 # Introduction
 
-Vex is a parallelism-first systems programming language aimed at native performance, memory safety, and hardware saturation without forcing the programmer into low-level scheduling or handwritten SIMD.
+Vex is a systems programming language built around three concerns that are often handled separately: explicit memory ownership, concurrent execution, and data-parallel computation. The language is still pre-1.0, but the core programming model is already concrete enough to learn and use.
 
-## Core Model
+## The basic idea
 
-Vex combines four ideas into one language surface:
+Vex keeps ordinary systems code readable while making the important costs visible:
 
-- ownership and borrowing for memory safety
-- Go-style task spawning and channels for concurrency
-- tensor/SIMD-friendly operators that lower into SIR
-- systems-level escape hatches for FFI, freestanding work, and typed low-level memory access
+- bindings are immutable unless mutation is written explicitly with let!;
+- values are moved or borrowed according to ownership rules;
+- go blocks, channels, async, and await are part of the language surface;
+- arrays and tensor-shaped operations can be lowered through Silicon IR (SIR);
+- FFI, typed pointers, spans, and raw buffers provide controlled low-level escape hatches.
 
-The compiler pipeline can lower regular code through native LLVM codegen and lower data-parallel shapes through SIR for optimized SIMD or GPU backends.
+These parts are not equally mature. Core syntax, data types, ownership, and the checker have the strongest coverage. Concurrency, SIR, GPU backends, FFI, and platform-specific tooling are documented as experimental where their behavior is still being developed. See the [Language Status](/guide/language-status) page before choosing a feature for production work.
 
-## Syntax at a Glance
+## A complete first program
 
-Vex syntax is intentionally small and direct:
+Create hello.vx:
 
-```vex
+~~~vex
 fn main(): i32 {
-    let x = 5;
-    let! total = x + 2;
-    $println("total = {}", total);
+    let language = "Vex";
+    $println("Hello from ", language);
     return 0;
 }
-```
+~~~
 
-- `fn name(): Type` declares a function return type
-- `let` is immutable by default
-- `let!` introduces mutability
-- member access uses `.`
-- builtins such as `$println` are always available
+Check and run it from the repository root:
 
-## Why Vex Exists
+~~~text
+target/release/vex lint hello.vx
+target/release/vex run hello.vx
+~~~
 
-### Hardware-First Execution
+The compiler reports syntax and semantic errors before it produces a program. The [installation guide](/guide/installation) covers building the compiler and the available command-line tools.
 
-Vex is designed around the idea that arrays, tensors, reductions, maps, fused arithmetic, and similar patterns should compile into efficient SIMD or GPU-ready graphs when the program shape allows it.
+## A small data model
 
-### Safe Systems Programming
+Structs hold related fields. Methods are declared outside the struct with a receiver:
 
-The language keeps explicit ownership, borrowing, and typed low-level memory tools in the foreground. Instead of manual pointer arithmetic, code is expected to use `Ptr<T>`, `Span<T>`, and `RawBuf` for clear and auditable memory operations.
-
-### Practical Concurrency
-
-Vex includes `go {}` tasks, async workflows, and channels as built-in concepts, so concurrent code stays inside the main language model instead of being outsourced to framework-specific conventions.
-
-## Major Areas in the Guide
-
-- [Syntax](/guide/basics/syntax): lexical rules, declarations, expressions, and control flow
-- [Enums](/guide/types/enums): tagged unions, `Option`, `Result`, and matching
-- [Ownership](/guide/memory/ownership): moves, borrows, and mutation rules
-- [Error Handling](/guide/error-handling): `Result`, `Option`, `?`, `!>`, and `??`
-- [SIMD](/guide/simd/): tensors, masks, reductions, and vectorized operators
-- [GPU & SIR](/guide/gpu/): the graph pipeline and heterogeneous backends
-- [Testing](/guide/tooling/testing): `vex test`, discovery, and test authoring
-
-## Representative Features
-
-| Area             | What you get                                                          |
-| ---------------- | --------------------------------------------------------------------- |
-| Memory model     | Ownership, borrowing, lifetimes, VUMM, RAII                           |
-| Low-level access | `Ptr<T>`, `Span<T>`, `RawBuf`, FFI, freestanding support              |
-| Concurrency      | `go {}` tasks, async workflows, channels                              |
-| Compute          | SIMD lowering, tensor operators, SIR, backend fusion                  |
-| Tooling          | `vex run`, `vex compile`, `vex test`, formatter, docs, editor tooling |
-
-## Small Examples
-
-### Error propagation
-
-```vex
-fn divide(a: i32, b: i32): Result<i32, i32> {
-    if b == 0 {
-        return Err(1);
-    }
-    return Ok(a / b);
+~~~vex
+struct Point {
+    public:
+    x: i32,
+    y: i32,
 }
 
-fn compute(): Result<i32, i32> {
-    let x = divide(20, 4)?;
-    return Ok(x + 1);
+fn (point: &Point) manhattan_distance(): i32 {
+    return point.x + point.y;
 }
-```
 
-### Concurrency
-
-```vex
 fn main(): i32 {
-    let! ch = Channel.new<i32>(1);
+    let point = Point { x: 3, y: 4 };
+    return point.manhattan_distance();
+}
+~~~
+
+&Point is an immutable borrow. A mutable receiver is written &Point!; mutation also requires the value at the call site to be held in a mutable binding. The complete rules are in [Ownership](/guide/memory/ownership) and [Borrowing](/guide/memory/borrowing).
+
+## Explicit failure values
+
+Vex uses enum-shaped values for recoverable failure. A function can propagate a matching error with ?:
+
+~~~vex
+enum Division {
+    Ok(i32),
+    Err(i32),
+}
+
+fn divide(left: i32, right: i32): Division {
+    if right == 0 {
+        return Division.Err(1);
+    }
+    return Division.Ok(left / right);
+}
+
+fn calculate(): Division {
+    let first = divide(20, 4)?;
+    return Division.Ok(first + 1);
+}
+
+fn main(): i32 {
+    return match calculate() {
+        Division.Ok(value) => value,
+        Division.Err(code) => code,
+    };
+}
+~~~
+
+`Option<T>` models an absent value; `Result<T, E>` is the standard shape for an operation that may fail. Vex does not use exceptions as the primary error model. See [Enums](/guide/types/enums), [Option](/guide/types/option-api), [Result](/guide/types/result-api), and [Error Handling](/guide/error-handling).
+
+## What makes Vex different
+
+### Mutation is visible
+
+let is immutable. Use let! when a local must change:
+
+~~~vex
+fn main(): i32 {
+    let! total = 0;
+    total += 2;
+    total += 3;
+    return total;
+}
+~~~
+
+This is a small rule, but it makes ownership diagnostics and code review easier: the places that can change state are visible in the source.
+
+### Concurrency is explicit
+
+A go block schedules work, while a channel provides a typed communication path:
+
+~~~vex
+fn main(): i32 {
+    let! channel: Channel<i64> = Channel(1);
 
     go {
-        ch.send(42);
+        channel.send(42);
     };
 
-    match ch.recv() {
-        Some(v) => { $println("received {}", v); }
-        None => { return 1; }
-    }
-
+    let value = <-channel;
+    $println(value);
     return 0;
 }
-```
+~~~
 
-### Data-parallel expression
+The syntax and checker path are implemented, but scheduling and runtime behavior remain experimental. Start with [Concurrency Overview](/guide/concurrency/overview) and [Channels](/guide/concurrency/channels), then test on the target platform you plan to ship.
 
-```vex
-fn fused(): [f32; 4] {
-    let a = [1.0, 2.0, 3.0, 4.0];
-    let b = [2.0, 2.0, 2.0, 2.0];
-    let c = [3.0, 3.0, 3.0, 3.0];
-    return a + b * c;
-}
-```
+### Data parallelism has a compiler path
 
-## Where to Go Next
+Vex includes operations intended to describe work over arrays and tensors. The SIR pipeline can lower eligible operations to target-specific code, but no source program should assume that every operation will be vectorized or that every GPU backend supports the same set of features. Read [SIMD](/guide/simd/) and [GPU & SIR](/guide/gpu/) together with the status notes on those pages.
 
-1. [Installation](/guide/installation)
-2. [Syntax](/guide/basics/syntax)
-3. [Functions](/guide/basics/functions)
-4. [Enums](/guide/types/enums)
-5. [Ownership](/guide/memory/ownership)
+## A practical learning path
+
+1. [Install the compiler](/guide/installation).
+2. Learn [syntax](/guide/basics/syntax), [variables](/guide/basics/variables), [functions](/guide/basics/functions), and [control flow](/guide/basics/control-flow).
+3. Build data models with [primitive types](/guide/types/primitives), [structs](/guide/types/structs), [enums](/guide/types/enums), and [pattern matching](/guide/types/pattern-matching).
+4. Learn the memory model through [ownership](/guide/memory/ownership), [borrowing](/guide/memory/borrowing), and [lifetimes](/guide/memory/lifetimes).
+5. Add recoverable failure with [error handling](/guide/error-handling).
+6. Explore [modules](/guide/modules), [testing](/guide/tooling/testing), and the [standard library](/guide/stdlib).
+7. Only then move into experimental areas such as [async](/guide/concurrency/async), [SIR](/guide/simd/sir-pipeline), [GPU programming](/guide/gpu/), or [FFI](/guide/ffi).
+
+## Source of truth
+
+The language guide describes the intended user-facing model. The compiler tests and checked examples determine what the current toolchain accepts. Design notes under the repository's docs/ directory can describe future work and should not be treated as stable syntax unless the corresponding guide page says that the feature is implemented.
+
+If an example in this site fails against the current compiler, report it with the exact command, source, and diagnostic. Documentation should make the language easier to understand while also making its current boundaries impossible to miss.

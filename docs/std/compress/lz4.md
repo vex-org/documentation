@@ -6,23 +6,22 @@ Ultra-fast lossless compression with best-in-class speed. LZ4 is the go-to algor
 
 ```vex
 import { compress, decompress, maxCompressedSize } from "compress/lz4";
-import { alloc, free } from "mem";
 
 let data = "Hello, Vex compression!";
-let ptr = data.as_ptr() as *void;
+let ptr = data.asPtr() as Ptr<Opaque>;
 let len = data.len() as i64;
 
 // Compress
 let outCap = maxCompressedSize(len);
-let comp = alloc(outCap as u64);
+let comp = Mem.allocCompat(outCap as u64);
 let compLen = compress(ptr, len, comp, outCap);
 
 // Decompress
-let decomp = alloc(len as u64);
+let decomp = Mem.allocCompat(len as u64);
 let decompLen = decompress(comp, compLen, decomp, len);
 
-free(comp);
-free(decomp);
+Mem.freeCompat(comp);
+Mem.freeCompat(decomp);
 ```
 
 ## API

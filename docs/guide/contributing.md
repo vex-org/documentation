@@ -11,7 +11,7 @@ This guide covers how to build Vex from source, run tests, debug the compiler, a
 | **Rust**   | 1.80+   | Install via [rustup.rs](https://rustup.rs) |
 | **LLVM**   | 22.1+   | Required for codegen                       |
 | **CMake**  | 3.20+   | Required by LLVM bindings                  |
-| **Clang**  | 16+     | For compiling the C runtime                |
+| **Clang**  | 16+     | Native dependencies and C interoperability |
 | **Git**    | 2.40+   | Version control                            |
 
 ### macOS
@@ -71,7 +71,7 @@ vex_lang/
 │   ├── vex-compiler/             # Main compiler (codegen, prelude)
 │   └── vex-diagnostics/          # Error/warning reporting
 ├── lib/
-│   ├── runtime/                  # C runtime (scheduler, VUMM allocator, async)
+│   ├── runtime/                  # VexArch plus optional runtime-core integration
 │   └── std/                      # Vex standard library (.vx files)
 ├── tools/
 │   ├── vex-cli/                  # CLI binary (run, compile, test)
@@ -205,7 +205,7 @@ Follow these conventions:
 
 **Vex code (stdlib):**
 
-- Follow Vex syntax v0.1.2. No `::` operator (use `.`). No `mut` keyword (use `!`).
+- Follow the current syntax guide. No `::` operator (use `.`). No `mut` keyword (use `!`).
 - No manual pointer arithmetic (use `Ptr<T>`, `Span<T>`, `RawBuf`).
 - Write comprehensive tests for all new stdlib functions.
 

@@ -1,233 +1,157 @@
 # Borrowing
 
-Borrowing lets code reference data without taking ownership. In the current compiler, this is enforced by a real NLL borrow checker rather than being only an aspirational language rule.
+Borrowing lets a function or expression use a value without taking ownership. Vex's semantic checker tracks immutable and mutable references, moves, field access, and the lifetime of returned references.
 
-::: tip Current Status
-The borrow checker and NLL pipeline are implemented in `crates/vex-hir/src/borrow_check/nll/` and are covered by a large targeted test suite. A recent targeted run of `cargo test -p vex-hir borrow_check::nll` passed with 288 tests and 1 ignored parser-related test.
-:::
+## Immutable references
 
-## Reference Types
+An immutable reference uses &T:
 
-### Immutable References (`&T`)
-
-```vex
-let data = [1, 2, 3];
-let reference = &data;
-
-// Can read through reference
-print(reference.len());
-
-// Cannot modify
-// reference.push(4);  // ❌ ERROR: cannot mutate through immutable reference
-```
-
-### Mutable References (`&T!`)
-
-```vex
-let! data = Vec.new<i32>();
-data.push(1);
-data.push(2);
-
-let reference = &data!;
-
-// Can read and modify
-reference.push(3);
-print(data.len());  // 3
-```
-
-## Borrowing Rules
-
-### Rule 1: One Mutable OR Many Immutable
-
-At any point, you can have either:
-
-- **One** mutable reference (`&T!`), OR
-- **Any number** of immutable references (`&T`)
-
-```vex
-let! data = Vec.new<i32>();
-data.push(1);
-
-// ✅ OK: Multiple immutable references
-let r1 = &data;
-let r2 = &data;
-print(r1.len());
-
-// ✅ OK: One mutable reference (after immutable refs are done)
-let r3 = &data!;
-r3.push(2);
-```
-
-### Rule 2: References Must Be Valid
-
-References cannot outlive the data they point to. The Vex compiler tracks this automatically without requiring lifetime annotations.
-
-```vex
-// ❌ ERROR: Dangling reference
-fn bad(): &i32 {
-    let x = 42;
-    return &x;  // ERROR: x is dropped when function returns
-}
-
-// ✅ OK: Return owned data
-fn good(): i32 {
-    let x = 42;
-    return x;
-}
-```
-
-## Non-Lexical Lifetimes (NLL)
-
-Vex uses NLL-style reasoning: borrows end at their last relevant use rather than always extending to the textual end of the scope.
-
-```vex
-let! data = Vec.new<i32>();
-data.push(1);
-
-let r = &data;
-print(r.len());   // Last use of r — borrow ends here
-
-let r2 = &data!;  // ✅ OK: no conflict because r is no longer used
-r2.push(2);
-```
-
-This behavior is backed by both unit tests and source-file harness tests such as the `nll_borrow_ends_at_last_use` regression.
-
-## Partial Moves
-
-You can move individual fields out of a struct without invalidating the entire struct:
-
-```vex
-struct Pair {
-    public:
-    a: string,
-    b: string,
-}
-
-let p = Pair { a: "hello", b: "world" };
-let x = p.a;     // Move only p.a
-print(p.b);      // ✅ OK: p.b is still valid
-// print(p.a);   // ❌ ERROR: p.a has been moved
-```
-
-::: tip
-Copy types (like `i32`, `bool`, `f64`) are never moved — they're copied. Partial moves only apply to non-Copy fields.
-:::
-
-## Field-Level Borrowing
-
-The borrow checker tracks borrows at the field level, allowing disjoint field access:
-
-```vex
+~~~vex
 struct Point {
     public:
     x: i32,
     y: i32,
 }
 
-let! p = Point { x: 1, y: 2 };
-let rx = &p.x;   // Borrow p.x
-p.y = 10;        // ✅ OK: p.y is disjoint from p.x
-print(rx);
+fn sum(point: &Point): i32 {
+    return point.x + point.y;
+}
 
-// p.x = 5;      // ❌ ERROR: p.x is currently borrowed
-```
+fn main(): i32 {
+    let point = Point { x: 3, y: 4 };
+    return sum(&point);
+}
+~~~
 
-## Cross-Function Lifetime
+The callee can read through the reference, but it cannot mutate the borrowed value through an immutable reference.
 
-When a function returns a reference (`&T`), the compiler tracks that the returned reference is derived from an input borrow instead of treating it as a fresh owned value.
+## Mutable references
 
-```vex
-struct Data {
+A mutable reference uses &T!. The owner must be stored in a mutable binding:
+
+~~~vex
+struct Counter {
     public:
     value: i32,
 }
 
-fn get_value(d: &Data): &i32 {
-    return &d.value;
+fn increment(counter: &Counter!): i32 {
+    counter.value += 1;
+    return counter.value;
 }
 
-let d = Data { value: 42 };
-let r = get_value(&d);  // r borrows from d
-print(r);                // ✅ OK: d is still alive
-```
+fn main(): i32 {
+    let! counter = Counter { value: 41 };
+    return increment(&counter!);
+}
+~~~
 
-::: warning
-No explicit lifetime annotations are required in source syntax. The compiler currently applies automatic lifetime reasoning and conservative elision-style rules for common cases:
+Use a mutable borrow only for the smallest operation that needs it. The exclamation mark at the call site makes the exclusive borrow visible.
 
-1. If there's one `&T` parameter → return borrows from it
-2. If there's a `&self` receiver → return borrows from self
-3. Multiple `&T` parameters → return borrows from all (conservative)
-   :::
+## The borrowing rule
 
-The important point is that this is not only a design goal: return-reference cases are part of the current NLL test matrix.
+At a point in the program, Vex permits several immutable borrows or one exclusive mutable borrow. An immutable and mutable borrow cannot conflict while both are live.
 
-## Method Receivers (Go-style)
+~~~text
+let! values = Vec.new<i32>()
+let read_only = &values
+use(read_only)
+let writable = &values!
+mutate(writable)
+~~~
 
-```vex
-struct MyStruct {
+The checker uses non-lexical lifetime reasoning. In the example, the immutable borrow can end after its last use, allowing the later mutable borrow.
+
+## References cannot outlive their source
+
+A function may return a reference derived from one of its input references:
+
+~~~text
+fn choose(left: &string, right: &string): &string {
+    if left.len() > right.len() {
+        return left
+    }
+    return right
+}
+~~~
+
+A reference to a local value cannot be returned:
+
+~~~text
+fn invalid(): &i32 {
+    let value = 42
+    return &value
+}
+~~~
+
+The local value is destroyed when invalid returns, so the compiler rejects the dangling reference.
+
+## Field-level access
+
+The checker can reason about disjoint fields for supported struct operations:
+
+~~~text
+struct Point {
     public:
-    value: i32,
+    x: i32,
+    y: i32,
 }
 
-// Immutable borrow of self
-fn (self: &MyStruct) get_value(): i32 {
-    return self.value;
+let! point = Point { x: 1, y: 2 }
+let x_ref = &point.x
+point.y = 10
+use(x_ref)
+~~~
+
+Access to point.y does not overlap point.x. A write to point.x while x_ref is live would be rejected.
+
+## Method receivers
+
+Methods use the same reference types as ordinary functions:
+
+~~~text
+fn (point: &Point) sum(): i32 {
+    return point.x + point.y
 }
 
-// Mutable borrow of self
-fn (self: &MyStruct!) set_value(value: i32) {
-    self.value = value;
+fn (point: &Point!) move_by(dx: i32, dy: i32) {
+    point.x += dx
+    point.y += dy
 }
-```
+~~~
 
-## Reference Patterns
+The call-site value must satisfy the receiver's mutability requirement.
 
-### Function Parameters
+## Concurrency boundaries
 
-```vex
-// Take ownership
-fn consume(data: Vec<i32>) {
-    // data is moved in, dropped when function ends
-}
+References cannot be captured by a detached task when the capture could dangle or introduce an unsafe race:
 
-// Borrow immutably
-fn inspect(data: &Vec<i32>) {
-    // Can read, cannot modify, caller keeps ownership
-}
-
-// Borrow mutably
-fn modify(data: &Vec<i32>!) {
-    // Can read and modify, caller keeps ownership
-}
-```
-
-## Concurrency boundary
-
-Borrowing rules become stricter at detached concurrency boundaries.
-
-In particular, references are not allowed to escape into `go {}` blocks when that would create a dangling reference or a race-prone capture.
-
-```vex
-let! x: i32 = 42;
-let r = &x!;
+~~~text
+let! values = Vec.new<i32>()
+let borrowed = &values
 
 go {
-    $println("{}", r);  // rejected by the current borrow checker
-};
-```
+    use(borrowed)
+}
+~~~
 
-This is already covered by dedicated NLL tests for go-block capture safety.
+Whether a capture is accepted depends on the lifetime and escape path. Prefer moving an owned value into a task or sending a value through a typed channel.
 
-## Best Practices
+## Current implementation boundary
 
-1. **Prefer borrowing over cloning** — use `&T` to pass large structures
-2. **Use the smallest scope for mutable borrows** — NLL helps, but clarity is king
-3. **Prefer immutable when possible** — default to `&T`, only use `&T!` for mutation
-4. **Treat borrow-check success as local evidence** — the borrow checker is real and substantial, but broader ownership and runtime hardening work still exists elsewhere in the project
+The NLL borrow checker has direct tests for moves, mutable and immutable conflicts, returned references, field access, and concurrency captures. That evidence supports the core borrowing model; it does not turn every runtime or FFI ownership contract into a guarantee. Read the API contract for containers, pointers, and native resources before using them across a boundary.
 
-## Next Steps
+## Guidance
 
-- [Automatic Lifetimes](/guide/memory/lifetimes) — How Vex tracks references
-- [VUMM Memory Model](/guide/memory/vumm) — Automatic memory strategy
-- [Ownership](/guide/memory/ownership) — Value ownership model
+- Prefer &T for read-only functions.
+- Use &T! only when mutation is required.
+- End borrows before taking a mutable borrow.
+- Keep returned references tied to input data.
+- Treat pointers, raw buffers, and FFI values as separate safety boundaries.
+
+## Next steps
+
+- [Ownership](/guide/memory/ownership)
+- [Lifetimes](/guide/memory/lifetimes)
+- [Memory Safety](/guide/memory/safety)
+- [Concurrency Overview](/guide/concurrency/overview)

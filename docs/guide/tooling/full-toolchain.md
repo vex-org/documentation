@@ -14,7 +14,7 @@ vex <command> [options] [args]
 |---------|-------------|
 | `vex run <file>` | Compile and execute a Vex program |
 | `vex compile <file>` | AOT compile to native binary |
-| `vex check <file>` | Syntax check without codegen (fast validation) |
+| `vex lint [target]` | Correctness analysis, semantic lints and verified fixes without codegen |
 | `vex ir <file>` | Emit LLVM IR (shorthand for `compile --emit-llvm`) |
 | `vex test` | Run tests or benchmarks |
 | `vex format <file>` | Format source code (`-i` for in-place) |
@@ -32,8 +32,7 @@ vex <command> [options] [args]
 | `vex setup` | Setup `VEX_HOME` with standard library |
 | `vex clean` | Clean cache and build artifacts |
 | `vex repl` | Interactive REPL |
-| `vex analyze <file>` | Run compiler lints on AST and HIR |
-| `vex view <type> <file>` | Export AST, CFG, or DFG representations |
+| `vex view <type> <file>` | Inspect AST, CFG, DFG, layout or escape information |
 | `vex prof <file>` | Profile microarchitectural pipeline performance using LLVM-MCA |
 
 ## `vex compile` -- AOT Compilation
@@ -79,12 +78,23 @@ vex run -O 3 main.vx                  # with optimization
 vex run --simd --gpu main.vx          # with SIMD + GPU
 ```
 
-## `vex check` -- Fast Validation
+## `vex lint` -- Semantic Validation and Cleanup
 
 ```bash
-vex check main.vx                     # check single file
-vex check --strict-exports main.vx    # strict mode
+vex lint main.vx                      # check and lint one file
+vex lint .                            # check and lint a package
+vex lint --deny-warnings .            # CI quality gate
+vex lint --diff .                     # preview verified fixes
+vex lint --fix .                      # apply verified fixes
 ```
+
+`vex lint` runs parser, resolution, type, borrow and validation queries without
+LLVM codegen. Fixes are revision-bound structured edits and are committed only
+after semantic re-analysis. The former `vex check`, `vex analyze` and `vex fix`
+compatibility commands are removed; use the corresponding `vex lint` mode. See
+[Linting and Verified Fixes](/guide/tooling/lint) for
+the complete rule catalog, configuration, suppressions, pointer migration, and
+transactional fix guarantees.
 
 ## `vex ir` -- LLVM IR Quick View
 
@@ -230,7 +240,7 @@ vex setup                             # setup ~/.vex with stdlib
 
 ## Best Practices
 
-1. Use `vex check` for fast validation during development.
+1. Use `vex lint` for fast semantic validation during development.
 2. Use `vex format -i` before committing code.
 3. Run `vex test --bench` before and after optimization changes.
 4. Use `vex test --fuzz` for code that parses untrusted input.

@@ -8,7 +8,7 @@ Modern compression with excellent ratio-to-speed balance (RFC 8878). Zstandard c
 import { zstdCompress, zstdDecompress, zstdGetFrameContentSize } from "compress/zstd";
 
 let data = "Zstandard in pure Vex!";
-let ptr = data.as_ptr() as *void;
+let ptr = data.asPtr() as Ptr<Opaque>;
 let len = data.len() as i64;
 
 let outCap = len + len / 8 + 18;

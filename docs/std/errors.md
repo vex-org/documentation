@@ -1,89 +1,115 @@
-# errors — Go-Style Error Handling
+# errors
 
-Structured error creation, wrapping, inspection, and comparison. Inspired by Go's `errors` package with sentinel errors and `Is()`/`As()` patterns.
+`errors` is Vex's owned diagnostic layer for adding context across abstraction
+boundaries. Prefer a precise `Result<T, E>` and a domain error enum inside a
+library. Convert to `Error` when an API needs one dynamic, inspectable error
+type.
 
-## Creating Errors
+The package is platform-independent and freestanding: it imports no libc, OS,
+I/O, or native ABI surface.
 
-The modern way to construct errors is using struct-associated static methods on `StdError`:
+## Typed construction
 
-```vex
-import { StdError } from "errors";
-
-// Recommended static constructors
-let e = StdError.new("file not found");
-let e2 = StdError.newWithCode("timeout", CODE_TIMEOUT());
-let e3 = StdError.newWithKind("denied", KIND_PERMISSION_DENIED());
-let e4 = StdError.newFormatted("failed to parse: ", arg);
-```
-
-Legacy free-function constructors are deprecated but still supported for backward compatibility:
+Messages are presentation. Stable program logic uses `ErrorKind` or an explicit
+domain code; changing message wording never changes identity.
 
 ```vex
-import { newError, newErrorCode, newErrorKind } from "errors";
+import { Error, ErrorKind } from "errors";
 
-let e = newError("file not found");
-let e2 = newErrorCode("timeout", CODE_TIMEOUT());
-let e3 = newErrorKind("denied", KIND_PERMISSION_DENIED());
+let missing = Error.withKind("config.toml is absent", ErrorKind.NotFound);
+let protocol = Error.withCode("peer rejected the frame", 731);
+let generic = Error.new("operation failed");
+
+if missing.isKind(ErrorKind.NotFound) {
+    // recover
+}
 ```
 
-## Error Wrapping (Go 1.13+)
+`Error.fromKind(kind)` creates the canonical default message for a kind. The
+available kinds are `Other`, `NotFound`, `PermissionDenied`, `TimedOut`,
+`Canceled`, `Closed`, `EndOfFile`, `InvalidInput`, `Unsupported`,
+`AlreadyExists`, and `ConnectionRefused`.
 
-Add context to errors while preserving the original cause:
+## Context and causal chains
+
+`context` consumes the old error and adds one owned outer node. It performs one
+box allocation, does not clone the existing tail, and does not copy already
+rendered messages.
 
 ```vex
-import { wrap, wrapf, unwrapMsg } from "errors";
+let failure = Error.withKind("disk full", ErrorKind.EndOfFile)
+    .context("write audit log")
+    .context("serve request");
 
-let original = newError("connection refused");
-let wrapped = wrap(original, "failed to connect to database");
-// wrapped.msg = "failed to connect to database"
-// wrapped retains original error code
-
-let innerMsg = unwrapMsg(wrapped);
+$println("{}", failure.messageView()); // serve request
+$println("{}", failure.depth());       // 3
+$println("{}", failure.renderChain());
 ```
 
-## Error Comparison (`Is` / `Equals`)
+`messageView(): str`, `source(): Option<&Error>`, and `rootCause(): &Error`
+borrow without allocation. `message(): string` deliberately returns an owned
+copy. `clone()` deep-clones the chain and is O(depth).
+
+`toString()` formats only the current layer. `renderChain()` formats all layers
+once:
+
+```text
+serve request
+caused by: write audit log
+caused by: disk full
+```
+
+`isKind` and `hasCode` inspect the complete chain. `containsMessage` is only a
+text-search helper and must not drive recovery logic.
+
+## Independent failures
+
+Use `ErrorGroup` when several operations fail independently. A group owns a
+vector of complete `Error` chains; it never flattens messages or invents a
+cause relationship.
 
 ```vex
-import { is, equals, hasCode } from "errors";
+import { Error, ErrorGroup, ErrorKind } from "errors";
 
-let e = ErrNotFound();
+let! failures = ErrorGroup.new();
+failures.push(Error.withKind("config missing", ErrorKind.NotFound));
+failures.push(Error.withCode("backend refused", 731).context("save user"));
 
-is(e, CODE_NOT_FOUND());      // → true (match by code)
-equals(e, ErrNotFound());     // → true (match by code + message)
-hasCode(e, 1);                // → true
+if failures.isKind(ErrorKind.NotFound) {
+    // at least one retained chain has this kind
+}
+
+match failures.get(1) {
+    Some(failure) => $println("{}", failure.renderChain()),
+    None => { }
+}
 ```
 
-## Sentinel Errors
+`ErrorGroup.fromErrors(Vec<Error>)` transfers an existing vector without
+cloning. `get` borrows, while `clone` explicitly deep-clones every chain.
 
-Pre-defined common errors for fast comparison:
+## API summary
 
-| Constructor | Message | Code |
-|-------------|---------|------|
-| `ErrNotFound()` | `"not found"` | 1 |
-| `ErrPermission()` | `"permission denied"` | 2 |
-| `ErrTimeout()` | `"timeout"` | 3 |
-| `ErrCanceled()` | `"canceled"` | 4 |
-| `ErrClosed()` | `"closed"` | 5 |
-| `ErrEOF()` | `"EOF"` | 6 |
-| `ErrInvalidArg()` | `"invalid argument"` | 7 |
-| `ErrNotSupported()` | `"not supported"` | 8 |
-| `ErrExists()` | `"already exists"` | 9 |
-| `ErrConnRefused()` | `"connection refused"` | 10 |
+| Type/API | Ownership and cost |
+|---|---|
+| `Error.new`, `withKind`, `withCode`, `fromKind` | create one owned node |
+| `Error.context` | consumes the source; one box allocation |
+| `messageView`, `source`, `rootCause` | borrowed, zero allocation |
+| `message`, `toString` | return an owned string |
+| `renderChain` | O(total message bytes + depth) rendering |
+| `isKind`, `hasCode`, `containsMessage` | O(depth) inspection |
+| `ErrorGroup.new`, `fromErrors`, `push` | owned independent failures |
+| `ErrorGroup.get` | borrowed indexed lookup |
+| `ErrorGroup.isKind`, `hasCode` | traverse every retained chain |
 
-## Error Joining (Go 1.20+)
+The former `StdError`, sentinel constructors, integer `KIND_*` helpers,
+message-derived identity, and fixed-arity `join2`/`join3` APIs were removed.
+They exposed storage, cloned causal chains, or destroyed structure.
 
-```vex
-import { join2, join3 } from "errors";
-let combined = join2(err1, err2);   // Merge two errors
-let combined = join3(e1, e2, e3);   // Merge three errors
-```
+## Current validation status
 
-## Inspection
-
-| Function | Description |
-|----------|-------------|
-| `getMessage(err)` | Get error message |
-| `getCode(err)` | Get error code |
-| `getKind(err)` | Get semantic kind |
-| `isWrapped(err)` | Check if error wraps another |
-| `toString(err)` | String representation |
+The source and focused tests are lint-clean. Executable tests currently reach
+the final linker but are held by the repository-wide runtime-image closure
+work, not by an `errors` type or resolution failure. Production sign-off and
+measurement evidence are tracked in
+`docs/std/errors_SIGNOFF_2026-08-09.md` in the compiler repository.

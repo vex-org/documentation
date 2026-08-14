@@ -1,0 +1,1 @@
+import{_ as s,o as a,c as t,ag as e}from"./chunks/framework.BGkQCay2.js";const c=JSON.parse('{"title":"bit","description":"","frontmatter":{},"headers":[],"relativePath":"std/bit.md","filePath":"std/bit.md"}'),n={name:"std/bit.md"};function l(h,i,p,r,o,k){return a(),t("div",null,[...i[0]||(i[0]=[e("",19)])])}const g=s(n,[["render",l]]);export{c as __pageData,g as default};

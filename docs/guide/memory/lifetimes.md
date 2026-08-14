@@ -61,7 +61,7 @@ print(f"{a.len()}, {b.len()}")
 let c = &data!
 c.push(3)
 
-// ❌ ERROR: Cannot have mutable and immutable at same time
+// No ERROR: Cannot have mutable and immutable at same time
 let d = &data
 let e = &data!  // Error: cannot borrow mutably while immutably borrowed
 ```
@@ -71,10 +71,10 @@ let e = &data!  // Error: cannot borrow mutably while immutably borrowed
 ```vex
 fn dangling(): &i32 {
     let x = 42
-    return &x  // ❌ ERROR: x will be dropped, reference invalid
+    return &x  // No ERROR: x will be dropped, reference invalid
 }
 
-// ✅ Correct: Return owned data
+// Yes Correct: Return owned data
 fn not_dangling(): i32 {
     let x = 42
     return x
@@ -88,7 +88,7 @@ let! counter = 10
 
 // These would execute concurrently - compiler prevents race
 go {
-    // counter = counter + 1  // ❌ ERROR: data race possible
+    // counter = counter + 1  // No ERROR: data race possible
 }
 ```
 
@@ -117,7 +117,7 @@ print(name)  // OK: user still valid
 // Error case - would be caught at compile time
 fn bad_example(): &string {
     let user = User { name: "Bob", email: "bob@example.com" }
-    return user.get_name()  // ❌ ERROR: user dropped, reference invalid
+    return user.get_name()  // No ERROR: user dropped, reference invalid
 }
 ```
 

@@ -1,12 +1,12 @@
 # GPU & Compute with SIR
 
-SIR (Static Intermediate Representation) is Vex's heterogeneous compute layer. It allows the compiler and runtime to compile, optimize, and dispatch tensor-style operations to parallel execution targets (CPUs and GPUs) transparently.
+SIR (Static Intermediate Representation) is Vex's heterogeneous compute layer. It is intended to compile, optimize, and dispatch tensor-style operations to parallel execution targets, but the compiler, backend, and runtime paths remain experimental.
 
 ---
 
-## The Zero-Cost Perception Philosophy
+## Graph-Based Compute Model
 
-Vex does not force GPU programming through complex shader languages or custom runtime APIs. Instead, the compiler analyzes standard dataflow inside functions marked with `graph fn` to automatically construct a SIR Directed Acyclic Graph (DAG) for parallel execution.
+Vex aims to let `graph fn` describe standard dataflow that can be lowered to a SIR Directed Acyclic Graph (DAG). The lowering and execution path depends on the selected compiler revision and backend.
 
 ### Perception Example: Dot Product
 ```vex
@@ -118,11 +118,11 @@ For WASM/Web applications, Vex lowers graphs directly to WebGPU Shading Language
 
 | Platform / OS | Primary Target | Shader / IR Pipeline | Memory Model | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **macOS** | `Metal` | MSL Compiler | Unified (UMA) | Fully Supported (Optimized) |
-| **Linux** | `Vulkan` | SPIR-V Codegen | Discrete / Copied | Supported |
-| **Windows** | `Vulkan` | SPIR-V Codegen | Discrete / Copied | Supported |
-| **Web / WASM** | `WebGPU` | WGSL Code Generator | Sandboxed / Copied | Supported |
-| **Any (Fallback)** | `CPU SIMD` | LLVM Vector IR | CPU Cache | Fully Supported |
+| **macOS** | `Metal` | MSL Compiler | Unified (UMA) | Experimental |
+| **Linux** | `Vulkan` | SPIR-V Codegen | Discrete / Copied | Experimental |
+| **Windows** | `Vulkan` | SPIR-V Codegen | Discrete / Copied | Experimental |
+| **Web / WASM** | `WebGPU` | WGSL Code Generator | Sandboxed / Copied | Experimental |
+| **Any (Fallback)** | `CPU SIMD` | LLVM Vector IR | CPU Cache | Experimental |
 
 ---
 
@@ -149,4 +149,3 @@ VEX_DISPATCH_VERBOSE=1 vex run program.vx
 - [SIMD Auto-Vectorization](/guide/simd) - CPU SIMD details
 - [VUMM Memory Model](/guide/memory/vumm) - Automatic memory management
 - [Performance](/guide/advanced/performance) - Optimization techniques
-

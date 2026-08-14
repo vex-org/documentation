@@ -104,7 +104,7 @@ vex compile --emit-llvm file.vx
 Good signs for the small-array path are direct vector operations and vector reductions. For graph and tensor code, the more relevant check is whether the code lowered into the expected SIR/backend route.
 
 ```vex
-// ❌ Avoid: Manual loops when operators work
+// No Avoid: Manual loops when operators work
 fn sum_bad(data: [f64]): f64 {
     let! total = 0.0
     for x in data {

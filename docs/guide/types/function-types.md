@@ -124,7 +124,7 @@ Function pointers are the mechanism for C interop callbacks:
 
 ```vex
 // Declare a C function that takes a callback
-extern "C" {
+extern "LIBC" {
     fn qsort(base: ptr, nmemb: usize, size: usize,
              compar: fn(ptr, ptr): i32);
 }
@@ -147,7 +147,7 @@ let alsoNoop: fn(): () = myNoopFn
 ## Limitations
 
 - Function pointers cannot capture variables; use closures for that.
-- Closures cannot be passed across FFI boundaries; use `extern "C" fn` for that.
+- Closures cannot be passed across FFI boundaries; use a non-capturing function pointer with the exact declared foreign signature.
 - Recursive function types (a function returning its own type) require indirection via `Box` or structs.
 - Variadic C functions require the `...` syntax (see Variadic Functions documentation).
 

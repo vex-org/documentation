@@ -7,10 +7,10 @@ Variadic functions accept a variable number of arguments. Vex supports C-compati
 For interop with C libraries like `printf`, declare the function with `...` as the final parameter:
 
 ```vex
-extern "C" {
-    fn printf(format: *u8, ...): i32
-    fn scanf(format: *u8, ...): i32
-    fn snprintf(buf: *u8!, size: usize, format: *u8, ...): i32
+extern "LIBC" {
+    fn printf(format: Ptr<u8>, ...): i32
+    fn scanf(format: Ptr<u8>, ...): i32
+    fn snprintf(buf: Ptr<u8!>, size: usize, format: Ptr<u8>, ...): i32
 }
 ```
 
@@ -63,7 +63,7 @@ let msg = $format(f"Processing {} of {} items", current, total)
 
 Vex does NOT currently support defining new variadic functions with `...` syntax for pure Vex code. Variadic definitions are restricted to:
 
-1. `extern "C"` declarations for FFI
+1. `LIBC`, `SYSTEM`, and `NATIVE` extern declarations for C-ABI FFI
 2. Builtin compiler macros (like `$println`)
 
 For variable-argument needs in pure Vex, use these alternatives:
@@ -123,11 +123,11 @@ For compiler developers: The Vex compiler lowers variadic calls through `calls/v
 1. **C variadics are unsafe**: No type checking on variadic arguments. Mismatched types cause undefined behavior.
 2. **Prefer builtin macros**: `$println`, `$format` etc. are type-safe alternatives.
 3. **Don't mix Vex types with C variadics**: Pass only C-compatible types (primitives, pointers) to C variadic functions.
-4. **String handling**: Vex `string` is NOT C-compatible. Cast to `*u8` for C variadics:
+4. **String handling**: Vex `string` is NOT C-compatible. Pass an explicitly prepared C string through `Ptr<u8>` for C variadics:
 
 ```vex
 let msg = "Hello"
 unsafe {
-    printf("%s\n", msg as *u8)  // pass as C string pointer
+    printf("%s\n", msg.cstr() as Ptr<u8>) // pass a null-terminated C string pointer
 }
 ```

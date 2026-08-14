@@ -24,7 +24,7 @@ extern {
 }
 ```
 
-These types cannot be instantiated in Vex. They exist only behind pointers (`*FILE`, `Extern.Owned<FILE, "fclose">`).
+These types cannot be instantiated in Vex. They exist only behind pointers (`Ptr<FILE>`, `Extern.Owned<FILE, "fclose">`).
 
 ---
 
@@ -45,22 +45,22 @@ Extern.Owned<T, "c_destructor_name">
 ### Examples
 
 ```vex
-extern {
+extern "LIBC" {
     type FILE;
-    fn fopen(path: *u8, mode: *u8): *FILE;
-    fn fclose(file: *FILE): i32;
-    fn fread(buf: *u8, size: u64, count: u64, file: *FILE): u64;
+    fn fopen(path: Ptr<u8>, mode: Ptr<u8>): Ptr<FILE>;
+    fn fclose(file: Ptr<FILE>): i32;
+    fn fread(buf: Ptr<u8!>, size: u64, count: u64, file: Ptr<FILE>): u64;
 }
 
-fn read_file(path: *u8): void {
-    // fopen returns a raw *FILE — wrap it for safe cleanup
+fn read_file(path: Ptr<u8>): () {
+    // fopen returns a raw Ptr<FILE> — wrap it for safe cleanup
     let file = Extern.Owned<FILE, "fclose">.new(
-        unsafe { fopen(path, "r\0" as *u8) }
+        unsafe { fopen(path, "r\0" as Ptr<u8>) }
     );
     defer file.drop();  // calls fclose(file.ptr) at scope exit
 
     let! buf: [u8; 1024];
-    let n = unsafe { fread(&buf[0] as *u8, 1, 1024, file.ptr) };
+    let n = unsafe { fread(&buf[0] as Ptr<u8!>, 1, 1024, file.ptr) };
     // ...
 }  // fclose called automatically here via defer
 ```
@@ -68,7 +68,7 @@ fn read_file(path: *u8): void {
 ```vex
 // Default destructor: "free"
 let buf = Extern.Owned<u8>.new(
-    unsafe { extern_malloc(4096) as *u8 }
+    unsafe { extern_malloc(4096) as Ptr<u8!> }
 );
 // Drop calls free(buf.ptr)
 ```
@@ -96,10 +96,10 @@ Extern.ForeignManaged<T>
 ### Example
 
 ```vex
-extern {
+extern "dylib" from "sqlite3" {
     type sqlite3;                          // opaque DB handle
-    fn sqlite3_open(path: *u8, out: **sqlite3): i32;
-    fn sqlite3_close(db: *sqlite3): i32;
+    fn sqlite3_open(path: Ptr<u8>, out: Ptr<Ptr<sqlite3>!>): i32;
+    fn sqlite3_close(db: Ptr<sqlite3>): i32;
 }
 
 struct Database {
@@ -107,9 +107,9 @@ struct Database {
 }
 
 impl Database {
-    fn open(path: *u8): Database {
-        let! db: *sqlite3 = 0 as *sqlite3;
-        unsafe { sqlite3_open(path, &db as **sqlite3) };
+    fn open(path: Ptr<u8>): Database {
+        let! db = Ptr.null<sqlite3>();
+        unsafe { sqlite3_open(path, &db as Ptr<Ptr<sqlite3>!>) };
         return Database.new(
             handle: Extern.ForeignManaged<sqlite3>.new(db)
         );

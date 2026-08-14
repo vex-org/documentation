@@ -4,7 +4,7 @@ While `Tensor<T, N>` and `Mask<N>` have compile-time-known sizes, `Tensor<T>` (D
 
 ## DynTensor\<T\>
 
-`Tensor<T>` is a fat pointer: `{ ptr: *T, len: i64 }`. Use it when the tensor size is not known until runtime.
+`Tensor<T>` is a fat pointer: `{ ptr: Ptr<T>, len: i64 }`. Use it when the tensor size is not known until runtime.
 
 ### Construction
 
@@ -55,7 +55,7 @@ let cube: Tensor<f64> = flat.reshape([2, 3, 4])  // 2x3x4 cube
 
 ## DynMask
 
-`Mask` is a fat pointer for runtime-sized boolean masks: `{ ptr: *i8, len: i64 }`.
+`Mask` is a fat pointer for runtime-sized boolean masks: `{ ptr: Ptr<i8>, len: i64 }`.
 
 ### Construction
 
@@ -139,9 +139,9 @@ graph fn matmulKernel(input: Tensor<f32>, weights: Tensor<f32>): Tensor<f32> {
 | ----------------------- | ---------------------------- | -------------- |
 | `Tensor<T, N>` (<= 64B) | Register: `<N x T>` in LLVM  | Register-sized |
 | `Tensor<T, N>` (> 64B)  | Stack: `[N x T]`             | N \* sizeof(T) |
-| `DynTensor<T>`          | Heap fat ptr: `{ *T, i64 }`  | 16 bytes       |
+| `DynTensor<T>`          | Heap fat ptr: `{ Ptr<T>, i64 }`  | 16 bytes       |
 | `Mask<N>` (<= 64B)      | Register: `<N x i1>`         | Register-sized |
-| `DynMask`               | Heap fat ptr: `{ *i8, i64 }` | 16 bytes       |
+| `DynMask`               | Heap fat ptr: `{ Ptr<i8>, i64 }` | 16 bytes       |
 
 ## Best Practices
 

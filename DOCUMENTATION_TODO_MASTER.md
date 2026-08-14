@@ -1,89 +1,69 @@
-# Vex Language — Master Documentation TODO
+# Vex Language Documentation Coverage
 
-> **Status:** ✅ REVIEWED 2026-07-22 — Content 100% complete  
-> **Toplam:** 179 dosya, **0 eksik**  
-> **Son güncelleme:** 2026-07-22
->
-> Bu liste AI tarafından oluşturulmuştu ve birçok ❌ aslında var.
-> Aşağıdaki tablo **gerçek durumu** yansıtmaktadır.
+> **Last reviewed:** 2026-08-14
+> **Current bundle:** regenerated from all Markdown sources
+> **Status:** Core learning path, homepage, and high-risk maturity claims refreshed; feature-by-feature accuracy review continues.
 
----
+This file tracks documentation coverage and quality. A page existing is not the same as every claim on that page being verified. Compiler-supported syntax, experimental features, and planned APIs must remain visibly distinct.
 
-## Legend
+## Status labels
 
-| Icon | Meaning                     |
-| ---- | --------------------------- |
-| ✅   | Already documented          |
-| ❌   | Missing (gerçekten eksik)   |
-| ➕   | Bonus (TODO'da yok ama var) |
+| Label | Meaning |
+| --- | --- |
+| Verified | Checked against the current compiler or a maintained source-of-truth implementation. |
+| Experimental | Present in the language or compiler, but runtime, library, or platform behavior is still changing. |
+| Partial | The main surface is documented, while important edge cases or integration pieces remain unfinished. |
+| Planned | The concept is known, but it should not be presented as a stable current feature. |
 
----
+## Completed in the current pass
 
-## 📊 Summary
+- Reworked the homepage around the language's actual strengths and current limits.
+- Rewrote the introduction, installation, syntax, variables, functions, control flow, enums, structs, error handling, ownership, borrowing, concurrency overview, and channels pages.
+- Added a language-status page with an explicit maturity matrix.
+- Added compiler validation notes for syntax examples and documented the current macOS runtime failure in the repository root.
+- Removed fabricated benchmark tables, stale release claims, unsupported production labels, and presentation-only emoji/status markers from the documentation sources.
+- Regenerated the documentation bundle and verified the Vite/VitePress production build.
+- Reworked comptime around the verified strict-boundary and typed-staging
+  semantics; documented canonical user/std/VexArch CTFE, shared VUMM/Valence
+  materialization, persistent-cache/target rules, and controlled V2 limits.
+- Added a verified structural `DeclSet`/`DeclExpr` declaration-generation guide
+  and a compiler-facing comptime pipeline architecture page.
 
-| Kategori            | ✅ Var  |    ❌ Eksik    |
-| ------------------- | :-----: | :------------: |
-| Basics (6)          |    6    |       0        |
-| Types (27)          |   26    | **1 (pin.md)** |
-| Memory (11)         |   11    |       0        |
-| Advanced (11)       |   11    |       0        |
-| Concurrency (5)     |    5    |       0        |
-| SIMD/GPU/Fusion (8) |    8    |       0        |
-| Std Library         |   66    |       0        |
-| Architecture        |    7    |       0        |
-| HDL                 |    8    |       0        |
-| References          |    7    |       0        |
-| Other Guide         |   18    |       0        |
-| **Toplam**          | **177** |     **1**      |
+## Coverage map
 
----
+### Basics
 
-## 1. BASICS — 6/6 ✅
+`syntax.md`, `variables.md`, `functions.md`, `control-flow.md`, `loops.md`, `template-literals.md`
 
-All exist: `syntax.md`, `variables.md`, `functions.md`, `control-flow.md`, `loops.md`, `template-literals.md`
+### Types
 
-## 2. TYPES — 26/27 ✅ (1 eksik: pin.md)
+Primitive, compound, generic, enum, struct, contract, pattern-matching, collection, pointer, and function-type pages are present. Continue checking examples against the compiler as syntax evolves.
 
-All 26 files exist. **Eksik:** `guide/types/pin.md` — yazılacak.
+### Memory
 
-## 3. MEMORY — 11/11 ✅
+`ownership.md`, `borrowing.md`, `lifetimes.md`, `box.md`, `ptr-t.md`, `span-t.md`, `rawbuf.md`, `safety.md`, `vumm.md`, `pin.md`, and `mem-prelude.md`
 
-`ownership.md`, `borrowing.md`, `lifetimes.md`, `box.md`, `ptr-t.md`, `span-t.md`, `rawbuf.md`, `safety.md`, `vumm.md`, `pin.md`, `mem-prelude.md`
+### Advanced language features
 
-## 4. ADVANCED — 11/11 ✅
+Methods, operators, built-ins, comptime, typed declaration generation, pointers,
+unsafe code, assembly, compiler directives, autograd, and native module linking
+are covered. Comptime and declaration generation now identify their verified V2
+surface and explicit post-V2 limits; the remaining pages still need the same
+maturity labeling when their implementation is incomplete.
 
-`methods.md`, `operators.md`, `operators-reference.md`, `builtins.md`, `comptime.md`, `pointers.md`, `unsafe.md`, `assembly.md`, `autograd.md`, `compiler-directives.md`, `vxm-native-module-linking.md`
+### Concurrency and accelerated execution
 
-## 5. CONCURRENCY — 5/5 ✅
+Concurrency, async, channels, SIMD, tensors, SIR, GPU, and fusion pages are present. They should be read as experimental unless a page explicitly says otherwise.
 
-`overview.md`, `async.md`, `channels.md`, `deep-dive.md`, `async-internals.md`
+### Standard library and tooling
 
-## 6. SIMD/GPU/FUSION — 8/8 ✅
+The standard-library, CLI, package-manager, testing, architecture, FFI, platform, HDL, versioning, and contribution references are present. Their API examples need periodic compiler and runtime checks.
 
-SIMD(5): `index.md`, `simd-operations.md`, `tensor-mask.md`, `dynamic-tensors.md`, `sir-pipeline.md`
-GPU(2): `index.md`, `graph-functions.md`
-Fusion(1): `graph.md`
+## Next review queue
 
-## 7. STD LIBRARY — 66 ✅
+1. Audit remaining advanced and standard-library API pages against compiler and runtime tests rather than page prose alone.
+2. Add focused compiler checks for representative snippets, especially around FFI, SIMD, GPU, HDL, and package management.
+3. Review generated/reference pages for API signatures that have drifted from the current implementation.
+4. Keep the root compiler issue report and the language-status page synchronized when implementation behavior changes.
 
-Full API reference.
-
-## 8. ARCHITECTURE — 7 ✅
-
-Compiler internals deep-dive.
-
-## 9. HDL — 8 ➕
-
-Bonus section: VexHDL hardware design.
-
-## 10. REFERENCES — 7 ✅
-
-CLI, test, doc, pm references.
-
-## 11. OTHER GUIDE — 18 ✅
-
-`introduction.md`, `why-vex.md`, `installation.md`, `modules.md`, `ffi.md`, `ffi-deep-dive.md`, `error-handling.md`, `platform-support.md`, `math.md`, `bit.md`, `crypto.md`, `benchmarks.md`, `glossary.md`, `stdlib.md`, `faq.md`, `versioning.md`, `freestanding.md`, `contributing.md`
-
----
-
-_Reviewed 2026-07-20 — Gerçek audit sonuçları. Eski AI versiyonu `DOCUMENTATION_TODO_MASTER.md.bak` olarak kaydedildi._
+The generated `docs/vex_docs.txt` file is current when `bun run docs:bundle:check` reports no changes.

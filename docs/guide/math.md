@@ -1,12 +1,12 @@
 # Math Namespace
 
-The `Math` namespace provides hardware-accelerated mathematical functions. All functions map directly to LLVM intrinsics or optimized C library calls on scalars, and auto-vectorize to SIMD instructions on arrays, slices, and tensors.
+The `Math` namespace provides mathematical functions with compiler and runtime implementations that vary by operation and target. Some array and tensor forms can lower through the data-parallel pipeline, but support and vectorization are not blanket guarantees.
 
 > **No import needed.** `Math.*` is a builtin namespace available everywhere.
 
 ## Scalar vs Vectorized Usage
 
-Every `Math` function works on BOTH scalars AND arrays/tensors. When passed an array or tensor, the operation is automatically vectorized:
+Scalar forms are the most portable surface. Array and tensor forms are available only where the selected function and compiler path support them:
 
 ```vex
 // Scalar: single value

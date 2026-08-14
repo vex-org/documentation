@@ -102,14 +102,17 @@ fn spawnTasks(data: Vec<i32>) {
 }
 ```
 
-To share data between goroutines, use `Channel<T>` or `Arc<T>`:
+For mutable coordination, use `Channel<T>`. Immutable owned data may be captured
+through `Box<T>`; VUMM recognizes the cross-task escape and selects the required
+thread-safe representation internally. Vex does not expose `Arc`, `Rc`, reference
+counts, or thread-ownership bookkeeping to application code:
 
 ```vex
 fn shareData() {
-    let shared = Box.new(42)  // VUMM infers AtomicArc for multi-thread access
+    let shared = Box.new(42)  // ownership strategy is selected by VUMM
 
     go {
-        let val = shared.get()  // safe: atomic reference count
+        let val = shared.get()  // safe immutable capture
         $println(f"Goroutine 1: {val}")
     }
 
@@ -392,12 +395,13 @@ fn workerTask() {
 
 The compiler enforces thread safety through capability contracts:
 
-| Contract             | Meaning                                                |
-| -------------------- | ------------------------------------------------------ |
-| `ConcurrentSafe`    | Type can be safely sent between threads                |
-| `SuspendSafe`       | Value remains valid across `await` suspension points   |
-| `$Send` (conceptual) | Type can be transferred to another thread              |
-| `$Sync` (conceptual) | Shared reference can be accessed from multiple threads |
+| Contract | Meaning |
+| --- | --- |
+| `ConcurrentSafe` | Value/reference use satisfies concurrent transfer rules |
+| `SuspendSafe` | A borrow remains valid across `await` suspension points |
+
+These are the canonical Vex capability names. `$Send` and `$Sync` are not Vex
+contracts.
 
 ```vex
 // Compiler checks: Vec<i32> is ConcurrentSafe, so this compiles
@@ -450,7 +454,7 @@ VEX_DEADLOCK_DETECT=1 vex run main.vx
 4. Use `RwLock` when reads vastly outnumber writes.
 5. Always use `defer wg.done()` with WaitGroup to prevent leaks.
 6. Enable thread sanitizer in CI to catch data races early.
-7. Be mindful of `select` fairness -- Vex's select picks randomly among ready cases to prevent starvation.
+7. Vex rotates the first polled `select` case per thread, preventing a permanently-ready source-order prefix from starving later cases without requiring a clock or random syscall.
 
 ## Related Pages
 

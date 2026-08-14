@@ -1,64 +1,25 @@
 # Structs
 
-Structs in Vex are pure data types that group related values together. Unlike many other systems languages, Vex structs primarily contain data; behavior is defined externally using Go-style methods.
+Structs group named fields into a value. They are the main record type in Vex. Behavior is declared outside the struct with receiver methods.
 
-## Defining Structs
+## Define and construct a struct
 
-### Basic Struct
-
-```vex
+~~~vex
 struct Point {
-    x: f64,
-    y: f64,
+    public:
+    x: i32,
+    y: i32,
 }
 
-struct User {
-    id: u64,
-    name: string,
-    email: string,
-    active: bool,
+fn main(): i32 {
+    let point = Point { x: 3, y: 4 };
+    return point.x + point.y;
 }
-```
+~~~
 
-### Creating Instances
+Field declarations are grouped under visibility sections. Use public for fields that callers may read or write, readonly for fields that callers may read but not write, and private for module-internal fields. When a struct is part of a module API, export the struct declaration as well.
 
-```vex
-let origin = Point { x: 0.0, y: 0.0 }
-
-let user = User {
-    id: 1,
-    name: "Alice",
-    email: "alice@example.com",
-    active: true
-}
-```
-
-### Field Shorthand
-
-When variable names match field names:
-
-```vex
-fn create_user(name: string, email: string): User {
-    let id = 123
-    return User {
-        id,
-        name,
-        email,
-        active: true,
-    }
-}
-```
-
-## Field visibility and export
-
-Vex separates two concerns:
-
-- `export` controls whether the struct itself is visible outside the module
-- `private:`, `readonly:`, and `public:` control field visibility inside the struct
-
-Section-based field visibility is the current model:
-
-```vex
+~~~text
 export struct Account {
     private:
     internal_id: i64,
@@ -69,106 +30,126 @@ export struct Account {
     public:
     name: string,
 }
-```
+~~~
 
-| Label       | Access Level                            |
-| ----------- | --------------------------------------- |
-| `private:`  | Module-only (Default)                   |
-| `readonly:` | Publicly readable, Module-only writable |
-| `public:`   | Fully accessible                        |
+Keep the visibility choice close to the type definition. It is part of the data model, not a comment about how the type happens to be used today.
 
-If no section label is present, fields default to `private:`.
+## Methods
 
-## Go-Style Methods
+Methods use an external receiver:
 
-Methods are defined outside the struct using receiver syntax:
-
-```vex
-struct Point {
-    x: f64,
-    y: f64,
-}
-
-// Associated function
-fn Point.new(x: f64, y: f64): Point {
-    return Point { x, y }
-}
-
-fn (self: &Point) length(): f64 {
-    return (self.x * self.x + self.y * self.y).sqrt()
-}
-
-fn (self: &Point!) translate(dx: f64, dy: f64) {
-    self.x += dx
-    self.y += dy
-}
-```
-
-If a method should be available across modules, export the function itself:
-
-```vex
-export fn (self: &Point) length(): f64 {
-    return (self.x * self.x + self.y * self.y).sqrt()
-}
-```
-
-## Struct Tags (Go-Style)
-
-Vex uses Go-style backtick tags for metadata, such as serialization instructions:
-
-```vex
-struct User {
-    id: u64        `json:"id" db:"pk"`,
-    username: string `json:"username"`,
-}
-```
-
-::: warning No Rust-style Attributes
-Vex does **NOT** use `#[derive(...)]` or other attribute syntax. Use struct tags or implement contracts manually.
-:::
-
-## Contracts on structs
-
-Attach contracts directly on the struct declaration with colon syntax.
-
-```vex
-contract Area {
-    area(): f64;
-}
-
-struct Rect: Area {
+~~~vex
+struct Rectangle {
     public:
-    width: f64,
-    height: f64,
+    width: i32,
+    height: i32,
 }
 
-fn (self: &Rect) area(): f64 {
-    return self.width * self.height
+fn (rectangle: &Rectangle) area(): i32 {
+    return rectangle.width * rectangle.height;
 }
-```
 
-Builtin contracts from the prelude commonly start with `$`, such as `Display`, `Clone`, and `Drop`.
+fn main(): i32 {
+    let rectangle = Rectangle { width: 5, height: 7 };
+    return rectangle.area();
+}
+~~~
 
-## Tuple Structs
+The receiver is an ordinary typed parameter inside parentheses. A call such as rectangle.area() supplies that parameter automatically.
 
-Structs without named fields, useful for the "Newtype" pattern:
+A mutable receiver is written with !:
 
-```vex
-struct Color(u8, u8, u8)
-struct UserId(u64)
+~~~text
+fn (rectangle: &Rectangle!) resize(width: i32, height: i32) {
+    rectangle.width = width
+    rectangle.height = height
+}
+~~~
 
-let red = Color(255, 0, 0)
-```
+Mutation through a receiver requires a mutable binding at the call site and an exclusive mutable borrow. Field assignment through mutable receivers is still an area where individual compiler paths should be checked before use in a critical codebase.
+
+## Associated functions
+
+An associated function is qualified by the type name and has no receiver:
+
+~~~vex
+struct Point {
+    public:
+    x: i32,
+    y: i32,
+}
+
+fn Point.origin(): Point {
+    return Point { x: 0, y: 0 };
+}
+
+fn main(): i32 {
+    let point = Point.origin();
+    return point.x + point.y;
+}
+~~~
+
+Use associated functions for constructors and type-level operations. Use receiver methods when an existing value is the subject of the operation.
+
+## Generic structs
+
+Structs may have type parameters:
+
+~~~vex
+struct Container<T> {
+    public:
+    value: T,
+}
+
+fn main(): i32 {
+    let container = Container<i32> { value: 42 };
+    return container.value;
+}
+~~~
+
+Generic structs are implemented. Generic contracts and complex combinations with overloaded methods remain subject to the coverage described in [Language Status](/guide/language-status).
+
+## Structs and ownership
+
+A struct owns its fields unless a field is a reference or another explicitly borrowed type. Passing a struct by value may move it:
+
+~~~text
+fn consume(point: Point) { ... }
+fn inspect(point: &Point) { ... }
+~~~
+
+Use an immutable reference when the callee only needs to read the value. Use a mutable reference when it must update the value. See [Ownership](/guide/memory/ownership) and [Borrowing](/guide/memory/borrowing) for the rules that govern these calls.
+
+## Structs and contracts
+
+Contracts describe required methods and can be attached to a struct declaration:
+
+~~~text
+contract Area {
+    area(): i32;
+}
+
+struct Rectangle: Area {
+    public:
+    width: i32,
+    height: i32,
+}
+~~~
+
+The contract surface and validation rules are implemented, but generic contract bounds and default methods are still evolving. Use the [Contracts](/guide/types/contracts) reference for current syntax and the [Language Status](/guide/language-status) page for stability expectations.
 
 ## Guidance
 
-- Use `export struct` only when the type itself is part of the module surface.
-- Use visibility sections to group fields intentionally instead of repeating per-field modifiers.
-- Keep structs data-focused and put behavior in receiver methods.
-- Use tags when tooling or serializers need field metadata.
+- Keep data representation and behavior easy to find.
+- Make fields public only when callers should depend on their layout.
+- Prefer associated functions for construction instead of exposing an invalid intermediate state.
+- Use references for read-only inspection and avoid unnecessary moves.
+- Check mutable receiver examples against the compiler version used by the project.
 
-## Next Steps
+## Next steps
 
-- [Enums](/guide/types/enums) - Sum types and pattern matching
-- [Contracts](/guide/types/contracts) - Interface-driven development
-- [Generics](/guide/types/generics) - Type-safe abstractions
+- [Enums](/guide/types/enums)
+- [Tuples](/guide/types/tuples)
+- [Generics](/guide/types/generics)
+- [Contracts](/guide/types/contracts)
+- [Ownership](/guide/memory/ownership)

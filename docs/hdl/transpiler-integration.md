@@ -4,7 +4,7 @@ layout: doc
 title: Transpiler, Synthesis, and Integration
 ---
 
-> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> **Warning Concept Stage:** This page describes a planned VexHDL feature.
 > Implementation has not begun. Details may change.
 
 
@@ -63,7 +63,7 @@ When your project includes foreign (`extern`) imports, the VexHDL compiler enfor
 
 1. **Single-Language Target Constraint**: You cannot mix `extern "verilog"` and `extern "vhdl"` in the same project. If both are present, the compiler throws `E030: SirUnsynthesizable` error.
 2. **Simulation Bypass**:
-   * If a project is **100% pure VexHDL**, the built-in simulator (`vex-hdl-sim`) runs immediately and outputs waveform data.
+   * If a project contains only VexHDL, the built-in simulator may be available, subject to the current simulator implementation and target setup.
    * If a project imports **extern** modules, `vex-hdl-sim` cannot interpret foreign code and is bypassed. The IDE notifies you and routes the simulation execution to external simulators (such as Vivado XSim, ModelSim, or Verilator) running in the background.
 
 ---

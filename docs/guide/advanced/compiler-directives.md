@@ -1,272 +1,148 @@
-# Compiler Directives and Attributes
+# Compiler Directives
 
-Compiler directives control how the Vex compiler processes your code. They are written with `#[]` syntax and applied to functions, structs, or modules.
+Vex compiler directives are source constructs evaluated during parsing,
+semantic analysis, or compile-time expansion. The stable surface consists of
+compile-time control flow, namespaced compile-time intrinsics, `export`, and
+`extern` declarations.
 
-## Function Directives
+::: warning About attribute-style examples
+Rust-style optimizer attributes such as `#[inline]`, `#[cold]`, and
+`#[target_feature]` are not part of Vex's stable source API. Vex computes
+inlining and target lowering from semantic analysis and the selected target.
+Do not use those spellings in portable Vex code.
+:::
 
-### `#[inline]` -- Inline Hint
+## Compile-time conditional expansion
 
-Suggests the compiler should inline the function at call sites:
+Use `#if`, `#elif`, and `#else` with a compile-time expression. Branches use
+normal braces; there is no `#endif` terminator.
 
 ```vex
-#[inline]
-fn add(a: i32, b: i32): i32 {
+#if #Target.os() == "macos" {
+    fn platformName(): str { "Darwin" }
+} #elif #Target.os() == "linux" {
+    fn platformName(): str { "Linux" }
+} #elif #Target.os() == "windows" {
+    fn platformName(): str { "Windows" }
+} #else {
+    #Diag.compileError("unsupported operating system")
+}
+```
+
+Target queries are compile-time values:
+
+| Query | Typical results |
+| --- | --- |
+| `#Target.os()` | `"macos"`, `"linux"`, `"windows"` |
+| `#Target.arch()` | `"aarch64"`, `"x86_64"` |
+| `#Target.endian()` | `"little"`, `"big"` |
+| `#Target.pointerWidth()` | `64`, `32` |
+
+Use these queries instead of unbound names such as `target_os` or
+`target_arch`.
+
+## Compile-time iteration and evaluation
+
+```vex
+#for field in #Type.info<Packet>().fields {
+    $println(field.name)
+}
+
+let headerSize = #const {
+    #Type.sizeOf<PacketHeader>()
+}
+
+let folded = #Const.eval(6 * 7)
+```
+
+`#for` expands its body from compile-time-known metadata. `#const` evaluates a
+block at compile time. `#Const.eval` requires an expression that the compiler
+can fold and produces no runtime call.
+
+These are strict boundaries: an unknown value is a compile error. Runtime
+effects inside a branch selected by `#if` or a body expanded by `#for` remain
+ordinary runtime HIR; selecting the body does not execute its I/O or allocation
+during compilation.
+
+A top-level, parameterless, non-generic `const fn` returning `DeclSet` is a
+structural module generator. See
+[Structural Declaration Generation](/guide/advanced/comptime-declarations)
+for the typed builder surface and invocation rules.
+
+## Diagnostics
+
+```vex
+#Diag.staticAssert(
+    #Type.sizeOf<PacketHeader>() == 16,
+    "PacketHeader ABI changed"
+)
+
+#if #Target.pointerWidth() != 64 {
+    #Diag.compileError("this implementation requires a 64-bit target")
+}
+
+#Diag.compileWarning("experimental implementation selected")
+```
+
+- `#Diag.staticAssert(condition, message)` checks a compile-time invariant.
+- `#Diag.compileError(message)` stops compilation.
+- `#Diag.compileWarning(message)` emits a compiler and LSP diagnostic.
+- `#Diag.debugExpr(expression)` and `#Diag.debugType<T>()` assist metaprogram
+  development.
+
+## Layout, embedding, and source location
+
+```vex
+let size = #Type.sizeOf<Packet>()
+let alignment = #Type.alignOf<Packet>()
+let payloadOffset = #Type.offsetOf<Packet>("payload")
+
+let schema = #Embed.string("schema.json")
+let table = #Embed.bytes("lookup.bin")
+
+$eprintln(
+    "{}:{}",
+    #Source.fileName(),
+    #Source.line()
+)
+```
+
+Embedding reads the file during compilation and makes it an input to the
+binary. It performs no runtime file I/O. `#Source` reports the expansion's
+source location.
+
+## Exported and foreign symbols
+
+Use `export` for declarations that must be visible outside their module and an
+`extern` ABI at a foreign boundary:
+
+```vex
+export "C" fn vexAdd(a: i32, b: i32): i32 {
     return a + b
 }
 
-// Always inline, even in debug builds
-#[inline(always)]
-fn smallHelper(x: i32): i32 { return x * 2 }
-
-// Never inline (useful for debugging or large cold functions)
-#[inline(never)]
-fn rarelyUsed() { ... }
-```
-
-### `#[no_mangle]` -- Preserve Symbol Name
-
-Prevents the compiler from mangling the function name. Required for FFI and entry points:
-
-```vex
-#[no_mangle]
-extern "C" fn vex_main(): i32 {
-    return 0
-}
-
-// Without #[no_mangle], the symbol becomes something like _ZN8myModule6myFunc...
-// With #[no_mangle], the symbol stays as "myFunc"
-#[no_mangle]
-fn myFunc() { }
-```
-
-### `#[export]` -- Export Symbol
-
-Makes a function visible outside the current compilation unit:
-
-```vex
-#[export]
-fn publicApi(x: i32): i32 {
-    return x * 2
+extern "NATIVE" from "host_api" {
+    fn hostWrite(data: Ptr<u8>, length: usize): i32;
 }
 ```
 
-### `#[cold]` -- Cold Path Marker
+Keep ABI declarations at a narrow wrapper boundary. Convert raw pointers to
+typed Vex abstractions inside the wrapper, and keep ownership rules explicit.
+See [FFI](/guide/ffi) for ABI and native-module details.
 
-Marks a function as rarely executed, helping the optimizer place it away from hot code:
+## Best practices
 
-```vex
-#[cold]
-fn handleError(err: Error) {
-    $eprintln(f"Fatal: {err}")
-    $abort(1)
-}
+1. Use canonical namespaced intrinsics; legacy flat aliases are unsupported.
+2. Encode ABI and layout assumptions with `#Diag.staticAssert`.
+3. Keep `#if` conditions target- or type-derived and compile-time evaluable.
+4. Let the optimizer choose inlining unless Vex exposes a documented stable
+   directive for the use case.
+5. Treat embedded files and build environment values as build-cache inputs.
 
-fn process(data: Data) {
-    if !data.isValid() {
-        handleError(Error.new("invalid"))  // branch predictor: unlikely taken
-    }
-    // ... hot path continues here ...
-}
-```
+## Related
 
-### `#[target_feature]` -- CPU Feature Gate
-
-Enables specific CPU features for a function:
-
-```vex
-#[target_feature(enable = "avx512f")]
-fn avx512Kernel(data: Tensor<f64, 8>): f64 {
-    return <+ data    // uses AVX-512 instructions
-}
-
-#[target_feature(enable = "neon")]
-fn armSimdKernel(data: Tensor<f32, 4>): f32 {
-    return <+ data    // uses ARM NEON instructions
-}
-```
-
-## Struct Directives
-
-### `#[repr(C)]` -- C-Compatible Layout
-
-Guarantees the struct has the same memory layout as a C struct:
-
-```vex
-#[repr(C)]
-struct CPoint {
-    public:
-    x: f64,
-    y: f64,
-}
-// Memory layout matches: struct { double x; double y; }
-```
-
-### `#[repr(packed)]` -- No Padding
-
-Removes all padding between fields:
-
-```vex
-#[repr(packed)]
-struct PackedHeader {
-    public:
-    version: u8,      // 1 byte
-    length: u16,      // 2 bytes, immediately after version (no padding)
-    crc: u32,         // 4 bytes
-}
-// Total: 7 bytes (not 8 with padding)
-```
-
-### `#[repr(align(N))]` -- Override Alignment
-
-Sets a specific alignment for the struct:
-
-```vex
-#[repr(align(64))]
-struct CacheLineAligned {
-    public:
-    data: [u8; 64],
-}
-// Struct is aligned to 64-byte boundary (cache line)
-```
-
-## Conditional Compilation
-
-### `#if` / `#elif` / `#else` / `#endif`
-
-Conditionally include or exclude code based on compile-time conditions:
-
-```vex
-#if target_os == "macos"
-    fn getConfigDir(): string { return "~/Library/Application Support" }
-#elif target_os == "linux"
-    fn getConfigDir(): string {
-        let xdg = env("XDG_CONFIG_HOME")
-        return xdg.isNone() ? "~/.config" : xdg.unwrap()
-    }
-#elif target_os == "windows"
-    fn getConfigDir(): string { return env("APPDATA").unwrap() }
-#else
-    #error("Unsupported platform")
-#endif
-```
-
-### Platform Conditions
-
-| Condition        | Values                                         |
-| ---------------- | ---------------------------------------------- |
-| `target_os`      | `"macos"`, `"linux"`, `"freebsd"`, `"windows"` |
-| `target_arch`    | `"x86_64"`, `"arm64"`, `"riscv64"`             |
-| `target_feature` | `"avx2"`, `"avx512f"`, `"neon"`, `"sve"`       |
-| `debug`          | `true` in debug builds, `false` in release     |
-
-```vex
-#if target_arch == "x86_64"
-    #if target_feature == "avx512f"
-        fn simdWidth(): i32 { return 512 }
-    #elif target_feature == "avx2"
-        fn simdWidth(): i32 { return 256 }
-    #else
-        fn simdWidth(): i32 { return 128 }
-    #endif
-#endif
-```
-
-### `#error` -- Compile-Time Error
-
-Emits a compile error with a message:
-
-```vex
-#if target_os == "windows"
-    #error("Windows support is experimental. Use at your own risk.")
-#endif
-```
-
-### `#warning` -- Compile-Time Warning
-
-Emits a compile warning:
-
-```vex
-#if !target_feature == "avx2"
-    #warning("AVX2 not available -- some optimizations disabled")
-#endif
-```
-
-### Feature Flags
-
-```vex
-#if feature == "experimental_gpu"
-    graph fn myKernel(data: Tensor<f32>!) { ... }
-#endif
-
-// Set via: vex run --feature experimental_gpu main.vx
-```
-
-## Module-Level Directives
-
-### `#![no_std]` -- Freestanding Mode
-
-Opt out of the standard library (for embedded/bare-metal):
-
-```vex
-// At the top of the file, before any code
-#![no_std]
-
-// No stdlib available -- must provide your own allocator and panic handler
-fn main() { ... }
-```
-
-### `#![feature(...)]` -- Opt-in to Experimental Features
-
-```vex
-#![feature(gpu_kernels)]
-#![feature(simd512)]
-```
-
-## Intrinsic Compiler Functions
-
-Compiler intrinsics start with `#` and are resolved at compile time:
-
-| Intrinsic                         | Returns | Description                               |
-| --------------------------------- | ------- | ----------------------------------------- |
-| `#sizeof<T>()`                    | `usize` | Size of type T in bytes                   |
-| `#alignof<T>()`                   | `usize` | Required alignment of type T              |
-| `#offset_ptr_idx(ptr, idx, size)` | `*T`    | Offset a pointer by index \* element size |
-| `#typeof(expr)`                   | type    | Type of an expression (comptime only)     |
-| `#embed("file")`                  | `&[u8]` | Embed file contents at compile time       |
-| `#line()`                         | `i32`   | Current source line number                |
-| `#file()`                         | `str`   | Current source file path                  |
-| `#column()`                       | `i32`   | Current source column number              |
-| `#panic("msg")`                   | `never` | Compile-time panic (stops compilation)    |
-
-```vex
-// Size checks at compile time
-const HEADER_SIZE = #sizeof<NetworkHeader>()
-#if #sizeof<NetworkHeader>() != 16
-    #error("NetworkHeader must be exactly 16 bytes")
-#endif
-
-// Embed assets at compile time
-let logo_data = #embed("assets/logo.png")
-// logo_data: &[u8] -- embedded in the binary, no runtime file I/O
-
-// Source location for debugging
-fn debugTrace() {
-    $eprintln(f"[{ #file() }:{ #line() }] trace point")
-}
-```
-
-## Best Practices
-
-1. Use `#[inline]` sparingly -- the compiler's own heuristics are usually correct.
-2. Always use `#[no_mangle]` with `extern "C"` functions.
-3. Use `#[repr(C)]` for any struct passed across FFI boundaries.
-4. Use `#[cold]` on error handlers and panic paths to improve hot-path code layout.
-5. Prefer `#if target_os` over runtime OS checks for platform-specific code.
-6. Use `#error` to catch unsupported configurations at compile time, not runtime.
-7. Keep `#![feature(...)]` usage minimal -- experimental features may change without notice.
-
-## Related Pages
-
-- [Comptime](/guide/advanced/comptime) -- compile-time code execution
-- [Freestanding](/guide/freestanding) -- `#![no_std]` mode
-- [Builtins](/guide/advanced/builtins) -- `#`-prefixed intrinsics
+- [Compile-Time Evaluation](/guide/advanced/comptime)
+- [Structural Declaration Generation](/guide/advanced/comptime-declarations)
+- [Builtins and Intrinsics](/guide/advanced/builtins)
+- [FFI](/guide/ffi)
+- [Platform Support](/guide/platform-support)

@@ -1,10 +1,10 @@
 # SIMD Operations -- Deep Dive
 
-Vex provides first-class SIMD support. Arrays automatically vectorize to SIMD instructions without any manual intrinsics. This page covers the full SIMD operation set beyond the basic overview.
+Vex exposes SIMD-related operations and lowering paths. The compiler may vectorize suitable array and tensor workloads, but vectorization and backend coverage depend on the expression, target, and compiler revision. This page describes the intended operation surface, not a blanket performance guarantee.
 
 ## SIMD Model
 
-Vex treats arrays as SIMD vectors whenever you perform arithmetic or comparisons on them. The compiler automatically selects the best instruction set for your target (SSE, AVX2, AVX-512 on x86; NEON on ARM).
+Some array and tensor expressions can lower to SIMD operations. Do not assume that every arithmetic or comparison expression becomes a vector instruction; inspect the generated artifact or benchmark the exact target when that distinction matters.
 
 ### Auto-Vectorization Threshold
 

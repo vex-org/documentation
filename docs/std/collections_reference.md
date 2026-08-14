@@ -8,7 +8,7 @@
 
 ## Structs
 
-### <a id="HashSet"></a>`HashSet` `🔓 export`
+### <a id="HashSet"></a>`HashSet` ` export`
 
 &gt; 📄 `hashset.vx` L7-10
 
@@ -20,7 +20,7 @@ export struct HashSet<H>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `map` | `HashMap&lt;H, bool&gt;` | 🔓 public |  |
+| `map` | `HashMap&lt;H, bool&gt;` |  public |  |
 
 **Type Parameters:**
 
@@ -34,7 +34,7 @@ export struct HashSet<H>
 
 ---
 
-### <a id="Stack"></a>`Stack` `🔓 export`
+### <a id="Stack"></a>`Stack` ` export`
 
 &gt; 📄 `stack.vx` L5-8
 
@@ -46,7 +46,7 @@ export struct Stack<S>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `buf` | `Vec&lt;S&gt;` | 🔓 public |  |
+| `buf` | `Vec&lt;S&gt;` |  public |  |
 
 **Type Parameters:**
 
@@ -60,7 +60,7 @@ export struct Stack<S>
 
 ---
 
-### <a id="Node"></a>`Node` `🔓 export`
+### <a id="Node"></a>`Node` ` export`
 
 &gt; 📄 `linked.vx` L5-10
 
@@ -72,9 +72,9 @@ export struct Node<N>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `N` | 🔓 public |  |
-| `prev` | `i32` | 🔓 public |  |
-| `next` | `i32` | 🔓 public |  |
+| `value` | `N` |  public |  |
+| `prev` | `i32` |  public |  |
+| `next` | `i32` |  public |  |
 
 **Type Parameters:**
 
@@ -82,7 +82,7 @@ export struct Node<N>
 
 ---
 
-### <a id="LinkedList"></a>`LinkedList` `🔓 export`
+### <a id="LinkedList"></a>`LinkedList` ` export`
 
 &gt; 📄 `linked.vx` L12-19
 
@@ -94,11 +94,11 @@ export struct LinkedList<L>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `nodes` | `Vec&lt;Node&lt;L&gt;&gt;` | 🔓 public |  |
-| `free_nodes` | `Vec&lt;i32&gt;` | 🔓 public |  |
-| `head` | `i32` | 🔓 public |  |
-| `tail` | `i32` | 🔓 public |  |
-| `count` | `i32` | 🔓 public |  |
+| `nodes` | `Vec&lt;Node&lt;L&gt;&gt;` |  public |  |
+| `free_nodes` | `Vec&lt;i32&gt;` |  public |  |
+| `head` | `i32` |  public |  |
+| `tail` | `i32` |  public |  |
+| `count` | `i32` |  public |  |
 
 **Type Parameters:**
 
@@ -112,7 +112,7 @@ export struct LinkedList<L>
 
 ---
 
-### <a id="Entry"></a>`Entry` `🔓 export`
+### <a id="Entry"></a>`Entry` ` export`
 
 &gt; 📄 `hashmap.vx` L7-11
 
@@ -124,8 +124,8 @@ export struct Entry<K, V>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `key` | `K` | 🔓 public |  |
-| `value` | `V` | 🔓 public |  |
+| `key` | `K` |  public |  |
+| `value` | `V` |  public |  |
 
 **Type Parameters:**
 
@@ -134,7 +134,7 @@ export struct Entry<K, V>
 
 ---
 
-### <a id="HashMap"></a>`HashMap` `🔓 export`
+### <a id="HashMap"></a>`HashMap` ` export`
 
 &gt; 📄 `hashmap.vx` L13-18
 
@@ -146,9 +146,9 @@ export struct HashMap<K, V>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `buckets` | `Vec&lt;Vec&lt;Entry&lt;K, V&gt;&gt;&gt;` | 🔓 public |  |
-| `capacity` | `usize` | 🔓 public |  |
-| `occupied_count` | `usize` | 🔓 public |  |
+| `buckets` | `Vec&lt;Vec&lt;Entry&lt;K, V&gt;&gt;&gt;` |  public |  |
+| `capacity` | `usize` |  public |  |
+| `occupied_count` | `usize` |  public |  |
 
 **Type Parameters:**
 
@@ -164,7 +164,7 @@ export struct HashMap<K, V>
 
 ---
 
-### <a id="Queue"></a>`Queue` `🔓 export`
+### <a id="Queue"></a>`Queue` ` export`
 
 &gt; 📄 `queue.vx` L7-10
 
@@ -176,7 +176,7 @@ export struct Queue<Q>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `list` | `LinkedList&lt;Q&gt;` | 🔓 public |  |
+| `list` | `LinkedList&lt;Q&gt;` |  public |  |
 
 **Type Parameters:**
 
@@ -190,7 +190,7 @@ export struct Queue<Q>
 
 ---
 
-### <a id="PriorityQueue"></a>`PriorityQueue` `🔓 export`
+### <a id="PriorityQueue"></a>`PriorityQueue` ` export`
 
 &gt; 📄 `priority.vx` L5-8
 
@@ -202,7 +202,7 @@ export struct PriorityQueue<P>
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `buf` | `Vec&lt;P&gt;` | 🔓 public |  |
+| `buf` | `Vec&lt;P&gt;` |  public |  |
 
 **Type Parameters:**
 
@@ -218,7 +218,7 @@ export struct PriorityQueue<P>
 
 ## Functions
 
-### <a id="getHash"></a>`getHash` `🔓 export`
+### <a id="getHash"></a>`getHash` ` export`
 
 &gt; 📄 `hash.vx` L9-23
 
@@ -242,7 +242,7 @@ Returns the 64-bit hash of a value of type T.
 
 ---
 
-### <a id="getEq"></a>`getEq` `🔓 export`
+### <a id="getEq"></a>`getEq` ` export`
 
 &gt; 📄 `hash.vx` L26-40
 

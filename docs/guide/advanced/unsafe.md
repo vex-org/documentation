@@ -13,10 +13,10 @@ The `unsafe { }` block allows operations that the compiler cannot verify as safe
 ```vex
 fn main() {
     let value: i64 = 42
-    let ptr = &value as *i64
+    let ptr = &value as Ptr<i64>
     
     // Unsafe block for raw pointer dereference
-    let read_val = unsafe { *ptr }
+    let read_val = unsafe { ptr.read() }
     
     println(f"Value: {read_val}")
 }
@@ -26,9 +26,9 @@ fn main() {
 
 | Operation | Why Unsafe? |
 |-----------|-------------|
-| Raw pointer dereference (`*ptr`) | Pointer may be null or dangling |
+| Raw pointer read/write | Pointer may be null or dangling |
 | Calling `unsafe fn` | Function has manual safety requirements |
-| FFI calls (`extern "C"`) | No safety guarantees for C code |
+| Foreign calls (`LIBC`/`SYSTEM`/`NATIVE`) | No safety guarantees for foreign code |
 | Mutable global access | Risk of data races |
 
 ## Unsafe Functions
@@ -37,30 +37,31 @@ Declare functions with the `unsafe` keyword to signal manual safety requirements
 
 ```vex
 // Unsafe function - caller must ensure ptr is non-null
-unsafe fn raw_read(ptr: *i64): i64 {
-    return *ptr
+unsafe fn rawRead(ptr: Ptr<i64>): i64 {
+    return ptr.read()
 }
 
 fn main() {
     let val = 100
-    let ptr = &val as *i64
+    let ptr = &val as Ptr<i64>
     
     // Must call within unsafe block
-    let result = unsafe { raw_read(ptr) }
+    let result = unsafe { rawRead(ptr) }
 }
 ```
 
 ## Raw Pointers
 
-Vex distinguishes between references (`&T`) and raw pointers (`*T`).
+Vex distinguishes between references (`&T`) and canonical raw pointers
+(`Ptr<T>` and `Ptr<T!>`).
 
 ### Creating Raw Pointers
 
 ```vex
 let x = 42
-let ptr = &x as *i32      // Immutable raw pointer
+let ptr = &x as Ptr<i32>       // Readable raw pointer
 let! y = 100
-let ptr_mut = &y! as *i32! // Mutable raw pointer
+let ptrMut = &y as Ptr<i32!>   // Writable-pointee capability
 ```
 
 ### Dereferencing
@@ -69,12 +70,12 @@ Dereferencing a raw pointer is always `unsafe`:
 
 ```vex
 let x = 42
-let ptr = &x as *i32
-let val = unsafe { *ptr }
+let ptr = &x as Ptr<i32>
+let val = unsafe { ptr.read() }
 
 let! y = 100
-let ptr_mut = &y! as *i32!
-unsafe { *ptr_mut = 200 }
+let ptrMut = &y as Ptr<i32!>
+unsafe { ptrMut.write(200) }
 ```
 
 ## Mutable Global Variables

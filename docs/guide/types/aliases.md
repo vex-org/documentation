@@ -10,8 +10,8 @@ type UserId = u64
 type Email = string
 
 // Pointer aliases
-type IntPtr = *i32
-type VoidPtr = *void
+type IntPtr = Ptr<i32>
+type OpaquePtr = Ptr<Opaque>
 
 // Function type alias
 type Handler = fn(i32): bool
@@ -38,15 +38,17 @@ let handler: Callback<i32> = |x| x > 0;
 
 | Use Case | Alias | Example |
 |----------|-------|---------|
-| Improve readability | ✅ | `UserId` vs `u64` |
-| Reduce repetition | ✅ | `Result<T>` vs `Result<T, Error>` |
-| Create a new type | ❌ | Use `struct` instead |
-| Add methods | ❌ | Use `struct` instead |
+| Improve readability | Yes | `UserId` vs `u64` |
+| Reduce repetition | Yes | `Result<T>` vs `Result<T, Error>` |
+| Create a new type | No | Use `struct` instead |
+| Add methods | No | Use `struct` instead |
 
 > **Note:** Aliases are transparent — `UserId` and `u64` are the same type at
 > compile time. Use `struct` if you need type safety (e.g., prevent mixing
 > `UserId` and `OrderId`).
-type Callback = fn(string, i32): void
+
+```vex
+type Callback = fn(string, i32): ()
 
 // Generic type alias
 type Pair<T> = (T, T)
@@ -267,17 +269,17 @@ type Required<T> = {
 4. **Keep conditional types simple** - Complex ones are hard to debug
 
 ```vex
-// ✅ Good: Clear, documented
+// Yes Good: Clear, documented
 /// User identifier, guaranteed unique
 type UserId = u64
 
 /// Result type for API operations
 type ApiResult<T> = Result<T, ApiError>
 
-// ✅ Good: Useful conditional type
+// Yes Good: Useful conditional type
 type Unwrap<T> = T extends Option<infer U> ? U : T
 
-// ⚠️ Avoid: Overly complex
+// Warning Avoid: Overly complex
 type ComplexType<T, U, V> =
     T extends Option<infer A>
         ? A extends Result<infer B, infer C>

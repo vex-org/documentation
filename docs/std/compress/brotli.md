@@ -8,7 +8,7 @@ Google's modern compression algorithm (RFC 7932). Brotli achieves the best compr
 import { brotliCompress, brotliDecompress } from "compress/brotli";
 
 let data = "Brotli in pure Vex!";
-let ptr = data.as_ptr() as *void;
+let ptr = data.asPtr() as Ptr<Opaque>;
 let len = data.len() as i64;
 
 let outCap = len + (len / 65536 + 1) * 8 + 16;

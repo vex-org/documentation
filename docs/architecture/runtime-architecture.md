@@ -1,312 +1,167 @@
 # Runtime Architecture
 
-This page covers the C runtime that underpins Vex's concurrency, memory management, and async I/O. Implementation details reflect the current codebase structure under `lib/runtime/`.
+VexArch is the target-routed runtime implemented in
+Vex under `lib/runtime/VexArch`. It provides allocation, ownership support,
+async scheduling, channels, I/O, networking integration, panic paths, and
+platform ABI adapters without making libc an implicit language dependency.
 
-> **Note:** Specific C function names and internal algorithms described here represent the current implementation and may evolve. The architectural patterns (M:N scheduler, VUMM allocator, platform pollers) are stable.
+The separately packaged `vex-runtime-core` Rust artifact is a hosted
+compatibility option. It is not folded into the freestanding VexArch object,
+bitcode, or archive.
 
 ## Runtime Layer Map
 
-```
-+----------------------------------------------------+
-|                  Vex User Code                      |
-|         (go blocks, async fn, Box<T>, ...)          |
-+----------------------------------------------------+
-                        |
-                        v
-+----------------------------------------------------+
-|              Rust FFI Bridge (lib/runtime/src)       |
-|   extern "C" declarations, safe Rust wrappers       |
-+----------------------------------------------------+
-                        |
-                        v
-+----------------------------------------------------+
-|               C Runtime (lib/runtime/runtime)        |
-|  +----------+ +----------+ +----------+ +--------+  |
-|  | Scheduler| |  VUMM    | |  Async   | |  Net   |  |
-|  | (M:N)    | | Allocator| |  Poller  | | Stack  |  |
-|  +----------+ +----------+ +----------+ +--------+  |
-|  +----------+ +----------+ +----------+            |
-|  | Channels | |  Signals | |Platform  |            |
-|  | (MPMC)   | |          | |Abstraction|           |
-|  +----------+ +----------+ +----------+            |
-+----------------------------------------------------+
-                        |
-                        v
-+----------------------------------------------------+
-|               Operating System                      |
-|   (macOS, Linux, FreeBSD, Windows)                  |
-+----------------------------------------------------+
+```text
++------------------------------------------------------+
+| Vex application and lib/std public APIs              |
++------------------------------------------------------+
+                         |
+                         v
++------------------------------------------------------+
+| Compiler HIR/ABI lowering and generated code         |
++------------------------------------------------------+
+                         |
+                         v
++------------------------------------------------------+
+| VexArch                                               |
+| mem | async | channel | io | unwind | platform glue  |
++------------------------------------------------------+
+             |                          |
+             v                          v
++---------------------------+  +------------------------+
+| Explicit OS system ABI    |  | Manifest-owned native |
+| SYSTEM / selected LIBC    |  | NATIVE feature        |
++---------------------------+  +------------------------+
 ```
 
-## VUMM -- Vex Unified Memory Model
+There is no universal `extern "C"` import bucket. Every imported symbol states
+its owner:
 
-VUMM is the heap allocator that powers `Box<T>`. It automatically selects one of three ownership strategies.
+| Provider | Meaning |
+| --- | --- |
+| `extern "LIBC"` | An intentional hosted C-library dependency |
+| `extern "SYSTEM" from "library"` | A named operating-system DLL, dylib, or framework |
+| `extern "VEX"` | Compiler/runtime-owned ABI; reserved for VexArch, prelude, and standard-library internals |
+| `extern "NATIVE" from "feature"` | A package native feature whose artifacts are declared in `vex.json` |
 
-### Allocation Strategies
+`export "C" fn` is different: it defines an unmangled outbound C-ABI symbol.
+It does not select an import provider or add a library dependency.
 
-| Strategy      | When Used                      | Implementation      | Free Cost |
-| ------------- | ------------------------------ | ------------------- | --------- |
-| **Unique**    | Single owner, no clones        | Plain malloc/free   | O(1)      |
-| **SharedRc**  | Multiple owners, single-thread | Non-atomic refcount | O(1)      |
-| **AtomicArc** | Multiple owners, multi-thread  | Atomic refcount     | O(1)      |
+See the [FFI guide](/guide/ffi) for the complete provider contract.
 
-### Inference Example
+## Target-Routed Sources
 
-```vex
-fn singleOwner() {
-    let b = Box.new(42)      // VUMM infers: Unique
-    // b is the only owner, no clones detected
-}  // freed with plain free()
+Vex source files can select an OS and architecture directly. For an import of
+`native.vx`, resolution uses the first file that exists:
 
-fn sharedSingleThread() {
-    let b = Box.new(42)      // VUMM infers: SharedRc
-    let b2 = b.clone()        // clone detected, single thread context
-    // refcount reaches 0, memory freed
-}
+1. `native.<os>.<arch>.vx`
+2. `native.<os>.vx`
+3. `native.<arch>.vx`
+4. `native.vx`
 
-fn sharedMultiThread() {
-    let b = Box.new(42)      // VUMM infers: AtomicArc
-    go {
-        let b2 = b.clone()    // clone in different goroutine
-        // atomic refcount operations
-    }
-    // atomic decrement when each owner drops
-}
-```
+The same rule applies to `.vxc`. Source routing uses OS/architecture names;
+package native artifacts use exact target triples. These are intentionally
+separate mechanisms.
 
-### VUMM Allocation Algorithm
+## Memory and Freestanding Boundary
 
-The allocator (`vumm.c`) uses a size-class approach:
+The active memory implementation lives under `VexArch/src/mem`:
 
-```
-Size classes:
-  Tiny:   8, 16, 24, 32, 48, 64 bytes      (thread-local cache)
-  Small:  80, 96, 112, 128, 160, 192, 256   (thread-local cache)
-  Medium: 320, 384, 512, 768, 1024, 1536, 2048 (global heap)
-  Large:  3KB+                              (direct mmap/munmap)
-  Huge:   128KB+                             (mmap with guard pages)
-```
+- `arena.vx` owns arena state, region tokens, and runtime state;
+- `alloc.vx` owns slab, heap, realloc, and compatibility allocation entry
+  points;
+- `vumm.vx` implements Vex Unified Memory Model routing;
+- `raw_pages.*.vx` and `compat.*.vx` provide target-specific page, thread, and
+  process primitives.
 
-Each thread maintains a **thread-local cache** of freed blocks for its most-used size classes, eliminating lock contention for small allocations.
+VexArch does not require a hosted `malloc/free` allocator. Target code may call
+explicit system APIs, direct kernel interfaces, or selected hosted facilities,
+but such dependencies remain visible through the provider and final link plan.
+A freestanding link rejects activated `LIBC` requirements.
 
-### Refcount Implementation
+Prelude types such as `Box`, `Vec`, `string`, and `Mem` use the reserved VEX ABI
+internally. Application code consumes their public APIs instead of declaring
+raw allocator symbols.
 
-```
-Box<T> layout with refcount:
-+-------------------+
-| refcount (4/8 B)  |  <- atomic for Arc, non-atomic for Rc
-+-------------------+
-| capacity (8 B)    |  <- original allocation size
-+-------------------+
-| data (T)          |  <- the actual value
-+-------------------+
-```
+## Async Runtime and Channels
 
-Reference counting operations:
+The scheduler and async state machine support live under `VexArch/src/async`:
 
-- **Clone (increment):** `atomic_fetch_add(&refcount, 1)` or `refcount += 1`
-- **Drop (decrement + free):** decrement, if zero -> call `T.drop()` then `vumm_free()`
-- **Weak references:** Not yet implemented (planned for cycle breaking)
+- `async.vx` owns worker/task scheduling and lifecycle;
+- `channel.vx` implements channel state and waiter coordination;
+- `timer_wheel.vx` tracks timed wakeups;
+- `poller.<target>.vx` integrates the target event mechanism.
 
-## Async Runtime Event Loop
+Target files select the appropriate implementation at compile time. Runtime
+modules import concrete Vex implementations directly where possible. A small
+number of reserved VEX ABI edges remain where two core runtime modules form a
+deliberate dependency cycle or where a native bootstrap shim supplies the
+symbol.
 
-### Poller Abstraction
+## I/O and Networking
 
-Vex abstracts over platform-specific I/O notification mechanisms:
+VexArch owns stream state and exposes runtime I/O entry points. Target-specific
+files such as `io/native.macos.vx`, `io/native.linux.vx`, and
+`io/native.windows.vx` bind to the relevant system surface without exposing C
+`FILE` layout as Vex ABI.
 
-| Platform   | Poller   | Source File              |
-| ---------- | -------- | ------------------------ |
-| macOS      | kqueue   | `async/poller_kqueue.c`  |
-| Linux      | epoll    | `async/poller_epoll.c`   |
-| Linux 5.1+ | io_uring | `async/poller_iouring.c` |
-| FreeBSD    | kqueue   | `async/poller_kqueue.c`  |
-| Windows    | IOCP     | `async/poller_iocp.c`    |
+`lib/std/io`, `lib/std/fs`, and `lib/std/net` build public, typed APIs over this
+boundary. Their low-level target files use explicit `SYSTEM`, `LIBC`, `VEX`, or
+`NATIVE` declarations according to the actual symbol owner. Optional native
+codecs, database drivers, or TLS implementations are package features rather
+than hidden global linker inputs.
 
-### Event Loop Cycle
+## Extern Activation and Linking
 
-```
-1. Worker checks local task deque
-2. If empty, attempts to steal from another worker
-3. If all deques empty, polls I/O:
-   - kqueue/epoll/IOCP: wait for I/O events with timeout
-   - Any ready I/O wakes associated tasks via Waker
-4. Process timer wheel for expired timers
-5. Return to step 1
-```
+Parsing an extern declaration alone has no link effect. Codegen records the
+providers required by emitted uses, and the CLI constructs a deterministic
+native link plan from those activated requirements.
 
-### Timer Wheel
+Important failures are reported before native linking:
 
-The runtime maintains a hierarchical timer wheel for efficient timeout management:
+- an activated `LIBC` provider is rejected in freestanding mode;
+- an unresolved `VEX` provider is rejected when `--no-runtime` is selected;
+- a `NATIVE` feature must resolve to artifacts owned by the package manifest;
+- system libraries are deduplicated deterministically.
 
-```
-Millisecond wheel:  256 slots, 1ms resolution (covers 0-255ms)
-Second wheel:       64 slots,  256ms resolution (covers up to ~16s)
-Minute wheel:       64 slots,  ~16s resolution (covers up to ~17min)
-```
+Provider requirements are preserved beside warm prelude cache entries, so a
+warm compile cannot silently lose an FFI dependency.
 
-`after(5.seconds())` inserts into the appropriate wheel level.
+## Runtime Semantic Image and Fusion
 
-## Channel Implementation
+VexArch is not shipped or linked as a separate LLVM bitcode, object, static
+archive, or shared library. Cargo validates the VexArch package and embeds a
+deterministic, versioned Vex Runtime Image (VRI) in the compiler. The image
+contains lossless pre-parsed syntax, stable package/source identities,
+provenance and target selectors.
 
-Channels are lock-free MPMC (Multi-Producer, Multi-Consumer) ring buffers.
+For each user compilation the compiler rehydrates the selected VRI sources
+without invoking the parser. User code, the prelude and VexArch then enter one
+semantic graph. Exact `DefId` reachability, monomorphization and callback
+address-taking decide which runtime bodies are materialized in the same backend
+module as user code. This keeps cross-boundary inlining and eliminates unused
+runtime code before backend DCE.
 
-### Bounded Channel Layout
+Architecture-specific assembly is allowed only for operations that cannot be
+expressed in Vex. Cargo assembles this tiny target pack once and embeds it in
+the compiler; the CLI materializes the content-addressed object only because
+native linkers require a filesystem input. It carries no Vex semantics.
 
-```
-+------------------+
-| buffer (ptr)     | --> [slot0][slot1][slot2]...[slotN-1]
-+------------------+
-| mask (usize)     |  = capacity - 1 (power of 2)
-+------------------+
-| head (atomic)    |  next write position
-+------------------+
-| tail (atomic)    |  next read position
-+------------------+
-| closed (atomic)  |  channel closed flag
-+------------------+
-| senders (atomic) |  number of active senders
-+------------------+
-| receivers(atomic)|  number of active receivers
-+------------------+
-```
+## Safety Rules
 
-### Send Algorithm (Simplified)
-
-```
-fn send(ch, value):
-    loop:
-        head = atomic_load(&ch.head, Acquire)
-        tail = atomic_load(&ch.tail, Acquire)
-        if head - tail == capacity:
-            if ch.closed: return Err(Closed)
-            yield()  // full, wait
-            continue
-        if atomic_compare_exchange(&ch.head, head, head + 1, AcqRel):
-            slot = ch.buffer[head & ch.mask]
-            slot.write(value)
-            wake_one_receiver()
-            return Ok(())
-```
-
-### Receive Algorithm (Simplified)
-
-```
-fn recv(ch):
-    loop:
-        tail = atomic_load(&ch.tail, Acquire)
-        head = atomic_load(&ch.head, Acquire)
-        if tail == head:
-            if ch.closed: return Err(Closed)
-            yield()  // empty, wait
-            continue
-        if atomic_compare_exchange(&ch.tail, tail, tail + 1, AcqRel):
-            slot = ch.buffer[tail & ch.mask]
-            value = slot.read()
-            wake_one_sender()
-            return Ok(value)
-```
-
-### Channel Buffer Strategies
-
-| Capacity    | Behavior                                            |
-| ----------- | --------------------------------------------------- |
-| 0           | Unbuffered: rendezvous -- send blocks until receive |
-| 1           | Single-element buffer                               |
-| N (> 1)     | Bounded buffer: send blocks when full               |
-| (unlimited) | Not supported -- use a growing Vec + Mutex instead  |
-
-## Network Stack
-
-The network layer is built on the async poller:
-
-```
-Vex User Code (HTTP, WebSocket, TCP)
-        |
-        v
-lib/std/net/ (TCP, UDP, TLS wrappers)
-        |
-        v
-Runtime: net/net_kqueue.c, net/net_epoll.c, net/net_iocp.c
-        |
-        v
-OS Sockets (non-blocking I/O with poller integration)
-```
-
-### Non-Blocking Socket Operations
-
-All socket I/O is non-blocking. When a read/write would block (EAGAIN/EWOULDBLOCK), the runtime:
-
-1. Registers the socket with the poller
-2. Suspends the current task
-3. When the poller signals readiness, wakes the task
-
-## Signal Handling
-
-The runtime handles POSIX signals gracefully:
-
-```vex
-import * as sys from "sys"
-
-// Register signal handler
-sys.onSignal(sys.Signal.Interrupt, ||  {
-    $println("Received SIGINT, shutting down...")
-    shutdown()
-})
-
-sys.onSignal(sys.Signal.Terminate, ||  {
-    $println("Received SIGTERM")
-    gracefulShutdown()
-})
-```
-
-The runtime dedicates a signal-handling thread that converts signals to internal messages, avoiding the restrictions of signal handler context.
-
-## Panic and Abort
-
-### Panic Handler
-
-When a panic occurs:
-
-1. The panic message is formatted
-2. A backtrace is captured (DWARF unwinding on macOS/Linux)
-3. If a panic hook is registered, it's called
-4. The goroutine stack is unwound, running `Drop` for all in-scope values
-5. If uncaught, the process exits with code 101
-
-```vex
-// Custom panic hook
-sys.setPanicHook(|msg, backtrace|  {
-    $eprintln(f"FATAL: {msg}")
-    $eprintln(backtrace)
-    // Send to monitoring, write to crash log, etc.
-})
-```
-
-### Abort
-
-`$abort(code)` immediately terminates the process without unwinding. No `Drop` handlers run.
-
-## Memory Footprint
-
-| Component                    | Approximate Size       |
-| ---------------------------- | ---------------------- |
-| Runtime binary (stripped)    | ~200 KB                |
-| Per-worker stack             | 2 MB (configurable)    |
-| Per-goroutine initial stack  | 8 KB (grows as needed) |
-| VUMM thread-local cache      | ~64 KB per thread      |
-| Channel (bounded, 256 slots) | ~2 KB + slot data      |
-
-## Best Practices
-
-1. Let VUMM handle allocation strategy -- don't try to manually optimize Box ownership.
-2. Use `Channel.new(N)` with a reasonable buffer size -- unbuffered channels can cause deadlocks.
-3. Register signal handlers early in `main()` to ensure clean shutdown.
-4. Monitor goroutine count -- `sys.goroutineCount()` helps detect leaks.
-5. Use the thread sanitizer in CI to catch data races.
-6. Keep per-goroutine state small -- stacks grow but large initial state wastes memory.
+- Foreign calls require an audited `unsafe` boundary.
+- A concrete local definition or explicit import owns its name over an ambient
+  prelude extern declaration.
+- Raw VEX ABI declarations are runtime/standard-library internals, not the
+  application-facing API.
+- Provider choice describes ownership; it is not inferred from a filename or
+  platform convention.
+- Outbound `export "C" fn` definitions must expose explicitly ABI-safe types.
 
 ## Related Pages
 
-- [Runtime & Tooling](/architecture/runtime-and-tooling) -- runtime overview
+- [FFI](/guide/ffi) -- provider syntax and link behavior
+- [FFI Deep Dive](/guide/ffi-deep-dive) -- ownership and ABI design
+- [Freestanding Vex](/guide/freestanding) -- hosted and freestanding boundaries
 - [VUMM](/guide/memory/vumm) -- Vex Unified Memory Model
-- [Concurrency Deep Dive](/guide/concurrency/deep-dive) -- M:N scheduler
+- [Concurrency Deep Dive](/guide/concurrency/deep-dive) -- scheduler behavior

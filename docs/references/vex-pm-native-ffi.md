@@ -1,221 +1,160 @@
 # vex-pm Native FFI Pipeline Reference
 
-This document describes the current **manifest-driven native FFI pipeline** in Vex.
+This page documents the implemented manifest-driven native link pipeline shared by `vex compile` and `vex run`.
 
-It is the source-of-truth reference for how `vex.json` native blocks are resolved, compiled, and linked through `vex-pm` + `vex-cli`.
+## Source contract
 
----
+A package requests a native feature from a `.vxc` boundary:
 
-## Goals
+```vex
+extern "NATIVE" from "sqlite" {
+    fn sqlite3_libversion(): Ptr<i8>;
+}
+```
 
-- Resolve native dependencies from `vex.json` (not hardcoded package-specific paths)
-- Merge native linker inputs across:
-  - current package
-  - dependency packages
-  - stdlib packages referenced via imports
-- Keep dynamic-linking oriented behavior (no static linking in this pipeline)
-- Support low-overhead linking via ThinLTO in optimized builds
+The `from` value is a feature name, not a filename or linker flag. The nearest `vex.json` that owns the declaration defines the artifacts.
 
----
-
-## High-Level Flow
-
-1. `vex-cli` reads source and resolves package dependencies (`vex-pm`).
-2. `vex-pm` collects native linker args from all relevant package manifests.
-3. `vex-pm::NativeLinker` compiles native C sources declared in `vex.json`.
-4. `vex-cli` appends merged native linker args during link stage.
-5. `vex run` compiles to a temporary executable and runs it as a subprocess, with native symbols resolved by the system linker and dynamic loader.
-
----
-
-## Manifest Schema (`vex.json`)
-
-Native configuration is declared under `native`:
-
-- `sources`: C/C++ source files
-- `include_dirs`: include paths
-- `libraries`: dynamic libraries
-- `search_paths`: library search paths
-- `cflags`: compile flags (`-D...` supported)
-- `pkg_config`: packages to probe
-- `pkg_config_optional`: if `true`, missing pkg-config can skip this config/feature
-- `features`: feature-scoped native fragments
-
-Feature block fields:
-
-- `enabled`
-- `sources`, `include_dirs`, `libraries`, `search_paths`, `cflags`
-- `pkg_config`, `pkg_config_optional`
-
-### Example
+## Manifest schema
 
 ```json
 {
-  "name": "db",
+  "name": "database-app",
   "version": "0.1.0",
   "native": {
-    "sources": ["native/src/vex_db_shim.c"],
-    "include_dirs": ["native/include"],
-    "libraries": [],
-    "cflags": [],
+    "useSystemLibC": true,
     "features": {
       "sqlite": {
-        "enabled": true,
-        "pkg_config_optional": false,
-        "pkg_config": ["sqlite3"],
-        "sources": ["native/src/vex_sqlite.c"],
-        "libraries": ["sqlite3"],
-        "cflags": ["-DHAVE_SQLITE"]
-      },
-      "postgres": {
-        "enabled": false,
-        "pkg_config_optional": true,
-        "pkg_config": ["libpq"],
-        "sources": ["native/src/vex_pg.c"],
-        "libraries": ["pq"],
-        "cflags": ["-DHAVE_LIBPQ"]
+        "x86_64-unknown-linux-gnu": {
+          "path": "native/libsqlite3.a",
+          "type": "static"
+        },
+        "macos.arm64": {
+          "path": "native/libsqlite3.dylib",
+          "type": "dynamic"
+        },
+        "windows-x86_64": {
+          "path": "native/sqlite3.dll",
+          "type": "dynamic",
+          "importLib": "native/sqlite3.lib"
+        },
+        "all": {
+          "path": "native/portable.bc",
+          "type": "bitcode"
+        }
       }
     }
   }
 }
 ```
 
----
+`native.useSystemLibC` defaults to `true`. Setting it to `false` selects the freestanding libc policy for that package.
 
-## Environment Controls
+Each platform dependency contains:
 
-- `VEX_NATIVE_FEATURES=feat1,feat2`
-  - Forces feature selection in native linker layer
-- `VEX_DB_FEATURES=...`
-  - Backward-compatible alias used by DB workflows
-- `PKG_CONFIG_PATH=...`
-  - pkg-config lookup override
+| Field | Required | Meaning |
+|---|---:|---|
+| `path` | yes | Artifact path, relative to the owning manifest or absolute |
+| `type` | yes | `static`, `dynamic`, or `bitcode` |
+| `importLib` | Windows dynamic only | Link-time `.lib` paired with a runtime DLL |
 
-When feature env override is set, feature `enabled` values are ignored and only listed features are considered active.
+`importLib` is canonical. The parser accepts the legacy `import_lib` alias during migration.
 
----
+## Target key precedence
 
-## Resolution Scope
+For a target, `vex-pm` tries:
 
-`vex-pm` native arg collection merges from:
+1. exact target triple;
+2. `<os>.<arch>`;
+3. `<os>-<arch>`;
+4. `<os>-<environment>` such as `linux-musl` or `windows-msvc`;
+5. `<os>`;
+6. `all`.
 
-1. Current package `./vex.json`
-2. Dependency package manifests resolved by `vex-pm`
-3. Stdlib package manifests discovered from import roots in source (for example `import { Connection } from "db"`)
+The first match wins. A missing match is `E0FFI02`.
 
-This makes DB just one consumer of the same generic pipeline.
+`dynamic` cannot use the target-independent `all` key. Windows dynamic features require `importLib`. WASM rejects dynamic native features.
 
----
+## Used-only activation
 
-## pkg-config Behavior
+Codegen records a native requirement only when reachable code calls an extern function or takes its address. It carries both the feature name and declaration file.
 
-`pkg-config` is used to discover include/link metadata.
+`vex-pm` then:
 
-- success:
-  - include paths are merged into compile include set
-  - link search paths are merged
-  - discovered libs are merged
-- failure:
-  - if `pkg_config_optional=false` → hard fail
-  - if `pkg_config_optional=true` → skip that feature/config branch
+1. finds the declaration's owning manifest;
+2. groups requests deterministically by manifest and feature;
+3. resolves only those features for the requested target;
+4. stages only the selected artifacts;
+5. returns structured linker arguments, runtime files, and activated dependency metadata.
 
----
+Importing a boundary without using its functions has zero native link and deployment effect. There is no environment-variable feature activation and no package-wide “link all features” scan in the compile/run path.
 
-## Macro-Gated Source Compilation
+## Artifact behavior
 
-For source files with top-level guard style:
+### Static
 
-- `#ifndef HAVE_SQLITE`
-- `#ifndef HAVE_LIBPQ`
-- etc.
+The selected artifact is copied to the package native staging directory and passed to the linker by path.
 
-The linker reads required macro from source header area and compiles source only if corresponding `-D...` exists in effective `cflags`.
+### Bitcode
 
-This avoids compiling incompatible drivers when feature macros are not enabled.
+The selected `.bc` artifact is staged and passed as a linker input.
 
----
+### Dynamic
 
-## Linking Policy
+- Linux/macOS: Vex adds the staging search path and library name, then deploys the runtime library beside the produced executable.
+- Windows: Vex links the staged `importLib` and deploys the DLL.
+- macOS and Linux post-processing is performed only on a compatible host. Unsupported cross-host mutation fails explicitly with `E0FFI09`.
 
-### Dynamic Linking First
+Runtime deployment happens for both `vex compile` and `vex run` because both commands consume the same extern link plan.
 
-This pipeline is dynamic-link oriented.
+## Freestanding diagnostics
 
-- `native.static_libs` is rejected in `NativeLinker` for this architecture.
-- Use dynamic libraries (`libraries`) and pkg-config metadata.
+A reachable `LIBC` provider is rejected before linking. `SYSTEM` and `NATIVE` are not categorically forbidden: their actual target contracts determine compatibility.
 
-### LTO
+If an activated static native feature leaves known libc or TLS symbols unresolved, Vex emits `E0FFI07` naming that exact activated feature. Unused manifest features are never considered by this classifier.
 
-- `compile` command already supports ThinLTO/FullLTO options.
-- `run` subprocess link path auto-enables `-flto=thin` for optimized builds (`-O2+`).
+## Determinism
 
-This keeps FFI bridge overhead minimal while preserving flexible dynamic linking.
+- Requests are sorted and deduplicated.
+- Manifests and feature names use ordered collections in plan construction.
+- Link arguments and runtime files are deduplicated.
+- System libraries are emitted in stable order.
 
----
+This makes link behavior independent of parallel module traversal.
 
-## Execution Model for Native FFI
-
-`vex run` compiles to a temporary executable and runs it as a subprocess. Native symbols are resolved by the normal system linker and dynamic loader. This avoids any need for manual symbol registration for package-defined native APIs.
-
----
-
-## Key APIs and Files
+## Important APIs
 
 ### `vex-pm`
 
-- `tools/vex-pm/src/manifest.rs`
-  - `NativeConfig`, `NativeFeatureConfig`
-- `tools/vex-pm/src/native_linker.rs`
-  - feature merge, pkg-config resolve, source compilation, link arg generation
-- `tools/vex-pm/src/build.rs`
-  - `get_native_linker_args_for_build`
-  - `get_native_linker_args_for_source`
+- `NativeTarget::from_triple`
+- `NativeFeatureRequest`
+- `resolve_native_link_plan`
+- `NativeLinker::process_features`
+- `NativeLinkPlan`
+- `check_active_linker_error`
 
 ### `vex-cli`
 
-- `tools/vex-cli/src/commands/compile.rs`
-  - appends merged native linker args at link stage
-- `tools/vex-cli/src/commands/run.rs`
-  - source-aware native arg collection
-  - ThinLTO in optimized builds
-- `tools/vex-cli/build.rs`
-  - intentionally no-op for package native linking (no package hardcoding)
+- `native_plan::resolve_extern_link_plan`
+- `native_plan::deploy_runtime_files`
 
----
+The CLI plan also merges `LIBC`, `SYSTEM`, and `VEX` provider requirements with native feature results.
 
-## R
+## Diagnostics
 
-1. Declare all native requirements in `vex.json` only.
-2. Prefer feature bundles for optional drivers/backends.
-3. Prefer dynamic libraries and pkg-config.
-4. Gate driver-specific sources with `HAVE_*` style macros and matching `-D...` flags.
-5. Keep `pkg_config_optional=false` for required deps, `true` for optional integrations.
+| Code | Meaning |
+|---|---|
+| `E0904` | No owning manifest/native configuration for a requested feature |
+| `E0FFI01` | Requested feature is absent from the owning manifest |
+| `E0FFI02` | No artifact matches the target |
+| `E0FFI03` | Reachable libc call in a freestanding build |
+| `E0FFI04` | Dynamic native feature on WASM |
+| `E0FFI05` | Dynamic artifact declared under `all` |
+| `E0FFI06` / `E0FFI08` | Missing Windows import library |
+| `E0FFI07` | Activated static feature depends on hosted libc/TLS symbols |
+| `E0FFI09` | Unsupported cross-host dynamic-library post-processing |
 
----
+## Related
 
-## Troubleshooting
-
-### `pkg-config probe failed`
-
-- Verify package is installed
-- Verify `PKG_CONFIG_PATH`
-- Set `pkg_config_optional=true` for optional feature blocks
-
-### `file not found` during C compile
-
-- Ensure `sources` and `include_dirs` are relative to package root (where `vex.json` exists)
-
-### Native feature not compiling
-
-- Check `VEX_NATIVE_FEATURES` / `VEX_DB_FEATURES`
-- Check `cflags` contains matching `-D...` macro for guarded source
-
-### Runtime symbol errors
-
-- Native symbols are resolved by the system dynamic linker at runtime. Ensure native libraries are installed and accessible via `LD_LIBRARY_PATH` (Linux) or `DYLD_LIBRARY_PATH` (macOS).
-
----
-
-## Status
-
-Current status: implemented and validated on DB package tests with manifest-driven native resolution and no package-specific hardcoded native build path.
+- [FFI](/guide/ffi)
+- [Freestanding](/guide/freestanding)
+- [vex-pm Reference](/references/vex-pm-reference)

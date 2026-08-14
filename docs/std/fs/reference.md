@@ -22,7 +22,7 @@ const BUF_SIZE: usize=8192;
 
 ---
 
-### <a id="O_RDONLY"></a>`O_RDONLY` `🔓 export`
+### <a id="O_RDONLY"></a>`O_RDONLY` ` export`
 
 &gt; 📄 `sys.vx` L4-4
 
@@ -34,7 +34,7 @@ export const O_RDONLY: i32=0x0000;
 
 ---
 
-### <a id="O_WRONLY"></a>`O_WRONLY` `🔓 export`
+### <a id="O_WRONLY"></a>`O_WRONLY` ` export`
 
 &gt; 📄 `sys.vx` L5-5
 
@@ -46,7 +46,7 @@ export const O_WRONLY: i32=0x0001;
 
 ---
 
-### <a id="O_RDWR"></a>`O_RDWR` `🔓 export`
+### <a id="O_RDWR"></a>`O_RDWR` ` export`
 
 &gt; 📄 `sys.vx` L6-6
 
@@ -58,7 +58,7 @@ export const O_RDWR: i32=0x0002;
 
 ---
 
-### <a id="O_CREAT"></a>`O_CREAT` `🔓 export`
+### <a id="O_CREAT"></a>`O_CREAT` ` export`
 
 &gt; 📄 `sys.vx` L7-7
 
@@ -70,7 +70,7 @@ export const O_CREAT: i32=0x0040;
 
 ---
 
-### <a id="O_EXCL"></a>`O_EXCL` `🔓 export`
+### <a id="O_EXCL"></a>`O_EXCL` ` export`
 
 &gt; 📄 `sys.vx` L8-8
 
@@ -82,7 +82,7 @@ export const O_EXCL: i32=0x0080;
 
 ---
 
-### <a id="O_TRUNC"></a>`O_TRUNC` `🔓 export`
+### <a id="O_TRUNC"></a>`O_TRUNC` ` export`
 
 &gt; 📄 `sys.vx` L9-9
 
@@ -94,7 +94,7 @@ export const O_TRUNC: i32=0x0200;
 
 ---
 
-### <a id="O_APPEND"></a>`O_APPEND` `🔓 export`
+### <a id="O_APPEND"></a>`O_APPEND` ` export`
 
 &gt; 📄 `sys.vx` L10-10
 
@@ -106,7 +106,7 @@ export const O_APPEND: i32=0x0400;
 
 ---
 
-### <a id="O_NONBLOCK"></a>`O_NONBLOCK` `🔓 export`
+### <a id="O_NONBLOCK"></a>`O_NONBLOCK` ` export`
 
 &gt; 📄 `sys.vx` L11-11
 
@@ -118,7 +118,7 @@ export const O_NONBLOCK: i32=0x0800;
 
 ---
 
-### <a id="O_DIRECTORY"></a>`O_DIRECTORY` `🔓 export`
+### <a id="O_DIRECTORY"></a>`O_DIRECTORY` ` export`
 
 &gt; 📄 `sys.vx` L12-12
 
@@ -130,7 +130,7 @@ export const O_DIRECTORY: i32=0x10000;
 
 ---
 
-### <a id="SEEK_SET"></a>`SEEK_SET` `🔓 export`
+### <a id="SEEK_SET"></a>`SEEK_SET` ` export`
 
 &gt; 📄 `sys.vx` L15-15
 
@@ -142,7 +142,7 @@ export const SEEK_SET: i32=0;
 
 ---
 
-### <a id="SEEK_CUR"></a>`SEEK_CUR` `🔓 export`
+### <a id="SEEK_CUR"></a>`SEEK_CUR` ` export`
 
 &gt; 📄 `sys.vx` L16-16
 
@@ -154,7 +154,7 @@ export const SEEK_CUR: i32=1;
 
 ---
 
-### <a id="SEEK_END"></a>`SEEK_END` `🔓 export`
+### <a id="SEEK_END"></a>`SEEK_END` ` export`
 
 &gt; 📄 `sys.vx` L17-17
 
@@ -166,7 +166,7 @@ export const SEEK_END: i32=2;
 
 ---
 
-### <a id="PROT_READ"></a>`PROT_READ` `🔓 export`
+### <a id="PROT_READ"></a>`PROT_READ` ` export`
 
 &gt; 📄 `sys.vx` L20-20
 
@@ -178,7 +178,7 @@ export const PROT_READ: i32=0x1;
 
 ---
 
-### <a id="PROT_WRITE"></a>`PROT_WRITE` `🔓 export`
+### <a id="PROT_WRITE"></a>`PROT_WRITE` ` export`
 
 &gt; 📄 `sys.vx` L21-21
 
@@ -190,7 +190,7 @@ export const PROT_WRITE: i32=0x2;
 
 ---
 
-### <a id="MAP_SHARED"></a>`MAP_SHARED` `🔓 export`
+### <a id="MAP_SHARED"></a>`MAP_SHARED` ` export`
 
 &gt; 📄 `sys.vx` L22-22
 
@@ -202,7 +202,7 @@ export const MAP_SHARED: i32=0x1;
 
 ---
 
-### <a id="MAP_PRIVATE"></a>`MAP_PRIVATE` `🔓 export`
+### <a id="MAP_PRIVATE"></a>`MAP_PRIVATE` ` export`
 
 &gt; 📄 `sys.vx` L23-23
 
@@ -214,7 +214,7 @@ export const MAP_PRIVATE: i32=0x2;
 
 ---
 
-### <a id="MAP_FAILED"></a>`MAP_FAILED` `🔓 export`
+### <a id="MAP_FAILED"></a>`MAP_FAILED` ` export`
 
 &gt; 📄 `sys.vx` L24-24
 
@@ -226,7 +226,7 @@ export const MAP_FAILED: i64=-1;
 
 ---
 
-### <a id="F_OK"></a>`F_OK` `🔓 export`
+### <a id="F_OK"></a>`F_OK` ` export`
 
 &gt; 📄 `sys.vx` L27-27
 
@@ -238,7 +238,7 @@ export const F_OK: i32=0;
 
 ---
 
-### <a id="R_OK"></a>`R_OK` `🔓 export`
+### <a id="R_OK"></a>`R_OK` ` export`
 
 &gt; 📄 `sys.vx` L28-28
 
@@ -250,7 +250,7 @@ export const R_OK: i32=4;
 
 ---
 
-### <a id="W_OK"></a>`W_OK` `🔓 export`
+### <a id="W_OK"></a>`W_OK` ` export`
 
 &gt; 📄 `sys.vx` L29-29
 
@@ -262,7 +262,7 @@ export const W_OK: i32=2;
 
 ---
 
-### <a id="X_OK"></a>`X_OK` `🔓 export`
+### <a id="X_OK"></a>`X_OK` ` export`
 
 &gt; 📄 `sys.vx` L30-30
 
@@ -274,7 +274,7 @@ export const X_OK: i32=1;
 
 ---
 
-### <a id="S_IFMT"></a>`S_IFMT` `🔓 export`
+### <a id="S_IFMT"></a>`S_IFMT` ` export`
 
 &gt; 📄 `sys.vx` L32-32
 
@@ -286,7 +286,7 @@ export const S_IFMT: u32=0o170000;
 
 ---
 
-### <a id="S_IFDIR"></a>`S_IFDIR` `🔓 export`
+### <a id="S_IFDIR"></a>`S_IFDIR` ` export`
 
 &gt; 📄 `sys.vx` L33-33
 
@@ -298,7 +298,7 @@ export const S_IFDIR: u32=0o040000;
 
 ---
 
-### <a id="S_IFREG"></a>`S_IFREG` `🔓 export`
+### <a id="S_IFREG"></a>`S_IFREG` ` export`
 
 &gt; 📄 `sys.vx` L34-34
 
@@ -310,7 +310,7 @@ export const S_IFREG: u32=0o100000;
 
 ---
 
-### <a id="S_IFLNK"></a>`S_IFLNK` `🔓 export`
+### <a id="S_IFLNK"></a>`S_IFLNK` ` export`
 
 &gt; 📄 `sys.vx` L35-35
 
@@ -322,7 +322,7 @@ export const S_IFLNK: u32=0o120000;
 
 ---
 
-### <a id="DT_UNKNOWN"></a>`DT_UNKNOWN` `🔓 export`
+### <a id="DT_UNKNOWN"></a>`DT_UNKNOWN` ` export`
 
 &gt; 📄 `sys.vx` L38-38
 
@@ -334,7 +334,7 @@ export const DT_UNKNOWN: u8=0;
 
 ---
 
-### <a id="DT_DIR"></a>`DT_DIR` `🔓 export`
+### <a id="DT_DIR"></a>`DT_DIR` ` export`
 
 &gt; 📄 `sys.vx` L39-39
 
@@ -346,7 +346,7 @@ export const DT_DIR: u8=4;
 
 ---
 
-### <a id="DT_REG"></a>`DT_REG` `🔓 export`
+### <a id="DT_REG"></a>`DT_REG` ` export`
 
 &gt; 📄 `sys.vx` L40-40
 
@@ -358,7 +358,7 @@ export const DT_REG: u8=8;
 
 ---
 
-### <a id="DT_LNK"></a>`DT_LNK` `🔓 export`
+### <a id="DT_LNK"></a>`DT_LNK` ` export`
 
 &gt; 📄 `sys.vx` L41-41
 
@@ -408,7 +408,7 @@ const READDIR_VEC_CHUNK: usize=64;
 
 ## Structs
 
-### <a id="File"></a>`File` `🔓 export`
+### <a id="File"></a>`File` ` export`
 
 &gt; 📄 `file.vx` L8-12
 
@@ -422,8 +422,8 @@ export struct File
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
-| `path` | `string` | 🔓 public |  |
+| `fd` | `i32` |  public |  |
+| `path` | `string` |  public |  |
 
 **Methods:**
 
@@ -456,7 +456,7 @@ export struct File
 
 ---
 
-### <a id="BufReader"></a>`BufReader` `🔓 export`
+### <a id="BufReader"></a>`BufReader` ` export`
 
 &gt; 📄 `bufio.vx` L33-40
 
@@ -468,11 +468,11 @@ export struct BufReader
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
-| `buf` | `[u8; 8192]` | 🔓 public |  |
-| `pos` | `usize` | 🔓 public |  |
-| `filled` | `usize` | 🔓 public |  |
-| `eof` | `bool` | 🔓 public |  |
+| `fd` | `i32` |  public |  |
+| `buf` | `[u8; 8192]` |  public |  |
+| `pos` | `usize` |  public |  |
+| `filled` | `usize` |  public |  |
+| `eof` | `bool` |  public |  |
 
 **Methods:**
 
@@ -486,7 +486,7 @@ export struct BufReader
 
 ---
 
-### <a id="BufWriter"></a>`BufWriter` `🔓 export`
+### <a id="BufWriter"></a>`BufWriter` ` export`
 
 &gt; 📄 `bufio.vx` L189-194
 
@@ -498,9 +498,9 @@ export struct BufWriter
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
-| `buf` | `[u8; 8192]` | 🔓 public |  |
-| `pos` | `usize` | 🔓 public |  |
+| `fd` | `i32` |  public |  |
+| `buf` | `[u8; 8192]` |  public |  |
+| `pos` | `usize` |  public |  |
 
 **Methods:**
 
@@ -514,7 +514,7 @@ export struct BufWriter
 
 ---
 
-### <a id="Lines"></a>`Lines` `🔓 export`
+### <a id="Lines"></a>`Lines` ` export`
 
 &gt; 📄 `bufio.vx` L254-259
 
@@ -526,9 +526,9 @@ export struct Lines
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `reader` | `BufReader` | 🔓 public |  |
-| `done` | `bool` | 🔓 public |  |
-| `current` | `string` | 🔓 public |  |
+| `reader` | `BufReader` |  public |  |
+| `done` | `bool` |  public |  |
+| `current` | `string` |  public |  |
 
 **Methods:**
 
@@ -542,7 +542,7 @@ export struct Lines
 
 ---
 
-### <a id="FileInfo"></a>`FileInfo` `🔓 export`
+### <a id="FileInfo"></a>`FileInfo` ` export`
 
 &gt; 📄 `stat.vx` L7-22
 
@@ -556,19 +556,19 @@ export struct FileInfo
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `file_size` | `i64` | 🔓 public |  |
-| `mod_time` | `i64` | 🔓 public |  |
-| `access_time` | `i64` | 🔓 public |  |
-| `creation_time` | `i64` | 🔓 public |  |
-| `perms` | `u32` | 🔓 public |  |
-| `uid` | `i64` | 🔓 public |  |
-| `gid` | `i64` | 🔓 public |  |
-| `inode` | `i64` | 🔓 public |  |
-| `dev` | `i64` | 🔓 public |  |
-| `nlink` | `i64` | 🔓 public |  |
-| `is_dir` | `bool` | 🔓 public |  |
-| `is_file` | `bool` | 🔓 public |  |
-| `is_symlink` | `bool` | 🔓 public |  |
+| `file_size` | `i64` |  public |  |
+| `mod_time` | `i64` |  public |  |
+| `access_time` | `i64` |  public |  |
+| `creation_time` | `i64` |  public |  |
+| `perms` | `u32` |  public |  |
+| `uid` | `i64` |  public |  |
+| `gid` | `i64` |  public |  |
+| `inode` | `i64` |  public |  |
+| `dev` | `i64` |  public |  |
+| `nlink` | `i64` |  public |  |
+| `is_dir` | `bool` |  public |  |
+| `is_file` | `bool` |  public |  |
+| `is_symlink` | `bool` |  public |  |
 
 **Methods:**
 
@@ -580,7 +580,7 @@ export struct FileInfo
 
 ---
 
-### <a id="Permissions"></a>`Permissions` `🔓 export`
+### <a id="Permissions"></a>`Permissions` ` export`
 
 &gt; 📄 `permissions.vx` L13-15
 
@@ -626,7 +626,7 @@ p.isReadOnly() // false
 
 ---
 
-### <a id="Path"></a>`Path` `🔓 export`
+### <a id="Path"></a>`Path` ` export`
 
 &gt; 📄 `path.vx` L6-8
 
@@ -670,7 +670,7 @@ export struct Path
 
 ---
 
-### <a id="DirEntry"></a>`DirEntry` `🔓 export`
+### <a id="DirEntry"></a>`DirEntry` ` export`
 
 &gt; 📄 `dir.vx` L11-17
 
@@ -684,10 +684,10 @@ export struct DirEntry
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `name_buf` | `[u8; 256]` | 🔓 public |  |
-| `entry_type` | `u8` | 🔓 public |  |
-| `_pad` | `[u8; 7]` | 🔓 public |  |
-| `inode` | `u64` | 🔓 public |  |
+| `name_buf` | `[u8; 256]` |  public |  |
+| `entry_type` | `u8` |  public |  |
+| `_pad` | `[u8; 7]` |  public |  |
+| `inode` | `u64` |  public |  |
 
 **Methods:**
 
@@ -701,7 +701,7 @@ export struct DirEntry
 
 ---
 
-### <a id="DirList"></a>`DirList` `🔓 export`
+### <a id="DirList"></a>`DirList` ` export`
 
 &gt; 📄 `dir.vx` L69-73
 
@@ -722,12 +722,12 @@ while i &lt; list.count { $println(list.items[i].name()); i = i + 1; }
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `items` | `[DirEntry; 64]` | 🔓 public |  |
-| `count` | `usize` | 🔓 public |  |
+| `items` | `[DirEntry; 64]` |  public |  |
+| `count` | `usize` |  public |  |
 
 ---
 
-### <a id="DirCursor"></a>`DirCursor` `🔓 export`
+### <a id="DirCursor"></a>`DirCursor` ` export`
 
 &gt; 📄 `dir.vx` L224-230
 
@@ -741,10 +741,10 @@ Stateful cursor for paginated directory traversal.
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `path` | `string` | 🔓 public |  |
-| `offset` | `usize` | 🔓 public |  |
-| `page_size` | `usize` | 🔓 public |  |
-| `done` | `bool` | 🔓 public |  |
+| `path` | `string` |  public |  |
+| `offset` | `usize` |  public |  |
+| `page_size` | `usize` |  public |  |
+| `done` | `bool` |  public |  |
 
 **Methods:**
 
@@ -828,7 +828,7 @@ fn _openAppend(path: string): Result<File, StdError>
 
 ---
 
-### <a id="openFile"></a>`openFile` `🔓 export`
+### <a id="openFile"></a>`openFile` ` export`
 
 &gt; 📄 `file.vx` L87-87
 
@@ -846,7 +846,7 @@ export fn openFile(path: string): Result<File, StdError>
 
 ---
 
-### <a id="createFile"></a>`createFile` `🔓 export`
+### <a id="createFile"></a>`createFile` ` export`
 
 &gt; 📄 `file.vx` L88-88
 
@@ -864,7 +864,7 @@ export fn createFile(path: string): Result<File, StdError>
 
 ---
 
-### <a id="openReadWrite"></a>`openReadWrite` `🔓 export`
+### <a id="openReadWrite"></a>`openReadWrite` ` export`
 
 &gt; 📄 `file.vx` L89-89
 
@@ -882,7 +882,7 @@ export fn openReadWrite(path: string): Result<File, StdError>
 
 ---
 
-### <a id="openAppend"></a>`openAppend` `🔓 export`
+### <a id="openAppend"></a>`openAppend` ` export`
 
 &gt; 📄 `file.vx` L90-90
 
@@ -900,7 +900,7 @@ export fn openAppend(path: string): Result<File, StdError>
 
 ---
 
-### <a id="readFile"></a>`readFile` `🔓 export`
+### <a id="readFile"></a>`readFile` ` export`
 
 &gt; 📄 `file.vx` L280-298
 
@@ -920,7 +920,7 @@ Read entire file as string. Simple as Go's os.ReadFile.
 
 ---
 
-### <a id="writeFile"></a>`writeFile` `🔓 export`
+### <a id="writeFile"></a>`writeFile` ` export`
 
 &gt; 📄 `file.vx` L301-311
 
@@ -941,7 +941,7 @@ Write string to file (creates/truncates). Simple as Go's os.WriteFile.
 
 ---
 
-### <a id="appendFile"></a>`appendFile` `🔓 export`
+### <a id="appendFile"></a>`appendFile` ` export`
 
 &gt; 📄 `file.vx` L314-324
 
@@ -962,7 +962,7 @@ Append string to file (creates if needed).
 
 ---
 
-### <a id="copyFile"></a>`copyFile` `🔓 export`
+### <a id="copyFile"></a>`copyFile` ` export`
 
 &gt; 📄 `file.vx` L327-333
 
@@ -983,7 +983,7 @@ Copy a file from src to dst.
 
 ---
 
-### <a id="renameFile"></a>`renameFile` `🔓 export`
+### <a id="renameFile"></a>`renameFile` ` export`
 
 &gt; 📄 `file.vx` L336-342
 
@@ -1004,7 +1004,7 @@ Rename/move a file.
 
 ---
 
-### <a id="removeFile"></a>`removeFile` `🔓 export`
+### <a id="removeFile"></a>`removeFile` ` export`
 
 &gt; 📄 `file.vx` L345-351
 
@@ -1024,7 +1024,7 @@ Delete a file.
 
 ---
 
-### <a id="exists"></a>`exists` `🔓 export`
+### <a id="exists"></a>`exists` ` export`
 
 &gt; 📄 `file.vx` L354-356
 
@@ -1044,7 +1044,7 @@ Check if a file exists.
 
 ---
 
-### <a id="mkdir"></a>`mkdir` `🔓 export`
+### <a id="mkdir"></a>`mkdir` ` export`
 
 &gt; 📄 `file.vx` L363-369
 
@@ -1064,7 +1064,7 @@ Create a directory (mode 0755).
 
 ---
 
-### <a id="rmdir"></a>`rmdir` `🔓 export`
+### <a id="rmdir"></a>`rmdir` ` export`
 
 &gt; 📄 `file.vx` L372-378
 
@@ -1084,7 +1084,7 @@ Remove an empty directory.
 
 ---
 
-### <a id="cwd"></a>`cwd` `🔓 export`
+### <a id="cwd"></a>`cwd` ` export`
 
 &gt; 📄 `file.vx` L381-388
 
@@ -1098,7 +1098,7 @@ Get current working directory.
 
 ---
 
-### <a id="chdir"></a>`chdir` `🔓 export`
+### <a id="chdir"></a>`chdir` ` export`
 
 &gt; 📄 `file.vx` L391-397
 
@@ -1118,7 +1118,7 @@ Change current working directory.
 
 ---
 
-### <a id="chmod"></a>`chmod` `🔓 export`
+### <a id="chmod"></a>`chmod` ` export`
 
 &gt; 📄 `file.vx` L400-406
 
@@ -1156,7 +1156,7 @@ Caller is responsible for removing the file when done.
 
 ---
 
-### <a id="tempFile"></a>`tempFile` `🔓 export`
+### <a id="tempFile"></a>`tempFile` ` export`
 
 &gt; 📄 `file.vx` L437-437
 
@@ -1168,7 +1168,7 @@ export fn tempFile(): Result<File, StdError>
 
 ---
 
-### <a id="symlink"></a>`symlink` `🔓 export`
+### <a id="symlink"></a>`symlink` ` export`
 
 &gt; 📄 `file.vx` L444-450
 
@@ -1189,7 +1189,7 @@ Create a symbolic link pointing to `target` at `linkpath`.
 
 ---
 
-### <a id="hardlink"></a>`hardlink` `🔓 export`
+### <a id="hardlink"></a>`hardlink` ` export`
 
 &gt; 📄 `file.vx` L453-459
 
@@ -1210,7 +1210,7 @@ Create a hard link from `oldpath` to `newpath`.
 
 ---
 
-### <a id="readlink"></a>`readlink` `🔓 export`
+### <a id="readlink"></a>`readlink` ` export`
 
 &gt; 📄 `file.vx` L462-469
 
@@ -1230,7 +1230,7 @@ Read the target path of a symbolic link.
 
 ---
 
-### <a id="stat"></a>`stat` `🔓 export`
+### <a id="stat"></a>`stat` ` export`
 
 &gt; 📄 `stat.vx` L46-64
 
@@ -1252,7 +1252,7 @@ let info = stat("src/main.vx");
 
 ---
 
-### <a id="lstat"></a>`lstat` `🔓 export`
+### <a id="lstat"></a>`lstat` ` export`
 
 &gt; 📄 `stat.vx` L67-85
 
@@ -1272,7 +1272,7 @@ Get symlink metadata (does NOT follow symlinks).
 
 ---
 
-### <a id="pathIsDir"></a>`pathIsDir` `🔓 export`
+### <a id="pathIsDir"></a>`pathIsDir` ` export`
 
 &gt; 📄 `stat.vx` L88-90
 
@@ -1292,7 +1292,7 @@ Quick check: is path a directory?
 
 ---
 
-### <a id="pathIsFile"></a>`pathIsFile` `🔓 export`
+### <a id="pathIsFile"></a>`pathIsFile` ` export`
 
 &gt; 📄 `stat.vx` L93-95
 
@@ -1312,7 +1312,7 @@ Quick check: is path a regular file?
 
 ---
 
-### <a id="pathIsSymlink"></a>`pathIsSymlink` `🔓 export`
+### <a id="pathIsSymlink"></a>`pathIsSymlink` ` export`
 
 &gt; 📄 `stat.vx` L98-100
 
@@ -1332,7 +1332,7 @@ Quick check: is path a symbolic link?
 
 ---
 
-### <a id="fileSize"></a>`fileSize` `🔓 export`
+### <a id="fileSize"></a>`fileSize` ` export`
 
 &gt; 📄 `stat.vx` L103-105
 
@@ -1352,7 +1352,7 @@ Get file size by path (bytes).
 
 ---
 
-### <a id="modTime"></a>`modTime` `🔓 export`
+### <a id="modTime"></a>`modTime` ` export`
 
 &gt; 📄 `stat.vx` L108-110
 
@@ -1372,7 +1372,7 @@ Get file modification time (Unix epoch seconds).
 
 ---
 
-### <a id="pathPermissions"></a>`pathPermissions` `🔓 export`
+### <a id="pathPermissions"></a>`pathPermissions` ` export`
 
 &gt; 📄 `stat.vx` L112-114
 
@@ -1392,7 +1392,7 @@ Convenience: get typed Permissions for a path.
 
 ---
 
-### <a id="accessTime"></a>`accessTime` `🔓 export`
+### <a id="accessTime"></a>`accessTime` ` export`
 
 &gt; 📄 `stat.vx` L117-119
 
@@ -1412,7 +1412,7 @@ Get file access time (Unix epoch seconds).
 
 ---
 
-### <a id="creationTime"></a>`creationTime` `🔓 export`
+### <a id="creationTime"></a>`creationTime` ` export`
 
 &gt; 📄 `stat.vx` L123-125
 
@@ -1434,7 +1434,7 @@ On Linux, returns status change time (ctime) as closest approximation.
 
 ---
 
-### <a id="linkCount"></a>`linkCount` `🔓 export`
+### <a id="linkCount"></a>`linkCount` ` export`
 
 &gt; 📄 `stat.vx` L128-130
 
@@ -1454,7 +1454,7 @@ Get hard link count.
 
 ---
 
-### <a id="Permissions"></a>`Permissions` `🔓 export`
+### <a id="Permissions"></a>`Permissions` ` export`
 
 &gt; 📄 `permissions.vx` L20-22
 
@@ -1515,7 +1515,7 @@ Return last index of `needle` in raw byte buffer, or -1 if not found.
 
 ---
 
-### <a id="Path"></a>`Path` `🔓 export`
+### <a id="Path"></a>`Path` ` export`
 
 &gt; 📄 `path.vx` L31-33
 
@@ -1596,7 +1596,7 @@ fn emptyDirEntry(): DirEntry
 
 ---
 
-### <a id="readDir"></a>`readDir` `🔓 export`
+### <a id="readDir"></a>`readDir` ` export`
 
 &gt; 📄 `dir.vx` L81-89
 
@@ -1619,7 +1619,7 @@ Returns up to 64 entries. For larger directories, use raw vex_fs_readdir.
 
 ---
 
-### <a id="mkdirAll"></a>`mkdirAll` `🔓 export`
+### <a id="mkdirAll"></a>`mkdirAll` ` export`
 
 &gt; 📄 `dir.vx` L96-102
 
@@ -1639,7 +1639,7 @@ Create all directories along a path (like `mkdir -p`).
 
 ---
 
-### <a id="removeAll"></a>`removeAll` `🔓 export`
+### <a id="removeAll"></a>`removeAll` ` export`
 
 &gt; 📄 `dir.vx` L105-111
 
@@ -1659,7 +1659,7 @@ Recursively remove a file or directory tree (like `rm -rf`).
 
 ---
 
-### <a id="tempDir"></a>`tempDir` `🔓 export`
+### <a id="tempDir"></a>`tempDir` ` export`
 
 &gt; 📄 `dir.vx` L114-121
 
@@ -1673,7 +1673,7 @@ Get the system temporary directory path.
 
 ---
 
-### <a id="readDirVecLimit"></a>`readDirVecLimit` `🔓 export`
+### <a id="readDirVecLimit"></a>`readDirVecLimit` ` export`
 
 &gt; 📄 `dir.vx` L130-183
 
@@ -1697,7 +1697,7 @@ entries, avoiding single-batch truncation behavior.
 
 ---
 
-### <a id="readDirVec"></a>`readDirVec` `🔓 export`
+### <a id="readDirVec"></a>`readDirVec` ` export`
 
 &gt; 📄 `dir.vx` L187-189
 
@@ -1719,7 +1719,7 @@ Collects entries paginated up to DEFAULT_READDIR_MAX.
 
 ---
 
-### <a id="readDirPage"></a>`readDirPage` `🔓 export`
+### <a id="readDirPage"></a>`readDirPage` ` export`
 
 &gt; 📄 `dir.vx` L193-221
 
@@ -1743,7 +1743,7 @@ Returns up to `limit` entries.
 
 ---
 
-### <a id="newDirCursor"></a>`newDirCursor` `🔓 export`
+### <a id="newDirCursor"></a>`newDirCursor` ` export`
 
 &gt; 📄 `dir.vx` L233-241
 
@@ -1764,7 +1764,7 @@ Create a new directory cursor.
 
 ---
 
-### <a id="walkDir"></a>`walkDir` `🔓 export`
+### <a id="walkDir"></a>`walkDir` ` export`
 
 &gt; 📄 `dir.vx` L277-309
 

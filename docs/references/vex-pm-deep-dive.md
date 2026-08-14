@@ -15,9 +15,9 @@ repository = "https://github.com/alice/my-project"
 keywords = ["web", "server"]
 categories = ["network", "web"]
 
-# Vex language version compatibility
+# Vex language version compatibility; verify the accepted value with the compiler version in use.
 [package.vex]
-version = "0.1.2"
+version = "0.4.0-rc.39"
 
 [dependencies]
 http = "0.3.0"                    # exact version

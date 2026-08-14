@@ -1,5 +1,11 @@
 # context — Request-Scoped Context
 
+> **Experimental:** the current flat implementation does not yet provide
+> parent-to-child cancellation propagation, real monotonic timeout expiry, or
+> persistent multi-key values. Do not rely on the examples below as a
+> production contract. The replacement architecture is tracked in the
+> 2026-08-09 standard-library context audit.
+
 Go-style context propagation for cancellation signals, deadlines, timeouts, and request-scoped values through call chains.
 
 ## Background Context

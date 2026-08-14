@@ -100,11 +100,11 @@ The core constructor/static/instance overload paths are covered by regression te
 
 | Scenario | Status | Notes |
 |----------|--------|-------|
-| Constructor overloading | ✅ | Covered by `constructor_001.vx` |
-| Static method overloading | ✅ | Covered by `static_001.vx` and `static_types_001.vx` |
-| Instance method overloading | ✅ | Covered by `instance_001.vx` |
-| Static vs instance same-name split | ✅ | Covered by `static_instance_name_001.vx` |
-| Generic/default/variadic method interactions | ⚠️ Partial | Normal overload paths are solid, but exhaustive cross-product coverage is still incomplete |
+| Constructor overloading | Yes | Covered by `constructor_001.vx` |
+| Static method overloading | Yes | Covered by `static_001.vx` and `static_types_001.vx` |
+| Instance method overloading | Yes | Covered by `instance_001.vx` |
+| Static vs instance same-name split | Yes | Covered by `static_instance_name_001.vx` |
+| Generic/default/variadic method interactions | Warning Partial | Normal overload paths are solid, but exhaustive cross-product coverage is still incomplete |
 
 ## Generic Methods
 

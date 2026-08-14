@@ -18,7 +18,12 @@ This layer includes infrastructure for:
 
 Vex compiles to native code ahead-of-time (AOT). Both `vex run` and `vex compile` produce native binaries via LLVM. `vex run` compiles to a temporary executable and runs it as a subprocess; `vex compile` produces a standalone binary.
 
-The runtime is linked as a static library (`libvexruntime.a`) alongside the compiled Vex code. The system linker resolves all symbols at build time -- no runtime symbol registration is needed.
+VexArch is rehydrated from the compiler's embedded VRI and lowered into the
+same backend module as user and prelude code. Release packages do not carry a
+VexArch bitcode module or static/dynamic runtime library. A tiny
+target-selected native support object may be materialized for irreducible
+assembly; system and package-native dependencies remain explicit in the final
+link plan.
 
 ## CLI Tooling
 
@@ -34,6 +39,7 @@ The CLI owns orchestration around:
 
 - dependency resolution
 - compiler-driver invocation
+- embedded VRI target selection and semantic fusion
 - linking
 - execution model selection
 - test discovery and execution
@@ -52,9 +58,9 @@ These tools matter because they all depend on the same semantic model staying al
 
 Many user-facing “language” issues are actually toolchain or runtime issues:
 
-- link mode differences
-- symbol registration gaps
-- runtime state constraints
+- requested-target ABI and native-support selection
+- reachable provider/link-plan differences
+- fused runtime reachability constraints
 - test-runner discovery assumptions
 - editor/compiler semantic drift
 

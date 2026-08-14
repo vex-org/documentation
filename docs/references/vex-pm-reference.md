@@ -1,135 +1,99 @@
 # vex-pm Reference
 
-This document describes `vex-pm` package management and build integration responsibilities.
+`vex-pm` owns package manifests, dependency resolution, lock/cache behavior, target-aware package files, and manifest-owned native artifacts.
 
----
+## Core modules
 
-## Purpose
+- `manifest.rs`: `Manifest`, `NativeConfig`, `PlatformDependency`, testing, and workspace configuration.
+- `resolver.rs`: package dependency graph resolution.
+- `lockfile.rs`: integrity checks and deterministic locked selection.
+- `cache.rs`: local package and git caches.
+- `build.rs`: dependency source paths and compatibility build integration.
+- `platform.rs`: package-level platform file selection.
+- `native_linker.rs`: target-native artifact selection, staging, link plans, and diagnostics.
 
-`vex-pm` is responsible for:
+## Manifest responsibilities
 
-- manifest parsing (`vex.json`)
-- dependency resolution and lock-file behavior
-- cache management
-- platform-aware module resolution
-- native dependency build/link argument generation
+A `vex.json` can define package metadata, dependencies, entry modules, test/workspace settings, and native features.
 
----
+```json
+{
+  "name": "codec-wrapper",
+  "version": "1.0.0",
+  "dependencies": {},
+  "native": {
+    "useSystemLibC": true,
+    "features": {
+      "codec": {
+        "linux.x86_64": {
+          "path": "native/libcodec.a",
+          "type": "static"
+        },
+        "windows-x86_64": {
+          "path": "native/codec.dll",
+          "type": "dynamic",
+          "importLib": "native/codec.lib"
+        }
+      }
+    }
+  }
+}
+```
 
-## Core Modules
+Native features are requested explicitly by `extern "NATIVE" from "codec"` declarations. The artifact type lives in the manifest, not in Vex source syntax.
 
-- `tools/vex-pm/src/manifest.rs`
-  - `Manifest`, `NativeConfig`, `NativeFeatureConfig`, testing/workspace fields
-- `tools/vex-pm/src/build.rs`
-  - dependency path resolution
-  - native linker arg aggregation APIs
-- `tools/vex-pm/src/native_linker.rs`
-  - C source compilation
-  - pkg-config probing
-  - feature merge and linker arg generation
-- `tools/vex-pm/src/resolver.rs`
-  - dependency graph resolution
-- `tools/vex-pm/src/lockfile.rs`
-  - lock integrity, commit-SHA pinning, and deterministic dependency selection
-- `tools/vex-pm/src/cache.rs`
-  - local package/git cache logic
+## Dependency resolution
 
----
+`resolve_dependencies_for_build(locked)` behaves as follows:
 
-## Manifest Semantics
+- `locked=true`: requires a valid `vex.lock`;
+- `locked=false`: uses a valid lock or resolves again when needed.
 
-`vex.json` can define:
+The result contains package source directories and platform-file mappings. Locked non-local packages are pinned to canonical source metadata and an exact commit.
 
-- package metadata (`name`, `version`, `main`)
-- dependency map
-- testing/workspace config
-- native config (`native`)
+## Target-aware source selection
 
-`native` supports:
+Vex source resolution recognizes target variants for `.vx` and `.vxc` files. The compiler import resolver uses this precedence:
 
-- `sources`, `include_dirs`, `search_paths`
-- `libraries`, `cflags`
-- `pkg_config`, `pkg_config_optional`
-- `features` blocks with the same native fragment fields
+1. OS and architecture suffix;
+2. OS suffix;
+3. architecture suffix;
+4. generic file.
 
----
+Architecture aliases such as `x86_64`/`x64` and `aarch64`/`arm64` are accepted. Source routing chooses Vex code without inventing an ABI environment; native manifest routing independently chooses an exact-target binary artifact.
 
-## Dependency Resolution
+## Native planning
 
-`resolve_dependencies_for_build(locked)`:
+The compile/run path does not aggregate every native feature in every dependency. It starts with the exact `NATIVE` requirements recorded by codegen.
 
-- `locked=true`: requires valid `vex.lock`
-- `locked=false`: uses lock if valid; otherwise re-resolves
+`resolve_native_link_plan`:
 
-Output is `DependencyPaths` with:
+1. finds the owning manifest for each declaration file;
+2. groups and sorts requests by manifest and feature;
+3. chooses the best target entry;
+4. stages only selected artifacts;
+5. returns link arguments, runtime files, activated dependency metadata, and libc policy.
 
-- package source directories
-- platform-specific file mappings
+Supported artifact types are `static`, `dynamic`, and `bitcode`. Windows dynamic artifacts require `importLib`; the old `import_lib` spelling remains a read-only compatibility alias.
 
----
+The compatibility `NativeLinker::process` API can still process an entire config for package-manager workflows. Compiler and runner correctness relies on `process_features`, which is used-only.
 
-## Native Link Aggregation APIs
+## Freestanding policy
 
-### `get_native_linker_args_for_build(locked)`
+`native.useSystemLibC: false` declares a freestanding libc policy. A reachable `LIBC` extern is rejected by the CLI before linking. If an activated static feature exposes unresolved hosted libc/TLS symbols, the linker classifier reports that exact feature.
 
-Collects native linker args from:
+The package manager does not reinterpret OS libraries as libc. `SYSTEM` libraries and manifest-owned native artifacts remain explicit link-plan inputs.
 
-- current package manifest
-- resolved dependency manifests
+## Cache and determinism
 
-### `get_native_linker_args_for_source(source, locked)`
+- package/git cache uses the configured Vex cache root;
+- lock validation prevents dependency drift in locked builds;
+- native requests use ordered, deduplicated manifest/feature sets;
+- only active target artifacts are copied into native staging;
+- runtime files and linker arguments are deduplicated.
 
-Extends build-level collection with stdlib package manifests discovered from imports in source.
+## Related
 
-This is used by `vex-cli` so imported stdlib modules (for example `db`) can contribute native build/link settings automatically.
-
----
-
-## NativeLinker Behavior
-
-`NativeLinker::process(...)` performs:
-
-1. effective config materialization (base + enabled features)
-2. pkg-config resolution (optional/strict behavior)
-3. macro-aware source gating (`HAVE_*` checks)
-4. C compilation to objects
-5. dynamic linker arg generation (`-L`, `-l`, object list)
-
-Policy:
-
-- static linking is not allowed in this architecture (`static_libs` rejected)
-
----
-
-## Environment Controls
-
-- `VEX_NATIVE_FEATURES=feat1,feat2`
-- `VEX_DB_FEATURES=...` (compat alias)
-- `PKG_CONFIG_PATH=...`
-
----
-
-## Cache and Determinism
-
-- package/git cache rooted in `~/.vex/cache` (or `VEX_CACHE`)
-- bare git repos under `git/db`, extracted trees under `git/checkouts/<name>/<version>`
-- `vex.lock` pins each non-local package to a canonical git URL (`source`) and an
-  exact commit SHA (`commit`); checkouts are extracted by that SHA when resolvable,
-  so a moved/force-pushed tag cannot change a reproducible build
-- tag selection is semver-ordered (numeric), not lexical
-- lock-file validation prevents drift in CI/locked mode
-
----
-
-## Design Notes
-
-- `vex-pm` provides policy + metadata resolution
-- `vex-cli` consumes resolved paths/args to execute compile/run/test workflows
-- package-native behavior should remain manifest-driven, not command-hardcoded
-
----
-
-## Related References
-
-- [vex-cli Reference](./vex-cli-reference.md)
-- [vex-pm Native FFI Pipeline](./vex-pm-native-ffi.md)
+- [vex-pm Native FFI Pipeline](/references/vex-pm-native-ffi)
+- [FFI](/guide/ffi)
+- [vex-cli Reference](/references/vex-cli-reference)

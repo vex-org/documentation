@@ -42,10 +42,9 @@ if stream.fd >= 0 {
 
 - `accept()`: (Async) Accept a connection, returning a `TcpStream`.
 - `incoming()`: Return a `Channel&lt;TcpStream&gt;` that receives incoming connections from a background accept loop.
-- `read(buf: *u8, len: i32): i64`: (Async) Read data.
-- `write(data: *u8, len: i32): i64`: (Async) Write raw bytes.
+- `read(buf: Ptr<u8!>, len: i32): i64`: (Async) Read data.
+- `write(data: Ptr<u8>, len: i32): i64`: (Async) Write raw bytes.
 - `writeStr(s: string): i64`: (Async) Write a string.
 - `close()`: Explicitly close the socket.
 
 The standard library exports deprecated compatibility wrappers (`TcpListener(ip, port)` and `TcpStream(ip, port)`) which invoke `.bind` and `.connect` respectively.
-

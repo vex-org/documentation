@@ -1,389 +1,138 @@
-# RawBuf — Zero-Cost Byte-Level Memory Accessor
+# RawBuf — Byte-Level Memory View
 
-`RawBuf` is Vex's internal abstraction for byte-level memory access. It wraps an untyped `ptr` with typed load/store operations, replacing the raw C-style `(ptr as i64 + offset) as ptr` + `$load<T>` pattern.
+`RawBuf` is VexArch's zero-cost, non-owning view over an opaque `ptr`. Its
+offsets are bytes and its generic load/store methods make the value type
+explicit. It is a prelude API for standard-library internals, allocators,
+binary protocols, and audited FFI code.
 
-::: tip Prelude Type
-`RawBuf` is a **prelude type** — available in all Vex programs without any `import`. It is primarily used by the standard library internals (`String`, `str`, `Map`, `Vec`) but is also available for advanced use cases like custom allocators, binary parsers, and FFI buffer manipulation.
-:::
+RawBuf carries no length, lifetime, or ownership. It centralizes pointer
+arithmetic but cannot validate an access.
 
-::: info Zero Cost
-All `RawBuf` methods are trivially inlined by LLVM. The generated machine code is **bit-for-bit identical** to manual pointer arithmetic + `$load/$store` intrinsics. There is no runtime overhead.
-:::
-
-## Overview
+## Basic use
 
 ```vex
-fn main() {
-    // Allocate a raw buffer
-    let mem = alloc(32);
-    let! buf = RawBuf.of(mem);
-    
-    // Write a header: 4-byte magic + 4-byte version
-    buf.storeU32(0, 0x56455821);   // "VEX!" magic
-    buf.storeU32(4, 1);             // version 1
-    
-    // Write payload at offset 8
-    buf.storeU8(8, 72);            // 'H'
-    buf.storeU8(9, 105);           // 'i'
-    
-    // Read back
-    let magic = buf.load<u32>(0);
-    let version = buf.load<u32>(4);
-    let ch = buf.load<u8>(8);
-    
-    $println("magic: 0x{:X}, v{}, first byte: {}", magic, version, ch);
-    
-    free(mem, 32);
-}
+let size = 16 as usize
+let memory = Mem.alloc(size)
+let! buffer = RawBuf.of(memory)
+
+buffer.zero(size)
+buffer.store<u32>(0, 0x56455821)
+buffer.store<u16>(4, 1)
+
+let magic = buffer.load<u32>(0)
+let version = buffer.load<u16>(4)
+
+Mem.free(memory, size)
 ```
 
-Compare with the old C-style approach:
+The wrapper itself has the same representation as its `ptr` field. Its small
+methods lower to ordinary pointer arithmetic and memory operations without
+allocating an object or adding bounds metadata.
+
+## Construction and navigation
+
+| Method | Result |
+| --- | --- |
+| `RawBuf.of(p)` | view beginning at `p` |
+| `RawBuf.null()` | null view |
+| `at(offset)` | raw pointer at a signed or unsigned byte offset |
+| `advance(offset)` | new RawBuf at a byte offset |
+| `slice(offset)` | equivalent byte sub-view |
+| `addr()` | base address as `usize` |
+| `isNull()` | whether the base is null |
 
 ```vex
-// Old way — unsafe, casts everywhere, easy to get wrong
-unsafe {
-    $store<u32>(mem, 0x56455821);
-    $store<u32>((mem as i64 + 4) as ptr, 1);
-    $store<u8>((mem as i64 + 8) as ptr, 72);
-    let magic = $load<u32>(mem);
-    let ch = $load<u8>((mem as i64 + 8) as ptr);
-}
+let payload = buffer.advance(8)
+let fieldPointer = payload.at(4)
 ```
 
-## Struct Definition
+No navigation method checks allocation extent.
+
+## Typed loads and stores
 
 ```vex
-struct RawBuf {
-    public:
-    base: ptr
-}
+let count = buffer.load<u32>(0)
+let timestamp = buffer.load<u64>(8)
+
+buffer.store<u32>(0, count + 1)
+buffer.store<u64>(8, timestamp)
 ```
 
-`RawBuf` is a single-field struct wrapping an untyped pointer. After inlining, it has exactly the same layout and performance as a bare `ptr`.
-
-## Creating RawBuf
-
-### From Existing Pointer
+`load<T>(offset)` and `store<T>(offset, value)` use byte offsets.
+`loadAt<T>(index)` and `storeAt<T>(index, value)` scale the index by
+`#Type.sizeOf<T>()`.
 
 ```vex
-let mem = alloc(1024);
-let buf = RawBuf.of(mem);
+let second = buffer.loadAt<i64>(1) // byte offset 8
+buffer.storeAt<i64>(2, 99)         // byte offset 16
+let reference = buffer.refAt<i64>(2)
 ```
 
-### Null Buffer
+The caller must prove alignment and that the memory contains a valid `T`.
+`refAt` additionally requires the backing memory to outlive the returned
+reference and obey reference aliasing rules.
+
+## Bulk byte operations
+
+| Method | Behavior |
+| --- | --- |
+| `copyFrom(src, len)` | copy bytes from `src` into this buffer |
+| `copyTo(dst, len)` | copy bytes from this buffer into `dst` |
+| `copyFromBuf(src, len)` | copy bytes from another RawBuf |
+| `cmp(other, len)` | three-way byte comparison with a pointer |
+| `eq(other, len)` | byte equality with another RawBuf |
+| `fill(value, len)` | fill the base range |
+| `zero(len)` | zero the base range |
+| `zeroAt(offset, len)` | zero a range at an offset |
+
+The copy methods use non-overlapping copy semantics. Use `Mem.move` when the
+source and destination may overlap.
+
+RawBuf also provides `writeBytes` and `writeBytesAt` overloads for filling from
+a scalar byte value or copying from `Span<T>` and native arrays.
+
+## Typed views
 
 ```vex
-let null_buf = RawBuf.null();
-null_buf.isNull();  // true
+let words = unsafe { buffer.asSpan<u32>(4) }
+let native = unsafe { buffer.asSlice<u32>(4) }
 ```
 
-### From Struct Fields
-
-A common pattern in Vex internals — wrap a struct's data pointer:
-
-```vex
-// Inside String implementation
-let header = RawBuf.of((self.data_or_ptr as i64 - 8) as ptr);
-let capacity = header.load<u32>(0);
-```
-
-## Pointer Arithmetic
-
-All offsets are in **bytes** (not elements). Arithmetic returns new `RawBuf` values — no mutation.
-
-### at(offset) — Raw Pointer at Offset
-
-```vex
-let buf = RawBuf.of(mem);
-let p: ptr = buf.at(16);   // raw pointer to base + 16 bytes
-```
-
-### advance(n) — New RawBuf at Offset
-
-```vex
-let buf = RawBuf.of(mem);
-let payload = buf.advance(8);   // new RawBuf pointing to base + 8
-
-// Chainable
-let deep = buf.advance(8).advance(4);  // base + 12
-```
-
-### addr() — Integer Address
-
-```vex
-let buf = RawBuf.of(mem);
-let address: i64 = buf.addr();
-```
-
-### isNull() — Null Check
-
-```vex
-let buf = RawBuf.of(mem);
-if !buf.isNull() {
-    // safe to use
-}
-```
-
-## Typed Loads (Read)
-
-All load methods take a **byte offset** from the base pointer.
-
-### Fixed-Width Loads
-
-```vex
-let buf = RawBuf.of(mem);
-
-let byte_val:  u8  = buf.load<u8>(0);     // 1 byte
-let word_val:  u32 = buf.load<u32>(4);     // 4 bytes
-let dword_val: u64 = buf.load<u64>(8);     // 8 bytes
-let signed32:  i32 = buf.load<i32>(16);    // 4 bytes (signed)
-let signed64:  i64 = buf.load<i64>(24);    // 8 bytes (signed)
-```
-
-### Generic Load
-
-```vex
-// Load any type T at byte offset
-let val: MyStruct = buf.load<MyStruct>(0);
-```
-
-### Indexed Load (Array Access)
-
-Load the n-th element of type `T`, automatically computing `offset = idx * sizeof(T)`:
-
-```vex
-// Array of i64 at base pointer
-let first:  i64 = buf.loadAt<i64>(0);    // offset 0
-let second: i64 = buf.loadAt<i64>(1);    // offset 8
-let third:  i64 = buf.loadAt<i64>(2);    // offset 16
-
-// Array of u32
-let item: u32 = buf.loadAt<u32>(5);      // offset 20
-```
-
-This is the primary API used by `Map<K, V>` for its key/value slot arrays.
-
-## Typed Stores (Write)
-
-All store methods take a **byte offset** and a value.
-
-### Fixed-Width Stores
-
-```vex
-let! buf = RawBuf.of(mem);
-
-buf.storeU8(0, 0xFF);             // 1 byte
-buf.storeU32(4, 42);              // 4 bytes
-buf.store<u64>(8, 0xDEADBEEF);     // 8 bytes
-buf.store<i32>(16, -1);             // 4 bytes (signed)
-buf.store<i64>(24, -9999);          // 8 bytes (signed)
-```
-
-### Generic Store
-
-```vex
-buf.store<MyStruct>(0, my_value);
-```
-
-### Indexed Store (Array Access)
-
-Store at the n-th element slot of type `T`:
-
-```vex
-buf.storeAt<i64>(0, 100);    // offset 0
-buf.storeAt<i64>(1, 200);    // offset 8
-buf.storeAt<i64>(2, 300);    // offset 16
-```
-
-## Bulk Memory Operations
-
-### copyFrom — Read Into Buffer
-
-Copy `len` bytes from an external pointer into this buffer:
-
-```vex
-let! buf = RawBuf.of(dest);
-buf.copyFrom(source_ptr, 64);   // copy 64 bytes: source → buf
-```
-
-### copyTo — Write From Buffer
-
-Copy `len` bytes from this buffer to an external destination:
-
-```vex
-let buf = RawBuf.of(source);
-buf.copyTo(dest_ptr, 64);      // copy 64 bytes: buf → dest
-```
-
-### cmp — Compare Memory
-
-Compare `len` bytes with another pointer (like `memcmp`):
-
-```vex
-let buf = RawBuf.of(mem1);
-let result = buf.cmp(mem2, 32);
-
-if result == 0 {
-    $println("equal");
-} else if result < 0 {
-    $println("buf < other");
-} else {
-    $println("buf > other");
-}
-```
-
-### fill — Fill Memory
-
-Fill `len` bytes with a value (like `memset`):
-
-```vex
-let! buf = RawBuf.of(mem);
-buf.fill(0, 1024);     // zero-initialize 1024 bytes
-buf.fill(0xFF, 64);    // fill with 0xFF
-```
-
-## Real-World Usage Patterns
-
-### Binary Header Parsing
-
-```vex
-fn parse_header(data: ptr): FileHeader {
-    let buf = RawBuf.of(data);
-    
-    let magic   = buf.load<u32>(0);
-    let version = buf.load<u32>(4);
-    let flags   = buf.load<u64>(8);
-    let count   = buf.load<u32>(16);
-    
-    return FileHeader { magic, version, flags, count };
-}
-```
-
-### Hash Map Slot Access
-
-This is how Vex's `Map<K, V>` uses `RawBuf` internally:
-
-```vex
-// Inside Map implementation
-let keys = RawBuf.of(self.key_data);
-let vals = RawBuf.of(self.val_data);
-
-// Read key/value at slot index
-let k: K = keys.loadAt<K>(slot);
-let v: V = vals.loadAt<V>(slot);
-
-// Write key/value at slot index
-keys.storeAt<K>(slot, new_key);
-vals.storeAt<V>(slot, new_value);
-```
-
-### String Concatenation Buffer
-
-```vex
-fn concat(a: ptr, a_len: i64, b: ptr, b_len: i64): ptr {
-    let total = a_len + b_len + 1;
-    let mem = alloc(total);
-    
-    let! buf = RawBuf.of(mem);
-    buf.copyFrom(a, a_len);                    // copy first string
-    buf.advance(a_len).copyFrom(b, b_len);     // copy second string
-    buf.storeU8(a_len + b_len, 0);             // null terminator
-    
-    return mem;
-}
-```
-
-### Custom Allocator Metadata
-
-```vex
-fn alloc_with_header(size: i64): ptr {
-    let total = 16 + size;   // 16-byte header
-    let mem = alloc(total);
-    
-    let! hdr = RawBuf.of(mem);
-    hdr.store<u64>(0, size as u64);     // block size
-    hdr.store<u64>(8, 0);               // flags / ref count
-    
-    // Return pointer past the header
-    return hdr.at(16);
-}
-
-fn get_block_size(payload: ptr): u64 {
-    let hdr = RawBuf.of((payload as i64 - 16) as ptr);
-    return hdr.load<u64>(0);
-}
-```
-
-## RawBuf vs Ptr\<T\> vs Span\<T\>
-
-| Feature | `RawBuf` | `Ptr<T>` | `Span<T>` |
-|---------|----------|----------|-----------|
-| **Typed** | Untyped (byte offsets) | Typed (element offsets) | Typed (element offsets) |
-| **Bounds checking** | None | None | Yes |
-| **Owns memory** | No | No | No |
-| **Best for** | Binary layout, mixed types | Typed arrays, FFI | Safe iteration, slicing |
-| **Stride** | Manual (byte offsets) | Automatic (element size) | Automatic (element size) |
-| **Generic load/store** | `loadAt<T>` / `storeAt<T>` | `readAt` / `writeAt` | `get` / — |
-
-**Rule of thumb:**
-- Use `Ptr<T>` for homogeneous typed arrays
-- Use `Span<T>` for bounds-checked views over typed data
-- Use `RawBuf` for binary protocols, mixed-type layouts, and internal stdlib plumbing
-
-## Method Reference
-
-### Constructors
-
-| Method | Description |
-|--------|-------------|
-| `RawBuf.of(p)` | Wrap raw pointer |
-| `RawBuf.null()` | Null buffer |
-
-### Pointer Arithmetic
-
-| Method | Description |
-|--------|-------------|
-| `.at(offset)` | Raw pointer at byte offset |
-| `.advance(n)` | New RawBuf offset by n bytes |
-| `.addr()` | Base address as `i64` |
-| `.isNull()` | Check if base is null |
-
-### Typed Loads
-
-| Method | Description |
-|--------|-------------|
-| `.load<u8>(off)` | Load `u8` at byte offset |
-| `.load<u32>(off)` | Load `u32` at byte offset |
-| `.load<u64>(off)` | Load `u64` at byte offset |
-| `.load<i32>(off)` | Load `i32` at byte offset |
-| `.load<i64>(off)` | Load `i64` at byte offset |
-| `.load<T>(off)` | Load any type `T` at byte offset |
-| `.loadAt<T>(idx)` | Load `T` at index (stride = `sizeof(T)`) |
-
-### Typed Stores
-
-| Method | Description |
-|--------|-------------|
-| `.storeU8(off, val)` | Store `u8` at byte offset |
-| `.storeU32(off, val)` | Store `u32` at byte offset |
-| `.store<u64>(off, val)` | Store `u64` at byte offset |
-| `.store<i32>(off, val)` | Store `i32` at byte offset |
-| `.store<i64>(off, val)` | Store `i64` at byte offset |
-| `.store<T>(off, val)` | Store any type `T` at byte offset |
-| `.storeAt<T>(idx, val)` | Store `T` at index (stride = `sizeof(T)`) |
-
-### Bulk Operations
-
-| Method | Description |
-|--------|-------------|
-| `.copyFrom(src, len)` | Copy `len` bytes from `src` into buffer |
-| `.copyTo(dst, len)` | Copy `len` bytes from buffer to `dst` |
-| `.cmp(other, len)` | Compare `len` bytes (memcmp semantics) |
-| `.fill(val, len)` | Fill `len` bytes with `val` (memset semantics) |
-
-## See Also
-
-- [Ptr\<T\>](./ptr-t) — Typed generic pointer with element-level operations
-- [Span\<T\>](./span-t) — Bounds-checked fat pointer for safe iteration
-- [Ownership](./ownership) — Vex's ownership model
-- [Safety](./safety) — When and how to use unsafe code
+Prefer `asSpan` for ordinary bounds-aware access. `asSlice` is the low-level
+bridge used by native slice/vectorized operations. Both constructors are unsafe
+because RawBuf cannot prove the count, lifetime, alignment, or element validity.
+
+## RawBuf, Ptr, or Span?
+
+| Property | `RawBuf` | `Ptr<T>` | `Span<T>` |
+| --- | --- | --- | --- |
+| Offset unit | bytes | elements | elements |
+| Bounds stored | no | no | yes |
+| Element type stored | no | yes | yes |
+| Owns allocation | no | no | no |
+| Best use | mixed binary layout | homogeneous typed raw memory | bounded borrowed view |
+
+Owned collections and `Box<T>` should remain the default for application code.
+
+## Compiler boundary
+
+RawBuf is the public prelude layer over compiler-owned memory primitives. Those
+primitives are deliberately inaccessible to normal source code. Extend RawBuf
+or another typed prelude abstraction when a reusable low-level operation is
+missing; do not expose the compiler primitive at each call site.
+
+## Safety checklist
+
+1. Track the allocation base and total byte length outside RawBuf.
+2. Check every offset plus access size for overflow and bounds.
+3. Respect `T` alignment, initialization, and validity requirements.
+4. Do not retain references beyond the backing allocation's lifetime.
+5. Pair allocation and deallocation through the same allocator.
+
+## Related
+
+- [`Ptr<T>`](/guide/memory/ptr-t)
+- [`Span<T>`](/guide/memory/span-t)
+- [Memory Prelude](/guide/memory/mem-prelude)
+- [Ownership](/guide/memory/ownership)
+- [Unsafe](/guide/advanced/unsafe)

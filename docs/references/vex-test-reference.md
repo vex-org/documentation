@@ -430,20 +430,20 @@ Tests are placed alongside source code. The runner automatically imports `testin
 
 | Feature | Go | Rust | Vex |
 |---------|:---:|:---:|:---:|
-| Test discovery | ✅ | ✅ | ✅ |
-| Parallel execution | ✅ | ✅ | ✅ |
-| Per-test timing | ✅ | ✅ | ✅ |
-| Subtests | ✅ `t.Run()` | ✅ | ✅ `t.sub()` |
-| Benchmark calibration | ✅ `b.N` | ✅ criterion | ✅ `b.n` |
-| `--benchtime` | ✅ | ✅ | ✅ |
-| `--benchmem` | ✅ | — | ✅ |
-| `--count N` | ✅ | — | ✅ |
-| `--failfast` | ✅ | ✅ | ✅ |
-| `--json` | ✅ | ✅ | ✅ |
-| `--short` | ✅ | — | ✅ |
-| Coverage | ✅ | ✅ | ✅ |
-| Colors | ❌ | 3rd party | ✅ built-in |
-| Progress counter | ❌ | ❌ | ✅ `[3/24]` |
+| Test discovery | Yes | Yes | Yes |
+| Parallel execution | Yes | Yes | Yes |
+| Per-test timing | Yes | Yes | Yes |
+| Subtests | Yes `t.Run()` | Yes | Yes `t.sub()` |
+| Benchmark calibration | Yes `b.N` | Yes criterion | Yes `b.n` |
+| `--benchtime` | Yes | Yes | Yes |
+| `--benchmem` | Yes | — | Yes |
+| `--count N` | Yes | — | Yes |
+| `--failfast` | Yes | Yes | Yes |
+| `--json` | Yes | Yes | Yes |
+| `--short` | Yes | — | Yes |
+| Coverage | Yes | Yes | Yes |
+| Colors | No | 3rd party | Yes built-in |
+| Progress counter | No | No | Yes `[3/24]` |
 
 ---
 

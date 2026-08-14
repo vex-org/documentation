@@ -1,152 +1,126 @@
-# VAPE: Vex Analyzer, Profiler & Visualizer Ecosystem
+# VAPE: Analysis, Fixes and Performance Tooling
 
-VAPE is a first-class static analysis and performance profiling ecosystem built directly into the Vex compiler. Unlike other languages where safety auditing, microarchitectural pipeline profiling, and compilation state visualization require complex third-party setups, Vex integrates these components natively under a single command interface.
+VAPE groups three complementary tools: `vex lint` for semantic source
+analysis, `vex view` for compiler representations, and `vex prof` for native
+microarchitectural inspection.
 
----
+## `vex lint`
 
-## 🏛️ Architecture & Integration
+`vex lint` is the canonical correctness and lint command. It analyzes one
+`.vx`/`.vxc` file, a package directory, or the nearest package when the target
+is omitted. It runs the parser and semantic pipeline without LLVM codegen.
 
-VAPE operates as an end-to-end telemetry pipeline inside the Vex compiler CLI, hooking directly into the AST parsing, HIR lowering, and LLVM CodeGen phases.
-
-```mermaid
-graph TD
-    Source[Vex Source File] --> CLI{vex CLI}
-    
-    CLI -->|analyze| Linter[Static Linter]
-    CLI -->|view| Visualizer[CST/CFG/DFG Visualizer]
-    CLI -->|prof| Profiler[LLVM-MCA Pipeline Simulator]
-    
-    Linter -->|Warnings / Diagnostics| Console[Stdout / LSP / HTML Report]
-    Visualizer -->|DOT / JSON| Graphviz[Graphviz DOT / JSON Exporters]
-    Profiler -->|Port Latency / IPC| Dashboard[Terminal UI / HTML Dashboard]
+```bash
+vex lint main.vx
+vex lint --format json main.vx
+vex lint --format sarif .
+vex lint --format json --timings .
+vex lint --deny-warnings .
 ```
 
----
+Correctness errors are non-configurable. Lint findings use stable symbolic IDs
+in the `unused`, `redundancy`, `suspicious`, `migration`,
+`pointer_migration`, `performance`, `api` and `pedantic` groups. The default rules
+cover unused imports/locals/assignments/mutability, proven redundant casts and
+clones, pure discarded statements, self-assignment, unreachable code, empty
+blocks and exact syntax migrations.
 
-## 🔍 1. Static Linter (`vex analyze`)
+Semantic rules use resolved declaration and callable identities plus a shared,
+revision-bound graph of transitive effects, provenance, and target-aware
+numeric ranges. They do not decide whether code is unused, Copy, unsafe,
+allocating, or redundant from a source name. The `performance`, `library`,
+`pedantic`, and `strict` profiles promote evidence-backed opt-in groups.
 
-The Vex linter runs as a post-lowering compiler pass over the High-Level Intermediate Representation (HIR) and parsed syntax trees. It guarantees code safety and hygiene before binary compilation.
+SARIF 2.1.0 integrates external code scanners without replacing canonical
+JSON. `--timings` adds sorted rule invocation/finding/latency counters only
+when requested; ordinary runs avoid clock reads.
 
-### CLI Usage
-```bash
-# Analyze a Vex file and output formatted terminal diagnostics
-vex analyze main.vx
+### Configuration
 
-# Output diagnostics in raw JSON format for IDE/LSP integrations
-vex analyze main.vx --format=json
+```json
+{
+  "lint": {
+    "profile": "default",
+    "levels": {
+      "unused": "warn",
+      "unused_import": "deny",
+      "pedantic": "allow"
+    },
+    "exclude": ["generated/**"]
+  }
+}
 ```
 
-### Active Lint Rules
+CLI overrides take precedence:
 
-#### Rule `W0002`: Unused Imports
-*   **Description:** Warns on imports that are declared in the module header but never referenced in statements.
-*   **Wildcards:** Correctly detects unused wildcard imports (e.g. `import * as alias from "module"`).
-*   **Help Option:** Helps keep dependencies clean, reducing compilation times.
-
-#### Rule `W0010`: Unsafe FFI Boundary Safety
-*   **Description:** Audits external FFI functions (`extern "C"`). Emits warnings if FFI calls are not guarded by the Vex inline rescue operator `!>`.
-*   **Why:** FFI calls can trigger external crashes. Guarding them with rescue blocks (`ffi_call() !> { recovery_block }`) ensures program resilience.
-
-#### Rule `W0011`: Redundant Literal Clones
-*   **Description:** Highlights calls to `.clone()` or `.copy()` on literals (e.g. `100.clone()`).
-*   **Help Option:** Literals are copy-by-value, making duplicate allocation calls redundant.
-
----
-
-## 📊 2. Intermediate State Visualizer (`vex view`)
-
-`vex view` allows developers to inspect intermediate compiler representations (AST, Control Flow, and SSA Data Flow) to debug performance problems or complex compiler transformations.
-
-### CLI Usage
 ```bash
-# Export the parsed Rowan CST as text layout
-vex view ast main.vx
-
-# Export the parsed Rowan CST in structured JSON format
-vex view ast main.vx --format=json
-
-# Export the Control Flow Graph (CFG) in Graphviz DOT format
-vex view cfg main.vx --output=cfg.dot
-
-# Export the Data Flow Graph (DFG) in Graphviz DOT format
-vex view dfg main.vx --output=dfg.dot
+vex lint --only unused .
+vex lint --allow unused_mutability .
+vex lint --deny unused_import .
 ```
 
-### Exporters
+Local suppressions are structural:
 
-1.  **Rowan AST Exporter:** Serializes the concrete syntax tree, showing tokens and structural syntax nodes.
-2.  **LLVM Control Flow Graph (CFG):** Outputs basic block jump graphs showing branch target locations and instructions. Useful for analyzing branch predictions and execution hotpaths.
-3.  **LLVM Data Flow Graph (DFG):** Maps Static Single Assignment (SSA) values and operand dependencies. Allows developers to trace register dependency chains.
+```vex
+// vex-lint: allow-file unused_import
 
----
+fn example() {
+    // vex-lint: allow-next unused_mutability
+    let! value = 1
+}
+```
 
-## ⚡ 3. Microarchitectural Profiler (`vex prof`)
+`allow-file` must appear before the first item. `allow-next` applies once to
+the next item or statement. JSON output retains suppressed findings and the
+directive that matched them.
 
-`vex prof` simulates instruction execution cycles on target CPU microarchitectures by compiling Vex source to assembly, injecting LLVM-MCA start/stop markers, and programmatically running the LLVM Machine Code Analyzer.
+## Verified automatic fixes
 
-::: tip Why Vex is Better Than Rust and Go
-*   **Rust:** Requires manual generation of assembly files (`cargo rustc -- --emit=asm`), manual injection of `# LLVM-MCA-BEGIN` markers, target machine architecture lookup, and external execution.
-*   **Go:** Lacks microarchitectural execution unit profiling.
-*   **Vex:** Accomplishes the entire sequence automatically via `vex prof main.vx`.
-:::
-
-### CLI Usage
 ```bash
-# Profile the code using the native host CPU architecture
+vex lint --diff .
+vex lint --fix .
+vex lint --fix --only pointer_migration .
+```
+
+Fixes are revision-bound structured edits, not regular-expression rewrites.
+The engine rejects stale or conflicting edits, applies changes in memory,
+reruns semantic analysis for at most four fixed-point passes, and verifies
+that function signatures, binding types, exact overload/callable selection,
+generic arguments and correctness diagnostics do not regress. Files are
+atomically replaced only after verification succeeds; `--diff` performs the
+same proof without writing.
+
+The former `vex analyze`, `vex fix` and `vex check` compatibility commands have
+been removed. Commands, scripts and examples must use `vex lint`.
+
+## LSP parity
+
+The Vex language server consumes the same report and fix structures. It uses
+the same rule IDs and conflict planner, marks unused/redundant diagnostics as
+unnecessary, rejects stale revisions, and exposes `source.fixAll.vex`. It does
+not independently scan names for unused imports or rebuild lint edits from
+diagnostic text.
+
+## `vex view`
+
+```bash
+vex view ast main.vx --format json
+vex view cfg main.vx --output cfg.dot
+vex view dfg main.vx --output dfg.dot
+vex view layout main.vx --struct-name Packet
+vex view escape main.vx --output escape.dot
+```
+
+These commands expose syntax, control/data flow, layout and ownership/escape
+information without applying source changes.
+
+## `vex prof`
+
+```bash
 vex prof main.vx
-
-# Profile simulating a specific target processor model (Intel/AMD/Apple Silicon)
-vex prof main.vx --cpu=apple-m2
+vex prof main.vx --cpu apple-m2
 ```
 
-### Metrics Highlighted
-*   **Total Cycles:** The total execution clock cycles simulated by LLVM-MCA.
-*   **IPC (Instructions Per Cycle):** Throughput rating representing hardware pipeline utilization.
-*   **Block RThroughput (Reciprocal Throughput):** Estimated cycles required to execute one iteration of a loop block.
-*   **Resource Pressure Heatmaps:** Shows pipeline pressure across execution unit ports (e.g. arithmetic vs memory units).
-*   **Active Pipeline Stalls:** Detects which hardware stages are limiting dispatch (e.g. Retire Control Unit token starvation, scheduler queue full).
-*   **Dependency Bottlenecks:** Details registers/execution units responsible for critical paths (e.g. register dependencies, resource interference).
-
-::: info Cross-Platform Execution
-Standard `llvm-mca` assembly parsers crash on macOS due to Darwin-specific assembler directives (like `.subsections_via_symbols`). Vex works around this automatically by filtering out non-instruction dot-directives (preserving local `.L` branch labels) at runtime.
-:::
-
----
-
-## 📈 4. Next Generation: HTML Performance Reports
-
-VAPE is being updated to support `--report=html`. This merges static lints, control flow visualizers, and simulated execution timelines into an interactive, visual dashboard:
-
-*   **Interactive CFG/DFG Graph:** Renders code blocks visually using custom canvas or SVG elements.
-*   **Color-Coded Latency:** Highlights hot instructions with cycle density heatmaps.
-*   **Inline Tooltips:** Shows execution delays and register hazards directly inside source file views.
-
----
-
-## 🚀 5. Advanced Analyzer Roadmap (Future Plans)
-
-To push VAPE beyond standard tooling available in Go and Rust, the following advanced features are planned for future development:
-
-### 1. Memory Layout & Cache-Line Visualizer
-*   **Goal:** Visually map how struct fields are laid out in memory, identifying padding waste and cache-line boundaries.
-*   **Benefit:** Enables developers to reorder struct fields to fit perfectly within L1 cache lines (e.g., 64 bytes) without relying on external macros or guesswork.
-
-### 2. Auto-Remediation & Quick-Fixes
-*   **Goal:** Provide automated, semantic code refactoring directly from the CLI (`vex fix`) or via LSP code actions.
-*   **Benefit:** Not just identifying redundant `.clone()` calls or borrowing issues, but actually writing the correct borrow-semantics fix directly into the source file.
-
-### 3. Escape Analysis Visualizer
-*   **Goal:** Map variables that escape to the heap (allocations) directly onto the Data Flow Graph.
-*   **Benefit:** Turns raw escape analysis text (like Go's `-m`) into an intuitive graph, showing exactly *which* function call forced a variable onto the heap.
-
-### 4. SIMD & Vectorization Predictor
-*   **Goal:** Statically analyze loops and provide human-readable feedback on why a loop cannot be vectorized.
-*   **Benefit:** Explicitly highlights loop-carried dependencies, guiding developers on how to restructure code for SIMD acceleration.
-
-### 5. Non-Contiguous Memory Access Warning
-*   **Goal:** Detect sub-optimal array/matrix traversals (e.g., column-major reads on row-major data).
-*   **Benefit:** Prevents massive performance drops caused by cache-thrashing, a common pitfall in performance-critical applications.
-
-### 6. Branch Predictability & PGO Hints
-*   **Goal:** Analyze `if/else` control flow graphs to predict branch-predictor friendliness.
-*   **Benefit:** Suggests replacing highly unpredictable branches with branchless alternatives (e.g., lookup tables or conditional moves) for better pipeline throughput.
+`vex prof` uses LLVM-MCA to report instruction throughput, latency and target
+execution-resource pressure. Profiling is deliberately separate from lint:
+source diagnostics and fixes never rely on an LLVM optimization result.

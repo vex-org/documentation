@@ -1,150 +1,146 @@
-# Ownership and Borrowing
+# Ownership
 
-Vex is move-first. Values have an owner, moves transfer that ownership, and borrows let code inspect or mutate data without taking it over.
+Vex uses ownership to make the lifetime and movement of values explicit. A value has one owner. Passing an owning value to a function or assigning it to another binding can move that ownership; borrowing lets code use the value without taking it over.
 
-## The default rule: moves
+The ownership and borrow checker are implemented in the current compiler. The exact behavior of container, runtime, and FFI types still depends on their API contracts.
 
-Assignment and argument passing move non-`Copy` values unless you borrow them.
+## Bindings and mutation
 
-```vex
-let data = Vec.new<i32>();
-let other = data;
-// data.len();  // moved
+Bindings are immutable by default:
 
-fn consume(v: Vec<i32>) {
-    $println(v.len());
+~~~vex
+fn main(): i32 {
+    let value = 20;
+    return value;
 }
+~~~
 
-let more = Vec.new<i32>();
-consume(more);
-// more.len();  // moved
-```
+Use let! when the binding must be reassigned:
 
-That is the core rule to keep in mind for `Vec`, `Box`, `string`, maps, sets, and most user-defined structs.
-
-## `Copy` values
-
-Some values copy instead of move.
-
-Typical examples:
-
-- integer types
-- floating-point types
-- `bool`
-- `char`
-- `str`
-- raw pointer values like `ptr`
-
-```vex
-let x: i32 = 5;
-let y = x;
-$println(x);
-$println(y);
-```
-
-For larger or owning values, assume move semantics unless the type explicitly behaves as `Copy`.
-
-## Borrowing with references
-
-Borrowing avoids transfer of ownership.
-
-### Immutable borrow: `&T`
-
-```vex
-fn show_len(s: &string) {
-    $println(s.len());
+~~~vex
+fn main(): i32 {
+    let! total = 20;
+    total += 22;
+    return total;
 }
+~~~
 
-let msg: string = "hello";
-show_len(&msg);
-show_len(&msg);
-$println(msg);
-```
+A mutable binding does not make every reference to the value mutable. The reference type must also permit mutation.
 
-### Mutable borrow: `&T!`
+## Moves
 
-Mutable borrows require a mutable binding on the owner side.
+Owning values such as Vec, Box, strings, maps, sets, and most user-defined structs may be moved:
 
-```vex
-fn append_item(v: &Vec<i32>!) {
-    v.push(42);
+~~~text
+let data = Vec.new<i32>()
+let moved = data
+use(moved)
+use(data) // error: data was moved
+~~~
+
+A move is useful when a function or task should become the new owner. If the caller still needs to use the value, pass an immutable or mutable reference instead.
+
+## Copy values
+
+Small scalar values such as integers, floating-point values, booleans, and characters are copied in ordinary assignments:
+
+~~~vex
+fn main(): i32 {
+    let first: i32 = 42;
+    let second = first;
+    $println(first);
+    return second;
 }
+~~~
 
-let! values = Vec.new<i32>();
-append_item(&values!);
-$println(values.len());
-```
+For an owning or user-defined type, assume that assignment moves unless the type's contract says otherwise.
 
-The usual rule applies: many immutable borrows or one mutable borrow, but not both at the same time.
+## Borrowing
 
-## Partial moves and field access
+An immutable borrow uses &T:
 
-Moving one field of a struct does not mean every field becomes unusable. Copy fields can remain readable.
+~~~text
+fn inspect(value: &Point): i32 {
+    value.x + value.y
+}
+~~~
 
-```vex
+A mutable borrow uses &T!:
+
+~~~text
+fn update(value: &Point!) {
+    value.x = 10
+}
+~~~
+
+There may be several immutable borrows, or one exclusive mutable borrow, but the two kinds cannot conflict while they are live. The checker uses non-lexical lifetime reasoning, so an immutable borrow can end at its last use rather than at the end of the surrounding block.
+
+## Partial moves
+
+Ownership is tracked at the field level for supported structs. Moving one non-Copy field does not automatically move every independent field:
+
+~~~text
 struct Pair {
     public:
     name: string,
     age: i32,
 }
 
-let p = Pair { name: "Alice", age: 30 };
-let name = p.name;
-$println(p.age);
-// $println(p.name);
-```
+let pair = Pair { name: "Alice", age: 30 }
+let name = pair.name
+use(pair.age)
+~~~
 
-## Lifetimes are mostly inferred
+The moved field cannot be read again. Copy fields can remain available when the surrounding type and access path permit it.
 
-Vex aims to infer reference lifetimes instead of making users write annotations.
+## References returned from functions
 
-```vex
-fn longest(x: &string, y: &string): &string {
-    if x.len() > y.len() {
-        return x;
+A returned reference must be derived from data that outlives the returned reference:
+
+~~~text
+fn longest(left: &string, right: &string): &string {
+    if left.len() > right.len() {
+        return left
     }
-    return y;
+    return right
 }
-```
+~~~
 
-The main mental model is simple: returned references must still point at data that outlives the use site.
+Returning a reference to a local owned value is rejected because the local is destroyed when the function returns.
 
-## Heap ownership with `Box`
+## Heap-owned values
 
-Use `Box` when the value should live on the heap or when a recursive type needs an indirection point.
+Box is an owning heap value. It is useful when a value needs indirection or a recursive data structure needs a stable allocation:
 
-```vex
-let boxed = Box.new(42);
-$println(boxed.get());
-```
+~~~text
+let boxed = Box.new(42)
+use(boxed)
+~~~
 
-`Box` still participates in the same ownership model. It is an owning value, not a special escape hatch from borrowing rules.
+Box does not bypass ownership. Moving, borrowing, and dropping a boxed value still follow the same rules.
 
-## Views over memory
+## Low-level views
 
-Not every API should take ownership.
+Use the narrowest memory abstraction that expresses the operation:
 
-- use `&T` or `&T!` for ordinary borrows
-- use `Span<T>` for non-owning contiguous views
-- use `Ptr<T>` and `RawBuf` for low-level memory work
+- &T and &T! for ordinary borrows;
+- `Span<T>` for a non-owning contiguous view;
+- `Ptr<T>` for typed pointer operations;
+- RawBuf for explicit raw storage.
 
-That separation keeps high-level code safe and low-level code explicit.
+Keep raw memory and FFI code behind a small, tested boundary. See [FFI](/guide/ffi), [Pointers](/guide/advanced/pointers), and [Memory Safety](/guide/memory/safety).
 
-## How VUMM fits in
+## Practical rules
 
-VUMM is the compiler/runtime strategy behind `Box`, not a second ownership model you manually write every day. In user code, you still write `Box.new(value)` or `Box(value)`. The compiler can lower that to different internal ownership strategies as needed.
+1. Borrow when the callee should not become the owner.
+2. Move when ownership transfer is intentional.
+3. Make mutation visible with let! and mutable references.
+4. Use explicit types at FFI and ABI boundaries.
+5. Check detached-task captures carefully; a go block cannot safely outlive a borrowed local.
 
-## Practical guidance
+## Next steps
 
-1. Borrow first, move only when ownership transfer is intended.
-2. Use immutable borrows by default.
-3. Make mutation explicit with `let!` and `&value!`.
-4. Treat `Box` as an owning heap value, not as a substitute for borrowing.
-5. Keep raw memory work isolated behind `Ptr<T>`, `Span<T>`, and `RawBuf`.
-
-## See also
-
-- [Borrowing](./borrowing)
-- [Lifetimes](./lifetimes)
-- [VUMM](./vumm)
-- [Contracts](../types/contracts)
+- [Borrowing](/guide/memory/borrowing)
+- [Lifetimes](/guide/memory/lifetimes)
+- [Memory Safety](/guide/memory/safety)
+- [VUMM](/guide/memory/vumm)

@@ -18,10 +18,14 @@ These are available everywhere without `import`:
 ### Smart Pointers
 | Type | Description |
 |-----|----------|
-| `Box<T>` | VUMM: Unique/SharedRc/AtomicArc |
+| `Box<T>` | Compiler-managed heap ownership; sharing and thread safety are inferred automatically |
 | `Ptr<T>` | Typed pointer |
 | `Span<T>` | Bounds-checked fat pointer |
 | `RawBuf` | Raw byte buffer |
+| `Layout` | Checked allocation size and alignment |
+| `Block` | Exact-layout owning raw allocation with `Drop` |
+| `Mem` | Canonical low-level allocation and byte-operation namespace |
+| `Limits` | Target-aware compile-time integer minimum and maximum values |
 
 ### Error & Optionality
 | Type | Description |
@@ -32,6 +36,10 @@ These are available everywhere without `import`:
 | `Complex<T>` | Complex numbers |
 
 ## `std.*` Modules (Import Required)
+
+Memory primitives are deliberately absent from this list: there is no
+`std/mem` package. Low-level code uses the prelude `Mem.*` boundary; most code
+uses owning types such as `Box`, `Vec`, `string`, or `Block`.
 
 ```vex
 // File system

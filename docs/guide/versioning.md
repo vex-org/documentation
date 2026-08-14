@@ -1,147 +1,48 @@
 # Versioning and Stability
 
-This page describes Vex's versioning policy, stability guarantees, and migration expectations.
+Vex is pre-1.0. Version numbers describe compiler releases, not a promise that every documented feature is production-ready.
 
-## Semantic Versioning
+## Current release
 
-Vex follows **Semantic Versioning 2.0.0** (`MAJOR.MINOR.PATCH`):
+The compiler version used for this documentation pass is `0.4.0-rc.39`. Always verify the binary you are using:
 
-| Change                             | Version Bump           | Examples                                           |
-| ---------------------------------- | ---------------------- | -------------------------------------------------- |
-| Bug fixes (backward-compatible)    | PATCH (0.1.0 -> 0.1.1) | Fix crash in parser, correct codegen for edge case |
-| New features (backward-compatible) | MINOR (0.1.0 -> 0.2.0) | New stdlib module, new contract, new compiler flag |
-| Breaking changes                   | MAJOR (0.1.0 -> 1.0.0) | Syntax change, removed API, changed behavior       |
+~~~bash
+vex --version
+~~~
 
-**Current version: 0.1.2** -- Vex is pre-1.0. Breaking changes may occur in minor versions during 0.x.
+The [language status matrix](/guide/language-status) is the source of truth for the current maturity of language and runtime features.
 
-## Stability Tiers
+## Version policy
 
-### Tier 1: Stable
+Vex follows a SemVer-inspired policy. Before 1.0, minor releases may contain breaking language, compiler, or standard-library changes.
 
-These are guaranteed NOT to change without a major version bump (after 1.0):
+| Change | Typical release level | Pre-1.0 expectation |
+| --- | --- | --- |
+| Backward-compatible bug fix | Patch | Still verify generated code and runtime behavior. |
+| New or changed feature | Minor | May require source changes. |
+| Major compatibility break | Major | Reserved for broad migrations, but not the only possible breaking change before 1.0. |
 
-- Core syntax (`fn`, `let`, `struct`, `enum`, `match`, `if`, `for`, `while`, `loop`)
-- Primitive types (`i32`, `f64`, `bool`, `char`, etc.)
-- Basic operator semantics (`+`, `-`, `*`, `/`, `==`, `!=`, `<`, `>`)
-- Standard prelude types: `Option<T>`, `Result<T,E>`, `Box<T>`, `Vec<T>`, `Map<K,V>`, `Set<T>`
-- Core contracts: `Add`, `Sub`, `Mul`, `Div`, `Eq`, `Ord`, `Display`, `Debug`, `Clone`, `Drop`
-- `vex run` and `vex compile` CLI
+Release candidates should be treated as testable snapshots. Pin the compiler in CI and record the target platform when reporting a result.
 
-### Tier 2: Stabilizing (0.x)
+## Stability labels
 
-These are largely stable but may see minor adjustments:
+- **Verified:** The syntax or behavior is supported by the current compiler checks or a maintained implementation path.
+- **Experimental:** The compiler accepts the surface, but runtime, backend, or library behavior is still changing.
+- **Partial:** The main surface exists, while important integration or edge cases remain unfinished.
+- **Planned:** The concept is documented for direction only and should not be used as current syntax.
 
-- `Channel<T>`, `Ptr<T>`, `Span<T>`, `RawBuf`
-- `async fn` / `await` semantics
-- `go` blocks
-- Pattern matching (all pattern forms)
-- Operator overloading (`Index`, `BitAnd`, etc.)
-- `vex fmt`, `vex test`, `vex doc`
-- Standard library modules: `http`, `serde`, `crypto`, `fs`, `io`, `time`
+These labels are more precise than a single stable/unstable tier because a feature can be compiler-complete while its runtime support is incomplete.
 
-### Tier 3: Experimental
+## Upgrading safely
 
-These are under active development and may change significantly:
+1. Read the changelog and compare the compiler version with `vex --version`.
+2. Run `vex lint` on the project before and after upgrading.
+3. Run the project's tests on every target platform it supports.
+4. Recheck pages marked Experimental or Partial in the language-status matrix.
+5. Keep a small set of representative source examples in CI.
 
-- `graph fn` GPU kernels
-- SIR pipeline and all GPU backends
-- `Complex<T>`, `OrderedMap<K,V>`
-- SIMD operation set (saturating, FMA, CLMUL, reductions)
-- `vex fuzz`, `vex bench`
-- Package manager registry protocol
-- `comptime` advanced features (reflection, codegen)
-- WASM target
-- Windows and FreeBSD support
-- OpenVINO, CoreML, OpenCL backends
+Design notes and old migration documents may describe intended syntax. They are not authoritative when they disagree with compiler checks or the current language guide.
 
-### Tier 4: Internal / Unstable
+## Reporting a compatibility problem
 
-These are compiler internals NOT intended for direct use:
-
-- `#`-prefixed compiler intrinsics (may change without notice)
-- Runtime C API (`vumm.c` functions)
-- SIR internal graph representation
-- LSP protocol extensions
-
-## Deprecation Process
-
-When an API is scheduled for removal:
-
-1. **Deprecation notice** -- Added to documentation and release notes (MINOR release)
-2. **Deprecation warning** -- Compiler emits warning on use (next MINOR release)
-3. **Removal** -- API removed (next MAJOR release, or after 2 minor releases during 0.x)
-
-```vex
-// Example deprecation flow:
-// v0.2.0: oldFunction() documented as deprecated
-// v0.3.0: #[deprecated("use newFunction() instead")] warning emitted
-// v0.4.0: oldFunction() removed
-```
-
-### Deprecation Attribute
-
-```vex
-#[deprecated("Use newMethod() instead")]
-fn oldMethod() { ... }
-
-#[deprecated(since = "0.2.0", note = "Use processAsync()")]
-fn processSync() { ... }
-```
-
-## Migration Guide: v0.1.x to v0.2.x
-
-### Syntax Changes
-
-| Old (v0.1.x)             | New (v0.2.x)                             | Reason                         |
-| ------------------------ | ---------------------------------------- | ------------------------------ |
-| `impl Contract for Type` | Contract on struct: `struct T: Contract` | Vex doesn't use `impl` keyword |
-| `::` for method calls    | `.` for ALL member access                | Unified access syntax          |
-| `mut` keyword            | `!` suffix (`let!`, `&T!`)               | Consistent with type system    |
-
-### API Changes
-
-| Old                         | New                                                         |
-| --------------------------- | ----------------------------------------------------------- |
-| `Option.unwrap()`           | `Option.unwrap()` (unchanged, but `.expect()` added)        |
-| `Vec.push()` returning bool | `Vec.push()` returning void (use `.tryPush()` for fallible) |
-
-### Runtime Changes
-
-- Minimum macOS version raised to 12.0
-- io_uring poller available on Linux 5.1+
-
-## Long-Term Roadmap
-
-### v0.3 (Target: Q3 2026)
-
-- Stabilize `graph fn` and Metal/CUDA backends
-- Complete `select {}` for channels
-- Package manager registry MVP
-
-### v0.4 (Target: Q4 2026)
-
-- WASM target stabilization
-- LSP: code actions and refactoring
-- `vex bench` stabilization
-
-### v1.0 (Target: 2027)
-
-- All Tier 1 and Tier 2 features stable
-- Backward compatibility guarantees begin
-- LTS release cycle established
-
-## Reporting Breaking Changes
-
-If a compiler update breaks your code, check:
-
-1. The [CHANGELOG.md](https://github.com/meftunca/vex/blob/main/CHANGELOG.md) for documented changes
-2. Whether you were using Tier 3/4 features (experimental -- changes expected)
-3. File an issue at [github.com/meftunca/vex/issues](https://github.com/meftunca/vex/issues)
-
-## Best Practices
-
-1. Pin Vex version in CI (`vex --version` in build scripts).
-2. Avoid Tier 4 (internal) APIs -- they WILL break.
-3. Isolate Tier 3 (experimental) usage behind feature flags for easy removal.
-4. Check the changelog before upgrading Vex versions.
-5. Use `#[deprecated]` in your own libraries for graceful API evolution.
+Include the compiler version, platform, command, source file, and complete diagnostic. If the problem is in the compiler or bundled runtime rather than the user program, record it in the repository issue tracker and link the report from the relevant documentation page.

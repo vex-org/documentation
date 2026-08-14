@@ -15,7 +15,7 @@ Vex provides a layered approach to memory management — from raw hardware acces
 │  Layer 1: Ptr<T>         Typed · Generic · Methodful  │
 │  "I need pointer control, but type-safe"              │
 ├──────────────────────────────────────────────────────┤
-│  Layer 0: *T / *T!       Raw · Unsafe · FFI           │
+│  Layer 0: Ptr<T>          Raw · Unsafe · FFI           │
 │  "I'm talking to hardware or C code"                  │
 └──────────────────────────────────────────────────────┘
 ```
@@ -27,26 +27,26 @@ Vex provides a layered approach to memory management — from raw hardware acces
 | Heap allocation with auto cleanup         | `Box<T>`  | Full   | Zero (VUMM)          |
 | View into array/buffer with bounds checks | `Span<T>` | High   | ~1 branch per access |
 | Typed pointer arithmetic                  | `Ptr<T>`  | Medium | Zero                 |
-| FFI / hardware / memory-mapped I/O        | `*T`      | Manual | Zero                 |
+| FFI / hardware / memory-mapped I/O        | `Ptr<T>`  | Manual | Zero                 |
 
 ---
 
-## Layer 0: Raw Pointers (`*T` / `*T!`)
+## Layer 0: Raw Pointers (`Ptr<T>` / `Ptr<T!>`)
 
 The escape hatch. Required for FFI and hardware interaction. Everything is manual.
 
 ```vex
-extern "C" {
-    fn mmap(addr: *void, len: u64, prot: i32, flags: i32,
-            fd: i32, offset: i64): *void;
-    fn munmap(addr: *void, len: u64): i32;
+extern "LIBC" {
+    fn mmap(addr: Ptr<Opaque>, len: u64, prot: i32, flags: i32,
+            fd: i32, offset: i64): Ptr<Opaque>;
+    fn munmap(addr: Ptr<Opaque>, len: u64): i32;
 }
 
-fn mapHardwareRegister(): *u32! {
+fn mapHardwareRegister(): Ptr<u32!> {
     let addr = unsafe {
-        mmap(0 as *void, 4096, 3, 1, -1, 0)
+        mmap(Ptr.null<Opaque>(), 4096, 3, 1, -1, 0)
     };
-    return addr as *u32!;
+    return addr as Ptr<u32!>;
 }
 ```
 
@@ -92,7 +92,7 @@ fn main() {
 
 **Guarantees:**
 
-- Type-safe reads/writes (no `as *T` casts)
+- Type-directed reads/writes (no legacy raw-pointer cast syntax)
 - Element-level arithmetic (not byte-level)
 - Null checking via `.isNull()`
 
@@ -177,14 +177,14 @@ fn main() {
 **When to use:**
 
 - Any heap allocation
-- Shared data (VUMM auto-selects Rc/Arc)
+- Shared data (VUMM selects the cheapest safe internal ownership strategy)
 - Trees, graphs, linked structures
 - "I just want a heap value"
 
 **Guarantees:**
 
 - Automatic deallocation
-- Correct sharing (Unique/SharedRc/AtomicArc auto-selected)
+- Correct local and cross-thread sharing, selected automatically by VUMM
 - Zero runtime branching (monomorphized)
 - Move semantics prevent use-after-free
 
@@ -232,19 +232,18 @@ fn main() {
 ### Layer Transitions
 
 ```
-       asRaw()              Span.ofPtr()            Box.new()
-Box<T> ───────→ Ptr<T> ───────→ Span<T>             value → Box
-       ←───────        ←───────
-      Ptr.of()        .toPtr()
+       explicit view         Span.ofPtr()            Box.new()
+Box<T> ─────────────→ Ptr<T> ───────────→ Span<T>    value → Box
+                       ←───────────────
+                           .toPtr()
 ```
 
 | From      | To        | Method                          | Allocates? |
 | --------- | --------- | ------------------------------- | ---------- |
-| `*T`      | `Ptr<T>`  | `Ptr.of<T>(p)`                  | No         |
-| `*T`      | `Ptr<T>`  | `Ptr<T>(p)`                     | No         |
-| `Ptr<T>`  | `*T`      | `p.asRaw()`                     | No         |
-| `Ptr<T>`  | `*void`   | `p.asOpaque()`                  | No         |
-| `Ptr<T>`  | `Span<T>` | `Span.ofPtr<T>(p.asRaw(), len)` | No         |
+| `&T`      | `Ptr<T>`  | `ref as Ptr<T>`                 | No         |
+| `Ptr<T>`  | `Ptr<U>`  | `p.asOpaque() as Ptr<U>`        | No         |
+| `Ptr<T>`  | `Ptr<Opaque>` | `p.asOpaque()`              | No         |
+| `Ptr<T>`  | `Span<T>` | `Span.ofPtr<T>(p, len)`         | No         |
 | `Span<T>` | `Ptr<T>`  | `span.toPtr()`                  | No         |
 | `Span<T>` | `Vec<T>`  | `span.toVec()`                  | Yes        |
 | Any       | `Box<T>`  | `Box(val)`                      | Yes        |
@@ -254,17 +253,17 @@ Box<T> ───────→ Ptr<T> ───────→ Span<T>         
 
 ## Safety Comparison
 
-| Property              | `*T`    | `Ptr<T>`                 | `Span<T>`              | `Box<T>`                  |
-| --------------------- | ------- | ------------------------ | ---------------------- | ------------------------- |
-| Typed                 | Partial | Yes                      | Yes                    | Yes                       |
-| Generic               | No      | Yes                      | Yes                    | Yes                       |
-| Null-safe             | No      | `.isNull()`              | Check with `.isNull()` | Check with `.isValid()`   |
-| Bounds-checked        | No      | No                       | `.get()`               | N/A                       |
-| Auto-free             | No      | No                       | No                     | Yes                       |
-| Move semantics        | No      | No                       | No                     | Yes                       |
-| Thread-safe           | Manual  | Manual                   | Manual                 | Ownership-managed surface |
-| Zero overhead         | Yes     | Yes                      | ~Yes                   | Heap-owning abstraction   |
-| FFI-compatible access | Native  | `asRaw()` / `asOpaque()` | `asPtr()`              | `asPtr()`                 |
+| Property              | `Ptr<T>`                 | `Span<T>`              | `Box<T>`                  |
+| --------------------- | ------------------------ | ---------------------- | ------------------------- |
+| Typed                 | Yes                      | Yes                    | Yes                       |
+| Generic               | Yes                      | Yes                    | Yes                       |
+| Null check            | `.isNull()`              | `.isNull()`            | `.isValid()`              |
+| Bounds-checked        | No                       | `.get()`               | N/A                       |
+| Auto-free             | No                       | No                     | Yes                       |
+| Move semantics        | No                       | No                     | Yes                       |
+| Thread-safe           | Manual                   | Manual                 | Ownership-managed surface |
+| Runtime representation | target pointer         | pointer + length       | owned handle              |
+| FFI-compatible access | direct / `asOpaque()`    | `asPtr()`              | `asPtr()`                 |
 
 ---
 
@@ -273,34 +272,34 @@ Box<T> ───────→ Ptr<T> ───────→ Span<T>         
 ### 1. Start at the highest layer, drop down only when needed
 
 ```vex
-// ✅ Default: Use Box for heap values
+// Yes Default: Use Box for heap values
 let data = Box(MyStruct { ... });
 
-// ✅ Use Span for bounded views
+// Yes Use Span for bounded views
 let span = v.asSpan();
 
-// ✅ Use Ptr only for allocator/container internals
+// Yes Use Ptr only for allocator/container internals
 struct MyVec<T> { data: Ptr<T>, ... }
 
-// ✅ Use *T only for FFI
-extern "C" { fn c_func(p: *void): i32; }
+// Use Ptr<Opaque> at opaque FFI boundaries
+extern "NATIVE" from "c_api" { fn c_func(p: Ptr<Opaque>): i32; }
 ```
 
 ### 2. Convert upward as soon as possible
 
 ```vex
-// FFI returns raw pointer — immediately wrap in Ptr<T>
+// FFI returns an opaque pointer — recover a typed contract explicitly
 let raw = c_alloc(100);
-let typed = Ptr.of<u8>(raw as *u8);       // Layer 0 → 1
+let typed = raw as Ptr<u8!>;
 
 // Create Span for safe access
-let view = Span.ofPtr<u8>(raw as *u8, 100);  // Layer 0 → 2
+let view = Span.ofPtr<u8>(typed, 100);
 ```
 
 ### 3. Use Span for function interfaces
 
 ```vex
-// ✅ Good: accepts a bounded view
+// Yes Good: accepts a bounded view
 fn sum(data: Span<i32>): i32 {
     let! total: i32 = 0;
     let! iter = data.iter();
@@ -313,22 +312,22 @@ fn sum(data: Span<i32>): i32 {
     return total;
 }
 
-// ❌ Overly restrictive: only accepts raw pointer
-fn sum(data: *i32, len: usize): i32 { ... }
+// No Overly restrictive: only accepts raw pointer
+fn sum(data: Ptr<i32>, len: usize): i32 { ... }
 ```
 
 ### 4. Keep unsafe at the boundary
 
 ```vex
-// ✅ Good: wrap raw pointer immediately
+// Yes Good: make address recovery explicit and keep it local
 fn readSensor(addr: usize): i32 {
-    let p = Ptr.of<i32>(addr as *i32);
+    let p = addr as Ptr<i32>;
     return p.read();
 }
 
-// ❌ Bad: raw pointer leaks to caller
-fn readSensor(addr: usize): *i32 {
-    return addr as *i32;
+// No Bad: raw pointer leaks to caller
+fn readSensor(addr: usize): Ptr<i32> {
+    return addr as Ptr<i32>;
 }
 ```
 

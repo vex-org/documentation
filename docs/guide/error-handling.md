@@ -1,191 +1,149 @@
 # Error Handling
 
-Vex uses explicit values for failure and absence. There are no exceptions. The three core building blocks are:
+Vex represents failure and absence as values. The core language does not require exceptions: a function can return an enum, a caller can inspect it with match, and the ? operator can propagate the unsuccessful branch.
 
-- `Result<T, E>` for operations that can fail
-- `Option<T>` for values that may be absent
-- `nil` for raw-pointer and FFI null checks
+## Result-shaped values
 
-## `Result<T, E>`
+Use a Result-shaped enum when the caller needs to distinguish success from failure:
 
-Use `Result<T, E>` when the caller should distinguish success from failure.
-
-```vex
-fn divide(a: i32, b: i32): Result<i32, i32> {
-    if b == 0 {
-        return Err(1);
-    }
-    return Ok(a / b);
-}
-```
-
-### Matching on `Result`
-
-```vex
-match divide(20, 4) {
-    Ok(v) => {
-        $println("quotient = {}", v);
-    }
-    Err(code) => {
-        $println("divide failed with {}", code);
-    }
-}
-```
-
-## `Option<T>`
-
-Use `Option<T>` when missing data is expected and not necessarily an error.
-
-```vex
-fn first_even(a: i32, b: i32): Option<i32> {
-    if a % 2 == 0 {
-        return Some(a);
-    }
-    if b % 2 == 0 {
-        return Some(b);
-    }
-    return None;
-}
-```
-
-### Matching on `Option`
-
-```vex
-match first_even(3, 8) {
-    Some(v) => {
-        $println("found even value {}", v);
-    }
-    None => {
-        $println("no even value");
-    }
-}
-```
-
-## The `?` Operator
-
-`expr?` unwraps the success branch and propagates the failure branch to the caller.
-
-### `Result` propagation
-
-```vex
-fn compute(): Result<i32, i32> {
-    let x = divide(20, 4)?;
-    let y = divide(x, 2)?;
-    return Ok(y + 1);
-}
-```
-
-If any step returns `Err(e)`, the current function returns that `Err(e)` immediately.
-
-### `Option` propagation
-
-```vex
-fn next_even_pair(a: i32, b: i32): Option<i32> {
-    let first = first_even(a, b)?;
-    return Some(first + 2);
-}
-```
-
-If the operand is `None`, the current function returns `None` immediately.
-
-## The `!>` Rescue Operator
-
-`expr !> handler` converts a failing `Result` into a fallback value inline.
-
-```vex
-fn handler(code: i32): i32 {
-    return code + 100;
+~~~vex
+enum Division {
+    Ok(i32),
+    Err(i32),
 }
 
-let ok_value = divide(20, 4) !> handler;
-let err_value = divide(20, 0) !> handler;
-```
-
-- if the left-hand side is `Ok(v)`, the expression yields `v`
-- if the left-hand side is `Err(e)`, the handler runs and produces the fallback
-
-Closures work as well:
-
-```vex
-let value = divide(20, 0) !> |code| {
-    return code + 1000;
-};
-```
-
-## The `??` Fallback Operator
-
-Use `??` with `Option<T>` when you want a direct default value.
-
-```vex
-let port = Some(8080) ?? 3000;
-let fallback_port = None ?? 3000;
-```
-
-This is the concise alternative to a `match` when the absence path is a simple default.
-
-## Common Helper Surface
-
-Current tested helper surface commonly used in the repository:
-
-### `Option<T>`
-
-- `isSome()` / `isNone()`
-- `or(...)` / `orElse(...)`
-- `map(...)` / `flatMap(...)`
-- `filter(...)`
-- `rescue(...)`
-
-### `Result<T, E>`
-
-- `isOk()` / `isErr()`
-- `or(...)` / `orElse(...)`
-- `map(...)` / `mapErr(...)`
-- `flatMap(...)`
-- `rescue(...)`
-
-Prefer explicit matching, `?`, and `!>` when the control flow matters. They are easier to audit and line up with the main regression coverage in this repository.
-
-## `nil` for Raw Pointers and FFI
-
-`nil` is the null sentinel for raw-pointer style APIs.
-
-```vex
-extern "C" {
-    fn malloc(size: usize): ptr;
+fn divide(left: i32, right: i32): Division {
+    if right == 0 {
+        return Division.Err(1);
+    }
+    return Division.Ok(left / right);
 }
 
 fn main(): i32 {
-    let p = malloc(64);
-    if p == nil {
-        return 1;
-    }
-    return 0;
+    return match divide(20, 4) {
+        Division.Ok(value) => value,
+        Division.Err(code) => code,
+    };
 }
-```
+~~~
 
-Do not use `nil` as a substitute for `Option<T>` or `Result<T, E>`. Keep nullability at the FFI/raw-memory boundary.
+The standard library and prelude provide Result APIs for common code. A custom enum is shown here so that the representation and matching rules are visible.
 
-## When to Use What
+## Option-shaped values
 
-| Need                                   | Use            |
-| -------------------------------------- | -------------- |
-| Fallible computation with error detail | `Result<T, E>` |
-| Optional presence or lookup            | `Option<T>`    |
-| Early propagation to caller            | `?`            |
-| Inline fallback from `Result`          | `!>`           |
-| Inline fallback from `Option`          | `??`           |
-| FFI null handling                      | `nil`          |
+Use Option when absence is expected rather than exceptional:
 
-## Guidelines
+~~~vex
+enum Maybe<T> {
+    Some(T),
+    None,
+}
 
-1. Use `Result` when the caller should know why something failed.
-2. Use `Option` when absence is normal and expected.
-3. Use `?` for straight-line propagation.
-4. Use `!>` when the fallback belongs at the current call site.
-5. Keep `nil` at raw-pointer boundaries only.
+fn first_even(left: i32, right: i32): Maybe<i32> {
+    if left % 2 == 0 {
+        return Maybe.Some(left);
+    }
+    if right % 2 == 0 {
+        return Maybe.Some(right);
+    }
+    return Maybe.None;
+}
 
-## Next Steps
+fn main(): i32 {
+    return match first_even(3, 8) {
+        Maybe.Some(value) => value,
+        Maybe.None => 0,
+    };
+}
+~~~
+
+In application code, use the project-provided Option type rather than redefining it. See the [Option API](/guide/types/option-api).
+
+## Propagation with ?
+
+The question-mark operator returns the failure branch to the current function and unwraps the success branch:
+
+~~~vex
+enum Division {
+    Ok(i32),
+    Err(i32),
+}
+
+fn divide(left: i32, right: i32): Division {
+    if right == 0 {
+        return Division.Err(1);
+    }
+    return Division.Ok(left / right);
+}
+
+fn calculate(): Division {
+    let first = divide(20, 4)?;
+    let second = divide(first, 2)?;
+    return Division.Ok(second + 1);
+}
+
+fn main(): i32 {
+    return match calculate() {
+        Division.Ok(value) => value,
+        Division.Err(code) => code,
+    };
+}
+~~~
+
+The propagated type must be compatible with the enclosing function's return type. If several error types are involved, make the conversion explicit or use the conversion support documented by the current Result API.
+
+## Fallback operators
+
+The repository contains additional fallback operators for Result and Option workflows, including ?? and !>. These operators are more version-sensitive than match and ?. Treat them as experimental until the API page for your compiler version confirms the exact operand and return types.
+
+Use text fragments when documenting a library-specific fallback:
+
+~~~text
+let value = optional ?? default_value
+let value = fallible !> handle_error
+~~~
+
+Do not assume that a fallback operator is lazy unless its API documentation says so.
+
+## Null pointers
+
+Use typed pointer constructors and `isNull()` at FFI boundaries. Null pointers
+are not a replacement for `Option` in ordinary application code:
+
+~~~text
+extern "LIBC" {
+    fn malloc(size: usize): Ptr<Opaque>
+}
+
+let pointer = malloc(64)
+if pointer.isNull() {
+    return 1
+}
+~~~
+
+Keep allocation, null checks, and deallocation inside a small FFI boundary with a documented ownership contract. See [FFI](/guide/ffi) and [Raw Pointers](/guide/types/raw-pointers).
+
+## Choosing a representation
+
+| Situation | Prefer |
+| --- | --- |
+| An operation succeeds or fails with a meaningful error | `Result<T, E>` |
+| A lookup or value may be absent | `Option<T>` |
+| The caller should stop and return the same failure | ? |
+| A null pointer crosses a foreign ABI | nil |
+| A default value is enough and the operator is supported by your version | ?? or an explicit match |
+
+## Guidance
+
+- Handle failure at the boundary where the program can make a useful decision.
+- Use match when the success and failure paths are materially different.
+- Use ? for straight-line propagation inside a function returning the same shape.
+- Avoid integer sentinels when Option or Result communicates the state more clearly.
+- Check the exact standard-library API before using helper methods such as map, flatMap, or rescue.
+
+## Next steps
 
 - [Enums](/guide/types/enums)
 - [Pattern Matching](/guide/types/pattern-matching)
-- [Testing](/guide/tooling/testing)
+- [Option API](/guide/types/option-api)
+- [Result API](/guide/types/result-api)

@@ -41,8 +41,8 @@ let logger = newLogger(WARN);  // Only WARN and ERROR
 
 logger.debug("Ignored");    // Filtered (below WARN)
 logger.info("Ignored");     // Filtered
-logger.warn("Disk space below 10%");    // ✅ Printed
-logger.err("Out of memory");            // ✅ Printed
+logger.warn("Disk space below 10%");    // Yes Printed
+logger.err("Out of memory");            // Yes Printed
 
 println("Logger level: {logger.getLevel()}");  // 2
 ```

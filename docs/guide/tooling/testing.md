@@ -20,12 +20,21 @@ vex test --run "user"
 # Run benchmarks
 vex test --bench
 
+# Observe typed comptime staging without changing test/benchmark code
+vex test --analyze-comptime
+vex test --bench --analyze-comptime
+
 # Disable parallel execution
 vex test --no-parallel
 
 # Set custom timeout (seconds)
 vex test --timeout 60
 ```
+
+`--analyze-comptime` is explicit and observation-only. It forwards the shared
+`AnalyzeOnly` policy to each generated test runner or benchmark compilation and
+prints the compiler's semantic summary. It does not fold calls, change
+diagnostics, or enable the experimental `ApplyKnown` rewrite mode.
 
 ## Writing Tests
 
@@ -222,7 +231,7 @@ fn test_with_cleanup(): i32 {
 import { TestCtx } from "testing/core"
 
 fn test_platform_specific(t: &TestCtx!): i32 {
-    t.skip_if($os() != "linux", "Linux only test")
+    t.skip_if(#Target.os() != "linux", "Linux only test")
     
     // Test logic here...
     return 0
@@ -443,7 +452,7 @@ fn test_add_cases(t: &TestCtx): i32 {
     ]
     
     for case in cases {
-        t.run(#stringify(case), fn() {
+        t.run(#Text.stringify(case), fn() {
             eq(add(case.a, case.b), case.want)
         })
     }
@@ -492,17 +501,17 @@ vex test --coverage
 
 | Feature | Go | Rust | Vex |
 |---------|:---:|:----:|:---:|
-| Test Discovery | ✅ | ✅ | ✅ |
-| Filtering | ✅ | ✅ | ✅ |
-| Parallel Exec | ✅ | ✅ | ✅ |
-| Benchmarks | ✅ | ⚠️ | ✅ |
-| Coverage | ✅ | ⚠️ | ✅ |
-| Subtests | ✅ | ❌ | 🔜 |
-| Table Tests | ✅ | ⚠️ | 🔜 |
-| Fuzzing | ✅ | ⚠️ | 🔜 |
-| Line Coverage | ✅ | ✅ | 🔜 |
+| Test Discovery | Yes | Yes | Yes |
+| Filtering | Yes | Yes | Yes |
+| Parallel Exec | Yes | Yes | Yes |
+| Benchmarks | Yes | Warning | Yes |
+| Coverage | Yes | Warning | Yes |
+| Subtests | Yes | No | Planned |
+| Table Tests | Yes | Warning | Planned |
+| Fuzzing | Yes | Warning | Planned |
+| Line Coverage | Yes | Yes | Planned |
 
-Legend: ✅ Native | ⚠️ External/Nightly | 🔜 Planned | ❌ Not Available
+Legend: Yes Native | Warning External/Nightly | Planned Planned | No Not Available
 
 ## Next Steps
 

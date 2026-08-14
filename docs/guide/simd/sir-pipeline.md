@@ -184,12 +184,12 @@ The following table summarizes compiler code generation support for Silicon IR (
 
 | Operator Category | CPU (SIMD/Scalar) | macOS (Metal) | Linux/Windows (Vulkan) | Web (WebGPU/WGSL) | CUDA / ROCm |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Element-wise Math** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
-| **Reductions** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
-| **Mask Ops** | ✅ Native (cttz/ctpop) | ✅ Native (`popcount`) | ✅ Native (subgroup) | ✅ Native | ✅ Native |
-| **Matrix Operations** | ✅ LLVM-SIMD / BLAS | ✅ Metal Kernels | ✅ SPIR-V MatMul | ✅ WGSL Compute | ✅ CuBLAS / HIP |
-| **Saturating Arithmetic**| ✅ Native | ✅ Clamped emulation | ✅ Clamped emulation | ✅ Clamped | ✅ Native |
-| **Quantized/Sparse** | ✅ SIMD-optimized | ✅ MSL Quantized | 🟡 Partial | 🟡 Partial | ✅ CUDA Kernels |
+| **Element-wise Math** | Yes Full | Yes Full | Yes Full | Yes Full | Yes Full |
+| **Reductions** | Yes Full | Yes Full | Yes Full | Yes Full | Yes Full |
+| **Mask Ops** | Yes Native (cttz/ctpop) | Yes Native (`popcount`) | Yes Native (subgroup) | Yes Native | Yes Native |
+| **Matrix Operations** | Yes LLVM-SIMD / BLAS | Yes Metal Kernels | Yes SPIR-V MatMul | Yes WGSL Compute | Yes CuBLAS / HIP |
+| **Saturating Arithmetic**| Yes Native | Yes Clamped emulation | Yes Clamped emulation | Yes Clamped | Yes Native |
+| **Quantized/Sparse** | Yes SIMD-optimized | Yes MSL Quantized | Partial Partial | Partial Partial | Yes CUDA Kernels |
 
 ---
 

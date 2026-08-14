@@ -1,317 +1,132 @@
-# Ptr\<T\> — Typed Generic Pointer
+# `Ptr<T>` — Typed Raw Pointer
 
-`Ptr<T>` is Vex's modern, type-safe pointer wrapper. It replaces the pattern of raw `*T` pointers with `as` cast chains, providing a clean method-based API with zero runtime overhead.
+`Ptr<T>` is Vex's canonical typed raw-memory handle. It is represented directly
+as a target pointer—never as a wrapper aggregate—and provides element-based
+reads, writes, offsets, allocation, and FFI interop. It is a prelude type and
+needs no import.
 
-::: tip Prelude Type
-`Ptr<T>` is a **prelude type** — available in all Vex programs without any `import`. Just use it directly.
-:::
+`Ptr<T>` is not a safe smart pointer: it carries neither a length nor a
+lifetime. Prefer references, `Box<T>`, or `Span<T>` when they fit the job.
 
-## Overview
+## Allocate and initialize
 
 ```vex
-fn main() {
-    // Allocate 10 integers
-    let! p = Ptr.allocN<i32>(10);
-    
-    // Write at specific indices
-    p.writeAt(0, 100);
-    p.writeAt(1, 200);
-    p.writeAt(2, 300);
-    
-    // Read
-    let val = p.readAt(1);    // 200
-    $println("Value: {}", val);
-    
-    // Done
-    p.free();
+let! value = Ptr.allocWith<i32>(42)
+
+unsafe {
+    $println(value.read())
+    value.free()
 }
 ```
 
-Compare with the old C-style approach:
-```vex
-// Old way — unsafe, casts everywhere
-let raw = alloc(40) as *i32!;
-unsafe { *raw = 100; *(raw + 1) = 200; *(raw + 2) = 300; }
-let val = unsafe { *(raw + 1) };
-free(raw as *void);
-```
+Allocation constructors are:
 
-## Struct Definition
+| Constructor | Result |
+| --- | --- |
+| `Ptr.null<T>()` | null typed pointer |
+| `Ptr.nullMut<T>()` | null pointer with writable-pointee capability |
+| `Ptr.alloc<T>()` | allocate one uninitialized `T` |
+| `Ptr.allocWith<T>(value)` | allocate and initialize one `T` |
+| `Ptr.allocN<T>(count)` | allocate `count` uninitialized contiguous elements |
+
+An uninitialized allocation must be written before it is read.
+
+## Reads and writes
 
 ```vex
-struct Ptr<T> {
-    raw: *T
+let! values = Ptr.allocN<i32>(3)
+
+unsafe {
+    values.writeAt(0, 10)
+    values.writeAt(1, 20)
+    values.writeAt(2, 30)
+
+    let second = values.readAt(1)
+    $println(second)
+
+    values.freeN(3)
 }
 ```
 
-`Ptr<T>` is a single-field struct wrapping a raw pointer. After optimization, it has exactly the same memory layout and performance as `*T`.
+| Method | Unit |
+| --- | --- |
+| `read()` / `write(value)` | the pointed-to `T` |
+| `readAt(index)` / `writeAt(index, value)` | element index |
+| `refAt(index)` | borrowed element reference |
 
-## Creating Pointers
+The compiler cannot prove that an index is within the allocation. These
+operations are unsafe even though their element type is explicit.
 
-### From Allocation
-
-```vex
-// Allocate a single element (uninitialized)
-let! p = Ptr.alloc<i32>();
-p.write(42);
-
-// Allocate and initialize with a value
-let! p = Ptr.allocWith<i64>(9999);
-
-// Allocate N contiguous elements
-let! arr = Ptr.allocN<f64>(1000);
-```
-
-### From Raw Pointers
-
-Interop with existing raw pointer code:
+## Element-based pointer arithmetic
 
 ```vex
-let x = 42;
-let raw: *i32 = &x;
-
-// Raw → Ptr
-let p = Ptr.of<i32>(raw);
-let val = p.read();     // 42
-
-// Ptr → Raw (for FFI, legacy code)
-let back: *i32 = p.asRaw();
+let third = unsafe { values.add(2) }
+let previous = unsafe { third.sub(1) }
+let signed = unsafe { third.offset(-2) }
+let distance = values.distanceTo(third) // 2 elements
 ```
 
-### Special Values
+`add`, `sub`, and `offset` scale by `#Type.sizeOf<T>()`. They never use byte
+units. Use `RawBuf` when the layout is naturally byte-oriented.
+
+## Views and conversions
+
+| Method | Result |
+| --- | --- |
+| `asOpaque()` | `Ptr<Opaque>` with erased pointee type |
+| `addr()` | address as `usize` |
+| `asSpan(count)` | bounds-aware `Span<T>` view |
+| `asSlice(count)` | native slice view for low-level/vectorized operations |
+| `asRef()` / `asMut()` | synthesized Vex reference |
+| `isNull()` / `isValid()` | null checks |
+| `isAligned(alignment)` | alignment check |
+
+Creating a reference, span, or slice from a raw pointer is unsafe: the caller
+must prove lifetime, extent, alignment, initialization, and aliasing.
+
+To reinterpret the element type, cross an explicit opaque-pointer boundary:
 
 ```vex
-let null = Ptr.null<i32>();         // null pointer
-
-null.isNull();   // true
-null.isValid();  // false
+let bytes = value.asOpaque() as Ptr<u8>
 ```
 
-## Reading and Writing
+## Bulk operations
 
-### Single Element
+| Method | Behavior |
+| --- | --- |
+| `copyFrom(&src, count)` | copy `count` elements from `src` into `self` |
+| `copyTo(&dst, count)` | copy `count` elements from `self` into `dst` |
+| `compare(&other, count)` | compare `count` elements bytewise |
+| `writeBytes(value, count)` | fill `count` bytes |
+| `swap(&other)` | swap the two pointed-to values |
 
-```vex
-let! p = Ptr.alloc<i32>();
+The `count` parameter is elements for copy/compare and bytes for `writeBytes`.
+That distinction is intentional and should stay visible at call sites.
 
-// Write
-p.write(42);
+## Deallocation
 
-// Read
-let val = p.read();     // 42
-```
+- `free()` destroys an allocation created for one `T` and nulls the handle.
+- `freeN(count)` destroys an allocation created by `allocN(count)` and supplies
+  the correct total byte size.
 
-### Indexed Access
+Call deallocation only on the original allocation pointer, never an offset
+pointer. Do not use it for foreign memory unless the foreign allocator is
+explicitly compatible with VexArch's allocator.
 
-For arrays allocated with `allocN`:
+## Safety checklist
 
-```vex
-let! arr = Ptr.allocN<i32>(5);
+Before every raw access, prove:
 
-// Write at index
-arr.writeAt(0, 10);
-arr.writeAt(1, 20);
-arr.writeAt(2, 30);
+1. the pointer is non-null and correctly aligned;
+2. the requested range lies within a live allocation;
+3. reads observe initialized valid `T` values;
+4. mutable access is exclusive for the operation's duration;
+5. deallocation uses the original pointer, allocator, and size.
 
-// Read at index
-let v = arr.readAt(1);  // 20
-```
+## Related
 
-## Pointer Arithmetic
-
-All arithmetic is **element-level** — `p.add(3)` advances by 3 elements (not 3 bytes):
-
-```vex
-let! p = Ptr.allocN<i32>(10);
-p.writeAt(0, 100);
-p.writeAt(5, 500);
-
-let p5 = p.add(5);       // p + 5*sizeof(i32)
-let val = p5.read();      // 500
-
-// Signed offset (can go backward)
-let back = p5.offset(-2); // p + 3 elements
-
-// Subtract
-let p3 = p5.sub(2);       // same as offset(-2)
-```
-
-### Distance Between Pointers
-
-```vex
-let! start = Ptr.allocN<i32>(100);
-let p50 = start.add(50);
-
-let dist = start.distanceTo(&p50);   // 50 (elements, not bytes)
-```
-
-## Type Casting
-
-Cast between pointer types via `asOpaque()`:
-
-```vex
-let! ip = Ptr.alloc<i64>();
-ip.write(0x41424344);
-
-// Cast to Ptr<u8> via opaque pointer
-let bp = Ptr.of<u8>(ip.asOpaque() as *u8);
-let firstByte = bp.read();  // 0x44 (little-endian)
-```
-
-## Bulk Operations
-
-```vex
-let! src = Ptr.allocN<i32>(3);
-src.writeAt(0, 100);
-src.writeAt(1, 200);
-src.writeAt(2, 300);
-
-let! dst = Ptr.allocN<i32>(3);
-
-// Copy N elements from src to dst (two directions)
-dst.copyFrom(&src, 3);   // dst ← src
-src.copyTo(&dst, 3);     // src → dst (same result)
-
-// Compare two memory blocks (byte-level, like memcmp)
-let cmp = src.compare(&dst, 3);   // 0 = equal
-
-// Fill bytes (like memset) — e.g., zero-initialize 12 bytes
-dst.writeBytes(0, 12);   // fills 12 bytes with 0x00
-
-// Swap values at two pointer locations
-let! a = Ptr.allocWith<i32>(111);
-let! b = Ptr.allocWith<i32>(222);
-a.swap(&b);
-// a.read() == 222, b.read() == 111
-```
-
-## Reference Conversion
-
-Convert a `Ptr<T>` into Vex's reference system:
-
-```vex
-let! x: i32 = 42;
-let p = Ptr.of<i32>(&x as *i32);
-
-// Immutable reference
-let r: &i32 = p.asRef();
-$println(*r);    // 42
-
-// Mutable reference
-let mr: &i32! = p.asMut();
-*mr = 100;       // x is now 100
-```
-
-::: warning
-`asRef()` and `asMut()` require the pointer to be valid and non-null. Using them on a null or freed pointer is undefined behavior.
-:::
-
-## Alignment Check
-
-Required for SIMD operations and specialized allocators:
-
-```vex
-let! p = Ptr.allocN<i32>(64);
-
-if p.isAligned(16) {
-    // Safe for SSE/NEON operations
-    $println("16-byte aligned");
-}
-
-if p.isAligned(32) {
-    // Safe for AVX operations
-    $println("32-byte aligned");
-}
-```
-
-## Memory Management
-
-```vex
-let! p = Ptr.alloc<i32>();
-p.write(42);
-p.free();    // deallocates and sets to null
-
-// After free:
-p.isNull();  // true
-```
-
-::: warning
-`free()` deallocates the **entire allocation**, not just one element. Call it on the pointer returned by `alloc()` / `allocN()`, not on an offset pointer.
-:::
-
-## FFI Interop
-
-`Ptr<T>` works seamlessly with C FFI:
-
-```vex
-extern "C" {
-    fn fread(buf: ptr, size: u64, count: u64, stream: ptr): u64;
-}
-
-fn readBytes(stream: ptr, count: usize): Ptr<u8> {
-    let! buf = Ptr.allocN<u8>(count);
-    fread(buf.asOpaque(), 1, count as u64, stream);
-    return buf;
-}
-```
-
-## Method Reference
-
-### Constructors
-
-| Method | Description |
-|--------|-------------|
-| `Ptr.null<T>()` | Null pointer |
-| `Ptr.of<T>(p)` | Wrap raw `*T` pointer |
-| `Ptr.alloc<T>()` | Allocate single element |
-| `Ptr.allocWith<T>(val)` | Allocate + initialize |
-| `Ptr.allocN<T>(n)` | Allocate N elements |
-
-### Core Operations
-
-| Method | Description |
-|--------|-------------|
-| `.read()` | Read value at pointer |
-| `.write(val)` | Write value at pointer |
-| `.readAt(idx)` | Read at element index |
-| `.writeAt(idx, val)` | Write at element index |
-
-### Arithmetic
-
-| Method | Description |
-|--------|-------------|
-| `.add(n)` | Forward N elements |
-| `.sub(n)` | Backward N elements |
-| `.offset(n)` | Signed element offset |
-| `.distanceTo(&other)` | Element distance |
-
-### Conversion & Checks
-
-| Method | Description |
-|--------|-------------|
-| `.asRaw()` | Get underlying `*T` |
-| `.asOpaque()` | Get as `ptr` (for FFI) |
-| `.addr()` | Get address as `i64` |
-| `.isNull()` | Check if null |
-| `.isValid()` | Check if non-null |
-| `.asRef()` | Convert to immutable reference `&T` |
-| `.asMut()` | Convert to mutable reference `&T!` |
-| `.isAligned(n)` | Check n-byte alignment |
-
-### Memory
-
-| Method | Description |
-|--------|-------------|
-| `.copyFrom(&src, n)` | Copy N elements from src |
-| `.copyTo(&dest, n)` | Copy N elements to dest |
-| `.compare(&other, n)` | Compare N elements (memcmp) |
-| `.writeBytes(val, n)` | Fill n bytes with val (memset) |
-| `.swap(&other)` | Swap values at two locations |
-| `.free()` | Deallocate and null-out |
-
-## See Also
-
-- [RawBuf](./rawbuf) — Zero-cost byte-level memory accessor
-- [Span\<T\>](./span-t) — Bounds-checked fat pointer built on Ptr\<T\>
-- [Raw Pointers](/guide/advanced/pointers) — Legacy raw `*T` documentation
-- [VUMM](./vumm) — Automatic ownership with `Box<T>`
+- [`Span<T>`](/guide/memory/span-t)
+- [RawBuf](/guide/memory/rawbuf)
+- [Memory Prelude](/guide/memory/mem-prelude)
+- [Pointers and Low-Level Memory](/guide/advanced/pointers)
+- [Unsafe](/guide/advanced/unsafe)

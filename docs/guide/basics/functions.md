@@ -1,270 +1,213 @@
 # Functions
 
-Functions are the primary unit of code reuse in Vex. They are declared using the `fn` keyword.
+Functions are the main unit of reuse in Vex. A function has a name, typed parameters, an optional return type, and a block body.
 
-## Basic Syntax
+## Declaration
 
-```vex
-fn function_name(param1: Type1, param2: Type2): ReturnType {
-    // bodies are blocks
-    return value
+The basic form is:
+
+~~~text
+fn name(parameter: Type): ReturnType {
+    ...
 }
-```
+~~~
 
-### Examples
+A return type can be omitted for a function that returns unit. Use an explicit return type for public functions and for code where the interface matters.
 
-```vex
-// Function with no parameters and no return value
-fn greet() {
-    $println("Hello, Vex!")
-}
-
-// Function with parameters
-fn greet_user(name: string) {
-    $println(f"Hello, {name}!")
+~~~vex
+fn add(left: i32, right: i32): i32 {
+    return left + right;
 }
 
-// Function with return value
-fn add(a: i32, b: i32): i32 {
-    return a + b
+fn main(): i32 {
+    let answer = add(20, 22);
+    $println(answer);
+    return answer;
+}
+~~~
+
+Vex accepts automatic statement boundaries at line breaks. Explicit semicolons are still useful when several statements share a line or when a boundary would be ambiguous.
+
+## Parameters and mutation
+
+Parameters are immutable by default. Use the mutable marker when a function must reassign a parameter:
+
+~~~vex
+fn increment(value!: i32): i32 {
+    value += 1;
+    return value;
 }
 
-// Single expression functions (automatic return)
-fn multiply(a: i32, b: i32): i32 {
-    a * b
+fn main(): i32 {
+    return increment(41);
 }
-```
+~~~
 
-## Parameters
+Mutation of a caller-owned value normally requires a mutable binding and a mutable reference. The full rules are covered in [Ownership](/guide/memory/ownership) and [Borrowing](/guide/memory/borrowing).
 
-### Immutable by Default
+~~~text
+fn inspect(value: &Point): i32 { ... }
+fn update(value: &Point!): i32 { ... }
+~~~
 
-Parameters are immutable by default. You cannot modify them within the function body:
+Use immutable references for read-only access. A mutable reference is exclusive for the duration of the borrow; the checker rejects conflicting mutable and immutable borrows.
 
-```vex
-fn process(value: i32) {
-    // value = 10  // ERROR: Cannot mutate parameter
-}
-```
+## Return values
 
-### Mutable Parameters
+A function returns with return expression. Tuples are the direct way to return more than one value:
 
-To make a parameter mutable, use the `!` suffix:
-
-```vex
-fn increment(value!: i32) {
-    value = value + 1
-}
-```
-
-### References
-
-Use `&T` for immutable references and `&T!` for mutable references:
-
-```vex
-fn print_vec(data: &Vec<i32>) {
-    $println(f"Vector length: {data.len()}")
+~~~vex
+fn divide_with_remainder(left: i32, right: i32): (i32, i32) {
+    return (left / right, left % right);
 }
 
-fn append_sum(data: &Vec<i32>!) {
-    // Note: iter() method is on &Vec<T>
-    let! sum = 0
-    for n in data {
-        sum += n
-    }
-    data.push(sum)
+fn main(): i32 {
+    let (quotient, remainder) = divide_with_remainder(10, 3);
+    return quotient + remainder;
 }
-```
+~~~
 
-## Optional and Default Parameters
+Use an enum such as Result when a function can fail; do not use a magic integer unless the calling contract explicitly requires one.
 
-Vex supports default values for parameters:
+## Generic functions
 
-```vex
-fn greet(name: string, greeting: string = "Hello") {
-    $println(f"{greeting}, {name}!")
-}
+Generic functions declare type parameters after the function name:
 
-fn main() {
-    greet("Alice")           // Prints: Hello, Alice!
-    greet("Bob", "Hi")       // Prints: Hi, Bob!
-}
-```
-
-## Variadic Parameters
-
-Use `...T` for functions that accept a variable number of arguments:
-
-```vex
-fn sum(numbers: ...i32): i32 {
-    let! total = 0
-    for n in numbers {
-        total += n
-    }
-    return total
-}
-
-let result = sum(1, 2, 3, 4, 5)
-```
-
-## Generic Functions
-
-Functions can be generic over one or more types:
-
-```vex
+~~~vex
 fn identity<T>(value: T): T {
-    return value
+    return value;
 }
 
-let x = identity<i32>(42)
-let y = identity<string>("hello")
-```
-
-### With Contract Bounds
-
-Constrain generic types using contracts:
-
-```vex
-fn print_it<T: Display>(item: T) {
-    $println(item.toString())
+fn main(): i32 {
+    let value = identity<i32>(42);
+    return value;
 }
-```
+~~~
 
-## Function Overloading
+Generic structs use the same angle-bracket syntax. Generic functions and structs are implemented, but the interaction between generics, contracts, default parameters, and variadics is still being expanded. See [Language Status](/guide/language-status) before relying on an untested combination.
 
-Vex supports function overloading when functions share a name but have distinct parameter signatures.
+## Methods and associated functions
 
-```vex
-fn add(a: i32, b: i32): i32 {
-    return a + b
-}
+Methods are declared outside the struct with a receiver. The receiver type determines which value owns the method:
 
-fn add(a: f64, b: f64): f64 {
-    return a + b
-}
-
-let x = add(1, 2)
-let y = add(1.5, 2.5)
-```
-
-### Resolution Priority
-
-When multiple overloads are available, Vex currently prefers:
-
-1. **Exact type match**
-2. **Compatible numeric coercion**
-3. **More generic fallback**
-4. **Compile error** if the call is still ambiguous
-
-### Tested Scenarios
-
-| Scenario                                                   | Status     | Notes                                                            |
-| ---------------------------------------------------------- | ---------- | ---------------------------------------------------------------- |
-| Different primitive parameter types                        | ✅         | Covered by overload regression tests                             |
-| Different arity                                            | ✅         | Covered by `num_args_001.vx`                                     |
-| Imported overloaded functions                              | ✅         | Covered by `import_001.vx`                                       |
-| Default-parameter overloads                                | ✅         | Covered by `default_001.vx`                                      |
-| Variadic overloads                                         | ✅         | Covered by `variadic_001.vx`                                     |
-| Generic fallback vs specific overload                      | ✅         | Covered by `generic_specific_001.vx`                             |
-| Exhaustive generic + variadic + default-param combinations | ⚠️ Partial | Core cases are tested, but the full matrix is not yet exhaustive |
-
-::: warning Current Coverage Note
-Core function overloading is tested and usable today, including basic **generic fallback**, **variadic**, and **default-parameter** cases. However, the overload regression suite still does **not** exhaust every combination involving **generic functions**, **variadic functions**, and **default parameters** together.
-:::
-
-## Multiple Return Values (Tuples)
-
-Vex uses tuples to return multiple values:
-
-```vex
-fn divide_with_remainder(a: i32, b: i32): (i32, i32) {
-    return (a / b, a % b)
-}
-
-let (quotient, remainder) = divide_with_remainder(10, 3)
-```
-
-## Methods (Go-style)
-
-Vex uses Go-style receiver syntax for methods. Methods are defined outside the struct:
-
-```vex
+~~~vex
 struct Point {
-    x: f64,
-    y: f64
+    public:
+    x: i32,
+    y: i32,
 }
 
-// Immutable receiver
-fn (self: &Point) length(): f64 {
-    return (self.x * self.x + self.y * self.y).sqrt()
+fn (point: &Point) sum(): i32 {
+    return point.x + point.y;
 }
 
-// Mutable receiver
-fn (self: &Point!) move_by(dx: f64, dy: f64) {
-    self.x += dx
-    self.y += dy
+fn Point.origin(): Point {
+    return Point { x: 0, y: 0 };
 }
 
-// Static/Associated function
-fn Point.new(x: f64, y: f64): Point {
-    return Point { x, y }
+fn main(): i32 {
+    let point = Point.origin();
+    return point.sum();
 }
-```
+~~~
 
-## Anonymous Functions (Closures)
+The receiver is written as an ordinary parameter inside parentheses. A call such as point.sum() supplies the receiver automatically. Methods can be immutable or mutable; mutable receiver methods require the corresponding mutable reference rules.
 
-```vex
-let add = |a: i32, b: i32| a + b
-let result = add(10, 20)
+## Closures
 
-// With parameter types and return type
-let multiply = |a: i32, b: i32|: i32 {
-    return a * b
-}
-```
+Closures use pipe delimiters around their parameters:
 
-## Async Functions
-
-Vex supports real `async fn` declarations and prefix `await`.
-
-```vex
-async fn fetch_number(): i32 {
-    return 42
+~~~vex
+fn apply(operation: fn(i32): i32, value: i32): i32 {
+    return operation(value);
 }
 
-async fn sum_once(): i32 {
-    let value = await fetch_number()
-    return value + 1
+fn main(): i32 {
+    let double = |value: i32| value * 2;
+    return apply(double, 21);
+}
+~~~
+
+A closure can capture values from its surrounding scope. Capture behavior is checked by the ownership and escape analyses, especially when the closure is passed to a go block or stored for later execution.
+
+## Explicit inlining
+
+Use `inline fn` for a small, bounded function whose body must remain visible to
+the optimizer at every legal call site:
+
+~~~vex
+inline fn isAscii(value: u8): bool {
+    return value < 128 as u8;
+}
+~~~
+
+This is a semantic code-generation contract, not a spelling-based compiler
+special case. Vex carries it through HIR and emits the corresponding backend
+attribute. It can override ordinary size and loop profitability heuristics,
+but it cannot override a semantic prohibition such as a function that the
+compiler has proven unsafe to inline.
+
+Prefer ordinary `fn` by default. Use `inline fn` for short dispatchers,
+fixed-width primitives, and similar boundaries where caller constants remove
+most of the body. Keep large loops in a separate ordinary function and call it
+from the inline dispatcher; this preserves specialization without duplicating
+the loop at every call site.
+
+## Overloading
+
+Vex supports functions with the same name when their parameter signatures are distinct:
+
+~~~vex
+fn measure(value: i32): i32 {
+    return value;
+}
+
+fn measure(value: f64): f64 {
+    return value;
+}
+
+fn main(): i32 {
+    return measure(42);
+}
+~~~
+
+Resolution considers exact matches, compatible numeric coercions, and generic candidates. Ambiguous calls should be made explicit with an annotation or a type conversion. The complete overload matrix is not yet a stability guarantee.
+
+## Async functions
+
+Async functions are declared with async fn. Await is valid inside an async function or async execution context:
+
+~~~vex
+async fn get_value(): i32 {
+    return 42;
 }
 
 async fn main(): i32 {
-    let total = await sum_once()
-    $println(total)
-    return 0
+    let value = await get_value();
+    $println(value);
+    return 0;
 }
-```
+~~~
 
-Current repo tests and examples cover:
+Async declarations and await lowering are implemented. Runtime scheduling, suspension behavior, and the interaction with every library API remain experimental. Do not use await in an ordinary synchronous function.
 
-- `async fn` with explicit return types
-- prefix `await` inside async functions
-- `async fn main(): i32`
-- rejection of `await` inside ordinary sync functions
+## What is not part of the stable surface
 
-`await` is not a general-purpose operator for sync code. In normal code it must be used in an async context. For spawned concurrent tasks, channels, and `go {}` interplay, see the dedicated concurrency docs.
+The following forms appear in older design notes or incomplete examples and should not be copied as current syntax:
 
-See also: [Async/Await](/guide/concurrency/async) and [Channels](/guide/concurrency/channels).
+- an impl block for attaching methods;
+- C-style for loops;
+- an implicit expression return without an explicit return statement;
+- a closure type annotation copied from another language;
+- default and variadic parameter combinations that have not been checked in the current compiler.
 
-## Best Practices
+When in doubt, start from a complete example in the repository and run `vex lint` before treating a form as supported.
 
-1. **Use `string` for text** - Always prefer the built-in `string` type.
-2. **Prefer immutable parameters** - Only use `!` when necessary.
-3. **Use descriptive names** - Functions should describe actions (`calculate_sum`).
-4. **Keep functions focused** - A function should do one thing well.
-5. **Leverage Go-style methods** - For better code organization and readability.
+## Next steps
 
-## Next Steps
-
-- [Control Flow](/guide/basics/control-flow) - Conditionals and loops
-- [Structs](/guide/types/structs) - Custom data types
-- [Contracts](/guide/types/contracts) - Interface definitions
+- [Control Flow](/guide/basics/control-flow)
+- [Structs](/guide/types/structs)
+- [Generics](/guide/types/generics)
+- [Contracts](/guide/types/contracts)
+- [Closures](/guide/types/closures)
+- [Async](/guide/concurrency/async)

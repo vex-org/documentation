@@ -14,6 +14,10 @@
 | `.source` | Original pattern string |
 | `.groupCount` | Number of capture groups |
 
+Invalid syntax, unknown flags or a pattern exceeding the documented resource
+budgets returns `Regex.invalid()` (`valid == false`). Compilation does not print
+to stdout.
+
 ## `Match` — Captured Result
 
 | Method | Description |
@@ -25,6 +29,9 @@
 | `.start(): i32` | Start position of full match |
 | `.end(): i32` | End position of full match |
 
+`Match` also owns reusable execution scratch. Reuse one `Match` per concurrent
+caller; the compiled `Regex` itself remains immutable during matching.
+
 ## Flags
 
 | Flag | Inline | Description |
@@ -32,6 +39,10 @@
 | `"i"` | `(?i)` | Case-insensitive matching |
 | `"m"` | `(?m)` | Multiline (`^` and `$` match line boundaries) |
 | `"s"` | `(?s)` | Dot-all (`.` matches `\n`) |
+
+Only `i`, `m` and `s` are accepted by `Regex.compile`. Bare inline flags must
+appear at the beginning of the pattern. Scoped groups such as `(?i:...)` are
+currently rejected rather than being compiled with incorrect global semantics.
 
 ## Examples
 

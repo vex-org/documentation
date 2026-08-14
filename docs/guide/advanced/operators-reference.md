@@ -268,8 +268,8 @@ fn process(): Result<Data, Error> {
 
 | Operator | Syntax        | Description                            |
 | -------- | ------------- | -------------------------------------- |
-| Send     | `ch <- value` | Sends value into channel               |
-| Receive  | `<-ch`        | Receives value from channel (blocking) |
+| Send     | `ch <- value` | Moves a value into the channel; blocks while full |
+| Receive  | `<-ch`        | Blocks for `T`; returns zero `T` when closed and drained |
 
 ```vex
 let! ch = Channel.new<i32>(10)
@@ -282,6 +282,8 @@ if let Some(val) = ch.tryRecv() {
     process(val)
 }
 ```
+
+Use `recv()`, `recvResult()`, or `tryRecv()` instead of `<-ch` when the program must distinguish a closed or not-ready channel from a valid zero value.
 
 ## Ternary Operator
 

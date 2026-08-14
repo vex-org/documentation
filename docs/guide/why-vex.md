@@ -15,7 +15,7 @@ This page compares Vex to other systems programming languages, highlighting wher
 | **Ecosystem maturity** | New (growing)                                    | Mature (100K+ crates)                        |
 | **Standard library**   | Batteries included (HTTP, crypto, serde, DB, ML) | Minimal std, community crates for everything |
 | **Error messages**     | Clear and concise                                | Excellent (but lots of them)                 |
-| **FFI**                | C ABI, `extern "C"`, simple linking              | C ABI, `extern "C"`, build.rs                |
+| **FFI**                | Explicit `LIBC`/`SYSTEM`/`NATIVE` providers       | C ABI, `extern "C"`, build.rs                |
 
 **Choose Vex when:** You want Rust-level safety with Go-level simplicity, and you need SIMD/GPU acceleration without fighting the type system.
 

@@ -4,13 +4,13 @@ layout: doc
 title: Design Examples
 ---
 
-> **⚠️ Concept Stage:** This page describes a planned VexHDL feature.
+> **Warning Concept Stage:** This page describes a planned VexHDL feature.
 > Implementation has not begun. Details may change.
 
 
 # VexHDL Design Examples
 
-This document provides complete, production-grade, and compiler-verified VexHDL design examples for common hardware components.
+This document provides illustrative VexHDL design examples for common hardware components. The page is a concept-stage reference; examples are not a production or synthesis guarantee.
 
 ---
 

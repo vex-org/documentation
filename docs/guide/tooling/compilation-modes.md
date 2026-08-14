@@ -1,6 +1,6 @@
 # Compilation Modes and Optimization
 
-Vex compiles to native code ahead-of-time (AOT) via LLVM 21. `vex compile` produces standalone binaries; `vex run` compiles and executes in one step.
+Vex compiles to native code ahead-of-time through its LLVM-based backend. `vex compile` produces a persistent artifact when the selected target and runtime path are available; `vex run` compiles and executes in one step.
 
 > **Note:** Some optimization flags described below (LTO, cross-compilation targets, sanitizers, incremental compilation) are **planned features**. Currently available flags are documented in the [CLI Reference](/references/vex-cli-reference) and visible via `vex compile --help`.
 
@@ -24,7 +24,7 @@ vex run --emit-llvm main.vx  # also emit LLVM IR during run
 
 ### `vex compile` -- AOT Binary
 
-`vex compile` produces a standalone native binary. Best for production and distribution.
+`vex compile` produces a standalone native binary when linking succeeds. Validate the target runtime and artifact before distributing it.
 
 ```bash
 vex compile main.vx                    # AOT compile to executable
@@ -194,12 +194,12 @@ vex compile --target wasm32-unknown-unknown main.vx
 
 | Target                      | OS      | Arch        | Status       |
 | --------------------------- | ------- | ----------- | ------------ |
-| `x86_64-apple-darwin`       | macOS   | x86_64      | Production   |
-| `aarch64-apple-darwin`      | macOS   | ARM64 (M1+) | Production   |
-| `x86_64-unknown-linux-gnu`  | Linux   | x86_64      | Production   |
-| `aarch64-unknown-linux-gnu` | Linux   | ARM64       | Production   |
-| `x86_64-unknown-freebsd`    | FreeBSD | x86_64      | Beta         |
-| `x86_64-pc-windows-msvc`    | Windows | x86_64      | Beta         |
+| `x86_64-apple-darwin`       | macOS   | x86_64      | Experimental |
+| `aarch64-apple-darwin`      | macOS   | ARM64 (M1+) | Primary development target |
+| `x86_64-unknown-linux-gnu`  | Linux   | x86_64      | Experimental |
+| `aarch64-unknown-linux-gnu` | Linux   | ARM64       | Experimental |
+| `x86_64-unknown-freebsd`    | FreeBSD | x86_64      | Experimental |
+| `x86_64-pc-windows-msvc`    | Windows | x86_64      | Experimental |
 | `wasm32-unknown-unknown`    | WASM    | 32-bit      | Experimental |
 
 ## Emit Flags

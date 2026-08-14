@@ -51,6 +51,7 @@ export default defineConfig({
           items: [
             { text: "Introduction", link: "/guide/introduction" },
             { text: "Installation", link: "/guide/installation" },
+            { text: "Language Status", link: "/guide/language-status" },
             { text: "Why Vex?", link: "/guide/why-vex" },
           ],
         },
@@ -140,7 +141,7 @@ export default defineConfig({
                 { text: "Ptr<T>", link: "/guide/memory/ptr-t" },
                 { text: "Span<T>", link: "/guide/memory/span-t" },
                 { text: "RawBuf", link: "/guide/memory/rawbuf" },
-                { text: "Pin<T>", link: "/guide/memory/pin" },
+                { text: "Pin", link: "/guide/memory/pin" },
                 { text: "Mem Prelude", link: "/guide/memory/mem-prelude" },
               ],
             },
@@ -186,6 +187,10 @@ export default defineConfig({
             { text: "Assembly", link: "/guide/advanced/assembly" },
             { text: "Builtins", link: "/guide/advanced/builtins" },
             { text: "Comptime", link: "/guide/advanced/comptime" },
+            {
+              text: "Declaration Generation",
+              link: "/guide/advanced/comptime-declarations",
+            },
             { text: "Unsafe", link: "/guide/advanced/unsafe" },
           ],
         },
@@ -230,6 +235,7 @@ export default defineConfig({
                   link: "/guide/tooling/compilation-modes",
                 },
                 { text: "Toolchain", link: "/guide/tooling/full-toolchain" },
+                { text: "Linting & Verified Fixes", link: "/guide/tooling/lint" },
                 { text: "Testing", link: "/guide/tooling/testing" },
                 { text: "VAPE Analyzer", link: "/guide/tooling/vape" },
               ],
@@ -270,6 +276,10 @@ export default defineConfig({
             {
               text: "Compiler Pipeline",
               link: "/architecture/compiler-pipeline",
+            },
+            {
+              text: "Comptime Pipeline",
+              link: "/architecture/comptime-pipeline",
             },
             { text: "SIR & Backends", link: "/architecture/sir-and-backends" },
             {
@@ -358,7 +368,6 @@ export default defineConfig({
             { text: "IO", link: "/std/io" },
             { text: "Log", link: "/std/log" },
             { text: "Math", link: "/std/math" },
-            { text: "Mem", link: "/std/mem" },
             { text: "ML", link: "/std/ml" },
             { text: "Net", link: "/std/net" },
             { text: "Rand", link: "/std/rand" },
