@@ -44,7 +44,10 @@ uses owning types such as `Box`, `Vec`, `string`, or `Block`.
 ```vex
 // File system
 import * as fs from "fs"
-let file = fs.open("test.txt") !> |err| { ... }
+match fs.File.open("test.txt") {
+    Ok(file) => { /* File closes automatically when ownership ends. */ },
+    Err(error) => $println(error.toString()),
+}
 
 // Math
 import * as math from "math"

@@ -1,37 +1,42 @@
-# Brotli (`compress/brotli`)
+# Brotli
 
-Google's modern compression algorithm (RFC 7932). Brotli achieves the best compression ratio for web content, surpassing Gzip by 15–25% on typical HTML/CSS/JS payloads. It's the standard for HTTP `Content-Encoding: br` and WOFF2 web fonts.
+The Brotli codec is implemented in pure Vex and is intended for bounded
+whole-buffer compression and decompression of web-oriented payloads.
 
 ## Usage
 
 ```vex
-import { brotliCompress, brotliDecompress } from "compress/brotli";
+import {
+    compress, decompress,
+    CompressOptions, CompressionFormat,
+} from "compress";
 
-let data = "Brotli in pure Vex!";
-let ptr = data.asPtr() as Ptr<Opaque>;
-let len = data.len() as i64;
-
-let outCap = len + (len / 65536 + 1) * 8 + 16;
-let comp = alloc(outCap as u64);
-let compLen = brotliCompress(ptr, len, comp, outCap);
-
-let decomp = alloc(len as u64);
-let decompLen = brotliDecompress(comp, compLen, decomp, len);
+let encoded = compress(
+    source.asSpan(),
+    CompressOptions.forFormat(CompressionFormat.Brotli).withLevel(6),
+)?;
+let decoded = decompress(
+    encoded.asSpan(),
+    CompressionFormat.Brotli,
+    source.len(),
+)?;
 ```
 
-## API
+Levels 1–11 are accepted. Levels 1–5 prioritize fast uncompressed metablocks;
+levels 6–11 attempt LZ77-compressed metablocks and fall back when compression
+would expand the block.
 
-| Function | Description |
-|----------|-------------|
-| `brotliCompress(src, srcLen, dst, dstCap): i64` | Compress into Brotli stream |
-| `brotliDecompress(src, srcLen, dst, dstCap): i64` | Decompress Brotli data |
+## Decoder coverage and safety
 
-## Internal Architecture
+The decoder handles compressed and uncompressed metablocks, prefix codes,
+back-references and the RFC static dictionary transformations used by the test
+corpus. Every decode goes through an explicit output ceiling. Truncated input,
+invalid distance/prefix data and insufficient output space fail without
+publishing partial output through the safe facade.
 
-| File | Purpose |
-|------|---------|
-| `compress.vx` | Brotli encoder with context modeling |
-| `decompress.vx` | Brotli decoder |
-| `prefix.vx` | Prefix code (Huffman) tables |
+Official Brotli decoders validate streams produced across levels 0, 1, 4, 6,
+9 and 11. The package does not claim bit-for-bit parity with Google's encoder;
+interoperability and decoded content are the contract.
 
-The reference C Brotli implementation is ~15,000 lines. Vex achieves the same in ~660 lines — a **96% reduction**.
+`brotliCompress` and `brotliDecompress` are low-level `RawBuf` kernels for
+specialized callers. A streaming Brotli writer is not currently exposed.

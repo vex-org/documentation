@@ -33,7 +33,7 @@ Available methods:
 | `writeByte(value: u8)` | Append one byte |
 | `writeI64(value: i64)` | Append signed decimal text |
 | `writeU64(value: u64)` | Append unsigned decimal text |
-| `writeF64(value: f64, precision: i32)` | Append fixed-precision text |
+| `writeF64(value: f64, precision: i32)` | Append rounded fixed/scientific text without an intermediate string |
 | `toString()` | Copy current bytes into an owned `string` |
 | `len()` / `isEmpty()` | Inspect logical content |
 | `capacity()` | Inspect reserved byte capacity |
@@ -59,6 +59,22 @@ compared verbatim.
 
 Single-byte variants are also available: `indexOfByte`, `indexOfByteFrom`,
 `lastIndexOfByte`, `countByte`, and `containsByte`.
+
+Complete ranges use Vex's target-independent `[u8; 16]` and `Mask<16>`
+operations. Substring search delegates to the same VexArch
+`Mem.indexOfBytes` implementation used by prelude `str`, so the package does
+not maintain a slower second search engine. Exact tails remain bounded scalar
+code. Ignore-case comparisons fold only ASCII `A`–`Z` lanes; punctuation and
+non-ASCII bytes are never changed.
+
+On an Apple M2 Max with O3 and runtime-backed 64 KiB inputs, the 2026-08-16
+baseline is roughly 37 GB/s byte search, 24 GB/s substring search, 37 GB/s
+ASCII validation and 11.6 GB/s all-case-different ASCII equality. These are
+regression baselines for that machine, not cross-platform guarantees.
+
+`StringBuilder.writeF64` writes through `strconv`'s caller-buffer formatter.
+It shares canonical NaN, infinity, negative-zero, rounding and scientific
+notation behavior without allocating a temporary formatted string.
 
 ## ASCII helpers
 

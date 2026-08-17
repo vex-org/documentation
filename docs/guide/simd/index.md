@@ -1,16 +1,22 @@
 # SIMD and Auto-Vectorization
 
-Vex has two related, but different, SIMD stories:
+Vex has two related, but different, execution stories:
 
 - small fixed-size arrays can be lowered directly to LLVM vector instructions
 - tensor and graph workloads can flow through SIR, which has its own SIMD backend
 
-The important constraint is that SIMD is not a blanket guarantee for every array expression. Some patterns inline cleanly, some lower to loop kernels, and some belong on the `graph fn` and `Tensor<T>` path instead.
+The important constraint is that vectorization is not a blanket guarantee for every
+array expression. Some patterns inline cleanly, some lower to vector-loop kernels,
+and some belong on the `graph fn` and `Tensor<T>` path instead.
+
+To keep behavior stable across CPU and GPU, all these routes are expected to follow
+the same `SIMD/SIMT` contract described in [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract).
 
 See also:
 
 - [Tensor and Mask Types](./tensor-mask)
 - [SIR Optimization Pipeline](./sir-pipeline)
+- [SIMD/SIMT Unified Execution Contract](./simd-simt-contract)
 
 ## The practical model
 
@@ -54,6 +60,12 @@ Treat these areas as advanced or still moving:
 - automatic coercion stories between `Span<T>` and `Tensor<T>` at every call boundary
 - assuming every dynamic array expression will become a single SIMD instruction
 - assuming every matrix or signal-processing operator is equally mature on every backend
+
+## Cross-backend contract at a glance
+
+The `simd-simt-contract` page is the canonical place for “does this API mean the
+same thing on CPU SIMD and GPU SIMT” questions. In short: choose source-level
+operators and masks first; avoid writing backend-dependent branching in user code.
 
 ## Small-array path
 

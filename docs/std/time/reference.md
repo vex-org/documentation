@@ -2,19 +2,19 @@
 
 ## Overview
 
-**Structs:** [`Location`](#Location) · [`ScanResult`](#ScanResult) · [`ScanResult64`](#ScanResult64) · [`Timer`](#Timer) · [`Ticker`](#Ticker) · [`DateParts`](#DateParts) · [`DateTimeParts`](#DateTimeParts) · [`Time`](#Time) · [`Duration`](#Duration)
+**Structs:** [`Location`](#Location) · [`timespec`](#timespec) · [`tm`](#tm) · [`ScanResult`](#ScanResult) · [`ScanResult64`](#ScanResult64) · [`Instant`](#Instant) · [`Timer`](#Timer) · [`Ticker`](#Ticker) · [`DateTimeParts`](#DateTimeParts) · [`Time`](#Time) · [`timespec`](#timespec) · [`tm`](#tm) · [`DateParts`](#DateParts) · [`Duration`](#Duration) · [`FILETIME`](#FILETIME) · [`SYSTEMTIME`](#SYSTEMTIME) · [`TIME_ZONE_INFORMATION`](#TIME_ZONE_INFORMATION)
 
 **Enums:** [`Month`](#Month) · [`Weekday`](#Weekday)
 
-**Functions:** [`UTC`](#UTC) · [`Local`](#Local) · [`fixedZone`](#fixedZone) · [`loadLocation`](#loadLocation) · [`EST`](#EST) · [`PST`](#PST) · [`CET`](#CET) · [`TRT`](#TRT) · [`JST`](#JST) · [`isDigit`](#isDigit) · [`scan_int_at`](#scan_int_at) · [`scan_number_at`](#scan_number_at) · [`scan_nanos_at`](#scan_nanos_at) · [`parts_to_ns`](#parts_to_ns) · [`parse`](#parse) · [`parse_rfc3339`](#parse_rfc3339) · [`parse_duration`](#parse_duration) · [`now`](#now) · [`sleep`](#sleep) · [`monotonicNow`](#monotonicNow) · [`sleepDuration`](#sleepDuration) · [`getLocalOffset`](#getLocalOffset) · [`since`](#since) · [`until`](#until) · [`truncate`](#truncate) · [`round`](#round) · [`unix`](#unix) · [`unix_seconds`](#unix_seconds) · [`unix_nanosecond`](#unix_nanosecond) · [`unix_milli`](#unix_milli) · [`unix_micro`](#unix_micro) · [`compare`](#compare) · [`before`](#before) · [`after`](#after) · [`equal`](#equal) · [`after`](#after) · [`weekday`](#weekday) · [`date`](#date) · [`clock`](#clock) · [`normalized_delay_ns`](#normalized_delay_ns) · [`newTimer`](#newTimer) · [`newTicker`](#newTicker) · [`afterDuration`](#afterDuration) · [`tz_pad2`](#tz_pad2) · [`tz_pad4`](#tz_pad4) · [`formatInLocation`](#formatInLocation) · [`toRFC3339InLocation`](#toRFC3339InLocation) · [`inLocation`](#inLocation) · [`isDST`](#isDST) · [`days_in_month`](#days_in_month) · [`ns_to_datetime`](#ns_to_datetime) · [`add`](#add) · [`sub`](#sub) · [`pad2`](#pad2) · [`pad4`](#pad4) · [`abs_date`](#abs_date) · [`is_leap`](#is_leap) · [`nsToDateTime`](#nsToDateTime) · [`fmt_int`](#fmt_int) · [`format_layout`](#format_layout) · [`utc`](#utc) · [`local`](#local) · [`fixed_zone`](#fixed_zone) · [`load_location`](#load_location) · [`seconds`](#seconds) · [`milliseconds`](#milliseconds) · [`microseconds`](#microseconds) · [`nanoseconds`](#nanoseconds) · [`minutes`](#minutes) · [`hours`](#hours)
+**Functions:** [`UTC`](#UTC) · [`Local`](#Local) · [`fixedZone`](#fixedZone) · [`loadLocation`](#loadLocation) · [`EST`](#EST) · [`PST`](#PST) · [`CET`](#CET) · [`TRT`](#TRT) · [`JST`](#JST) · [`vex_time_current_ns`](#vex_time_current_ns) · [`vex_nanosleep`](#vex_nanosleep) · [`vex_monotonic_ns`](#vex_monotonic_ns) · [`vex_tz_offset_at_shim`](#vex_tz_offset_at_shim) · [`vex_tz_exists_shim`](#vex_tz_exists_shim) · [`vex_get_local_offset`](#vex_get_local_offset) · [`isDigit`](#isDigit) · [`scan_int_at`](#scan_int_at) · [`scan_nanos_at`](#scan_nanos_at) · [`daysFromCivil`](#daysFromCivil) · [`validDateTime`](#validDateTime) · [`partsToNs`](#partsToNs) · [`parse`](#parse) · [`parse_rfc3339`](#parse_rfc3339) · [`parse_duration`](#parse_duration) · [`signedDurationBetween`](#signedDurationBetween) · [`now`](#now) · [`sleep`](#sleep) · [`sleep`](#sleep) · [`getLocalOffset`](#getLocalOffset) · [`since`](#since) · [`until`](#until) · [`truncate`](#truncate) · [`round`](#round) · [`unix`](#unix) · [`unix_seconds`](#unix_seconds) · [`unix_nanosecond`](#unix_nanosecond) · [`unix_milli`](#unix_milli) · [`unix_micro`](#unix_micro) · [`compare`](#compare) · [`before`](#before) · [`after`](#after) · [`equal`](#equal) · [`after`](#after) · [`weekday`](#weekday) · [`date`](#date) · [`clock`](#clock) · [`newTimer`](#newTimer) · [`newTicker`](#newTicker) · [`afterDuration`](#afterDuration) · [`tz_pad2`](#tz_pad2) · [`tz_pad4`](#tz_pad4) · [`formatInLocation`](#formatInLocation) · [`toRFC3339InLocation`](#toRFC3339InLocation) · [`inLocation`](#inLocation) · [`isDST`](#isDST) · [`days_in_month`](#days_in_month) · [`ns_to_datetime`](#ns_to_datetime) · [`floor_div`](#floor_div) · [`add`](#add) · [`sub`](#sub) · [`write_padded_int`](#write_padded_int) · [`vex_time_current_ns`](#vex_time_current_ns) · [`vex_nanosleep`](#vex_nanosleep) · [`vex_monotonic_ns`](#vex_monotonic_ns) · [`vex_tz_offset_at_shim`](#vex_tz_offset_at_shim) · [`vex_tz_exists_shim`](#vex_tz_exists_shim) · [`vex_get_local_offset`](#vex_get_local_offset) · [`fmt_int`](#fmt_int) · [`format_layout`](#format_layout) · [`utc`](#utc) · [`local`](#local) · [`fixed_zone`](#fixed_zone) · [`load_location`](#load_location) · [`abs_date`](#abs_date) · [`is_leap`](#is_leap) · [`nsToDateTime`](#nsToDateTime) · [`magnitude`](#magnitude) · [`seconds`](#seconds) · [`milliseconds`](#milliseconds) · [`microseconds`](#microseconds) · [`nanoseconds`](#nanoseconds) · [`minutes`](#minutes) · [`hours`](#hours) · [`vex_time_current_ns`](#vex_time_current_ns) · [`sleepMilliseconds`](#sleepMilliseconds) · [`vex_nanosleep`](#vex_nanosleep) · [`vex_monotonic_ns`](#vex_monotonic_ns) · [`vex_tz_offset_at_shim`](#vex_tz_offset_at_shim) · [`vex_tz_exists_shim`](#vex_tz_exists_shim) · [`vex_get_local_offset`](#vex_get_local_offset)
 
 **Constants:** [`NANOSECOND`](#NANOSECOND) · [`MICROSECOND`](#MICROSECOND) · [`MILLISECOND`](#MILLISECOND) · [`SECOND`](#SECOND) · [`MINUTE`](#MINUTE) · [`HOUR`](#HOUR) · [`DAY`](#DAY) · [`RFC3339`](#RFC3339)
 
 ## Constants
 
-### <a id="NANOSECOND"></a>`NANOSECOND` ` export`
+### <a id="NANOSECOND"></a>`NANOSECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L33-33
+> 📄 `constants.vx` L33-33
 
 ```vex
 export const NANOSECOND: i64=1;
@@ -24,9 +24,9 @@ export const NANOSECOND: i64=1;
 
 ---
 
-### <a id="MICROSECOND"></a>`MICROSECOND` ` export`
+### <a id="MICROSECOND"></a>`MICROSECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L34-34
+> 📄 `constants.vx` L34-34
 
 ```vex
 export const MICROSECOND: i64=1000 * NANOSECOND;
@@ -36,9 +36,9 @@ export const MICROSECOND: i64=1000 * NANOSECOND;
 
 ---
 
-### <a id="MILLISECOND"></a>`MILLISECOND` ` export`
+### <a id="MILLISECOND"></a>`MILLISECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L35-35
+> 📄 `constants.vx` L35-35
 
 ```vex
 export const MILLISECOND: i64=1000 * MICROSECOND;
@@ -48,9 +48,9 @@ export const MILLISECOND: i64=1000 * MICROSECOND;
 
 ---
 
-### <a id="SECOND"></a>`SECOND` ` export`
+### <a id="SECOND"></a>`SECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L36-36
+> 📄 `constants.vx` L36-36
 
 ```vex
 export const SECOND: i64=1000 * MILLISECOND;
@@ -60,9 +60,9 @@ export const SECOND: i64=1000 * MILLISECOND;
 
 ---
 
-### <a id="MINUTE"></a>`MINUTE` ` export`
+### <a id="MINUTE"></a>`MINUTE` `🔓 export`
 
-&gt; 📄 `constants.vx` L37-37
+> 📄 `constants.vx` L37-37
 
 ```vex
 export const MINUTE: i64=60 * SECOND;
@@ -72,9 +72,9 @@ export const MINUTE: i64=60 * SECOND;
 
 ---
 
-### <a id="HOUR"></a>`HOUR` ` export`
+### <a id="HOUR"></a>`HOUR` `🔓 export`
 
-&gt; 📄 `constants.vx` L38-38
+> 📄 `constants.vx` L38-38
 
 ```vex
 export const HOUR: i64=60 * MINUTE;
@@ -84,9 +84,9 @@ export const HOUR: i64=60 * MINUTE;
 
 ---
 
-### <a id="DAY"></a>`DAY` ` export`
+### <a id="DAY"></a>`DAY` `🔓 export`
 
-&gt; 📄 `constants.vx` L39-39
+> 📄 `constants.vx` L39-39
 
 ```vex
 export const DAY: i64=24 * HOUR;
@@ -96,9 +96,9 @@ export const DAY: i64=24 * HOUR;
 
 ---
 
-### <a id="RFC3339"></a>`RFC3339` ` export`
+### <a id="RFC3339"></a>`RFC3339` `🔓 export`
 
-&gt; 📄 `constants.vx` L42-42
+> 📄 `constants.vx` L42-42
 
 ```vex
 export const RFC3339: string="2006-01-02T15:04:05Z07:00";
@@ -110,9 +110,9 @@ export const RFC3339: string="2006-01-02T15:04:05Z07:00";
 
 ## Structs
 
-### <a id="Location"></a>`Location` ` export`
+### <a id="Location"></a>`Location` `🔓 export`
 
-&gt; 📄 `location.vx` L13-23
+> 📄 `location.vx` L17-27
 
 ```vex
 export struct Location
@@ -136,52 +136,135 @@ export struct Location
 | `Location.local`[↗](#Location.local) | `export fn Location.local(): Location` |  |
 | `Location.fixedZone`[↗](#Location.fixedZone) | `export fn Location.fixedZone(name: string, offsetS` |  |
 | `Location.load`[↗](#Location.load) | `export fn Location.load(name: string): Result&lt;Loca` |  |
-| `offset`[↗](#Location.offset) | `export fn (self: &Location) offset(): i64` | Standard (base) offset in seconds. |
-| `offsetAtUnix`[↗](#Location.offsetAtUnix) | `export fn (self: &Location) offsetAtUnix(unixSec: ` | Actual UTC offset at an arbitrary Unix timestamp. |
-| `offsetAt`[↗](#Location.offsetAt) | `export fn (self: &Location) offsetAt(t: Time): i64` | Offset at a Time instant. |
-| `offsetHours`[↗](#Location.offsetHours) | `export fn (self: &Location) offsetHours(): i32` | Offset in whole hours. |
-| `clone`[↗](#Location.clone) | `export fn (self: &Location) clone(): Location` | Clone. |
-| `toString`[↗](#Location.toString) | `export fn (self: &Location) toString(): string` | Display: "America/New_York (UTC-5)" |
+| `offset`[↗](#Location.offset) | `export fn (self: &amp;Location) offset(): i64` | Standard (base) offset in seconds. |
+| `offsetAtUnix`[↗](#Location.offsetAtUnix) | `export fn (self: &amp;Location) offsetAtUnix(unixSec: ` | Actual UTC offset at an arbitrary Unix timestamp. |
+| `offsetAt`[↗](#Location.offsetAt) | `export fn (self: &amp;Location) offsetAt(t: Time): i64` | Offset at a Time instant. |
+| `offsetHours`[↗](#Location.offsetHours) | `export fn (self: &amp;Location) offsetHours(): i32` | Offset in whole hours. |
+| `clone`[↗](#Location.clone) | `export fn (self: &amp;Location) clone(): Location` | Clone. |
+| `toString`[↗](#Location.toString) | `export fn (self: &amp;Location) toString(): string` | Display: "America/New_York (UTC-5)" |
 
 ---
 
-### <a id="ScanResult"></a>`ScanResult` ` export`
+### <a id="timespec"></a>`timespec`
 
-&gt; 📄 `parse.vx` L7-11
+> 📄 `native.macos.vxc` L3-7
 
 ```vex
-export struct ScanResult
+struct timespec
+```
+
+**Implements:** `Copy`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `tv_sec` | `i64` | 🔓 public |  |
+| `tv_nsec` | `i64` | 🔓 public |  |
+
+---
+
+### <a id="tm"></a>`tm`
+
+> 📄 `native.macos.vxc` L54-67
+
+```vex
+struct tm
 ```
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `i32` |  public |  |
-| `count` | `i32` |  public |  |
+| `tm_sec` | `i32` | 🔓 public |  |
+| `tm_min` | `i32` | 🔓 public |  |
+| `tm_hour` | `i32` | 🔓 public |  |
+| `tm_mday` | `i32` | 🔓 public |  |
+| `tm_mon` | `i32` | 🔓 public |  |
+| `tm_year` | `i32` | 🔓 public |  |
+| `tm_wday` | `i32` | 🔓 public |  |
+| `tm_yday` | `i32` | 🔓 public |  |
+| `tm_isdst` | `i32` | 🔓 public |  |
+| `tm_gmtoff` | `i64` | 🔓 public |  |
+| `tm_zone` | `Ptr&lt;u8&gt;` | 🔓 public |  |
 
 ---
 
-### <a id="ScanResult64"></a>`ScanResult64` ` export`
+### <a id="ScanResult"></a>`ScanResult`
 
-&gt; 📄 `parse.vx` L12-16
+> 📄 `parse.vx` L6-10
 
 ```vex
-export struct ScanResult64
+struct ScanResult
 ```
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `i64` |  public |  |
-| `count` | `i32` |  public |  |
+| `value` | `i32` | 🔓 public |  |
+| `count` | `i32` | 🔓 public |  |
 
 ---
 
-### <a id="Timer"></a>`Timer` ` export`
+### <a id="ScanResult64"></a>`ScanResult64`
 
-&gt; 📄 `helpers.vx` L124-129
+> 📄 `parse.vx` L11-15
+
+```vex
+struct ScanResult64
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `value` | `i64` | 🔓 public |  |
+| `count` | `i32` | 🔓 public |  |
+
+---
+
+### <a id="Instant"></a>`Instant` `🔓 export`
+
+> 📄 `instant.vx` L7-10
+
+```vex
+export struct Instant
+```
+
+**Implements:** `Clone` & `Copy` & `Eq` & `Ord`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `ticks` | `u64` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `Instant.now`[↗](#Instant.now) | `export fn Instant.now(): Instant` |  |
+| `clone`[↗](#Instant.clone) | `export fn (self: &amp;Instant) clone(): Instant` |  |
+| `asNanos`[↗](#Instant.asNanos) | `export fn (self: &amp;Instant) asNanos(): u64` | Process-local clock reading for diagnostics and native interop. It has no |
+| `durationSince`[↗](#Instant.durationSince) | `export fn (self: &amp;Instant) durationSince(earlier: ` | Signed difference with saturation at Duration's representable limits. |
+| `saturatingDurationSince`[↗](#Instant.saturatingDurationSince) | `export fn (self: &amp;Instant) saturatingDurationSince` | Non-negative difference; clock anomalies or reversed operands yield zero. |
+| `elapsed`[↗](#Instant.elapsed) | `export fn (self: &amp;Instant) elapsed(): Duration` |  |
+| `checkedAdd`[↗](#Instant.checkedAdd) | `export fn (self: &amp;Instant) checkedAdd(duration: Du` |  |
+| `checkedSub`[↗](#Instant.checkedSub) | `export fn (self: &amp;Instant) checkedSub(duration: Du` |  |
+| `saturatingAdd`[↗](#Instant.saturatingAdd) | `export fn (self: &amp;Instant) saturatingAdd(duration:` |  |
+| `saturatingSub`[↗](#Instant.saturatingSub) | `export fn (self: &amp;Instant) saturatingSub(duration:` |  |
+| `op==`[↗](#Instant.op==) | `export fn (self: &amp;Instant) op==(other: &amp;Instant): ` |  |
+| `op<`[↗](#Instant.op<) | `export fn (self: &amp;Instant) op&lt;(other: &amp;Instant): b` |  |
+| `op>`[↗](#Instant.op>) | `export fn (self: &amp;Instant) op&gt;(other: &amp;Instant): b` |  |
+| `op<=`[↗](#Instant.op<=) | `export fn (self: &amp;Instant) op&lt;=(other: &amp;Instant): ` |  |
+| `op>=`[↗](#Instant.op>=) | `export fn (self: &amp;Instant) op&gt;=(other: &amp;Instant): ` |  |
+
+---
+
+### <a id="Timer"></a>`Timer` `🔓 export`
+
+> 📄 `helpers.vx` L122-127
 
 ```vex
 export struct Timer
@@ -191,26 +274,26 @@ export struct Timer
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `deadline_ns` | `u64` |  public |  |
-| `fired` | `bool` |  public |  |
-| `active` | `bool` |  public |  |
+| `deadline` | `Instant` | 🔒 private |  |
+| `fired` | `bool` | 🔒 private |  |
+| `active` | `bool` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `Timer.new`[↗](#Timer.new) | `export fn Timer.new(d: Duration): Timer` |  |
-| `expired`[↗](#Timer.expired) | `export fn (self: &Timer) expired(): bool` |  |
-| `poll`[↗](#Timer.poll) | `export fn (self: &Timer!) poll(): bool` |  |
-| `reset`[↗](#Timer.reset) | `export fn (self: &Timer!) reset(d: Duration)` |  |
-| `stop`[↗](#Timer.stop) | `export fn (self: &Timer!) stop()` |  |
-| `wait`[↗](#Timer.wait) | `export fn (self: &Timer!) wait(): Time` |  |
+| `expired`[↗](#Timer.expired) | `export fn (self: &amp;Timer) expired(): bool` |  |
+| `poll`[↗](#Timer.poll) | `export fn (self: &amp;Timer!) poll(): bool` |  |
+| `reset`[↗](#Timer.reset) | `export fn (self: &amp;Timer!) reset(d: Duration)` |  |
+| `stop`[↗](#Timer.stop) | `export fn (self: &amp;Timer!) stop()` |  |
+| `wait`[↗](#Timer.wait) | `export fn (self: &amp;Timer!) wait(): Time` |  |
 
 ---
 
-### <a id="Ticker"></a>`Ticker` ` export`
+### <a id="Ticker"></a>`Ticker` `🔓 export`
 
-&gt; 📄 `helpers.vx` L210-215
+> 📄 `helpers.vx` L195-200
 
 ```vex
 export struct Ticker
@@ -220,42 +303,24 @@ export struct Ticker
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `interval_ns` | `u64` |  public |  |
-| `last_tick_ns` | `u64` |  public |  |
-| `active` | `bool` |  public |  |
+| `interval` | `Duration` | 🔒 private |  |
+| `next` | `Instant` | 🔒 private |  |
+| `active` | `bool` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `Ticker.new`[↗](#Ticker.new) | `export fn Ticker.new(d: Duration): Ticker` |  |
-| `tick`[↗](#Ticker.tick) | `export fn (self: &Ticker!) tick(): bool` |  |
-| `reset`[↗](#Ticker.reset) | `export fn (self: &Ticker!) reset(d: Duration)` |  |
-| `stop`[↗](#Ticker.stop) | `export fn (self: &Ticker!) stop()` |  |
+| `tick`[↗](#Ticker.tick) | `export fn (self: &amp;Ticker!) tick(): bool` |  |
+| `reset`[↗](#Ticker.reset) | `export fn (self: &amp;Ticker!) reset(d: Duration)` |  |
+| `stop`[↗](#Ticker.stop) | `export fn (self: &amp;Ticker!) stop()` |  |
 
 ---
 
-### <a id="DateParts"></a>`DateParts`
+### <a id="DateTimeParts"></a>`DateTimeParts` `🔓 export`
 
-&gt; 📄 `time_type.vx` L27-32
-
-```vex
-struct DateParts
-```
-
-**Fields:**
-
-| Name | Type | Access | Description |
-|------|------|--------|-------------|
-| `y` | `i32` | 🔒 readonly |  |
-| `m` | `i32` | 🔒 readonly |  |
-| `d` | `i32` | 🔒 readonly |  |
-
----
-
-### <a id="DateTimeParts"></a>`DateTimeParts` ` export`
-
-&gt; 📄 `time_type.vx` L35-44
+> 📄 `time_type.vx` L28-37
 
 ```vex
 export struct DateTimeParts
@@ -277,31 +342,31 @@ export struct DateTimeParts
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `year`[↗](#DateTimeParts.year) | `export fn (self: &DateTimeParts) year(): i32` |  |
-| `month`[↗](#DateTimeParts.month) | `export fn (self: &DateTimeParts) month(): i32` |  |
-| `day`[↗](#DateTimeParts.day) | `export fn (self: &DateTimeParts) day(): i32` |  |
-| `hour`[↗](#DateTimeParts.hour) | `export fn (self: &DateTimeParts) hour(): i32` |  |
-| `minute`[↗](#DateTimeParts.minute) | `export fn (self: &DateTimeParts) minute(): i32` |  |
-| `second`[↗](#DateTimeParts.second) | `export fn (self: &DateTimeParts) second(): i32` |  |
-| `weekday`[↗](#DateTimeParts.weekday) | `export fn (self: &DateTimeParts) weekday(): i32` |  |
+| `year`[↗](#DateTimeParts.year) | `export fn (self: &amp;DateTimeParts) year(): i32` |  |
+| `month`[↗](#DateTimeParts.month) | `export fn (self: &amp;DateTimeParts) month(): i32` |  |
+| `day`[↗](#DateTimeParts.day) | `export fn (self: &amp;DateTimeParts) day(): i32` |  |
+| `hour`[↗](#DateTimeParts.hour) | `export fn (self: &amp;DateTimeParts) hour(): i32` |  |
+| `minute`[↗](#DateTimeParts.minute) | `export fn (self: &amp;DateTimeParts) minute(): i32` |  |
+| `second`[↗](#DateTimeParts.second) | `export fn (self: &amp;DateTimeParts) second(): i32` |  |
+| `weekday`[↗](#DateTimeParts.weekday) | `export fn (self: &amp;DateTimeParts) weekday(): i32` |  |
 
 ---
 
-### <a id="Time"></a>`Time` ` export`
+### <a id="Time"></a>`Time` `🔓 export`
 
-&gt; 📄 `time_type.vx` L85-88
+> 📄 `time_type.vx` L78-81
 
 ```vex
 export struct Time
 ```
 
-**Implements:** `Display` & `Clone`
+**Implements:** `Display` & `Clone` & `Copy` & `Eq` & `Ord`
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `ns` | `i64` |  public |  |
+| `ns` | `i64` | 🔒 readonly |  |
 
 **Methods:**
 
@@ -309,43 +374,120 @@ export struct Time
 |--------|-----------|-------------|
 | `Time.now`[↗](#Time.now) | `export fn Time.now(): Time` |  |
 | `Time.unix`[↗](#Time.unix) | `export fn Time.unix(sec: i64, nsec: i64): Time` |  |
-| `clone`[↗](#Time.clone) | `export fn (self: &Time) clone(): Time` |  |
-| `toString`[↗](#Time.toString) | `export fn (self: &Time) toString(): string` |  |
-| `unix`[↗](#Time.unix) | `export fn (self: &Time) unix(): i64` |  |
-| `unixNano`[↗](#Time.unixNano) | `export fn (self: &Time) unixNano(): i64` |  |
-| `add`[↗](#Time.add) | `export fn (self: &Time) add(d: i64): Time` |  |
-| `sub`[↗](#Time.sub) | `export fn (self: &Time) sub(t: Time): i64` |  |
-| `year`[↗](#Time.year) | `export fn (self: &Time) year(): i64` |  |
-| `month`[↗](#Time.month) | `export fn (self: &Time) month(): Month` |  |
-| `day`[↗](#Time.day) | `export fn (self: &Time) day(): i64` |  |
-| `hour`[↗](#Time.hour) | `export fn (self: &Time) hour(): i64` |  |
-| `minute`[↗](#Time.minute) | `export fn (self: &Time) minute(): i64` |  |
-| `second`[↗](#Time.second) | `export fn (self: &Time) second(): i64` |  |
-| `weekday`[↗](#Time.weekday) | `export fn (self: &Time) weekday(): Weekday` |  |
-| `addDate`[↗](#Time.addDate) | `export fn (self: &Time) addDate(years: i32, months` |  |
-| `withOffset`[↗](#Time.withOffset) | `export fn (self: &Time) withOffset(offsetSec: i64)` |  |
-| `formatWithOffset`[↗](#Time.formatWithOffset) | `export fn (self: &Time) formatWithOffset(layout: s` |  |
-| `format`[↗](#Time.format) | `export fn (self: &Time) format(layout: str): strin` |  |
-| `startOf`[↗](#Time.startOf) | `export fn (self: &Time) startOf(unit: str): Time` |  |
-| `endOf`[↗](#Time.endOf) | `export fn (self: &Time) endOf(unit: str): Time` |  |
+| `Time.checkedUnix`[↗](#Time.checkedUnix) | `export fn Time.checkedUnix(sec: i64, nsec: i64): O` | Constructs Unix time while normalizing an arbitrary nanosecond offset. |
+| `Time.fromUnixNanos`[↗](#Time.fromUnixNanos) | `export fn Time.fromUnixNanos(ns: i64): Time` | Constructs an absolute time from nanoseconds since the Unix epoch. |
+| `clone`[↗](#Time.clone) | `export fn (self: &amp;Time) clone(): Time` |  |
+| `cmp`[↗](#Time.cmp) | `export fn (self: &amp;Time) cmp(other: &amp;Time): i32` |  |
+| `op==`[↗](#Time.op==) | `export fn (self: &amp;Time) op==(other: &amp;Time): bool` |  |
+| `op<`[↗](#Time.op<) | `export fn (self: &amp;Time) op&lt;(other: &amp;Time): bool` |  |
+| `op>`[↗](#Time.op>) | `export fn (self: &amp;Time) op&gt;(other: &amp;Time): bool` |  |
+| `op<=`[↗](#Time.op<=) | `export fn (self: &amp;Time) op&lt;=(other: &amp;Time): bool` |  |
+| `op>=`[↗](#Time.op>=) | `export fn (self: &amp;Time) op&gt;=(other: &amp;Time): bool` |  |
+| `toString`[↗](#Time.toString) | `export fn (self: &amp;Time) toString(): string` |  |
+| `unix`[↗](#Time.unix) | `export fn (self: &amp;Time) unix(): i64` |  |
+| `unixNano`[↗](#Time.unixNano) | `export fn (self: &amp;Time) unixNano(): i64` | Total nanoseconds elapsed since the Unix epoch. |
+| `unixMilli`[↗](#Time.unixMilli) | `export fn (self: &amp;Time) unixMilli(): i64` | Total milliseconds elapsed since the Unix epoch, rounded toward the past. |
+| `unixMicro`[↗](#Time.unixMicro) | `export fn (self: &amp;Time) unixMicro(): i64` | Total microseconds elapsed since the Unix epoch, rounded toward the past. |
+| `nanosecond`[↗](#Time.nanosecond) | `export fn (self: &amp;Time) nanosecond(): i64` | Nanosecond offset within the current Unix second (`0..999_999_999`). |
+| `checkedAdd`[↗](#Time.checkedAdd) | `export fn (self: &amp;Time) checkedAdd(d: Duration): O` |  |
+| `add`[↗](#Time.add) | `export fn (self: &amp;Time) add(d: Duration): Time` |  |
+| `saturatingAdd`[↗](#Time.saturatingAdd) | `export fn (self: &amp;Time) saturatingAdd(d: Duration)` |  |
+| `checkedDurationSince`[↗](#Time.checkedDurationSince) | `export fn (self: &amp;Time) checkedDurationSince(earli` |  |
+| `durationSince`[↗](#Time.durationSince) | `export fn (self: &amp;Time) durationSince(earlier: Tim` |  |
+| `year`[↗](#Time.year) | `export fn (self: &amp;Time) year(): i64` |  |
+| `month`[↗](#Time.month) | `export fn (self: &amp;Time) month(): Month` |  |
+| `day`[↗](#Time.day) | `export fn (self: &amp;Time) day(): i64` |  |
+| `hour`[↗](#Time.hour) | `export fn (self: &amp;Time) hour(): i64` |  |
+| `minute`[↗](#Time.minute) | `export fn (self: &amp;Time) minute(): i64` |  |
+| `second`[↗](#Time.second) | `export fn (self: &amp;Time) second(): i64` |  |
+| `weekday`[↗](#Time.weekday) | `export fn (self: &amp;Time) weekday(): Weekday` |  |
+| `addDate`[↗](#Time.addDate) | `export fn (self: &amp;Time) addDate(years: i32, months` |  |
+| `withOffset`[↗](#Time.withOffset) | `export fn (self: &amp;Time) withOffset(offsetSec: i64)` |  |
+| `formatWithOffset`[↗](#Time.formatWithOffset) | `export fn (self: &amp;Time) formatWithOffset(layout: s` |  |
+| `format`[↗](#Time.format) | `export fn (self: &amp;Time) format(layout: str): strin` |  |
+| `startOf`[↗](#Time.startOf) | `export fn (self: &amp;Time) startOf(unit: str): Time` |  |
+| `endOf`[↗](#Time.endOf) | `export fn (self: &amp;Time) endOf(unit: str): Time` |  |
 
 ---
 
-### <a id="Duration"></a>`Duration` ` export`
+### <a id="timespec"></a>`timespec`
 
-&gt; 📄 `duration.vx` L4-7
+> 📄 `native.linux.vxc` L3-7
 
 ```vex
-export struct Duration
+struct timespec
 ```
 
-**Implements:** `Display` & `Clone`
+**Implements:** `Copy`
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `ns` | `i64` |  public |  |
+| `tv_sec` | `i64` | 🔓 public |  |
+| `tv_nsec` | `i64` | 🔓 public |  |
+
+---
+
+### <a id="tm"></a>`tm`
+
+> 📄 `native.linux.vxc` L50-63
+
+```vex
+struct tm
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `tm_sec` | `i32` | 🔓 public |  |
+| `tm_min` | `i32` | 🔓 public |  |
+| `tm_hour` | `i32` | 🔓 public |  |
+| `tm_mday` | `i32` | 🔓 public |  |
+| `tm_mon` | `i32` | 🔓 public |  |
+| `tm_year` | `i32` | 🔓 public |  |
+| `tm_wday` | `i32` | 🔓 public |  |
+| `tm_yday` | `i32` | 🔓 public |  |
+| `tm_isdst` | `i32` | 🔓 public |  |
+| `tm_gmtoff` | `i64` | 🔓 public |  |
+| `tm_zone` | `Ptr&lt;u8&gt;` | 🔓 public |  |
+
+---
+
+### <a id="DateParts"></a>`DateParts` `🔓 export`
+
+> 📄 `conversions.vx` L7-12
+
+```vex
+export struct DateParts
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `y` | `i32` | 🔒 readonly |  |
+| `m` | `i32` | 🔒 readonly |  |
+| `d` | `i32` | 🔒 readonly |  |
+
+---
+
+### <a id="Duration"></a>`Duration` `🔓 export`
+
+> 📄 `duration.vx` L5-8
+
+```vex
+export struct Duration
+```
+
+**Implements:** `Display` & `Clone` & `Copy` & `Eq` & `Ord`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `ns` | `i64` | 🔒 readonly |  |
 
 **Methods:**
 
@@ -357,31 +499,106 @@ export struct Duration
 | `Duration.nanoseconds`[↗](#Duration.nanoseconds) | `export fn Duration.nanoseconds(ns: i64): Duration` |  |
 | `Duration.minutes`[↗](#Duration.minutes) | `export fn Duration.minutes(m: i64): Duration` |  |
 | `Duration.hours`[↗](#Duration.hours) | `export fn Duration.hours(h: i64): Duration` |  |
-| `asSeconds`[↗](#Duration.asSeconds) | `export fn (self: &Duration) asSeconds(): i64` |  |
-| `asMillis`[↗](#Duration.asMillis) | `export fn (self: &Duration) asMillis(): i64` |  |
-| `asMicros`[↗](#Duration.asMicros) | `export fn (self: &Duration) asMicros(): i64` |  |
-| `asNanos`[↗](#Duration.asNanos) | `export fn (self: &Duration) asNanos(): i64` |  |
-| `asMinutes`[↗](#Duration.asMinutes) | `export fn (self: &Duration) asMinutes(): i64` |  |
-| `asHours`[↗](#Duration.asHours) | `export fn (self: &Duration) asHours(): i64` |  |
-| `add`[↗](#Duration.add) | `export fn (self: &Duration) add(other: Duration): ` |  |
-| `sub`[↗](#Duration.sub) | `export fn (self: &Duration) sub(other: Duration): ` |  |
-| `mul`[↗](#Duration.mul) | `export fn (self: &Duration) mul(n: i64): Duration` |  |
-| `div`[↗](#Duration.div) | `export fn (self: &Duration) div(n: i64): Duration` |  |
-| `isZero`[↗](#Duration.isZero) | `export fn (self: &Duration) isZero(): bool` |  |
-| `isNegative`[↗](#Duration.isNegative) | `export fn (self: &Duration) isNegative(): bool` |  |
-| `abs`[↗](#Duration.abs) | `export fn (self: &Duration) abs(): Duration` |  |
-| `clone`[↗](#Duration.clone) | `export fn (self: &Duration) clone(): Duration` |  |
-| `neg`[↗](#Duration.neg) | `export fn (self: &Duration) neg(): Duration` |  |
-| `cmp`[↗](#Duration.cmp) | `export fn (self: &Duration) cmp(other: &Duration):` |  |
-| `toString`[↗](#Duration.toString) | `export fn (self: &Duration) toString(): string` |  |
+| `asSeconds`[↗](#Duration.asSeconds) | `export fn (self: &amp;Duration) asSeconds(): i64` |  |
+| `asMillis`[↗](#Duration.asMillis) | `export fn (self: &amp;Duration) asMillis(): i64` |  |
+| `asMicros`[↗](#Duration.asMicros) | `export fn (self: &amp;Duration) asMicros(): i64` |  |
+| `asNanos`[↗](#Duration.asNanos) | `export fn (self: &amp;Duration) asNanos(): i64` |  |
+| `asMinutes`[↗](#Duration.asMinutes) | `export fn (self: &amp;Duration) asMinutes(): i64` |  |
+| `asHours`[↗](#Duration.asHours) | `export fn (self: &amp;Duration) asHours(): i64` |  |
+| `add`[↗](#Duration.add) | `export fn (self: &amp;Duration) add(other: Duration): ` |  |
+| `sub`[↗](#Duration.sub) | `export fn (self: &amp;Duration) sub(other: Duration): ` |  |
+| `mul`[↗](#Duration.mul) | `export fn (self: &amp;Duration) mul(n: i64): Duration` |  |
+| `div`[↗](#Duration.div) | `export fn (self: &amp;Duration) div(n: i64): Duration` |  |
+| `checkedAdd`[↗](#Duration.checkedAdd) | `export fn (self: &amp;Duration) checkedAdd(other: Dura` |  |
+| `checkedSub`[↗](#Duration.checkedSub) | `export fn (self: &amp;Duration) checkedSub(other: Dura` |  |
+| `checkedMul`[↗](#Duration.checkedMul) | `export fn (self: &amp;Duration) checkedMul(n: i64): Op` |  |
+| `checkedDiv`[↗](#Duration.checkedDiv) | `export fn (self: &amp;Duration) checkedDiv(n: i64): Op` |  |
+| `saturatingAdd`[↗](#Duration.saturatingAdd) | `export fn (self: &amp;Duration) saturatingAdd(other: D` |  |
+| `saturatingSub`[↗](#Duration.saturatingSub) | `export fn (self: &amp;Duration) saturatingSub(other: D` |  |
+| `saturatingMul`[↗](#Duration.saturatingMul) | `export fn (self: &amp;Duration) saturatingMul(n: i64):` |  |
+| `isZero`[↗](#Duration.isZero) | `export fn (self: &amp;Duration) isZero(): bool` |  |
+| `isNegative`[↗](#Duration.isNegative) | `export fn (self: &amp;Duration) isNegative(): bool` |  |
+| `abs`[↗](#Duration.abs) | `export fn (self: &amp;Duration) abs(): Duration` |  |
+| `saturatingAbs`[↗](#Duration.saturatingAbs) | `export fn (self: &amp;Duration) saturatingAbs(): Durat` |  |
+| `clone`[↗](#Duration.clone) | `export fn (self: &amp;Duration) clone(): Duration` |  |
+| `neg`[↗](#Duration.neg) | `export fn (self: &amp;Duration) neg(): Duration` |  |
+| `cmp`[↗](#Duration.cmp) | `export fn (self: &amp;Duration) cmp(other: &amp;Duration):` |  |
+| `op==`[↗](#Duration.op==) | `export fn (self: &amp;Duration) op==(other: &amp;Duration)` |  |
+| `op<`[↗](#Duration.op<) | `export fn (self: &amp;Duration) op&lt;(other: &amp;Duration):` |  |
+| `op>`[↗](#Duration.op>) | `export fn (self: &amp;Duration) op&gt;(other: &amp;Duration):` |  |
+| `op<=`[↗](#Duration.op<=) | `export fn (self: &amp;Duration) op&lt;=(other: &amp;Duration)` |  |
+| `op>=`[↗](#Duration.op>=) | `export fn (self: &amp;Duration) op&gt;=(other: &amp;Duration)` |  |
+| `toString`[↗](#Duration.toString) | `export fn (self: &amp;Duration) toString(): string` |  |
+
+---
+
+### <a id="FILETIME"></a>`FILETIME`
+
+> 📄 `native.windows.vxc` L3-6
+
+```vex
+struct FILETIME
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `dwLowDateTime` | `u32` | 🔒 private |  |
+| `dwHighDateTime` | `u32` | 🔒 private |  |
+
+---
+
+### <a id="SYSTEMTIME"></a>`SYSTEMTIME`
+
+> 📄 `native.windows.vxc` L108-117
+
+```vex
+struct SYSTEMTIME
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `wYear` | `u16` | 🔒 private |  |
+| `wMonth` | `u16` | 🔒 private |  |
+| `wDayOfWeek` | `u16` | 🔒 private |  |
+| `wDay` | `u16` | 🔒 private |  |
+| `wHour` | `u16` | 🔒 private |  |
+| `wMinute` | `u16` | 🔒 private |  |
+| `wSecond` | `u16` | 🔒 private |  |
+| `wMilliseconds` | `u16` | 🔒 private |  |
+
+---
+
+### <a id="TIME_ZONE_INFORMATION"></a>`TIME_ZONE_INFORMATION`
+
+> 📄 `native.windows.vxc` L119-128
+
+```vex
+struct TIME_ZONE_INFORMATION
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `Bias` | `i32` | 🔓 public |  |
+| `StandardName` | `[u16; 32]` | 🔓 public |  |
+| `StandardDate` | `SYSTEMTIME` | 🔓 public |  |
+| `StandardBias` | `i32` | 🔓 public |  |
+| `DaylightName` | `[u16; 32]` | 🔓 public |  |
+| `DaylightDate` | `SYSTEMTIME` | 🔓 public |  |
+| `DaylightBias` | `i32` | 🔓 public |  |
 
 ---
 
 ## Enums
 
-### <a id="Month"></a>`Month` ` export`
+### <a id="Month"></a>`Month` `🔓 export`
 
-&gt; 📄 `constants.vx` L5-18
+> 📄 `constants.vx` L5-18
 
 ```vex
 export enum Month
@@ -404,9 +621,9 @@ export enum Month
 
 ---
 
-### <a id="Weekday"></a>`Weekday` ` export`
+### <a id="Weekday"></a>`Weekday` `🔓 export`
 
-&gt; 📄 `constants.vx` L20-28
+> 📄 `constants.vx` L20-28
 
 ```vex
 export enum Weekday
@@ -426,9 +643,9 @@ export enum Weekday
 
 ## Functions
 
-### <a id="UTC"></a>`UTC` ` export`
+### <a id="UTC"></a>`UTC` `🔓 export`
 
-&gt; 📄 `location.vx` L62-64
+> 📄 `location.vx` L70-72
 
 ```vex
 export fn UTC(): Location
@@ -438,9 +655,9 @@ export fn UTC(): Location
 
 ---
 
-### <a id="Local"></a>`Local` ` export`
+### <a id="Local"></a>`Local` `🔓 export`
 
-&gt; 📄 `location.vx` L66-69
+> 📄 `location.vx` L74-77
 
 ```vex
 export fn Local(): Location
@@ -450,9 +667,9 @@ export fn Local(): Location
 
 ---
 
-### <a id="fixedZone"></a>`fixedZone` ` export`
+### <a id="fixedZone"></a>`fixedZone` `🔓 export`
 
-&gt; 📄 `location.vx` L71-73
+> 📄 `location.vx` L79-81
 
 ```vex
 export fn fixedZone(name: string, offsetSeconds: i64): Location
@@ -469,9 +686,9 @@ export fn fixedZone(name: string, offsetSeconds: i64): Location
 
 ---
 
-### <a id="loadLocation"></a>`loadLocation` ` export`
+### <a id="loadLocation"></a>`loadLocation` `🔓 export`
 
-&gt; 📄 `location.vx` L82-98
+> 📄 `location.vx` L90-110
 
 ```vex
 export fn loadLocation(name: string): Result<Location, string>
@@ -487,9 +704,9 @@ export fn loadLocation(name: string): Result<Location, string>
 
 ---
 
-### <a id="EST"></a>`EST` ` export`
+### <a id="EST"></a>`EST` `🔓 export`
 
-&gt; 📄 `location.vx` L160-160
+> 📄 `location.vx` L173-173
 
 ```vex
 export fn EST(): Location
@@ -499,9 +716,9 @@ export fn EST(): Location
 
 ---
 
-### <a id="PST"></a>`PST` ` export`
+### <a id="PST"></a>`PST` `🔓 export`
 
-&gt; 📄 `location.vx` L161-161
+> 📄 `location.vx` L174-174
 
 ```vex
 export fn PST(): Location
@@ -511,9 +728,9 @@ export fn PST(): Location
 
 ---
 
-### <a id="CET"></a>`CET` ` export`
+### <a id="CET"></a>`CET` `🔓 export`
 
-&gt; 📄 `location.vx` L162-162
+> 📄 `location.vx` L175-175
 
 ```vex
 export fn CET(): Location
@@ -523,9 +740,9 @@ export fn CET(): Location
 
 ---
 
-### <a id="TRT"></a>`TRT` ` export`
+### <a id="TRT"></a>`TRT` `🔓 export`
 
-&gt; 📄 `location.vx` L163-163
+> 📄 `location.vx` L176-176
 
 ```vex
 export fn TRT(): Location
@@ -535,9 +752,9 @@ export fn TRT(): Location
 
 ---
 
-### <a id="JST"></a>`JST` ` export`
+### <a id="JST"></a>`JST` `🔓 export`
 
-&gt; 📄 `location.vx` L164-164
+> 📄 `location.vx` L177-177
 
 ```vex
 export fn JST(): Location
@@ -547,9 +764,98 @@ export fn JST(): Location
 
 ---
 
+### <a id="vex_time_current_ns"></a>`vex_time_current_ns` `🔓 export`
+
+> 📄 `native.macos.vxc` L15-20
+
+```vex
+export fn vex_time_current_ns(): u64
+```
+
+**Returns:** `u64`
+
+---
+
+### <a id="vex_nanosleep"></a>`vex_nanosleep` `🔓 export`
+
+> 📄 `native.macos.vxc` L22-40
+
+```vex
+export fn vex_nanosleep(ns: u64)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `u64` |  |
+
+---
+
+### <a id="vex_monotonic_ns"></a>`vex_monotonic_ns` `🔓 export`
+
+> 📄 `native.macos.vxc` L42-47
+
+```vex
+export fn vex_monotonic_ns(): u64
+```
+
+**Returns:** `u64`
+
+---
+
+### <a id="vex_tz_offset_at_shim"></a>`vex_tz_offset_at_shim` `🔓 export`
+
+> 📄 `native.macos.vxc` L74-76
+
+```vex
+export fn vex_tz_offset_at_shim(name: Ptr<u8>, unix_sec: i64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+| `unix_sec` | `i64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_tz_exists_shim"></a>`vex_tz_exists_shim` `🔓 export`
+
+> 📄 `native.macos.vxc` L78-80
+
+```vex
+export fn vex_tz_exists_shim(name: Ptr<u8>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_get_local_offset"></a>`vex_get_local_offset` `🔓 export`
+
+> 📄 `native.macos.vxc` L82-92
+
+```vex
+export fn vex_get_local_offset(): i64
+```
+
+**Returns:** `i64`
+
+---
+
 ### <a id="isDigit"></a>`isDigit`
 
-&gt; 📄 `parse.vx` L18-20
+> 📄 `parse.vx` L17-19
 
 ```vex
 fn isDigit(c: u8): bool
@@ -567,7 +873,7 @@ fn isDigit(c: u8): bool
 
 ### <a id="scan_int_at"></a>`scan_int_at`
 
-&gt; 📄 `parse.vx` L22-36
+> 📄 `parse.vx` L21-35
 
 ```vex
 fn scan_int_at(s: str, pos: usize, digits: i32): ScanResult
@@ -585,28 +891,9 @@ fn scan_int_at(s: str, pos: usize, digits: i32): ScanResult
 
 ---
 
-### <a id="scan_number_at"></a>`scan_number_at`
-
-&gt; 📄 `parse.vx` L38-50
-
-```vex
-fn scan_number_at(s: str, pos: usize): ScanResult64
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `s` | `str` |  |
-| `pos` | `usize` |  |
-
-**Returns:** `ScanResult64`
-
----
-
 ### <a id="scan_nanos_at"></a>`scan_nanos_at`
 
-&gt; 📄 `parse.vx` L52-66
+> 📄 `parse.vx` L37-51
 
 ```vex
 fn scan_nanos_at(s: str, pos: usize): ScanResult64
@@ -623,12 +910,55 @@ fn scan_nanos_at(s: str, pos: usize): ScanResult64
 
 ---
 
-### <a id="parts_to_ns"></a>`parts_to_ns`
+### <a id="daysFromCivil"></a>`daysFromCivil`
 
-&gt; 📄 `parse.vx` L70-79
+> 📄 `parse.vx` L57-67
 
 ```vex
-fn parts_to_ns(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64): i64
+fn daysFromCivil(year: i32, month: i32, day: i32): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `year` | `i32` |  |
+| `month` | `i32` |  |
+| `day` | `i32` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="validDateTime"></a>`validDateTime`
+
+> 📄 `parse.vx` L69-76
+
+```vex
+fn validDateTime(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `y` | `i32` |  |
+| `m` | `i32` |  |
+| `d` | `i32` |  |
+| `h` | `i32` |  |
+| `min` | `i32` |  |
+| `s` | `i32` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="partsToNs"></a>`partsToNs`
+
+> 📄 `parse.vx` L78-102
+
+```vex
+fn partsToNs(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64, offsetSeconds: i32): Option<i64>
 ```
 
 **Parameters:**
@@ -642,14 +972,15 @@ fn parts_to_ns(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64): i64
 | `min` | `i32` |  |
 | `s` | `i32` |  |
 | `ns` | `i64` |  |
+| `offsetSeconds` | `i32` |  |
 
-**Returns:** `i64`
+**Returns:** `Option&lt;i64&gt;`
 
 ---
 
-### <a id="parse"></a>`parse` ` export`
+### <a id="parse"></a>`parse` `🔓 export`
 
-&gt; 📄 `parse.vx` L81-130
+> 📄 `parse.vx` L104-157
 
 ```vex
 export fn parse(layout: str, input: str): Result<Time, string>
@@ -666,9 +997,9 @@ export fn parse(layout: str, input: str): Result<Time, string>
 
 ---
 
-### <a id="parse_rfc3339"></a>`parse_rfc3339` ` export`
+### <a id="parse_rfc3339"></a>`parse_rfc3339` `🔓 export`
 
-&gt; 📄 `parse.vx` L132-166
+> 📄 `parse.vx` L159-222
 
 ```vex
 export fn parse_rfc3339(input: str): Result<Time, string>
@@ -684,9 +1015,9 @@ export fn parse_rfc3339(input: str): Result<Time, string>
 
 ---
 
-### <a id="parse_duration"></a>`parse_duration` ` export`
+### <a id="parse_duration"></a>`parse_duration` `🔓 export`
 
-&gt; 📄 `parse.vx` L168-196
+> 📄 `parse.vx` L224-307
 
 ```vex
 export fn parse_duration(input: str): Result<Duration, string>
@@ -702,9 +1033,28 @@ export fn parse_duration(input: str): Result<Duration, string>
 
 ---
 
-### <a id="now"></a>`now` ` export`
+### <a id="signedDurationBetween"></a>`signedDurationBetween`
 
-&gt; 📄 `helpers.vx` L12-14
+> 📄 `instant.vx` L12-27
+
+```vex
+fn signedDurationBetween(later: u64, earlier: u64): Duration
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `later` | `u64` |  |
+| `earlier` | `u64` |  |
+
+**Returns:** `Duration`
+
+---
+
+### <a id="now"></a>`now` `🔓 export`
+
+> 📄 `helpers.vx` L13-15
 
 ```vex
 export fn now(): Time
@@ -714,9 +1064,9 @@ export fn now(): Time
 
 ---
 
-### <a id="sleep"></a>`sleep` ` export`
+### <a id="sleep"></a>`sleep` `🔓 export`
 
-&gt; 📄 `helpers.vx` L17-21
+> 📄 `helpers.vx` L18-22
 
 ```vex
 export fn sleep(d: i64)
@@ -730,24 +1080,12 @@ export fn sleep(d: i64)
 
 ---
 
-### <a id="monotonicNow"></a>`monotonicNow` ` export`
+### <a id="sleep"></a>`sleep` `🔓 export`
 
-&gt; 📄 `helpers.vx` L24-27
-
-```vex
-export fn monotonicNow(): u64
-```
-
-**Returns:** `u64`
-
----
-
-### <a id="sleepDuration"></a>`sleepDuration` ` export`
-
-&gt; 📄 `helpers.vx` L30-34
+> 📄 `helpers.vx` L25-30
 
 ```vex
-export fn sleepDuration(d: Duration)
+export fn sleep(d: Duration)
 ```
 
 **Parameters:**
@@ -758,9 +1096,9 @@ export fn sleepDuration(d: Duration)
 
 ---
 
-### <a id="getLocalOffset"></a>`getLocalOffset` ` export`
+### <a id="getLocalOffset"></a>`getLocalOffset` `🔓 export`
 
-&gt; 📄 `helpers.vx` L37-39
+> 📄 `helpers.vx` L33-35
 
 ```vex
 export fn getLocalOffset(): i64
@@ -770,9 +1108,9 @@ export fn getLocalOffset(): i64
 
 ---
 
-### <a id="since"></a>`since` ` export`
+### <a id="since"></a>`since` `🔓 export`
 
-&gt; 📄 `helpers.vx` L49-52
+> 📄 `helpers.vx` L45-48
 
 ```vex
 export fn since(t: Time): Duration
@@ -788,9 +1126,9 @@ export fn since(t: Time): Duration
 
 ---
 
-### <a id="until"></a>`until` ` export`
+### <a id="until"></a>`until` `🔓 export`
 
-&gt; 📄 `helpers.vx` L55-58
+> 📄 `helpers.vx` L51-54
 
 ```vex
 export fn until(t: Time): Duration
@@ -806,9 +1144,9 @@ export fn until(t: Time): Duration
 
 ---
 
-### <a id="truncate"></a>`truncate` ` export`
+### <a id="truncate"></a>`truncate` `🔓 export`
 
-&gt; 📄 `helpers.vx` L61-65
+> 📄 `helpers.vx` L57-63
 
 ```vex
 export fn truncate(t: Time, d: Duration): Time
@@ -825,9 +1163,9 @@ export fn truncate(t: Time, d: Duration): Time
 
 ---
 
-### <a id="round"></a>`round` ` export`
+### <a id="round"></a>`round` `🔓 export`
 
-&gt; 📄 `helpers.vx` L68-75
+> 📄 `helpers.vx` L66-75
 
 ```vex
 export fn round(t: Time, d: Duration): Time
@@ -844,9 +1182,9 @@ export fn round(t: Time, d: Duration): Time
 
 ---
 
-### <a id="unix"></a>`unix` ` export`
+### <a id="unix"></a>`unix` `🔓 export`
 
-&gt; 📄 `helpers.vx` L78-80
+> 📄 `helpers.vx` L78-80
 
 ```vex
 export fn unix(sec: i64, nsec: i64): Time
@@ -863,9 +1201,9 @@ export fn unix(sec: i64, nsec: i64): Time
 
 ---
 
-### <a id="unix_seconds"></a>`unix_seconds` ` export`
+### <a id="unix_seconds"></a>`unix_seconds` `🔓 export`
 
-&gt; 📄 `helpers.vx` L83-83
+> 📄 `helpers.vx` L83-83
 
 ```vex
 export fn unix_seconds(t: Time): i64
@@ -881,9 +1219,9 @@ export fn unix_seconds(t: Time): i64
 
 ---
 
-### <a id="unix_nanosecond"></a>`unix_nanosecond` ` export`
+### <a id="unix_nanosecond"></a>`unix_nanosecond` `🔓 export`
 
-&gt; 📄 `helpers.vx` L84-84
+> 📄 `helpers.vx` L84-84
 
 ```vex
 export fn unix_nanosecond(t: Time): i64
@@ -899,9 +1237,9 @@ export fn unix_nanosecond(t: Time): i64
 
 ---
 
-### <a id="unix_milli"></a>`unix_milli` ` export`
+### <a id="unix_milli"></a>`unix_milli` `🔓 export`
 
-&gt; 📄 `helpers.vx` L85-85
+> 📄 `helpers.vx` L85-85
 
 ```vex
 export fn unix_milli(t: Time): i64
@@ -917,9 +1255,9 @@ export fn unix_milli(t: Time): i64
 
 ---
 
-### <a id="unix_micro"></a>`unix_micro` ` export`
+### <a id="unix_micro"></a>`unix_micro` `🔓 export`
 
-&gt; 📄 `helpers.vx` L86-86
+> 📄 `helpers.vx` L86-86
 
 ```vex
 export fn unix_micro(t: Time): i64
@@ -935,9 +1273,9 @@ export fn unix_micro(t: Time): i64
 
 ---
 
-### <a id="compare"></a>`compare` ` export`
+### <a id="compare"></a>`compare` `🔓 export`
 
-&gt; 📄 `helpers.vx` L89-93
+> 📄 `helpers.vx` L89-91
 
 ```vex
 export fn compare(t1: Time, t2: Time): i32
@@ -954,9 +1292,9 @@ export fn compare(t1: Time, t2: Time): i32
 
 ---
 
-### <a id="before"></a>`before` ` export`
+### <a id="before"></a>`before` `🔓 export`
 
-&gt; 📄 `helpers.vx` L95-95
+> 📄 `helpers.vx` L93-93
 
 ```vex
 export fn before(t1: Time, t2: Time): bool
@@ -973,9 +1311,9 @@ export fn before(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="after"></a>`after` ` export`
+### <a id="after"></a>`after` `🔓 export`
 
-&gt; 📄 `helpers.vx` L96-96
+> 📄 `helpers.vx` L94-94
 
 ```vex
 export fn after(t1: Time, t2: Time): bool
@@ -992,9 +1330,9 @@ export fn after(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="equal"></a>`equal` ` export`
+### <a id="equal"></a>`equal` `🔓 export`
 
-&gt; 📄 `helpers.vx` L97-97
+> 📄 `helpers.vx` L95-95
 
 ```vex
 export fn equal(t1: Time, t2: Time): bool
@@ -1011,9 +1349,9 @@ export fn equal(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="after"></a>`after` ` export`
+### <a id="after"></a>`after` `🔓 export`
 
-&gt; 📄 `helpers.vx` L100-107
+> 📄 `helpers.vx` L98-105
 
 ```vex
 export fn after(d: Duration): Channel<Time>
@@ -1029,9 +1367,9 @@ export fn after(d: Duration): Channel<Time>
 
 ---
 
-### <a id="weekday"></a>`weekday` ` export`
+### <a id="weekday"></a>`weekday` `🔓 export`
 
-&gt; 📄 `helpers.vx` L110-110
+> 📄 `helpers.vx` L108-108
 
 ```vex
 export fn weekday(t: Time): Weekday
@@ -1047,9 +1385,9 @@ export fn weekday(t: Time): Weekday
 
 ---
 
-### <a id="date"></a>`date` ` export`
+### <a id="date"></a>`date` `🔓 export`
 
-&gt; 📄 `helpers.vx` L112-114
+> 📄 `helpers.vx` L110-112
 
 ```vex
 export fn date(t: Time): (i32, Month, i32)
@@ -1065,9 +1403,9 @@ export fn date(t: Time): (i32, Month, i32)
 
 ---
 
-### <a id="clock"></a>`clock` ` export`
+### <a id="clock"></a>`clock` `🔓 export`
 
-&gt; 📄 `helpers.vx` L116-118
+> 📄 `helpers.vx` L114-116
 
 ```vex
 export fn clock(t: Time): (i32, i32, i32)
@@ -1083,27 +1421,9 @@ export fn clock(t: Time): (i32, i32, i32)
 
 ---
 
-### <a id="normalized_delay_ns"></a>`normalized_delay_ns`
+### <a id="newTimer"></a>`newTimer` `🔓 export`
 
-&gt; 📄 `helpers.vx` L131-136
-
-```vex
-fn normalized_delay_ns(d: Duration): u64
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `d` | `Duration` |  |
-
-**Returns:** `u64`
-
----
-
-### <a id="newTimer"></a>`newTimer` ` export`
-
-&gt; 📄 `helpers.vx` L148-150
+> 📄 `helpers.vx` L139-141
 
 ```vex
 export fn newTimer(d: Duration): Timer
@@ -1119,9 +1439,9 @@ export fn newTimer(d: Duration): Timer
 
 ---
 
-### <a id="newTicker"></a>`newTicker` ` export`
+### <a id="newTicker"></a>`newTicker` `🔓 export`
 
-&gt; 📄 `helpers.vx` L228-230
+> 📄 `helpers.vx` L212-214
 
 ```vex
 export fn newTicker(d: Duration): Ticker
@@ -1137,9 +1457,9 @@ export fn newTicker(d: Duration): Ticker
 
 ---
 
-### <a id="afterDuration"></a>`afterDuration` ` export`
+### <a id="afterDuration"></a>`afterDuration` `🔓 export`
 
-&gt; 📄 `helpers.vx` L257-260
+> 📄 `helpers.vx` L252-255
 
 ```vex
 export fn afterDuration(d: Duration): Time
@@ -1157,7 +1477,7 @@ export fn afterDuration(d: Duration): Time
 
 ### <a id="tz_pad2"></a>`tz_pad2`
 
-&gt; 📄 `helpers.vx` L266-269
+> 📄 `helpers.vx` L261-264
 
 ```vex
 fn tz_pad2(n: i64): string
@@ -1175,7 +1495,7 @@ fn tz_pad2(n: i64): string
 
 ### <a id="tz_pad4"></a>`tz_pad4`
 
-&gt; 📄 `helpers.vx` L271-276
+> 📄 `helpers.vx` L266-271
 
 ```vex
 fn tz_pad4(n: i64): string
@@ -1191,12 +1511,12 @@ fn tz_pad4(n: i64): string
 
 ---
 
-### <a id="formatInLocation"></a>`formatInLocation` ` export`
+### <a id="formatInLocation"></a>`formatInLocation` `🔓 export`
 
-&gt; 📄 `helpers.vx` L280-283
+> 📄 `helpers.vx` L275-278
 
 ```vex
-export fn formatInLocation(t: Time, layout: str, loc: Location): string
+export fn formatInLocation(t: Time, layout: str, loc: &Location): string
 ```
 
 **Parameters:**
@@ -1205,18 +1525,18 @@ export fn formatInLocation(t: Time, layout: str, loc: Location): string
 |------|------|-------------|
 | `t` | `Time` |  |
 | `layout` | `str` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `string`
 
 ---
 
-### <a id="toRFC3339InLocation"></a>`toRFC3339InLocation` ` export`
+### <a id="toRFC3339InLocation"></a>`toRFC3339InLocation` `🔓 export`
 
-&gt; 📄 `helpers.vx` L286-311
+> 📄 `helpers.vx` L281-306
 
 ```vex
-export fn toRFC3339InLocation(t: Time, loc: Location): string
+export fn toRFC3339InLocation(t: Time, loc: &Location): string
 ```
 
 **Parameters:**
@@ -1224,18 +1544,18 @@ export fn toRFC3339InLocation(t: Time, loc: Location): string
 | Name | Type | Description |
 |------|------|-------------|
 | `t` | `Time` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `string`
 
 ---
 
-### <a id="inLocation"></a>`inLocation` ` export`
+### <a id="inLocation"></a>`inLocation` `🔓 export`
 
-&gt; 📄 `helpers.vx` L315-318
+> 📄 `helpers.vx` L310-313
 
 ```vex
-export fn inLocation(t: Time, loc: Location): Time
+export fn inLocation(t: Time, loc: &Location): Time
 ```
 
 **Parameters:**
@@ -1243,18 +1563,18 @@ export fn inLocation(t: Time, loc: Location): Time
 | Name | Type | Description |
 |------|------|-------------|
 | `t` | `Time` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `Time`
 
 ---
 
-### <a id="isDST"></a>`isDST` ` export`
+### <a id="isDST"></a>`isDST` `🔓 export`
 
-&gt; 📄 `helpers.vx` L321-323
+> 📄 `helpers.vx` L316-318
 
 ```vex
-export fn isDST(t: Time, loc: Location): bool
+export fn isDST(t: Time, loc: &Location): bool
 ```
 
 **Parameters:**
@@ -1262,15 +1582,15 @@ export fn isDST(t: Time, loc: Location): bool
 | Name | Type | Description |
 |------|------|-------------|
 | `t` | `Time` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `bool`
 
 ---
 
-### <a id="days_in_month"></a>`days_in_month` ` export`
+### <a id="days_in_month"></a>`days_in_month` `🔓 export`
 
-&gt; 📄 `time_type.vx` L13-21
+> 📄 `time_type.vx` L14-22
 
 ```vex
 export fn days_in_month(m: i32, year: i32): i32
@@ -1287,9 +1607,9 @@ export fn days_in_month(m: i32, year: i32): i32
 
 ---
 
-### <a id="ns_to_datetime"></a>`ns_to_datetime` ` export`
+### <a id="ns_to_datetime"></a>`ns_to_datetime` `🔓 export`
 
-&gt; 📄 `time_type.vx` L54-79
+> 📄 `time_type.vx` L47-72
 
 ```vex
 export fn ns_to_datetime(ns: i64): DateTimeParts
@@ -1305,9 +1625,28 @@ export fn ns_to_datetime(ns: i64): DateTimeParts
 
 ---
 
-### <a id="add"></a>`add` ` export`
+### <a id="floor_div"></a>`floor_div`
 
-&gt; 📄 `time_type.vx` L149-151
+> 📄 `time_type.vx` L110-117
+
+```vex
+fn floor_div(value: i64, unit: i64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `i64` |  |
+| `unit` | `i64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="add"></a>`add` `🔓 export`
+
+> 📄 `time_type.vx` L219-221
 
 ```vex
 export fn add(t: Time, d: Duration): Time
@@ -1324,9 +1663,9 @@ export fn add(t: Time, d: Duration): Time
 
 ---
 
-### <a id="sub"></a>`sub` ` export`
+### <a id="sub"></a>`sub` `🔓 export`
 
-&gt; 📄 `time_type.vx` L153-155
+> 📄 `time_type.vx` L223-225
 
 ```vex
 export fn sub(t1: Time, t2: Time): Duration
@@ -1343,99 +1682,116 @@ export fn sub(t1: Time, t2: Time): Duration
 
 ---
 
-### <a id="pad2"></a>`pad2`
+### <a id="write_padded_int"></a>`write_padded_int`
 
-&gt; 📄 `time_type.vx` L248-251
+> 📄 `time_type.vx` L317-329
 
 ```vex
-fn pad2(n: i64): string
+fn write_padded_int(sb: &StringBuilder!, val: i64, width: i32)
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `n` | `i64` |  |
-
-**Returns:** `string`
+| `sb` | `&amp;StringBuilder!` |  |
+| `val` | `i64` |  |
+| `width` | `i32` |  |
 
 ---
 
-### <a id="pad4"></a>`pad4`
+### <a id="vex_time_current_ns"></a>`vex_time_current_ns` `🔓 export`
 
-&gt; 📄 `time_type.vx` L253-258
+> 📄 `native.linux.vxc` L14-19
 
 ```vex
-fn pad4(n: i64): string
+export fn vex_time_current_ns(): u64
 ```
 
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `n` | `i64` |  |
-
-**Returns:** `string`
+**Returns:** `u64`
 
 ---
 
-### <a id="abs_date"></a>`abs_date` ` export`
+### <a id="vex_nanosleep"></a>`vex_nanosleep` `🔓 export`
 
-&gt; 📄 `conversations.vx` L5-24
+> 📄 `native.linux.vxc` L21-36
 
 ```vex
-export fn abs_date(abs_sec: i64): DateParts
+export fn vex_nanosleep(ns: u64)
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `abs_sec` | `i64` |  |
-
-**Returns:** `DateParts`
+| `ns` | `u64` |  |
 
 ---
 
-### <a id="is_leap"></a>`is_leap` ` export`
+### <a id="vex_monotonic_ns"></a>`vex_monotonic_ns` `🔓 export`
 
-&gt; 📄 `conversations.vx` L30-32
+> 📄 `native.linux.vxc` L38-43
 
 ```vex
-export fn is_leap(year: i32): bool
+export fn vex_monotonic_ns(): u64
 ```
 
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `year` | `i32` |  |
-
-**Returns:** `bool`
+**Returns:** `u64`
 
 ---
 
-### <a id="nsToDateTime"></a>`nsToDateTime` ` export`
+### <a id="vex_tz_offset_at_shim"></a>`vex_tz_offset_at_shim` `🔓 export`
 
-&gt; 📄 `conversations.vx` L36-69
+> 📄 `native.linux.vxc` L70-72
 
 ```vex
-export fn nsToDateTime(ns: i64): (i32, i32, i32, i32, i32, i32, i32)
+export fn vex_tz_offset_at_shim(name: Ptr<u8>, unix_sec: i64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `ns` | `i64` |  |
+| `name` | `Ptr&lt;u8&gt;` |  |
+| `unix_sec` | `i64` |  |
 
-**Returns:** `(i32, i32, i32, i32, i32, i32, i32)`
+**Returns:** `i64`
+
+---
+
+### <a id="vex_tz_exists_shim"></a>`vex_tz_exists_shim` `🔓 export`
+
+> 📄 `native.linux.vxc` L74-76
+
+```vex
+export fn vex_tz_exists_shim(name: Ptr<u8>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_get_local_offset"></a>`vex_get_local_offset` `🔓 export`
+
+> 📄 `native.linux.vxc` L78-88
+
+```vex
+export fn vex_get_local_offset(): i64
+```
+
+**Returns:** `i64`
 
 ---
 
 ### <a id="fmt_int"></a>`fmt_int`
 
-&gt; 📄 `format.vxc` L5-25
+> 📄 `format.vxc` L5-25
 
 ```vex
 fn fmt_int(val: i32, width: i32): string
@@ -1454,9 +1810,9 @@ Pad integer with zeros to width
 
 ---
 
-### <a id="format_layout"></a>`format_layout` ` export`
+### <a id="format_layout"></a>`format_layout` `🔓 export`
 
-&gt; 📄 `format.vxc` L29-107
+> 📄 `format.vxc` L29-107
 
 ```vex
 export fn format_layout(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64, layout: string): string
@@ -1483,9 +1839,9 @@ Supported tokens: YYYY, MM, DD, HH, mm, ss, SSS, Z
 
 ---
 
-### <a id="utc"></a>`utc` ` export`
+### <a id="utc"></a>`utc` `🔓 export`
 
-&gt; 📄 `lib.vx` L6-6
+> 📄 `lib.vx` L5-5
 
 ```vex
 export fn utc(): Location
@@ -1495,9 +1851,9 @@ export fn utc(): Location
 
 ---
 
-### <a id="local"></a>`local` ` export`
+### <a id="local"></a>`local` `🔓 export`
 
-&gt; 📄 `lib.vx` L7-7
+> 📄 `lib.vx` L6-6
 
 ```vex
 export fn local(): Location
@@ -1507,9 +1863,9 @@ export fn local(): Location
 
 ---
 
-### <a id="fixed_zone"></a>`fixed_zone` ` export`
+### <a id="fixed_zone"></a>`fixed_zone` `🔓 export`
 
-&gt; 📄 `lib.vx` L8-8
+> 📄 `lib.vx` L7-7
 
 ```vex
 export fn fixed_zone(name: string, offset: i32): Location
@@ -1526,9 +1882,9 @@ export fn fixed_zone(name: string, offset: i32): Location
 
 ---
 
-### <a id="load_location"></a>`load_location` ` export`
+### <a id="load_location"></a>`load_location` `🔓 export`
 
-&gt; 📄 `lib.vx` L9-9
+> 📄 `lib.vx` L8-8
 
 ```vex
 export fn load_location(name: string): Result<Location, string>
@@ -1544,9 +1900,81 @@ export fn load_location(name: string): Result<Location, string>
 
 ---
 
-### <a id="seconds"></a>`seconds` ` export`
+### <a id="abs_date"></a>`abs_date` `🔓 export`
 
-&gt; 📄 `duration.vx` L38-40
+> 📄 `conversions.vx` L15-30
+
+```vex
+export fn abs_date(abs_sec: i64): DateParts
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `abs_sec` | `i64` |  |
+
+**Returns:** `DateParts`
+
+---
+
+### <a id="is_leap"></a>`is_leap` `🔓 export`
+
+> 📄 `conversions.vx` L32-34
+
+```vex
+export fn is_leap(year: i32): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `year` | `i32` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="nsToDateTime"></a>`nsToDateTime` `🔓 export`
+
+> 📄 `conversions.vx` L37-58
+
+```vex
+export fn nsToDateTime(ns: i64): (i32, i32, i32, i32, i32, i32, i32)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `i64` |  |
+
+**Returns:** `(i32, i32, i32, i32, i32, i32, i32)`
+
+---
+
+### <a id="magnitude"></a>`magnitude`
+
+> 📄 `duration.vx` L10-16
+
+```vex
+fn magnitude(value: i64): u64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `i64` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="seconds"></a>`seconds` `🔓 export`
+
+> 📄 `duration.vx` L47-49
 
 ```vex
 export fn seconds(s: i64): Duration
@@ -1562,9 +1990,9 @@ export fn seconds(s: i64): Duration
 
 ---
 
-### <a id="milliseconds"></a>`milliseconds` ` export`
+### <a id="milliseconds"></a>`milliseconds` `🔓 export`
 
-&gt; 📄 `duration.vx` L42-44
+> 📄 `duration.vx` L51-53
 
 ```vex
 export fn milliseconds(ms: i64): Duration
@@ -1580,9 +2008,9 @@ export fn milliseconds(ms: i64): Duration
 
 ---
 
-### <a id="microseconds"></a>`microseconds` ` export`
+### <a id="microseconds"></a>`microseconds` `🔓 export`
 
-&gt; 📄 `duration.vx` L46-48
+> 📄 `duration.vx` L55-57
 
 ```vex
 export fn microseconds(us: i64): Duration
@@ -1598,9 +2026,9 @@ export fn microseconds(us: i64): Duration
 
 ---
 
-### <a id="nanoseconds"></a>`nanoseconds` ` export`
+### <a id="nanoseconds"></a>`nanoseconds` `🔓 export`
 
-&gt; 📄 `duration.vx` L50-52
+> 📄 `duration.vx` L59-61
 
 ```vex
 export fn nanoseconds(ns: i64): Duration
@@ -1616,9 +2044,9 @@ export fn nanoseconds(ns: i64): Duration
 
 ---
 
-### <a id="minutes"></a>`minutes` ` export`
+### <a id="minutes"></a>`minutes` `🔓 export`
 
-&gt; 📄 `duration.vx` L54-56
+> 📄 `duration.vx` L63-65
 
 ```vex
 export fn minutes(m: i64): Duration
@@ -1634,9 +2062,9 @@ export fn minutes(m: i64): Duration
 
 ---
 
-### <a id="hours"></a>`hours` ` export`
+### <a id="hours"></a>`hours` `🔓 export`
 
-&gt; 📄 `duration.vx` L58-60
+> 📄 `duration.vx` L67-69
 
 ```vex
 export fn hours(h: i64): Duration
@@ -1652,6 +2080,111 @@ export fn hours(h: i64): Duration
 
 ---
 
+### <a id="vex_time_current_ns"></a>`vex_time_current_ns` `🔓 export`
+
+> 📄 `native.windows.vxc` L32-42
+
+```vex
+export fn vex_time_current_ns(): u64
+```
+
+**Returns:** `u64`
+
 ---
 
-*Generated by vex-doc v2.0 • 2026-07-06*
+### <a id="sleepMilliseconds"></a>`sleepMilliseconds`
+
+> 📄 `native.windows.vxc` L44-55
+
+```vex
+fn sleepMilliseconds(ns: u64)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `u64` |  |
+
+---
+
+### <a id="vex_nanosleep"></a>`vex_nanosleep` `🔓 export`
+
+> 📄 `native.windows.vxc` L57-93
+
+```vex
+export fn vex_nanosleep(ns: u64)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `u64` |  |
+
+---
+
+### <a id="vex_monotonic_ns"></a>`vex_monotonic_ns` `🔓 export`
+
+> 📄 `native.windows.vxc` L95-106
+
+```vex
+export fn vex_monotonic_ns(): u64
+```
+
+**Returns:** `u64`
+
+---
+
+### <a id="vex_tz_offset_at_shim"></a>`vex_tz_offset_at_shim` `🔓 export`
+
+> 📄 `native.windows.vxc` L139-141
+
+```vex
+export fn vex_tz_offset_at_shim(name: Ptr<u8>, unix_sec: i64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+| `unix_sec` | `i64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_tz_exists_shim"></a>`vex_tz_exists_shim` `🔓 export`
+
+> 📄 `native.windows.vxc` L143-145
+
+```vex
+export fn vex_tz_exists_shim(name: Ptr<u8>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_get_local_offset"></a>`vex_get_local_offset` `🔓 export`
+
+> 📄 `native.windows.vxc` L147-181
+
+```vex
+export fn vex_get_local_offset(): i64
+```
+
+**Returns:** `i64`
+
+---
+
+---
+
+*Generated by vex-doc v2.0 • 2026-09-03*

@@ -20,6 +20,11 @@ source code
   -> LLVM IR / target code
 ```
 
+Both routes are expected to follow the same SIMD/SIMT execution contract.
+The canonical contract definition is:
+
+- [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract)
+
 ## Route 1: inline SIMD for small arrays
 
 The compiler has a dedicated `simd_small` path for qualifying fixed-size arrays.
@@ -52,6 +57,8 @@ On this path, the likely evidence in emitted LLVM is:
 - `insertelement` chains for tiny literals
 - `llvm.vector.reduce.*` intrinsics for reductions
 
+The same operation family can be routed to SIMT kernels via SIR when shapes are dynamic or graph-oriented.
+
 ## Route 2: SIR for tensor and graph code
 
 When code is written around `graph fn`, `Tensor<T>`, or other graph-shaped tensor operations, the compiler lowers into SIR first and then chooses a backend based on shapes and supported node families.
@@ -62,6 +69,8 @@ This route is the right mental model for:
 - graph compute
 - gather and scatter families
 - backend dispatch between CPU SIMD and GPU-style paths
+
+Backend choice is implementation detail. Correctness is checked at the SIR contract level.
 
 ## Static and dynamic shape routing
 
@@ -214,4 +223,3 @@ Workloads with cumulative FLOP scores exceeding the dispatch threshold are autom
 - [SIMD and Auto-Vectorization](./index)
 - [Tensor and Mask Types](./tensor-mask)
 - [GPU Programming](/guide/gpu)
-

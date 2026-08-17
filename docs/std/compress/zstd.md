@@ -1,41 +1,54 @@
-# Zstd (`compress/zstd`)
+# Zstandard
 
-Modern compression with excellent ratio-to-speed balance (RFC 8878). Zstandard consistently outperforms both Gzip and LZ4 in compression ratio while maintaining competitive decompression speed.
+The pure-Vex Zstandard implementation reads and writes RFC 8878 frames. The
+recommended entry points are the common `compress`/`decompress` facade and the
+workspace-reusing `ZstdEncoder`.
 
-## Usage
+## Reusable encoding
 
 ```vex
-import { zstdCompress, zstdDecompress, zstdGetFrameContentSize } from "compress/zstd";
+import {
+    decompress, CompressionFormat, ZstdEncoder,
+} from "compress";
 
-let data = "Zstandard in pure Vex!";
-let ptr = data.asPtr() as Ptr<Opaque>;
-let len = data.len() as i64;
+let! encoder = ZstdEncoder.withLevel(3)?;
+let! encoded = Vec.new<u8>();
 
-let outCap = len + len / 8 + 18;
-let comp = alloc(outCap as u64);
-let compLen = zstdCompress(ptr, len, comp, outCap);
-
-let origSize = zstdGetFrameContentSize(comp, compLen);
-let decomp = alloc(origSize as u64);
-let decompLen = zstdDecompress(comp, compLen, decomp, origSize);
+encoder.compressInto(source.asSpan(), &encoded)?;
+let decoded = decompress(
+    encoded.asSpan(),
+    CompressionFormat.Zstd,
+    source.len(),
+)?;
 ```
 
-## API
+Levels 1–22 are accepted. The encoder owns one reusable workspace and grows it
+only when the input requires more capacity.
 
-| Function | Description |
-|----------|-------------|
-| `zstdCompress(src, srcLen, dst, dstCap): i64` | Compress into Zstd frame |
-| `zstdDecompress(src, srcLen, dst, dstCap): i64` | Decompress Zstd frame |
-| `zstdGetFrameContentSize(src, srcLen): i64` | Read content size from frame header |
+## Implemented frame features
 
-## Internal Architecture
+- raw, run-length and compressed blocks;
+- multi-block frames and a rolling 128 KiB match window;
+- repeat offsets;
+- predefined, RLE and custom FSE sequence tables;
+- compressed and raw literal decoding, including Huffman literal streams;
+- optional frame checksum validation;
+- bounded backward bit readers and checked frame-content-size parsing.
 
-| File | Purpose |
-|------|---------|
-| `compress.vx` | Frame compression with LZ77 matching |
-| `decompress.vx` | Frame decompression |
-| `fse.vx` | Finite State Entropy coding (tANS) |
-| `huffman.vx` | Huffman tree decoding |
-| `bitreader.vx` | Backward bit reader for entropy streams |
+The encoder currently emits raw literal sections; sequence streams use FSE.
+Dictionary compression, concatenated frames and skippable frames are explicit
+future extensions.
 
-The reference C implementation is ~20,000 lines. Vex achieves feature parity in ~1,060 lines — a **95% reduction**.
+## Low-level kernels
+
+`zstdCompress`, `zstdDecompress` and `zstdGetFrameContentSize` operate on
+`RawBuf` and capacities. They preserve negative codec diagnostics and exist for
+runtime or codec implementers. Application code should prefer `ZstdEncoder` or
+the common safe facade, which performs checked sizing, alias staging and typed
+error conversion.
+
+## Verification
+
+Package tests cover all public levels, empty and multi-block inputs, custom FSE
+tables, repeated offsets, malformed/truncated streams and output ceilings.
+Generated frames are validated and decoded by the official Zstandard tool.

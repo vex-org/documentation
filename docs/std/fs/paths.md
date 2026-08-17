@@ -1,32 +1,65 @@
-# Paths & Directories (`fs/path`, `fs/dir`)
+# Paths and directories
 
-## `Path`
+## Path
 
-Current `Path` is a value type with methods such as:
+`Path` is an owned native-path value. `clean()` performs lexical O(n)
+normalization without consulting the filesystem; `canonicalize()` resolves
+the filesystem, follows links according to the native provider and returns an
+absolute path or an `IoError`.
 
-- `join(...)`
-- `parent()`
-- `fileName()`
-- `extension()`
-- `stem()`
-- `exists()`
-- `isReadable()` / `isWritable()`
-- `isAbsolute()` / `isRelative()`
-- `isDir()` / `isFile()` / `isSymlink()`
-- `canonicalize()`
-- `withExtension(...)`
+```vex
+import { Path } from "fs";
 
-## Directory Helpers
+let source = Path("src/./frontend/../main.vx").clean();
+$println(source.toString()); // src/main.vx
 
-Current directory-facing helpers include:
+match source.canonicalize() {
+    Ok(absolute) => $println(absolute.toString()),
+    Err(error) => $println(error.toString()),
+}
+```
 
-- `readDir(path, &DirList!)`
-- `readDirVec(path)`
-- `readDirPage(path, offset, limit)`
-- `mkdirAll(path)`
-- `removeAll(path)`
-- `walkDir(...)`
+The surface includes `asStr`, `len`, `join`, `parent`, `fileName`,
+`extension`, `stem`, `withExtension`, `components`, `exists`,
+`isReadable`, `isWritable`, `isAbsolute`, `isRelative`, `isDir`,
+`isFile` and `isSymlink`.
 
-## Notes
+Windows behavior is native rather than POSIX-shaped: drive-relative paths,
+rooted paths, mixed separators and UNC prefixes remain distinct. Public paths
+stay UTF-8 while the provider uses UTF-16 wide Win32 APIs.
 
-This page intentionally avoids stale `unwrap()`-style examples and top-level function names that do not match the current exported surface.
+## Directory collection
+
+- `readDir` fills caller-provided `DirList` storage.
+- `readDirVecLimit` collects at most an explicit number of entries.
+- `readDirVec` collects the full directory and is intended for trusted sizes.
+- `readDirPage` provides stateless offset/limit pagination.
+
+Dot entries are excluded. Provider counts are validated before Vec lengths are
+committed.
+
+## Streaming traversal
+
+`DirCursor` is the preferred API for large or untrusted directories. It opens
+the provider once, advances monotonically in O(n), and closes automatically.
+
+```vex
+import { DirCursor } from "fs";
+
+match DirCursor.open(".", 256 as usize) {
+    Ok(cursor) => {
+        let! stream = cursor;
+        match stream.nextPage() {
+            Ok(entries) => $println(entries.len()),
+            Err(error) => $println(error.toString()),
+        }
+        let _ = stream.close();
+    },
+    Err(error) => $println(error.toString()),
+}
+```
+
+`mkdirAll`, `removeAll` and `walkDir` provide recursive operations.
+`walkDir` stops when its callback returns `false` and reports whether the
+walk completed.
+

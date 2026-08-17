@@ -36,7 +36,7 @@ for `WyHash` and `XxHash3`.
 ## Incremental API
 
 ```vex
-import { Fnv1a, SipHasher } from "hash";
+import { Fnv1a, SipHasher, XxHash3 } from "hash";
 
 let! stable = Fnv1a.new();
 stable.update("header");
@@ -47,20 +47,29 @@ let! keyed = SipHasher.new(secret0, secret1);
 keyed.update("header");
 keyed.update(payload);
 let keyedDigest = keyed.finish();
+
+let! fast = XxHash3.new();
+fast.update("header");
+fast.update(payload);
+let fastDigest = fast.finish();
 ```
 
-Chunks may be strings or byte spans and may split at any byte. FNV-1a and
-SipHash keep bounded state. XXH3 intentionally has no incremental API until a
-bounded upstream-compatible state machine is provided.
+Chunks may be strings or byte spans and may split at any byte. Every hasher
+keeps bounded state. `XxHash3.new(seed)` selects the seeded form; its state is
+eight accumulator lanes plus a fixed 256-byte tail and never grows with the
+input. `finish()` is non-mutating and `reset()` preserves the constructor seed.
 
 ## Compatibility and guarantees
 
 - `WyHash` matches final4 / 4.3.
 - `XxHash3` matches upstream XXH3 64-bit 0.8.x, seeded and unseeded.
+- XXH3 long inputs use target-independent fixed-vector operations. CPU
+  backends select their legal SIMD instructions; applications do not choose an
+  architecture implementation or link a native hash library.
 - `SipHash` implements SipHash-2-4.
 - `Crc32c` implements CRC-32C Castagnoli and uses hardware only when the target
   proves the required CPU feature.
-- One-shot methods allocate no memory.
+- One-shot and incremental methods allocate no memory.
 - There is no fixed-key SipHash helper: a public key would defeat collision-DoS
   protection.
 

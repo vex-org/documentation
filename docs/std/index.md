@@ -8,10 +8,13 @@ The Vex Standard Library (`std`) provides a set of highly optimized, parallelism
 |---|---|
 | **[`bit`](./bit.md)** | Bitwise manipulation, population counts, masking, leading/trailing zero counts mapped directly to hardware vector intrinsics. |
 | **[`cli`](./cli.md)** | Subcommand, argument, and flag parsing utilities for rapid CLI application development. |
+| **[`collections`](./collections.md)** | Owning queues, stacks, binary priority heaps, and stable-index linked lists with allocation reuse. |
 | **[`compress`](./compress.md)** | Pure Vex DEFLATE and GZIP compression and decompression paths optimized for the vectorizer. |
+| **[`context`](./context.md)** | Immutable request contexts with cooperative cancellation, monotonic deadlines, typed causes, and persistent metadata. |
 | **[`crypto`](./crypto.md)** | Core cryptographic algorithms and checksums (e.g. CRC32, AES, MD5) leveraging crypto SIMD instructions (AES-NI) with software fallbacks. |
 | **[`db`](./db.md)** | Database connections, async pooling, and Native PostgreSQL bindings written purely in Vex without C driver dependencies. |
-| **[`fs`](./fs.md)** | Buffered asynchronous and synchronous File System operations integrated into the Vex M:N scheduler. |
+| **[`fs`](./fs/index.md)** | RAII files and mappings, bounded whole-file I/O, portable metadata, native paths, and O(n) directory streaming. |
+| **[`filter`](./filter.md)** | Stable predicate filtering, reusable output storage, and fixed-mask SIMD/SIMT compaction. |
 | **[`hash`](./hash.md)** | Extremely fast, non-cryptographic hashing algorithms (FNV-1a, xxHash3, WyHash) optimized for Hash Maps and general probing. |
 | **[`http`](./http.md)** | Zero-allocation HTTP/1.1 Protocol parsers and baseline Web Server constructs. |
 | **[`inference`](./inference.md)** | LLM specific primitive abstractions. Holds logic for RoPE, K/V Cache, and Hardware quantizations. |
@@ -20,6 +23,7 @@ The Vex Standard Library (`std`) provides a set of highly optimized, parallelism
 | **[`ml`](./ml.md)** | High performance Neural Network blocks (RMSNorm, Softmax) executed via Graph blocks. |
 | **[`net`](./net.md)** | Asynchronous TCP/UDP networking sockets mapped natively to the Vex M:N scheduler loop. |
 | **[`regex`](./regex.md)** | SIMD-Accelerated zero-copy regex engine compiling to bytecode NFAs. |
+| **[`rand`](./rand.md)** | Explicit xoshiro256** streams, unbiased ranges, parallel jumps, and reusable zero-allocation distributions. |
 | **[`semver`](./semver.md)** | Semantic Versioning definitions and query engines. |
 | **[`serde`](./serde.md)** | A powerful, zero-copy serialization/deserialization framework supporting JSON, TOML, CSV, and MessagePack formats. |
 | **[`strings`](./strings.md)** | String building utilities centered on `StringBuilder`. |

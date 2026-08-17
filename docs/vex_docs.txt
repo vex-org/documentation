@@ -2966,6 +2966,28 @@ as ordinary typed HIR.
 The accepted V2 surface described on this page is verified. Vex is still
 pre-1.0, so pin the compiler version when publishing metaprogramming APIs.
 
+## V2 feature and limit table
+
+This table is the frozen user-facing V2 contract. “Accepted” means the feature
+uses canonical typed HIR semantics and fails closed outside its supported
+domain; it does not promote experimental CLI rollout modes to defaults.
+
+| Area | V2 status | Contract |
+| --- | --- | --- |
+| Required boundaries | Accepted | `#const`, required intrinsics, `#if`, `#for`, and `#while` must resolve at compile time or diagnose. |
+| Ordinary `const fn` CTFE | Accepted | User, std, prelude, and VexArch calls use the same typed callable/effect model. |
+| Typed residualization | Accepted | Runtime-dependent work remains ordinary typed HIR and uses normal Valence/VUMM/fusion. |
+| Type/target/source reflection | Accepted | Results retain exact semantic identity, requested-target facts, and source provenance. |
+| Scalars and aggregates | Accepted subset | Scalars, text, bytes, arrays, tuples, structs, enums, references, sequences, and insertion-ordered maps are quota-bounded. |
+| Structural declarations | Accepted subset | Typed functions, methods, structs, enums, constants, aliases, conformances, constraints, and patterns enter the sealed HIR snapshot without generated source or bitcode. |
+| Persistent CTFE cache | Accepted subset | Only the closed semantic wire subset is stored; target/source/compiler drift or malformed data is a cache miss. Host addresses and session-local IDs cannot persist. |
+| Opportunistic staging | Controlled rollout | `analyze` observes; explicit `apply-known` commits only verified known islands. Automatic/default application is outside V2. |
+| Cyclic values and custom map policy | Outside V2 | No cyclic persistent graph or arbitrary user-defined compile-time map policy. |
+| Constraint boolean algebra | Outside V2 | Arbitrary `AND`/`OR`/`NOT` composition is not accepted. |
+| Unknown aggregate slots | Outside V2 | Residual aggregate value graphs with unknown interior slots remain runtime HIR. |
+| Scalable/GPU/foreign vector ABI | Outside V2 | Only explicitly proven target layouts are generated. |
+| Token/source/procedural macros | Outside V2 | V2 does not expose token streams, source templates, or Rust-style procedural macros. |
+
 ## The three ways code becomes compile time
 
 | Form | Meaning | If the result is not known |
@@ -3878,12 +3900,21 @@ vex test --run "user"
 # Run benchmarks
 vex test --bench
 
+# Observe typed comptime staging without changing test/benchmark code
+vex test --analyze-comptime
+vex test --bench --analyze-comptime
+
 # Disable parallel execution
 vex test --no-parallel
 
 # Set custom timeout (seconds)
 vex test --timeout 60
 ```
+
+`--analyze-comptime` is explicit and observation-only. It forwards the shared
+`AnalyzeOnly` policy to each generated test runner or benchmark compilation and
+prints the compiler's semantic summary. It does not fold calls, change
+diagnostics, or enable the experimental `ApplyKnown` rewrite mode.
 
 ## Writing Tests
 
@@ -5289,6 +5320,10 @@ graph fn dot(a: Span<f32>, b: Span<f32>): f32 {
 
 The compiler detects the element-wise multiplication followed by a sum reduction and lowers it to a SIR `Map` and `Reduce` DAG. The runtime then chooses the best execution path based on the input size.
 
+The same `Map`/`Reduce`/`Mask` contract is used on CPU SIMD and GPU SIMT backends (same operation semantics, different schedulers). See the shared contract here:
+
+- [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract)
+
 ---
 
 ## Metal GPU Backend Architecture
@@ -5419,6 +5454,14 @@ VEX_DISPATCH_VERBOSE=1 vex run program.vx
 - [SIMD Auto-Vectorization](/guide/simd) - CPU SIMD details
 - [VUMM Memory Model](/guide/memory/vumm) - Automatic memory management
 - [Performance](/guide/advanced/performance) - Optimization techniques
+
+## Contract First
+
+If you are tuning kernel performance, keep this rule:
+
+- do not write `if` branches in user code for CPU vs GPU behavior,
+- keep algorithm code in shared `Tensor`/`Mask` operations,
+- and verify backend-specific differences only through benchmark deltas, not API splits.
 
 
 // ============================================================================
@@ -13562,7 +13605,11 @@ Comparisons with Rust, Go, Zig, C, or C++ are meaningful only when each implemen
 
 ## Current status
 
-SIMD, async, channels, GPU backends, and standard-library services are not uniform across platforms. A successful `vex lint` proves semantic acceptance; it does not prove that runtime compilation, native I/O, or a selected accelerator works on the target machine. See the [language status](/guide/language-status) page for current limitations.
+SIMD, async, channels, GPU backends, and standard-library services are not
+uniform across platforms. A successful `vex lint` proves semantic acceptance;
+it does not prove that fused backend codegen, native linking, I/O, or a selected
+accelerator works on the target machine. See the
+[language status](/guide/language-status) page for current limitations.
 
 
 // ============================================================================
@@ -13780,7 +13827,10 @@ uses owning types such as `Box`, `Vec`, `string`, or `Block`.
 ```vex
 // File system
 import * as fs from "fs"
-let file = fs.open("test.txt") !> |err| { ... }
+match fs.File.open("test.txt") {
+    Ok(file) => { /* File closes automatically when ownership ends. */ },
+    Err(error) => $println(error.toString()),
+}
 
 // Math
 import * as math from "math"
@@ -13939,6 +13989,11 @@ source code
   -> LLVM IR / target code
 ```
 
+Both routes are expected to follow the same SIMD/SIMT execution contract.
+The canonical contract definition is:
+
+- [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract)
+
 ## Route 1: inline SIMD for small arrays
 
 The compiler has a dedicated `simd_small` path for qualifying fixed-size arrays.
@@ -13971,6 +14026,8 @@ On this path, the likely evidence in emitted LLVM is:
 - `insertelement` chains for tiny literals
 - `llvm.vector.reduce.*` intrinsics for reductions
 
+The same operation family can be routed to SIMT kernels via SIR when shapes are dynamic or graph-oriented.
+
 ## Route 2: SIR for tensor and graph code
 
 When code is written around `graph fn`, `Tensor<T>`, or other graph-shaped tensor operations, the compiler lowers into SIR first and then chooses a backend based on shapes and supported node families.
@@ -13981,6 +14038,8 @@ This route is the right mental model for:
 - graph compute
 - gather and scatter families
 - backend dispatch between CPU SIMD and GPU-style paths
+
+Backend choice is implementation detail. Correctness is checked at the SIR contract level.
 
 ## Static and dynamic shape routing
 
@@ -14195,7 +14254,10 @@ let cube: Tensor<f64> = flat.reshape([2, 3, 4])  // 2x3x4 cube
 
 ## DynMask
 
-`Mask` is a fat pointer for runtime-sized boolean masks: `{ ptr: Ptr<i8>, len: i64 }`.
+`DynMask` is a packed, runtime-sized boolean mask with canonical ABI
+`{ packedBits: Ptr<u8>, len: usize, owner: Ptr<None> }`.
+This is the dynamic contract that is also used by GPU and CPU backend paths; backends
+share the same logical mask semantics while their scheduling differs.
 
 ### Construction
 
@@ -14224,7 +14286,7 @@ let negated = !m1            // element-wise NOT
 // Query
 let any_true = m1.any()     // any element true?
 let all_true = m1.all()     // all elements true?
-let count = m1.countTrue() // number of true elements
+let count = m1.countBits()  // number of true elements
 ```
 
 ### Selective Operations with Masks
@@ -14298,6 +14360,7 @@ graph fn matmulKernel(input: Tensor<f32>, weights: Tensor<f32>): Tensor<f32> {
 - [SIR Pipeline](/guide/simd/sir-pipeline) -- how SIMD lowers through SIR
 - [Operators Reference](/guide/advanced/operators-reference) -- SIMD operators catalog
 - [GPU Programming](/guide/gpu/) -- graph functions for GPU compute
+- [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract)
 
 
 // ============================================================================
@@ -14305,17 +14368,23 @@ graph fn matmulKernel(input: Tensor<f32>, weights: Tensor<f32>): Tensor<f32> {
 // ============================================================================
 # SIMD and Auto-Vectorization
 
-Vex has two related, but different, SIMD stories:
+Vex has two related, but different, execution stories:
 
 - small fixed-size arrays can be lowered directly to LLVM vector instructions
 - tensor and graph workloads can flow through SIR, which has its own SIMD backend
 
-The important constraint is that SIMD is not a blanket guarantee for every array expression. Some patterns inline cleanly, some lower to loop kernels, and some belong on the `graph fn` and `Tensor<T>` path instead.
+The important constraint is that vectorization is not a blanket guarantee for every
+array expression. Some patterns inline cleanly, some lower to vector-loop kernels,
+and some belong on the `graph fn` and `Tensor<T>` path instead.
+
+To keep behavior stable across CPU and GPU, all these routes are expected to follow
+the same `SIMD/SIMT` contract described in [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract).
 
 See also:
 
 - [Tensor and Mask Types](./tensor-mask)
 - [SIR Optimization Pipeline](./sir-pipeline)
+- [SIMD/SIMT Unified Execution Contract](./simd-simt-contract)
 
 ## The practical model
 
@@ -14359,6 +14428,12 @@ Treat these areas as advanced or still moving:
 - automatic coercion stories between `Span<T>` and `Tensor<T>` at every call boundary
 - assuming every dynamic array expression will become a single SIMD instruction
 - assuming every matrix or signal-processing operator is equally mature on every backend
+
+## Cross-backend contract at a glance
+
+The `simd-simt-contract` page is the canonical place for “does this API mean the
+same thing on CPU SIMD and GPU SIMT” questions. In short: choose source-level
+operators and masks first; avoid writing backend-dependent branching in user code.
 
 ## Small-array path
 
@@ -14608,6 +14683,7 @@ The compiler routes target workloads based on shapes and constraints:
 - [SIMD and Auto-Vectorization](./index)
 - [SIR Optimization Pipeline](./sir-pipeline)
 - [GPU Programming](/guide/gpu)
+- [SIMD/SIMT Unified Execution Contract](./simd-simt-contract)
 
 
 // ============================================================================
@@ -14693,7 +14769,7 @@ let restored: Mask<8> = Mask.fromBitmask(bits)
 // Query mask state
 let anyTrue = mask.any()          // true if any lane is true
 let allTrue = mask.all()          // true if all lanes are true
-let count = mask.countSetBits()   // number of true lanes (POPCNT)
+let count = mask.countBits()      // number of true lanes (POPCNT)
 let firstIdx = mask.firstSet()    // index of first true lane (TZCNT)
 ```
 
@@ -17187,8 +17263,10 @@ target/release/vex run hello.vx
 
 Use lint while writing code. It performs correctness and configured lint analysis without creating a final executable. Use run when you want the compiler to build a temporary executable and launch it.
 
-::: warning Current macOS runtime issue
-On the current development line, source builds on macOS may fail while rebuilding the pure Vex runtime in the native I/O module. A successful check does not guarantee a successful run; see the repository-root report `VEX_COMPILER_ISSUES_2026-08-07.md` when this occurs.
+::: warning Native execution is a separate gate
+`vex lint` does not emit an object, link, or execute the program. `vex run`
+uses the fused embedded VexArch image plus the requested target's native
+support and system ABI, so validate that path on the exact deployment target.
 :::
 
 ## Command-line tools
@@ -17277,9 +17355,9 @@ Platform support has two separate dimensions: whether the compiler can check a p
 
 | Platform | Current documentation status | Notes |
 | --- | --- | --- |
-| macOS ARM64 | Primary development platform | Source checks are available. On the current revision, `vex run` can fail while rebuilding the macOS runtime; see the [language status](/guide/language-status). |
+| macOS ARM64 | Primary development platform | Local fused compile/run and the representative native comptime corpus are characterized; release certification still requires a retained clean-host artifact. |
 | macOS x86_64 | Experimental | Requires independent runtime validation on the target machine. |
-| Linux x86_64 / ARM64 | Experimental | Compiler and runtime behavior should be checked on the exact distribution, linker, and libc combination. |
+| Linux x86_64 / ARM64 | Experimental | Structural target checks and release lanes exist; retain green native artifacts on each exact release host before promoting support. |
 | FreeBSD | Experimental | Not validated in this documentation pass. |
 | Windows | Experimental | Toolchain and runtime integration are not validated in this documentation pass. |
 | WASM | Experimental | Limited compiler and library surface; do not assume native-runtime parity. |
@@ -17297,9 +17375,14 @@ target/release/vex lint examples/01_basics/hello_world.vx
 
 The exact native dependencies depend on the compiler checkout and host platform. Follow the repository build instructions and record the toolchain versions when reporting a failure.
 
-## macOS runtime limitation
+## Fusion and native-link boundary
 
-On the current macOS checkout, `vex lint` can succeed while `vex run` fails during pure-Vex runtime compilation. Source analysis deliberately does not execute runtime compilation or native linking.
+`vex lint` validates source semantics but does not execute LLVM object emission,
+native linking, or the produced program. `vex compile` and `vex run` rehydrate
+target-selected VexArch sources from the compiler's embedded VRI; they do not
+rebuild or link a separate runtime artifact. Platform certification must still
+exercise the requested target's native support pack, linker, system ABI and
+execution path.
 
 ## Reporting platform results
 
@@ -17309,7 +17392,8 @@ Include:
 - compiler version and repository revision;
 - Rust, LLVM, linker, and C toolchain versions where relevant;
 - the exact `vex lint`, `vex compile`, or `vex run` command;
-- whether the failure occurred during source checking, runtime compilation, linking, or execution.
+- whether the failure occurred during source checking, VRI target selection,
+  fused codegen, native linking, or execution.
 
 Platform claims should be updated only after the relevant path has been tested on that platform.
 
@@ -18864,7 +18948,8 @@ Responsibilities:
 2. Build compiler pipeline via `CompilerDriver`
 3. Generate object file from LLVM module
 4. Link executable with:
-   - runtime linker args (`vex_runtime::get_linker_args()`)
+   - the target-selected embedded native support pack, when required
+   - target system libraries activated by reachable VexArch providers
    - native package linker args (`vex_pm::get_native_linker_args_for_source(...)`)
 5. Emit optional artifacts (`.ll`, CFG, coverage)
 
@@ -18873,8 +18958,35 @@ Responsibilities:
 Responsibilities:
 
 1. Resolve deps + compile module
-2. Link temporary executable with runtime + merged native linker args
+2. Link a temporary executable from the fused module, embedded native support,
+   and manifest-owned native dependencies
 3. Execute and report timings
+
+### Comptime staging modes
+
+`vex compile`, `vex run`, and `vex ir` accept:
+
+```bash
+--comptime-staging disabled|analyze|apply-known
+```
+
+The default is `disabled`. `analyze` measures opportunistic typed staging while
+preserving the original HIR and diagnostics. `apply-known` is the explicit
+experimental native canary; it transactionally commits only canonical,
+materialization-ready known islands. Disabling the mode restores the original
+immutable HIR path. Automatic/default application is not part of V2.
+
+`vex lint` and `vex test` retain the observation-only `--analyze-comptime`
+option. In test mode it also reaches generated benchmark compilation. Neither
+command can apply replacements, and LSP's `analyzeComptime` setting is likewise
+observation-only.
+
+Compile and run additionally accept `--comptime-telemetry FILE`. It requires a
+non-disabled `--comptime-staging` mode and writes the versioned schema-v4 JSON
+report. Schema v4 separates policy discovery, persistent-cache lookup, record
+decode, semantic validation, installation and publication from frontend,
+fusion, LLVM, object and native-link phases. Missing phases are `null`, and
+telemetry cannot implicitly enable staging or affect semantic query identity.
 
 ### `vex test`
 
@@ -18899,7 +19011,8 @@ Responsibilities:
 
 Core options are `--fix`, `--diff`, `--format text|json|sarif`, `--deny-warnings`,
 `--allow`, `--warn`, `--deny`, `--only`, `--target`, `--explain-boxing` and
-`--explain-arena`. `--timings` adds opt-in per-rule telemetry to JSON/SARIF;
+`--explain-arena`. `--analyze-comptime` adds an observation-only staging
+summary on stderr. `--timings` adds opt-in per-rule telemetry to JSON/SARIF;
 normal runs have no clock-read overhead. The former `check`, `analyze` and `fix` compatibility
 commands have been removed.
 
@@ -18957,12 +19070,19 @@ This keeps command handlers thin while preserving shared compilation behavior.
 
 ## Linking Model
 
-At link stage, `vex-cli` merges:
+VexArch source semantics are rehydrated from the embedded VRI and lowered into
+the same backend module as user and prelude code. They are not linked from a
+runtime bitcode module, object, static archive, or dynamic library.
 
-1. runtime args (`vex_runtime`)
-2. native args from package manifests (`vex-pm`)
+At native link stage, `vex-cli` merges:
 
-For optimized builds, ThinLTO is enabled where appropriate to reduce FFI overhead while preserving dynamic linking flexibility.
+1. a requested-target native support object only when that port requires one;
+2. system libraries activated by reachable `SYSTEM`/`LIBC` providers;
+3. native args from package manifests (`vex-pm`).
+
+The support object contains irreducible assembly only and carries no VexArch
+semantics. Ordinary cross-boundary optimization happens before object emission
+inside the fused module.
 
 ---
 
@@ -18970,7 +19090,9 @@ For optimized builds, ThinLTO is enabled where appropriate to reduce FFI overhea
 
 `vex run` compiles to a temporary executable and runs it as a subprocess. Native dependencies are resolved via the system linker and dynamic loader at runtime.
 
-`vex compile` produces a standalone binary linked against the Vex runtime static library.
+`vex compile` produces a standalone binary from the fused user/prelude/VexArch
+module plus the explicit target/native link plan. Release packages do not ship
+a separate Vex runtime library or `vex_runtime.bc`.
 
 ---
 
@@ -24562,7 +24684,7 @@ for `WyHash` and `XxHash3`.
 ## Incremental API
 
 ```vex
-import { Fnv1a, SipHasher } from "hash";
+import { Fnv1a, SipHasher, XxHash3 } from "hash";
 
 let! stable = Fnv1a.new();
 stable.update("header");
@@ -24573,20 +24695,29 @@ let! keyed = SipHasher.new(secret0, secret1);
 keyed.update("header");
 keyed.update(payload);
 let keyedDigest = keyed.finish();
+
+let! fast = XxHash3.new();
+fast.update("header");
+fast.update(payload);
+let fastDigest = fast.finish();
 ```
 
-Chunks may be strings or byte spans and may split at any byte. FNV-1a and
-SipHash keep bounded state. XXH3 intentionally has no incremental API until a
-bounded upstream-compatible state machine is provided.
+Chunks may be strings or byte spans and may split at any byte. Every hasher
+keeps bounded state. `XxHash3.new(seed)` selects the seeded form; its state is
+eight accumulator lanes plus a fixed 256-byte tail and never grows with the
+input. `finish()` is non-mutating and `reset()` preserves the constructor seed.
 
 ## Compatibility and guarantees
 
 - `WyHash` matches final4 / 4.3.
 - `XxHash3` matches upstream XXH3 64-bit 0.8.x, seeded and unseeded.
+- XXH3 long inputs use target-independent fixed-vector operations. CPU
+  backends select their legal SIMD instructions; applications do not choose an
+  architecture implementation or link a native hash library.
 - `SipHash` implements SipHash-2-4.
 - `Crc32c` implements CRC-32C Castagnoli and uses hardware only when the target
   proves the required CPU feature.
-- One-shot methods allocate no memory.
+- One-shot and incremental methods allocate no memory.
 - There is no fixed-key SipHash helper: a public key would defeat collision-DoS
   protection.
 
@@ -24611,39 +24742,100 @@ target runtime boundary.
 // ============================================================================
 // File: ./std/rand.md
 // ============================================================================
-# rand — Random Number Generation
+# rand — explicit, fast random streams
 
-Fast, high-quality pseudo-random number generation using the **Xoshiro256++** algorithm.
-
-## Usage
+`rand` provides independently owned `Rng` values based on xoshiro256**. It is
+intended for simulation, randomized algorithms, games, sampling and tests. It
+has no hidden global generator.
 
 ```vex
-import { Rng } from "rand";
+import { Rng } from "rand"
 
-// Auto-seeded (from system entropy)
-let! rng = Rng.init();
+let! replayable = Rng.withSeed(42)
+let! independentlySeeded = Rng.init()
 
-// Deterministic (reproducible)
-let! rng = Rng.withSeed(42);
-
-// Generate values
-let u = rng.nextU64();              // Random u64
-let i = rng.nextI64();              // Random i64
-let f = rng.nextF64();              // Random f64 in [0.0, 1.0)
-let n = rng.nextInRange(1, 100);    // Random in [1, 100]
-let b = rng.nextBool();             // Random bool
+let word = replayable.nextU64()
+let ratio = replayable.nextFloat()        // [0.0, 1.0)
+let index = replayable.nextRange(0, 100)  // [0, 100)
 ```
 
-## Xoshiro256++ Algorithm
+`Rng.init()` seeds from the target's fail-closed `Crypto.secureRand()`
+capability. xoshiro output remains non-cryptographic: use the crypto API itself
+for keys, tokens, nonces and secrets.
 
-| Property | Value |
-|----------|-------|
-| State size | 256 bits (4 × u64) |
-| Period | 2²⁵⁶ - 1 |
-| Speed | ~1 ns per u64 |
-| Quality | Passes BigCrush, PractRand |
+## Core API
 
-Significantly faster than Mersenne Twister with better statistical properties.
+| API | Result |
+|---|---|
+| `nextU64`, `nextI64`, `nextU32`, `nextI32` | full-width integer output |
+| `nextFloat`, `nextFloat32` | uniform semi-open floating output |
+| `nextBelow(upper)` | unbiased `u64` in `[0, upper)` |
+| `nextRange`, `nextRangeU64`, `nextRangeF` | uniform semi-open ranges |
+| `choose`, `chooseSpan` | borrowed selection without cloning |
+| `shuffle`, `unsafe shuffleSpan` | ownership-neutral Fisher–Yates shuffle |
+| `fillBytes(&Vec<u8>!)` | safe deterministic pseudorandom fill |
+| `unsafe fillBytes(&Span<u8>!)` | raw-backed fill with caller-proven exclusivity |
+| `jump`, `longJump` | advance by `2^128` or `2^192` transitions |
+| `fork` | return the current stream and jump the parent |
+
+Bounded integers use Lemire multiply-high sampling with a rejection threshold,
+so arbitrary bounds are unbiased without division on the ordinary accepted
+path. Signed range width is calculated in unsigned space and therefore handles
+almost the complete `i64` domain without overflow.
+
+## Reusable distributions
+
+```vex
+import { Normal, Rng, WeightedIndex } from "rand"
+
+let! rng = Rng.withSeed(42)
+let! normal = match Normal.new(10.0, 2.0) {
+    Result.Ok(value) => value,
+    Result.Err(err) => $panic(err.message()),
+}
+let value = normal.sample(&rng!)
+```
+
+| Type | Constructor contract | Sample behavior |
+|---|---|---|
+| `Bernoulli` | finite probability in `[0, 1]` | O(1); exact edges consume no RNG state |
+| `Normal` | finite mean, finite non-negative deviation | cached Box–Muller pair, zero allocation |
+| `Exponential` | positive finite rate | stable `log1p` transform, zero allocation |
+| `WeightedIndex` | finite non-negative weights, positive finite total | owned cumulative table, O(log n), zero allocation |
+
+All constructors return `Result<..., DistributionError>` and validate before a
+reusable distribution becomes observable.
+
+## Parallel streams
+
+Give every worker its own `Rng`. Use `longJump()` to partition top-level jobs
+and `jump()` or `fork()` to partition worker streams. These operations neither
+allocate nor synchronize.
+
+## Measured baseline
+
+Apple M2 Max, release `-O3`, 2026-08-17, 300 ms-per-case median of three runs:
+
+| Operation | Median | Allocation |
+|---|---:|---:|
+| `nextU64` | 3.06 ns | 0 |
+| dynamic `nextBelow` | 3.18 ns | 0 |
+| 1 KiB `fillBytes` | 169.16 ns / 5.64 GB/s | 0 |
+| Bernoulli | 3.21 ns | 0 |
+| cached-pair Normal | 10.37 ns | 0 |
+| Exponential | 9.29 ns | 0 |
+| eight-entry `WeightedIndex` | 5.40 ns | 0 |
+
+These values are target-specific evidence, not portable latency guarantees.
+
+## Verification
+
+```bash
+vex lint lib/std/rand --deny-warnings
+vex test lib/std/rand/tests/basic.test.vx
+vex test -O3 lib/std/rand/tests/basic.test.vx
+vex test -O3 --bench --benchmem lib/std/rand/tests/bench.test.vx
+```
 
 
 // ============================================================================
@@ -24683,104 +24875,293 @@ graph fn my_hidden_layer(t: Tensor<f32>, w: Tensor<f32>) {
 // ============================================================================
 // File: ./std/context.md
 // ============================================================================
-# context — Request-Scoped Context
+# context — request lifetime and cancellation
 
-> **Experimental:** the current flat implementation does not yet provide
-> parent-to-child cancellation propagation, real monotonic timeout expiry, or
-> persistent multi-key values. Do not rely on the examples below as a
-> production contract. The replacement architecture is tracked in the
-> 2026-08-09 standard-library context audit.
-
-Go-style context propagation for cancellation signals, deadlines, timeouts, and request-scoped values through call chains.
-
-## Background Context
+`context` carries cooperative cancellation, monotonic deadlines and small
+request metadata through a call tree. Contexts are immutable persistent
+handles: deriving a child never mutates its parent or siblings.
 
 ```vex
-import { background, todo, withCancel, withTimeout, withValue } from "context";
+import { Context } from "context";
+import { Error, ErrorKind } from "errors";
+import { Duration } from "time";
 
-// Root context (never canceled)
-let ctx = background();
+fn serve(request: &Context): Result<string, Error> {
+    match request.check() {
+        Result.Err(cause) => return Result.Err(cause),
+        Result.Ok(_) => { /* continue */ },
+    }
 
-// Placeholder (for WIP code)
-let ctx = todo();
+    match request.valueStringView("request-id") {
+        Some(id) => return Result.Ok("request " + id),
+        None => return Result.Ok("anonymous request"),
+    }
+}
+
+let root = Context.background();
+let timed = root.withTimeout(Duration.seconds(5));
+let request = timed.withValue("request-id", "req-42");
+let result = serve(&request);
 ```
+
+## Roots and derivation
+
+```vex
+let root = Context.background();
+let placeholder = Context.todo();
+
+let absolute = root.withDeadline(deadline); // deadline: Instant
+let relative = root.withTimeout(Duration.milliseconds(250));
+let tagged = relative.withValue("attempt", 3 as i64);
+```
+
+`Context.todo()` behaves like a background root but remains distinguishable
+through `kind()` for diagnostics. `withDeadline` accepts an absolute monotonic
+`Instant`; wall-clock `Time` and raw Unix timestamps cannot be mixed into this
+API. An earlier inherited deadline always wins.
+
+Deadline creation does not spawn a timer or thread. Consumers observe expiry
+at `isDone()`, `cause()`, `check()` or `remaining()` calls.
 
 ## Cancellation
 
 ```vex
-import { withCancel, cancel, isDone, isCanceled } from "context";
+let root = Context.background();
+let (request, cancel) = root.withCancelCause(
+    Error.withKind("server shutdown", ErrorKind.Closed),
+);
 
-let! ctx = withCancel(background());
+// Pass `request` or a clone to workers.
+let first = cancel.cancel();  // true: this caller published the event
+let again = cancel.cancel();  // false: cancellation is idempotent
 
-// Pass ctx to workers...
-cancel(&ctx);
-
-isDone(ctx);      // → true
-isCanceled(ctx);  // → true
-cause(ctx);       // → "context canceled"
+$assert(request.isDone(), "worker must observe cancellation");
+match request.cause() {
+    Some(cause) => $println(cause.messageView()),
+    None => $panic("missing cancellation cause"),
+}
 ```
 
-## Timeouts & Deadlines
+`CancelHandle.cancel()` is thread-safe. Exactly one concurrent caller publishes
+the event; other callers return only after the timestamp and immutable typed
+cause are visible. Child cancellation and parent cancellation remain separate
+events. `cause()` returns whichever cancellation or deadline occurred first.
+
+`withCancel()` is the convenience form using `ErrorKind.Canceled`.
+
+## Cooperative checkpoints
+
+Use `check()` at meaningful boundaries in request handlers and long-running
+loops:
 
 ```vex
-import { withTimeout, withDeadline, second, millis } from "context";
-
-// Cancel after 5 seconds
-let! ctx = withTimeout(background(), 5 * second());
-
-// Cancel at specific deadline (nanoseconds)
-let! ctx = withDeadline(background(), deadlineNs);
-
-isTimeout(ctx);       // → true (after timeout fires)
-getTimeout(ctx);      // → original timeout duration
-remainingTime(ctx);   // → nanoseconds remaining
+let! offset = 0 as usize;
+while offset < input.len() {
+    match request.check() {
+        Result.Err(cause) => return Result.Err(cause),
+        Result.Ok(_) => { /* process the next bounded chunk */ },
+    }
+    offset = offset + processChunk(input, offset);
+}
 ```
 
-## Request-Scoped Values
+`check()` returns the same typed `Error` as `cause()`. It does not panic, block,
+allocate a notification channel or introduce a scheduler dependency.
+
+## Values
+
+The current safe value surface supports `i64` and owned `string` entries:
 
 ```vex
-import { withValue, withValueStr, getValue, getValueStr } from "context";
+let first = root.withValue("attempt", 0 as i64);
+let second = first.withValue("request-id", "req-42");
 
-let ctx = withValue(background(), "request_id", 42);
-let ctx = withValueStr(ctx, "user", "alice");
+match second.valueI64("attempt") {
+    Some(value) => $assert(value == 0, "zero is a valid value"),
+    None => $panic("attempt missing"),
+}
 
-getValue(ctx, "request_id");     // → 42
-getValueStr(ctx, "user");        // → "alice"
-hasValue(ctx, "request_id");     // → true
+let borrowed: Option<str> = second.valueStringView("request-id");
+let owned: Option<string> = second.valueString("request-id");
 ```
 
-## Duration Helpers
+Absence is always `None`; integer zero and an empty string are ordinary values.
+`valueStringView` is allocation-free and tied to the context borrow.
+`valueString` returns an owned copy.
 
-| Function | Value |
-|----------|-------|
-| `nanosecond()` | 1 ns |
-| `microsecond()` | 1,000 ns |
-| `millisecond()` | 1,000,000 ns |
-| `second()` | 1,000,000,000 ns |
-| `minute()` | 60 × second |
-| `hour()` | 3,600 × second |
-| `seconds(n)` / `millis(n)` / `minutes(n)` / `hours(n)` | Conversion helpers |
+Values are for shallow cross-cutting metadata, not application state or
+dependency injection. Arbitrary typed payloads are intentionally unavailable
+until Vex has safe existential storage, exact generic drop glue and borrowed
+downcasting. Use an explicit typed request struct for domain data.
+
+## Cost model
+
+Each derivation creates one persistent node in the active request arena.
+Cloning a handle shares the chain through VUMM; developers never select or
+manage `Rc`/`Arc`.
+
+Cancellation state and request values use separate persistent chains. Every
+node caches its effective deadline and nearest cancellation state, so adding
+value nodes does not slow down polling.
+
+M2 Max O3 medians (500 ms, three runs, 2026-08-17):
+
+| Operation | Median |
+|---|---:|
+| context clone | 7.88 ns |
+| cancelable child creation and publication | 95.13 ns |
+| active cancellation poll | 2.13 ns |
+| active poll below 256 value nodes | 2.08 ns |
+| cooperative `check` below 256 value nodes | 4.84 ns |
+| cached deadline lookup below 256 value nodes | 1.27 ns |
+| latest value lookup at depth 256 | 4.82 ns |
+| oldest value lookup at depth 256 | 1.65 us |
+
+Value lookup is newest-to-oldest and O(depth). Keep metadata chains shallow;
+the 256-node row is an explicit adversarial regression baseline.
+
+## API summary
+
+| API | Meaning |
+|---|---|
+| `Context.background()` / `Context.todo()` | Create a root |
+| `withCancel()` / `withCancelCause(error)` | Derive a cancelable child and handle |
+| `withDeadline(Instant)` / `withTimeout(Duration)` | Derive a monotonic deadline |
+| `isDone()` | Cheap boolean poll |
+| `cause()` / `check()` | Retrieve or propagate the typed earliest cause |
+| `deadline()` / `timeout()` / `remaining()` | Inspect effective timing |
+| `withValue(key, i64|string)` | Add persistent metadata |
+| `valueI64`, `valueString`, `valueStringView` | Typed lookup |
+| `containsKey` / `kind` | Metadata and diagnostic inspection |
+
+The source distribution includes a generated `lib/std/context/REFERENCE.md`
+with complete signatures.
 
 
 // ============================================================================
 // File: ./std/cli.md
 // ============================================================================
-# cli
+# CLI applications
 
-The current CLI package exports these primary building blocks:
+The `cli` package provides a deterministic command schema, typed argv parser,
+generated help, action dispatch and fallible prompt helpers. Parsing does not
+use a process-global registry.
 
-- `App`
-- `Command`
-- `Context`
-- `Flag`
-- `Arg`
-- prompt helpers: `input`, `confirm`, `choose`
+## Build a command tree
 
-## Current Guidance
+```vex
+import { App, Arg, CliError, Command, Context, Flag } from "cli";
+import { args as processArgs } from "sys/args";
 
-This page intentionally avoids promising a specific high-level `Application.new(...).parse(...).unwrap()` flow until the user-facing examples are fully re-synchronized with the current stdlib surface.
+fn build(context: &Context): Result<(), CliError> {
+    let jobs = match context.getInt("jobs") {
+        Ok(Some(value)) => value,
+        Ok(None) => 1,
+        Err(cliErr) => return Err(cliErr),
+    };
+    $println("workers: " + jobs.toString());
+    return Ok(());
+}
 
-For now, treat `cli` as a structured command/flag/context package rather than relying on Rust-style builder examples copied from older drafts.
+fn main(): i32 {
+    let app = App.new("tool")
+        .version("1.0.0")
+        .about("Build projects")
+        .flag(Flag.boolean("verbose", "v").persistent(true))
+        .addCommand(
+            Command.new("build")
+                .alias("b")
+                .arg(Arg.new("input").required(true))
+                .flag(
+                    Flag.integer("jobs", "j")
+                        .env("TOOL_JOBS")
+                        .defaultValue("4")
+                )
+                .action(build)
+        );
+
+    match app.run(processArgs()) {
+        Ok(_) => return 0,
+        Err(cliErr) => {
+            $eprintln(cliErr.toString());
+            return 1;
+        }
+    }
+}
+```
+
+`-h`/`--help` and `--version` are application controls. `-v` is intentionally
+available to the schema for conventional verbose flags.
+
+## Flags and arguments
+
+Flag constructors are:
+
+- `Flag.boolean(name, short)`;
+- `Flag.stringValue(name, short)`;
+- `Flag.integer(name, short)`;
+- `Flag.count(name, short)`.
+
+Flags support `alias`, `required`, `defaultValue`, `env`, `persistent`,
+`repeatable`, `possibleValue`, `validator`, `conflictsWith`, and
+`requiresFlag`. Boolean flags accept positive and `--no-...` spellings.
+Value-less short flags can be clustered, while a value-taking short flag
+consumes the token suffix or next argv value.
+
+Arguments support `required`, `defaultValue`, `env`, `possibleValue`,
+`validator`, and a final `variadic` argument. `--` terminates option parsing.
+
+Resolution precedence is command line, then non-empty environment value, then
+explicit default. `Context.wasProvided` remains true only for actual
+command-line occurrences.
+
+Boolean absence is not converted into a fake `false`. Handle `Ok(None)` or add
+`.defaultValue("false")` when the schema requires a resolved value.
+
+## Parse once or prepare
+
+`App.parse(&argv)` validates the complete schema and returns a `Context`
+without printing or running an action. Repeated parsers should validate once:
+
+```vex
+let prepared = match app.prepare() {
+    Ok(value) => value,
+    Err(cliErr) => return Err(cliErr),
+};
+
+let first = prepared.parse(&firstArgv);
+let second = prepared.parse(&secondArgv);
+```
+
+`PreparedApp` also provides `run`, `helpText`, and `helpTextFor`.
+
+## Typed context access
+
+Use `getBool`, `getInt`, `getString`, `getStrings`, `getCount`, `getArg`, and
+`getArgs`. Repeatable and variadic accessors preserve input order. Command and
+flag aliases always resolve to canonical names in the context.
+
+## Deterministic help
+
+`helpText()` renders root help. `helpTextFor(&argv)` resolves aliases and
+renders the selected canonical command path. Output is ANSI-free and includes
+aliases, argument/value shapes, possible values, env/default/required
+metadata, relationships and inherited persistent flags.
+
+## Prompts and terminal style
+
+`input`, `confirm`, and `choose` return `Result<_, IoError>`. Empty/default and
+malformed/error states are not conflated. `choose` borrows its option vector.
+Prompt output is ANSI-free; the explicit `style` functions are opt-in when the
+application knows color output is appropriate.
+
+## Current advanced boundary
+
+The production-signed core covers schema, parsing, help and dispatch. Shell
+completion, hidden/deprecated migration metadata, typo suggestions,
+schema-generated man pages and explicit config-file integration are staged on
+the same command model. They are not silently emulated by ambient global
+configuration.
 
 
 // ============================================================================
@@ -24821,7 +25202,7 @@ Available methods:
 | `writeByte(value: u8)` | Append one byte |
 | `writeI64(value: i64)` | Append signed decimal text |
 | `writeU64(value: u64)` | Append unsigned decimal text |
-| `writeF64(value: f64, precision: i32)` | Append fixed-precision text |
+| `writeF64(value: f64, precision: i32)` | Append rounded fixed/scientific text without an intermediate string |
 | `toString()` | Copy current bytes into an owned `string` |
 | `len()` / `isEmpty()` | Inspect logical content |
 | `capacity()` | Inspect reserved byte capacity |
@@ -24847,6 +25228,22 @@ compared verbatim.
 
 Single-byte variants are also available: `indexOfByte`, `indexOfByteFrom`,
 `lastIndexOfByte`, `countByte`, and `containsByte`.
+
+Complete ranges use Vex's target-independent `[u8; 16]` and `Mask<16>`
+operations. Substring search delegates to the same VexArch
+`Mem.indexOfBytes` implementation used by prelude `str`, so the package does
+not maintain a slower second search engine. Exact tails remain bounded scalar
+code. Ignore-case comparisons fold only ASCII `A`–`Z` lanes; punctuation and
+non-ASCII bytes are never changed.
+
+On an Apple M2 Max with O3 and runtime-backed 64 KiB inputs, the 2026-08-16
+baseline is roughly 37 GB/s byte search, 24 GB/s substring search, 37 GB/s
+ASCII validation and 11.6 GB/s all-case-different ASCII equality. These are
+regression baselines for that machine, not cross-platform guarantees.
+
+`StringBuilder.writeF64` writes through `strconv`'s caller-buffer formatter.
+It shares canonical NaN, infinity, negative-zero, rounding and scientific
+notation behavior without allocating a temporary formatted string.
 
 ## ASCII helpers
 
@@ -24896,6 +25293,13 @@ Width-specific integer errors point at the first digit that exceeds the target
 type itself (`parseInt8("128")` reports byte 2). Representable subnormals are
 kept, including the minimum f64 boundary written as `5e-324`.
 
+Float parsing is correctly rounded to nearest-even, including halfway,
+subnormal, overflow, and long-decimal cases. Ordinary decimals use bounded
+native paths; wide exponents use an allocation-free pure-Vex cached-power
+conversion with `u128` products. Only ambiguous rounding boundaries use the
+pure-Vex exact bigint fallback. f32 values are checked for midpoint double
+rounding instead of blindly narrowing through f64.
+
 ## Format values
 
 ```vex
@@ -24927,43 +25331,127 @@ allocation-free. Categories are `Empty`, `InvalidChar`, `InvalidFormat`,
 // ============================================================================
 // File: ./std/sys.md
 // ============================================================================
-# sys — System Information
+# sys — typed hosted-system boundaries
 
-OS environment, process arguments, platform detection, and process control.
-
-## Environment Variables
+`sys` provides process identity and control, environment access, command-line
+arguments, and hosted OS facts. It is target-routed and opt-in: VexArch and the
+prelude remain freestanding when `sys` is not imported.
 
 ```vex
-import { getEnv, setEnv } from "sys";
+import { argView, getEnv, parentPid, pid, platform } from "sys";
 
-let home = getEnv("HOME");         // "/Users/vex"
-setEnv("APP_MODE", "production");
+$println("target: ", platform());
+$println("pid: ", pid());
+
+match parentPid() {
+    Result.Ok(Some(parent)) => $println("parent: ", parent),
+    Result.Ok(None) => $println("no exposed parent"),
+    Result.Err(err) => $println(err),
+}
+
+match getEnv("HOME") {
+    Result.Ok(Some(home)) => $println(home),
+    Result.Ok(None) => $println("HOME is missing"),
+    Result.Err(err) => $println(err),
+}
+
+match argView(0 as usize) {
+    Some(program) => $println(program),
+    None => { /* the host supplied no argv[0] */ },
+}
 ```
 
-## Command-Line Arguments
+## Process control
+
+`ProcessId` is a nonzero `u32` identity. `ExitStatus` preserves normal exit and
+signal termination as different variants.
+
+| API | Contract |
+|---|---|
+| `pid()` | Allocation-free current `ProcessId`. |
+| `parentPid()` | `Result<Option<ProcessId>, ProcessError>`. |
+| `exit(code)`, `abort()` | Immediate termination without Vex destructor unwinding. |
+| `execReplace(file, args)` | PATH-based process-image replacement; success never returns. |
+| `runShell(command)` | Shell execution with normalized `ExitStatus`; do not concatenate untrusted input. |
+| `unsafe forkProcess()` | True POSIX fork; Windows reports `Unsupported`. |
+| `wait(process)`, `tryWait(process)` | Blocking reap or a single nonblocking poll. |
+
+`forkProcess` is unsafe because a multithreaded child may call only
+async-signal-safe operations before `execReplace`. The package does not emulate
+fork on Windows with incompatible semantics.
+
+## Environment
 
 ```vex
-import { args } from "sys";
+import { getEnv, setEnv, unsetEnv } from "sys";
 
-let argv = args();     // Vec<string> of CLI arguments
+match getEnv("APP_MODE") {
+    Result.Ok(Some(value)) => $println(value),
+    Result.Ok(None) => $println("not configured"),
+    Result.Err(err) => $println(err),
+}
+
+unsafe {
+    let _ = setEnv("APP_MODE", "production");
+    let _ = unsetEnv("OLD_APP_MODE");
+}
 ```
 
-## Platform Detection
+`getEnv(key: str)` returns `Result<Option<string>, EnvError>`, so missing and
+present-empty variables remain distinct. Common short keys do not allocate;
+present values are owned Strings. `setEnv` and `unsetEnv` are unsafe because
+environment storage is process-global and foreign code may access it without
+Vex synchronization.
 
-```vex
-import { os, arch } from "sys";
+## Arguments and ownership
 
-let osName = os();       // "darwin", "linux", "windows"
-let archName = arch();   // "amd64", "arm64"
-```
+| API | Ownership |
+|---|---|
+| `argCount()` | Process argument count as `usize`. |
+| `argView(index)`, `programNameView()` | Zero-copy process-lifetime `str` views. |
+| `argViews()` | Allocates only Vec index storage; argument bytes are borrowed. |
+| `arg(index)`, `args()`, `programName()` | Independent owned snapshots. |
 
-## Process Control
+Invalid indices return `None`, never an invented empty string.
 
-```vex
-import { exit } from "sys";
+## Platform facts
 
-exit(0);    // Exit with status code 0
-exit(1);    // Exit with failure
+`platform()` and `arch()` are zero-cost compile-target facts. Hosted queries
+return typed results:
+
+- `logicalCpuCount(): Result<usize, SysError>`
+- `pageSize(): Result<usize, SysError>`
+- `hostname(): Result<string, SysError>`
+- `currentDir(): Result<string, SysError>`
+- `homeDir(): Result<Option<string>, EnvError>`
+- `tempDir(): Result<Option<string>, EnvError>`
+
+No API silently substitutes `/tmp`, `.`, or another plausible path after an OS
+failure.
+
+## Target status
+
+macOS carries the full native-tested provider. Linux carries the POSIX provider
+and passes cross-target semantic/strict-lint gates. Windows uses UTF-16 native
+APIs for environment, cwd and hostname, Toolhelp for parent PID, and CRT wide
+process APIs for replacement and shell execution; POSIX fork/wait are
+unsupported by design. Native Linux and Windows execution remain release gates,
+so cross-target compilation is not presented as native certification.
+Targets without a `native.<os>.vxc` provider fail at compilation; `sys` never
+reuses a guessed POSIX/Darwin ABI as a generic compatibility fallback.
+
+## Performance baseline
+
+Apple M2 Max, release `-O3`, 2026-08-17: `pid` 2.14 ns, `argView(0)` 7.45 ns,
+owned `arg(0)` 37.16 ns, owned ~2.5 KiB PATH lookup 349 ns, hostname 401 ns,
+and current directory 8.28 us. The cwd case is dominated by the host `getcwd`
+boundary.
+
+```bash
+vex lint lib/std/sys --deny-warnings
+vex test -O0 lib/std/sys/tests
+vex test -O3 lib/std/sys/tests
+vex test -O3 --bench --benchtime 300ms lib/std/sys/tests/bench.test.vx
 ```
 
 
@@ -25180,6 +25668,10 @@ export fn bench_sort(b: &BenchCtx!) {
 | `.source` | Original pattern string |
 | `.groupCount` | Number of capture groups |
 
+Invalid syntax, unknown flags or a pattern exceeding the documented resource
+budgets returns `Regex.invalid()` (`valid == false`). Compilation does not print
+to stdout.
+
 ## `Match` — Captured Result
 
 | Method | Description |
@@ -25191,6 +25683,9 @@ export fn bench_sort(b: &BenchCtx!) {
 | `.start(): i32` | Start position of full match |
 | `.end(): i32` | End position of full match |
 
+`Match` also owns reusable execution scratch. Reuse one `Match` per concurrent
+caller; the compiled `Regex` itself remains immutable during matching.
+
 ## Flags
 
 | Flag | Inline | Description |
@@ -25198,6 +25693,10 @@ export fn bench_sort(b: &BenchCtx!) {
 | `"i"` | `(?i)` | Case-insensitive matching |
 | `"m"` | `(?m)` | Multiline (`^` and `$` match line boundaries) |
 | `"s"` | `(?s)` | Dot-all (`.` matches `\n`) |
+
+Only `i`, `m` and `s` are accepted by `Regex.compile`. Bare inline flags must
+appear at the beginning of the pattern. Scoped groups such as `(?i:...)` are
+currently rejected rather than being compiled with incorrect global semantics.
 
 ## Examples
 
@@ -25228,39 +25727,96 @@ test(&re, "some text");
 // ============================================================================
 # Regex Engine Internals
 
-## Compilation Pipeline
+## Pipeline
 
+```text
+source → bounded parser → AST → Thompson bytecode (Prog)
+                                  ├─ literal/prefix metadata
+                                  └─ one-pass DFA when provably deterministic
 ```
-Source Pattern → Parser → AST (Pattern/Sequence) → Thompson NFA → Bytecode (Prog)
-                                                                         ↓
-                                                                 One-Pass DFA (if eligible)
-```
 
-1. **Parser** (`parser.vx`): Handles full regex syntax including character classes, quantifiers, alternation, groups, lookahead, backreferences, and inline flags like `(?i)`.
-2. **AST** (`ast.vx`): Produces `Pattern` → `Sequence` tree with `Span` position tracking.
-3. **Thompson Compiler** (`thompson.vx`): Converts AST into NFA bytecode with epsilon-free transitions.
-4. **One-Pass DFA** (`onepass.vx`): When the NFA is unambiguous, builds a direct DFA for O(n) matching.
+The AST is compile-only and is not retained by the returned `Regex`. Thompson
+fragments also allocate no side storage: each `Frag` is three `i32` values and
+its unresolved edges form an intrusive linked list in the unfinished program's
+target cells. After patching, those same cells contain ordinary instruction
+targets. The validated instruction budget reserves the four persistent SoA
+bytecode streams once, avoiding geometric reallocation and copy traffic.
+Before publication, `Prog.isWellFormed` rejects unresolved intrusive links,
+invalid opcodes, mismatched SoA lengths, bad class indices and out-of-range
+targets. Temporary compiler state therefore cannot leak into execution.
 
-## Execution Engines
+This gives per-call, thread-local compilation state without a process-global
+cache, runtime FFI allocator, or forced arena mode. Applications should compile
+a pattern once and share the resulting immutable `Regex`.
 
-### One-Pass DFA (`onepass.vx`)
-For simple patterns without ambiguity. O(n) time, no backtracking. Used for patterns like literal strings, simple alternations, and non-overlapping quantifiers.
+The parser fails closed for unknown flags, malformed inline flags, unsupported
+scoped flags, capture-slot overflow, excessive repeats, oversized patterns and
+programs whose instruction or capture-scratch budget would be unsafe.
 
-### SIMD Prefix Search (`thompson_fast.vx`)
-When the pattern starts with a multi-byte literal (e.g., `"HTTP/"`, `"error:"`), the engine extracts this prefix and uses V9 SIMD `indexOf` to jump directly to candidate positions, skipping large portions of the input.
+## Execution engines
 
-### Lazy DFA (`lazy_dfa.vx`)
-For complex patterns, builds DFA states on-demand with a bounded cache. Avoids the exponential state explosion of full DFA construction while still achieving near-DFA speeds on practical inputs.
+### Literal and required-literal filters
 
-### Thompson NFA (`thompson_exec.vx`)
-The fallback executor. Simulates all active NFA states simultaneously (parallel matching). Guarantees linear-time matching regardless of pattern complexity — no catastrophic backtracking.
+Pure literals use `str` search directly. The compiler may also publish a
+conservatively proven `requiredLiteral`. It is a rejection filter only; a
+literal from an optional group or one alternation branch is never treated as
+globally required. Exact `.*literal.*` shapes can complete directly.
 
-## Metadata & Optimization
+Multi-byte prefixes use the built-in `str.indexOf`/`contains` implementation,
+which inherits Vex's native SIMD lowering. Sparse prefix hits are verified by a
+bounded candidate engine. After at most two input lengths of speculative work,
+execution falls back to the parallel Thompson state set. Dense adversarial
+prefixes therefore remain linear.
 
-The compiled `Prog` includes metadata for routing decisions:
-- `prefixLen` / `prefixBytes`: Extracted literal prefix for SIMD acceleration
-- `innerLen` / `innerBytes`: Inner literal for mid-pattern SIMD filtering
-- Pattern complexity flags for engine selection
+### One-pass DFA
+
+Eligible programs receive a 256-way transition table. Empty acceptance is
+stored separately from byte transitions, so `a*` does not turn every non-`a`
+byte into a match. Position-dependent assertions remain explicit states and are
+evaluated at the exact input offset. Assertion table targets use a negative
+sentinel, leaving the ordinary hot loop as a direct table lookup.
+
+Multiline programs currently use the general Thompson engine. If branch byte
+sets overlap, one-pass construction fails closed and the same fallback is used.
+
+### Thompson boolean engine
+
+Programs with at most 64 instructions use a register-resident `u64` state set
+and iterate set bits with `Math.ctz`. All possible unanchored starts coexist in
+the same state set, so the input is consumed once instead of restarting the NFA
+for every byte. Larger programs use two reusable vectors per call. Both paths
+are linear in input length for a fixed program and contain no recursive
+backtracking.
+
+### Prioritized Pike capture engine
+
+`Regex.exec` uses an ordered Pike VM over the same bytecode. Split order carries
+greedy/lazy priority; a candidate match is retained while higher-priority live
+threads are allowed to extend it. Capture `Save` slots travel with each thread.
+
+Mutable VM scratch belongs to `Match`, not `Regex`. A compiled regex can
+therefore be shared by concurrent callers, while a caller that reuses its
+`Match` value pays workspace growth only on the first call. Epsilon generations
+avoid per-thread clears and wrap safely.
+
+## Complexity and limits
+
+- Boolean search/full match: linear in input for a fixed bytecode program.
+- Capture execution: prioritized Thompson/Pike simulation; no catastrophic
+  recursive backtracking.
+- Repeat count: at most 1000.
+- Capture groups: at most 127 (the bytecode's one-byte Save-slot format).
+- Group nesting: at most 256.
+- Pattern source: at most 1 MiB.
+- Compiled program: at most 65,536 instructions.
+- Capture workspace: at most 16,777,216 `i32` values.
+
+## Metadata
+
+`ProgMeta` contains exact minimum length, anchored-start information, pure and
+prefix literals, a conservative required literal and the exact
+literal-search-only classification. Metadata is never allowed to change regex
+semantics; uncertain cases fall back to the complete engine.
 
 
 // ============================================================================
@@ -25268,58 +25824,43 @@ The compiled `Prog` includes metadata for routing decisions:
 // ============================================================================
 # regex — Overview
 
-A complete, SIMD-accelerated regex engine written in pure Vex. The engine compiles patterns into Thompson NFA bytecode and employs multiple execution strategies for optimal performance.
-
-## Execution Strategy Pipeline
-
-When you call `regex.test(text)`, the engine routes through the fastest available path:
-
-```
-Pattern Compile → Thompson NFA → Bytecode Program
-                                       ↓
-                  ┌────────────────────┼────────────────────┐
-                  ↓                    ↓                    ↓
-            One-Pass DFA         SIMD Prefix        Lazy DFA
-           (small patterns)    (multi-byte lit)   (complex patterns)
-                  ↓                    ↓                    ↓
-              Direct match      Fast candidate       On-demand
-              (no backtrack)     pre-filter          state cache
-```
-
-## Quick Start
+`std/regex` is a pure-Vex, byte-oriented regular-expression engine with
+deterministic resource limits and no catastrophic backtracking.
 
 ```vex
-import { Regex, Match } from "regex";
+import { Match, Regex } from "std/regex";
 
-let re = Regex.new("\\d{3}-\\d{4}");
-
-// Simple test
-if re.test("Call 555-1234 now") {
-    println("Found phone number!");
-}
-
-// Extract match
-let! m = Match.new();
-if re.exec("Call 555-1234 now", &m) {
-    println("Match: {m.value()}");       // "555-1234"
-    println("Start: {m.start()}");       // position
+let regex = Regex.new("(\\w+)@(\\w+\\.\\w+)");
+let! result = Match.new();
+if regex.exec("mail: user@example.com", &result!) {
+    $println(result.group(1).unwrap());
 }
 ```
 
-## Module Architecture
+The public operations have distinct semantics:
 
-| File | Lines | Purpose |
-|------|------:|---------|
-| `parser.vx` | 18,837 | Regex syntax parser → AST |
-| `ast.vx` | 6,472 | Pattern/Sequence/Span types |
-| `thompson.vx` | 14,511 | NFA compiler (AST → bytecode) |
-| `prog.vx` | 4,296 | Bytecode program + metadata |
-| `onepass.vx` | 14,227 | One-pass DFA builder & executor |
-| `lazy_dfa.vx` | 15,444 | Lazy DFA with on-demand states |
-| `thompson_fast.vx` | 22,240 | SIMD-accelerated NFA execution |
-| `thompson_exec.vx` | 7,729 | Basic Thompson NFA executor |
-| `matcher.vx` | 17,197 | High-level search + capture groups |
-| `regex.vx` | 6,179 | Public API (`Regex`, `Match`) |
+- `test` searches anywhere;
+- `isMatch` requires the entire input;
+- `exec` returns the leftmost match and capture groups.
+
+Internally, pure literals and SIMD-backed prefix searches feed a one-pass DFA
+or a parallel Thompson NFA. Capture extraction uses a prioritized Pike VM with
+workspace reused through `Match`. Pattern-specific email/router shortcuts are
+not part of the engine.
+
+## Source layout
+
+| File | Responsibility |
+|---|---|
+| `parser.vx` | Bounded syntax parser and validation |
+| `ast.vx` | Pattern, sequence, class and capture types |
+| `prog.vx` | Thompson bytecode and semantic metadata |
+| `thompson.vx` | AST-to-bytecode compiler |
+| `class_match.vx` | Canonical byte-class semantics |
+| `onepass.vx` | Deterministic transition-table engine |
+| `thompson_exec.vx` | Linear boolean search/full-match engine |
+| `pike_vm.vx` | Prioritized capture engine |
+| `regex.vx` | Public `Regex`, `Matcher` and `Match` API |
 
 
 // ============================================================================
@@ -25363,6 +25904,13 @@ digits. Overflow and underflow therefore report the exact triggering byte, not
 a later wrapper-level cast. Float parsing preserves representable subnormals;
 `5e-324` is accepted while values that round to zero report underflow.
 
+Decimal f32/f64 results are rounded to nearest-even over the full finite IEEE
+domain. Exactly representable mantissa/power combinations use the smallest
+hardware path. Wider exponents use a pure-Vex Eisel-Lemire cached-power tier;
+only products whose IEEE result is unambiguous are accepted. Remaining values
+use an allocation-free pure-Vex bigint fallback. f32 midpoint detection
+prevents decimal → f64 → f32 double rounding.
+
 Convenience overloads are available as `parseInt`, `parseUInt`, `parseFloat`,
 and `parseBoolStr`.
 
@@ -25403,6 +25951,7 @@ match parseInt64("12x") {
 | `formatHex`, `formatHexUpper`, `formatHexPrefix` | Owned hexadecimal `string` |
 | `formatBinary` | Owned binary `string` |
 | `formatFloat64`, `formatFloat32` | Owned rounded decimal `string` |
+| `formatFloat64To` | Write rounded f64 text into caller-owned storage without allocation |
 | `formatBool` | Owned `true`/`false` string |
 
 `formatFloat64(value, precision)` clamps precision to 0 through 18. Common
@@ -25421,19 +25970,46 @@ $assert(formatFloat64(1.0e100, 2) == "1.00e+100");
 Aliases include `intToString`, `floatToString`, `boolToString`, `formatInt`,
 and `formatFloat`.
 
+### Caller-buffer float formatting
+
+`formatFloat64To(value, precision, out, outCap)` is the allocation-free source
+of truth used by `strings.StringBuilder`. The caller supplies a writable
+`RawBuf` with at least 64 bytes of capacity. The function returns the number of
+initialized bytes and never appends a terminator. If the buffer is null or too
+small, it returns zero without modifying the destination.
+
+```vex
+import { formatFloat64To } from "strconv/format"
+
+let! storage: [u8; 64] = [0; 64]
+let output = RawBuf.fromMutPtr(&storage[0])
+let length = formatFloat64To(9.999e100, 2, output, 64 as usize)
+let rendered = str.fromRawParts(storage.asPtr(), length)
+$assert(rendered == "1.00e+101")
+```
+
+This API is intended for builders, serializers and protocol writers that
+already own output capacity. Application code that needs an owned value should
+continue to use `formatFloat64`.
+
 ## Runtime properties
 
 - No libc, native shim, C-string scan, or external package dependency.
-- Parsing is single-pass and allocation-free.
+- Parsing is allocation-free. Common values need one digit pass; cached powers
+  handle unambiguous wide exponents, while rare exact fallbacks re-read the
+  borrowed digits without copying them.
 - Integer formatting uses backward writing with digit-pair lookup.
-- Formatting performs one final copy into a Vex-owned string.
+- Owned formatting performs one final copy into a Vex-owned string;
+  `formatFloat64To` writes directly into existing caller storage.
 - Extreme float normalization has bounded work.
 - O0 through O3 keep strict IEEE floating-point semantics; optimization level
   alone never enables relaxed math.
 
-The current O2 regression baseline for a 17-digit `formatUInt64` is 52 B/op
-and 1 alloc/op. Formatting two scientific heap strings measures 72 B/op and 2
-allocs/op. Timings vary by host, so allocation counts are the portable gate.
+The 2026-08-14 M2 Max O3 parser baselines are 6.50 ns for fixed-width f64,
+23.48 ns for a general exact-operand decimal, 44.71 ns for a cached-power wide
+exponent, and 75.83 ns for a cached-power long decimal. A true exact halfway
+fallback is 873.31 ns and is not paid by ordinary or interval-proven inputs.
+Timings vary by host.
 
 See the package's `REFERENCE.md`, tests, and benchmarks for the complete
 engineering contract.
@@ -25446,19 +26022,19 @@ engineering contract.
 
 ## Overview
 
-**Structs:** [`Location`](#Location) · [`ScanResult`](#ScanResult) · [`ScanResult64`](#ScanResult64) · [`Timer`](#Timer) · [`Ticker`](#Ticker) · [`DateParts`](#DateParts) · [`DateTimeParts`](#DateTimeParts) · [`Time`](#Time) · [`Duration`](#Duration)
+**Structs:** [`Location`](#Location) · [`timespec`](#timespec) · [`tm`](#tm) · [`ScanResult`](#ScanResult) · [`ScanResult64`](#ScanResult64) · [`Instant`](#Instant) · [`Timer`](#Timer) · [`Ticker`](#Ticker) · [`DateTimeParts`](#DateTimeParts) · [`Time`](#Time) · [`timespec`](#timespec) · [`tm`](#tm) · [`DateParts`](#DateParts) · [`Duration`](#Duration) · [`FILETIME`](#FILETIME) · [`SYSTEMTIME`](#SYSTEMTIME) · [`TIME_ZONE_INFORMATION`](#TIME_ZONE_INFORMATION)
 
 **Enums:** [`Month`](#Month) · [`Weekday`](#Weekday)
 
-**Functions:** [`UTC`](#UTC) · [`Local`](#Local) · [`fixedZone`](#fixedZone) · [`loadLocation`](#loadLocation) · [`EST`](#EST) · [`PST`](#PST) · [`CET`](#CET) · [`TRT`](#TRT) · [`JST`](#JST) · [`isDigit`](#isDigit) · [`scan_int_at`](#scan_int_at) · [`scan_number_at`](#scan_number_at) · [`scan_nanos_at`](#scan_nanos_at) · [`parts_to_ns`](#parts_to_ns) · [`parse`](#parse) · [`parse_rfc3339`](#parse_rfc3339) · [`parse_duration`](#parse_duration) · [`now`](#now) · [`sleep`](#sleep) · [`monotonicNow`](#monotonicNow) · [`sleepDuration`](#sleepDuration) · [`getLocalOffset`](#getLocalOffset) · [`since`](#since) · [`until`](#until) · [`truncate`](#truncate) · [`round`](#round) · [`unix`](#unix) · [`unix_seconds`](#unix_seconds) · [`unix_nanosecond`](#unix_nanosecond) · [`unix_milli`](#unix_milli) · [`unix_micro`](#unix_micro) · [`compare`](#compare) · [`before`](#before) · [`after`](#after) · [`equal`](#equal) · [`after`](#after) · [`weekday`](#weekday) · [`date`](#date) · [`clock`](#clock) · [`normalized_delay_ns`](#normalized_delay_ns) · [`newTimer`](#newTimer) · [`newTicker`](#newTicker) · [`afterDuration`](#afterDuration) · [`tz_pad2`](#tz_pad2) · [`tz_pad4`](#tz_pad4) · [`formatInLocation`](#formatInLocation) · [`toRFC3339InLocation`](#toRFC3339InLocation) · [`inLocation`](#inLocation) · [`isDST`](#isDST) · [`days_in_month`](#days_in_month) · [`ns_to_datetime`](#ns_to_datetime) · [`add`](#add) · [`sub`](#sub) · [`pad2`](#pad2) · [`pad4`](#pad4) · [`abs_date`](#abs_date) · [`is_leap`](#is_leap) · [`nsToDateTime`](#nsToDateTime) · [`fmt_int`](#fmt_int) · [`format_layout`](#format_layout) · [`utc`](#utc) · [`local`](#local) · [`fixed_zone`](#fixed_zone) · [`load_location`](#load_location) · [`seconds`](#seconds) · [`milliseconds`](#milliseconds) · [`microseconds`](#microseconds) · [`nanoseconds`](#nanoseconds) · [`minutes`](#minutes) · [`hours`](#hours)
+**Functions:** [`UTC`](#UTC) · [`Local`](#Local) · [`fixedZone`](#fixedZone) · [`loadLocation`](#loadLocation) · [`EST`](#EST) · [`PST`](#PST) · [`CET`](#CET) · [`TRT`](#TRT) · [`JST`](#JST) · [`vex_time_current_ns`](#vex_time_current_ns) · [`vex_nanosleep`](#vex_nanosleep) · [`vex_monotonic_ns`](#vex_monotonic_ns) · [`vex_tz_offset_at_shim`](#vex_tz_offset_at_shim) · [`vex_tz_exists_shim`](#vex_tz_exists_shim) · [`vex_get_local_offset`](#vex_get_local_offset) · [`isDigit`](#isDigit) · [`scan_int_at`](#scan_int_at) · [`scan_nanos_at`](#scan_nanos_at) · [`daysFromCivil`](#daysFromCivil) · [`validDateTime`](#validDateTime) · [`partsToNs`](#partsToNs) · [`parse`](#parse) · [`parse_rfc3339`](#parse_rfc3339) · [`parse_duration`](#parse_duration) · [`signedDurationBetween`](#signedDurationBetween) · [`now`](#now) · [`sleep`](#sleep) · [`sleep`](#sleep) · [`getLocalOffset`](#getLocalOffset) · [`since`](#since) · [`until`](#until) · [`truncate`](#truncate) · [`round`](#round) · [`unix`](#unix) · [`unix_seconds`](#unix_seconds) · [`unix_nanosecond`](#unix_nanosecond) · [`unix_milli`](#unix_milli) · [`unix_micro`](#unix_micro) · [`compare`](#compare) · [`before`](#before) · [`after`](#after) · [`equal`](#equal) · [`after`](#after) · [`weekday`](#weekday) · [`date`](#date) · [`clock`](#clock) · [`newTimer`](#newTimer) · [`newTicker`](#newTicker) · [`afterDuration`](#afterDuration) · [`tz_pad2`](#tz_pad2) · [`tz_pad4`](#tz_pad4) · [`formatInLocation`](#formatInLocation) · [`toRFC3339InLocation`](#toRFC3339InLocation) · [`inLocation`](#inLocation) · [`isDST`](#isDST) · [`days_in_month`](#days_in_month) · [`ns_to_datetime`](#ns_to_datetime) · [`floor_div`](#floor_div) · [`add`](#add) · [`sub`](#sub) · [`write_padded_int`](#write_padded_int) · [`vex_time_current_ns`](#vex_time_current_ns) · [`vex_nanosleep`](#vex_nanosleep) · [`vex_monotonic_ns`](#vex_monotonic_ns) · [`vex_tz_offset_at_shim`](#vex_tz_offset_at_shim) · [`vex_tz_exists_shim`](#vex_tz_exists_shim) · [`vex_get_local_offset`](#vex_get_local_offset) · [`fmt_int`](#fmt_int) · [`format_layout`](#format_layout) · [`utc`](#utc) · [`local`](#local) · [`fixed_zone`](#fixed_zone) · [`load_location`](#load_location) · [`abs_date`](#abs_date) · [`is_leap`](#is_leap) · [`nsToDateTime`](#nsToDateTime) · [`magnitude`](#magnitude) · [`seconds`](#seconds) · [`milliseconds`](#milliseconds) · [`microseconds`](#microseconds) · [`nanoseconds`](#nanoseconds) · [`minutes`](#minutes) · [`hours`](#hours) · [`vex_time_current_ns`](#vex_time_current_ns) · [`sleepMilliseconds`](#sleepMilliseconds) · [`vex_nanosleep`](#vex_nanosleep) · [`vex_monotonic_ns`](#vex_monotonic_ns) · [`vex_tz_offset_at_shim`](#vex_tz_offset_at_shim) · [`vex_tz_exists_shim`](#vex_tz_exists_shim) · [`vex_get_local_offset`](#vex_get_local_offset)
 
 **Constants:** [`NANOSECOND`](#NANOSECOND) · [`MICROSECOND`](#MICROSECOND) · [`MILLISECOND`](#MILLISECOND) · [`SECOND`](#SECOND) · [`MINUTE`](#MINUTE) · [`HOUR`](#HOUR) · [`DAY`](#DAY) · [`RFC3339`](#RFC3339)
 
 ## Constants
 
-### <a id="NANOSECOND"></a>`NANOSECOND` ` export`
+### <a id="NANOSECOND"></a>`NANOSECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L33-33
+> 📄 `constants.vx` L33-33
 
 ```vex
 export const NANOSECOND: i64=1;
@@ -25468,9 +26044,9 @@ export const NANOSECOND: i64=1;
 
 ---
 
-### <a id="MICROSECOND"></a>`MICROSECOND` ` export`
+### <a id="MICROSECOND"></a>`MICROSECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L34-34
+> 📄 `constants.vx` L34-34
 
 ```vex
 export const MICROSECOND: i64=1000 * NANOSECOND;
@@ -25480,9 +26056,9 @@ export const MICROSECOND: i64=1000 * NANOSECOND;
 
 ---
 
-### <a id="MILLISECOND"></a>`MILLISECOND` ` export`
+### <a id="MILLISECOND"></a>`MILLISECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L35-35
+> 📄 `constants.vx` L35-35
 
 ```vex
 export const MILLISECOND: i64=1000 * MICROSECOND;
@@ -25492,9 +26068,9 @@ export const MILLISECOND: i64=1000 * MICROSECOND;
 
 ---
 
-### <a id="SECOND"></a>`SECOND` ` export`
+### <a id="SECOND"></a>`SECOND` `🔓 export`
 
-&gt; 📄 `constants.vx` L36-36
+> 📄 `constants.vx` L36-36
 
 ```vex
 export const SECOND: i64=1000 * MILLISECOND;
@@ -25504,9 +26080,9 @@ export const SECOND: i64=1000 * MILLISECOND;
 
 ---
 
-### <a id="MINUTE"></a>`MINUTE` ` export`
+### <a id="MINUTE"></a>`MINUTE` `🔓 export`
 
-&gt; 📄 `constants.vx` L37-37
+> 📄 `constants.vx` L37-37
 
 ```vex
 export const MINUTE: i64=60 * SECOND;
@@ -25516,9 +26092,9 @@ export const MINUTE: i64=60 * SECOND;
 
 ---
 
-### <a id="HOUR"></a>`HOUR` ` export`
+### <a id="HOUR"></a>`HOUR` `🔓 export`
 
-&gt; 📄 `constants.vx` L38-38
+> 📄 `constants.vx` L38-38
 
 ```vex
 export const HOUR: i64=60 * MINUTE;
@@ -25528,9 +26104,9 @@ export const HOUR: i64=60 * MINUTE;
 
 ---
 
-### <a id="DAY"></a>`DAY` ` export`
+### <a id="DAY"></a>`DAY` `🔓 export`
 
-&gt; 📄 `constants.vx` L39-39
+> 📄 `constants.vx` L39-39
 
 ```vex
 export const DAY: i64=24 * HOUR;
@@ -25540,9 +26116,9 @@ export const DAY: i64=24 * HOUR;
 
 ---
 
-### <a id="RFC3339"></a>`RFC3339` ` export`
+### <a id="RFC3339"></a>`RFC3339` `🔓 export`
 
-&gt; 📄 `constants.vx` L42-42
+> 📄 `constants.vx` L42-42
 
 ```vex
 export const RFC3339: string="2006-01-02T15:04:05Z07:00";
@@ -25554,9 +26130,9 @@ export const RFC3339: string="2006-01-02T15:04:05Z07:00";
 
 ## Structs
 
-### <a id="Location"></a>`Location` ` export`
+### <a id="Location"></a>`Location` `🔓 export`
 
-&gt; 📄 `location.vx` L13-23
+> 📄 `location.vx` L17-27
 
 ```vex
 export struct Location
@@ -25580,52 +26156,135 @@ export struct Location
 | `Location.local`[↗](#Location.local) | `export fn Location.local(): Location` |  |
 | `Location.fixedZone`[↗](#Location.fixedZone) | `export fn Location.fixedZone(name: string, offsetS` |  |
 | `Location.load`[↗](#Location.load) | `export fn Location.load(name: string): Result&lt;Loca` |  |
-| `offset`[↗](#Location.offset) | `export fn (self: &Location) offset(): i64` | Standard (base) offset in seconds. |
-| `offsetAtUnix`[↗](#Location.offsetAtUnix) | `export fn (self: &Location) offsetAtUnix(unixSec: ` | Actual UTC offset at an arbitrary Unix timestamp. |
-| `offsetAt`[↗](#Location.offsetAt) | `export fn (self: &Location) offsetAt(t: Time): i64` | Offset at a Time instant. |
-| `offsetHours`[↗](#Location.offsetHours) | `export fn (self: &Location) offsetHours(): i32` | Offset in whole hours. |
-| `clone`[↗](#Location.clone) | `export fn (self: &Location) clone(): Location` | Clone. |
-| `toString`[↗](#Location.toString) | `export fn (self: &Location) toString(): string` | Display: "America/New_York (UTC-5)" |
+| `offset`[↗](#Location.offset) | `export fn (self: &amp;Location) offset(): i64` | Standard (base) offset in seconds. |
+| `offsetAtUnix`[↗](#Location.offsetAtUnix) | `export fn (self: &amp;Location) offsetAtUnix(unixSec: ` | Actual UTC offset at an arbitrary Unix timestamp. |
+| `offsetAt`[↗](#Location.offsetAt) | `export fn (self: &amp;Location) offsetAt(t: Time): i64` | Offset at a Time instant. |
+| `offsetHours`[↗](#Location.offsetHours) | `export fn (self: &amp;Location) offsetHours(): i32` | Offset in whole hours. |
+| `clone`[↗](#Location.clone) | `export fn (self: &amp;Location) clone(): Location` | Clone. |
+| `toString`[↗](#Location.toString) | `export fn (self: &amp;Location) toString(): string` | Display: "America/New_York (UTC-5)" |
 
 ---
 
-### <a id="ScanResult"></a>`ScanResult` ` export`
+### <a id="timespec"></a>`timespec`
 
-&gt; 📄 `parse.vx` L7-11
+> 📄 `native.macos.vxc` L3-7
 
 ```vex
-export struct ScanResult
+struct timespec
+```
+
+**Implements:** `Copy`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `tv_sec` | `i64` | 🔓 public |  |
+| `tv_nsec` | `i64` | 🔓 public |  |
+
+---
+
+### <a id="tm"></a>`tm`
+
+> 📄 `native.macos.vxc` L54-67
+
+```vex
+struct tm
 ```
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `i32` |  public |  |
-| `count` | `i32` |  public |  |
+| `tm_sec` | `i32` | 🔓 public |  |
+| `tm_min` | `i32` | 🔓 public |  |
+| `tm_hour` | `i32` | 🔓 public |  |
+| `tm_mday` | `i32` | 🔓 public |  |
+| `tm_mon` | `i32` | 🔓 public |  |
+| `tm_year` | `i32` | 🔓 public |  |
+| `tm_wday` | `i32` | 🔓 public |  |
+| `tm_yday` | `i32` | 🔓 public |  |
+| `tm_isdst` | `i32` | 🔓 public |  |
+| `tm_gmtoff` | `i64` | 🔓 public |  |
+| `tm_zone` | `Ptr&lt;u8&gt;` | 🔓 public |  |
 
 ---
 
-### <a id="ScanResult64"></a>`ScanResult64` ` export`
+### <a id="ScanResult"></a>`ScanResult`
 
-&gt; 📄 `parse.vx` L12-16
+> 📄 `parse.vx` L6-10
 
 ```vex
-export struct ScanResult64
+struct ScanResult
 ```
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `value` | `i64` |  public |  |
-| `count` | `i32` |  public |  |
+| `value` | `i32` | 🔓 public |  |
+| `count` | `i32` | 🔓 public |  |
 
 ---
 
-### <a id="Timer"></a>`Timer` ` export`
+### <a id="ScanResult64"></a>`ScanResult64`
 
-&gt; 📄 `helpers.vx` L124-129
+> 📄 `parse.vx` L11-15
+
+```vex
+struct ScanResult64
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `value` | `i64` | 🔓 public |  |
+| `count` | `i32` | 🔓 public |  |
+
+---
+
+### <a id="Instant"></a>`Instant` `🔓 export`
+
+> 📄 `instant.vx` L7-10
+
+```vex
+export struct Instant
+```
+
+**Implements:** `Clone` & `Copy` & `Eq` & `Ord`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `ticks` | `u64` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `Instant.now`[↗](#Instant.now) | `export fn Instant.now(): Instant` |  |
+| `clone`[↗](#Instant.clone) | `export fn (self: &amp;Instant) clone(): Instant` |  |
+| `asNanos`[↗](#Instant.asNanos) | `export fn (self: &amp;Instant) asNanos(): u64` | Process-local clock reading for diagnostics and native interop. It has no |
+| `durationSince`[↗](#Instant.durationSince) | `export fn (self: &amp;Instant) durationSince(earlier: ` | Signed difference with saturation at Duration's representable limits. |
+| `saturatingDurationSince`[↗](#Instant.saturatingDurationSince) | `export fn (self: &amp;Instant) saturatingDurationSince` | Non-negative difference; clock anomalies or reversed operands yield zero. |
+| `elapsed`[↗](#Instant.elapsed) | `export fn (self: &amp;Instant) elapsed(): Duration` |  |
+| `checkedAdd`[↗](#Instant.checkedAdd) | `export fn (self: &amp;Instant) checkedAdd(duration: Du` |  |
+| `checkedSub`[↗](#Instant.checkedSub) | `export fn (self: &amp;Instant) checkedSub(duration: Du` |  |
+| `saturatingAdd`[↗](#Instant.saturatingAdd) | `export fn (self: &amp;Instant) saturatingAdd(duration:` |  |
+| `saturatingSub`[↗](#Instant.saturatingSub) | `export fn (self: &amp;Instant) saturatingSub(duration:` |  |
+| `op==`[↗](#Instant.op==) | `export fn (self: &amp;Instant) op==(other: &amp;Instant): ` |  |
+| `op<`[↗](#Instant.op<) | `export fn (self: &amp;Instant) op&lt;(other: &amp;Instant): b` |  |
+| `op>`[↗](#Instant.op>) | `export fn (self: &amp;Instant) op&gt;(other: &amp;Instant): b` |  |
+| `op<=`[↗](#Instant.op<=) | `export fn (self: &amp;Instant) op&lt;=(other: &amp;Instant): ` |  |
+| `op>=`[↗](#Instant.op>=) | `export fn (self: &amp;Instant) op&gt;=(other: &amp;Instant): ` |  |
+
+---
+
+### <a id="Timer"></a>`Timer` `🔓 export`
+
+> 📄 `helpers.vx` L122-127
 
 ```vex
 export struct Timer
@@ -25635,26 +26294,26 @@ export struct Timer
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `deadline_ns` | `u64` |  public |  |
-| `fired` | `bool` |  public |  |
-| `active` | `bool` |  public |  |
+| `deadline` | `Instant` | 🔒 private |  |
+| `fired` | `bool` | 🔒 private |  |
+| `active` | `bool` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `Timer.new`[↗](#Timer.new) | `export fn Timer.new(d: Duration): Timer` |  |
-| `expired`[↗](#Timer.expired) | `export fn (self: &Timer) expired(): bool` |  |
-| `poll`[↗](#Timer.poll) | `export fn (self: &Timer!) poll(): bool` |  |
-| `reset`[↗](#Timer.reset) | `export fn (self: &Timer!) reset(d: Duration)` |  |
-| `stop`[↗](#Timer.stop) | `export fn (self: &Timer!) stop()` |  |
-| `wait`[↗](#Timer.wait) | `export fn (self: &Timer!) wait(): Time` |  |
+| `expired`[↗](#Timer.expired) | `export fn (self: &amp;Timer) expired(): bool` |  |
+| `poll`[↗](#Timer.poll) | `export fn (self: &amp;Timer!) poll(): bool` |  |
+| `reset`[↗](#Timer.reset) | `export fn (self: &amp;Timer!) reset(d: Duration)` |  |
+| `stop`[↗](#Timer.stop) | `export fn (self: &amp;Timer!) stop()` |  |
+| `wait`[↗](#Timer.wait) | `export fn (self: &amp;Timer!) wait(): Time` |  |
 
 ---
 
-### <a id="Ticker"></a>`Ticker` ` export`
+### <a id="Ticker"></a>`Ticker` `🔓 export`
 
-&gt; 📄 `helpers.vx` L210-215
+> 📄 `helpers.vx` L195-200
 
 ```vex
 export struct Ticker
@@ -25664,42 +26323,24 @@ export struct Ticker
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `interval_ns` | `u64` |  public |  |
-| `last_tick_ns` | `u64` |  public |  |
-| `active` | `bool` |  public |  |
+| `interval` | `Duration` | 🔒 private |  |
+| `next` | `Instant` | 🔒 private |  |
+| `active` | `bool` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `Ticker.new`[↗](#Ticker.new) | `export fn Ticker.new(d: Duration): Ticker` |  |
-| `tick`[↗](#Ticker.tick) | `export fn (self: &Ticker!) tick(): bool` |  |
-| `reset`[↗](#Ticker.reset) | `export fn (self: &Ticker!) reset(d: Duration)` |  |
-| `stop`[↗](#Ticker.stop) | `export fn (self: &Ticker!) stop()` |  |
+| `tick`[↗](#Ticker.tick) | `export fn (self: &amp;Ticker!) tick(): bool` |  |
+| `reset`[↗](#Ticker.reset) | `export fn (self: &amp;Ticker!) reset(d: Duration)` |  |
+| `stop`[↗](#Ticker.stop) | `export fn (self: &amp;Ticker!) stop()` |  |
 
 ---
 
-### <a id="DateParts"></a>`DateParts`
+### <a id="DateTimeParts"></a>`DateTimeParts` `🔓 export`
 
-&gt; 📄 `time_type.vx` L27-32
-
-```vex
-struct DateParts
-```
-
-**Fields:**
-
-| Name | Type | Access | Description |
-|------|------|--------|-------------|
-| `y` | `i32` | 🔒 readonly |  |
-| `m` | `i32` | 🔒 readonly |  |
-| `d` | `i32` | 🔒 readonly |  |
-
----
-
-### <a id="DateTimeParts"></a>`DateTimeParts` ` export`
-
-&gt; 📄 `time_type.vx` L35-44
+> 📄 `time_type.vx` L28-37
 
 ```vex
 export struct DateTimeParts
@@ -25721,31 +26362,31 @@ export struct DateTimeParts
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `year`[↗](#DateTimeParts.year) | `export fn (self: &DateTimeParts) year(): i32` |  |
-| `month`[↗](#DateTimeParts.month) | `export fn (self: &DateTimeParts) month(): i32` |  |
-| `day`[↗](#DateTimeParts.day) | `export fn (self: &DateTimeParts) day(): i32` |  |
-| `hour`[↗](#DateTimeParts.hour) | `export fn (self: &DateTimeParts) hour(): i32` |  |
-| `minute`[↗](#DateTimeParts.minute) | `export fn (self: &DateTimeParts) minute(): i32` |  |
-| `second`[↗](#DateTimeParts.second) | `export fn (self: &DateTimeParts) second(): i32` |  |
-| `weekday`[↗](#DateTimeParts.weekday) | `export fn (self: &DateTimeParts) weekday(): i32` |  |
+| `year`[↗](#DateTimeParts.year) | `export fn (self: &amp;DateTimeParts) year(): i32` |  |
+| `month`[↗](#DateTimeParts.month) | `export fn (self: &amp;DateTimeParts) month(): i32` |  |
+| `day`[↗](#DateTimeParts.day) | `export fn (self: &amp;DateTimeParts) day(): i32` |  |
+| `hour`[↗](#DateTimeParts.hour) | `export fn (self: &amp;DateTimeParts) hour(): i32` |  |
+| `minute`[↗](#DateTimeParts.minute) | `export fn (self: &amp;DateTimeParts) minute(): i32` |  |
+| `second`[↗](#DateTimeParts.second) | `export fn (self: &amp;DateTimeParts) second(): i32` |  |
+| `weekday`[↗](#DateTimeParts.weekday) | `export fn (self: &amp;DateTimeParts) weekday(): i32` |  |
 
 ---
 
-### <a id="Time"></a>`Time` ` export`
+### <a id="Time"></a>`Time` `🔓 export`
 
-&gt; 📄 `time_type.vx` L85-88
+> 📄 `time_type.vx` L78-81
 
 ```vex
 export struct Time
 ```
 
-**Implements:** `Display` & `Clone`
+**Implements:** `Display` & `Clone` & `Copy` & `Eq` & `Ord`
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `ns` | `i64` |  public |  |
+| `ns` | `i64` | 🔒 readonly |  |
 
 **Methods:**
 
@@ -25753,43 +26394,120 @@ export struct Time
 |--------|-----------|-------------|
 | `Time.now`[↗](#Time.now) | `export fn Time.now(): Time` |  |
 | `Time.unix`[↗](#Time.unix) | `export fn Time.unix(sec: i64, nsec: i64): Time` |  |
-| `clone`[↗](#Time.clone) | `export fn (self: &Time) clone(): Time` |  |
-| `toString`[↗](#Time.toString) | `export fn (self: &Time) toString(): string` |  |
-| `unix`[↗](#Time.unix) | `export fn (self: &Time) unix(): i64` |  |
-| `unixNano`[↗](#Time.unixNano) | `export fn (self: &Time) unixNano(): i64` |  |
-| `add`[↗](#Time.add) | `export fn (self: &Time) add(d: i64): Time` |  |
-| `sub`[↗](#Time.sub) | `export fn (self: &Time) sub(t: Time): i64` |  |
-| `year`[↗](#Time.year) | `export fn (self: &Time) year(): i64` |  |
-| `month`[↗](#Time.month) | `export fn (self: &Time) month(): Month` |  |
-| `day`[↗](#Time.day) | `export fn (self: &Time) day(): i64` |  |
-| `hour`[↗](#Time.hour) | `export fn (self: &Time) hour(): i64` |  |
-| `minute`[↗](#Time.minute) | `export fn (self: &Time) minute(): i64` |  |
-| `second`[↗](#Time.second) | `export fn (self: &Time) second(): i64` |  |
-| `weekday`[↗](#Time.weekday) | `export fn (self: &Time) weekday(): Weekday` |  |
-| `addDate`[↗](#Time.addDate) | `export fn (self: &Time) addDate(years: i32, months` |  |
-| `withOffset`[↗](#Time.withOffset) | `export fn (self: &Time) withOffset(offsetSec: i64)` |  |
-| `formatWithOffset`[↗](#Time.formatWithOffset) | `export fn (self: &Time) formatWithOffset(layout: s` |  |
-| `format`[↗](#Time.format) | `export fn (self: &Time) format(layout: str): strin` |  |
-| `startOf`[↗](#Time.startOf) | `export fn (self: &Time) startOf(unit: str): Time` |  |
-| `endOf`[↗](#Time.endOf) | `export fn (self: &Time) endOf(unit: str): Time` |  |
+| `Time.checkedUnix`[↗](#Time.checkedUnix) | `export fn Time.checkedUnix(sec: i64, nsec: i64): O` | Constructs Unix time while normalizing an arbitrary nanosecond offset. |
+| `Time.fromUnixNanos`[↗](#Time.fromUnixNanos) | `export fn Time.fromUnixNanos(ns: i64): Time` | Constructs an absolute time from nanoseconds since the Unix epoch. |
+| `clone`[↗](#Time.clone) | `export fn (self: &amp;Time) clone(): Time` |  |
+| `cmp`[↗](#Time.cmp) | `export fn (self: &amp;Time) cmp(other: &amp;Time): i32` |  |
+| `op==`[↗](#Time.op==) | `export fn (self: &amp;Time) op==(other: &amp;Time): bool` |  |
+| `op<`[↗](#Time.op<) | `export fn (self: &amp;Time) op&lt;(other: &amp;Time): bool` |  |
+| `op>`[↗](#Time.op>) | `export fn (self: &amp;Time) op&gt;(other: &amp;Time): bool` |  |
+| `op<=`[↗](#Time.op<=) | `export fn (self: &amp;Time) op&lt;=(other: &amp;Time): bool` |  |
+| `op>=`[↗](#Time.op>=) | `export fn (self: &amp;Time) op&gt;=(other: &amp;Time): bool` |  |
+| `toString`[↗](#Time.toString) | `export fn (self: &amp;Time) toString(): string` |  |
+| `unix`[↗](#Time.unix) | `export fn (self: &amp;Time) unix(): i64` |  |
+| `unixNano`[↗](#Time.unixNano) | `export fn (self: &amp;Time) unixNano(): i64` | Total nanoseconds elapsed since the Unix epoch. |
+| `unixMilli`[↗](#Time.unixMilli) | `export fn (self: &amp;Time) unixMilli(): i64` | Total milliseconds elapsed since the Unix epoch, rounded toward the past. |
+| `unixMicro`[↗](#Time.unixMicro) | `export fn (self: &amp;Time) unixMicro(): i64` | Total microseconds elapsed since the Unix epoch, rounded toward the past. |
+| `nanosecond`[↗](#Time.nanosecond) | `export fn (self: &amp;Time) nanosecond(): i64` | Nanosecond offset within the current Unix second (`0..999_999_999`). |
+| `checkedAdd`[↗](#Time.checkedAdd) | `export fn (self: &amp;Time) checkedAdd(d: Duration): O` |  |
+| `add`[↗](#Time.add) | `export fn (self: &amp;Time) add(d: Duration): Time` |  |
+| `saturatingAdd`[↗](#Time.saturatingAdd) | `export fn (self: &amp;Time) saturatingAdd(d: Duration)` |  |
+| `checkedDurationSince`[↗](#Time.checkedDurationSince) | `export fn (self: &amp;Time) checkedDurationSince(earli` |  |
+| `durationSince`[↗](#Time.durationSince) | `export fn (self: &amp;Time) durationSince(earlier: Tim` |  |
+| `year`[↗](#Time.year) | `export fn (self: &amp;Time) year(): i64` |  |
+| `month`[↗](#Time.month) | `export fn (self: &amp;Time) month(): Month` |  |
+| `day`[↗](#Time.day) | `export fn (self: &amp;Time) day(): i64` |  |
+| `hour`[↗](#Time.hour) | `export fn (self: &amp;Time) hour(): i64` |  |
+| `minute`[↗](#Time.minute) | `export fn (self: &amp;Time) minute(): i64` |  |
+| `second`[↗](#Time.second) | `export fn (self: &amp;Time) second(): i64` |  |
+| `weekday`[↗](#Time.weekday) | `export fn (self: &amp;Time) weekday(): Weekday` |  |
+| `addDate`[↗](#Time.addDate) | `export fn (self: &amp;Time) addDate(years: i32, months` |  |
+| `withOffset`[↗](#Time.withOffset) | `export fn (self: &amp;Time) withOffset(offsetSec: i64)` |  |
+| `formatWithOffset`[↗](#Time.formatWithOffset) | `export fn (self: &amp;Time) formatWithOffset(layout: s` |  |
+| `format`[↗](#Time.format) | `export fn (self: &amp;Time) format(layout: str): strin` |  |
+| `startOf`[↗](#Time.startOf) | `export fn (self: &amp;Time) startOf(unit: str): Time` |  |
+| `endOf`[↗](#Time.endOf) | `export fn (self: &amp;Time) endOf(unit: str): Time` |  |
 
 ---
 
-### <a id="Duration"></a>`Duration` ` export`
+### <a id="timespec"></a>`timespec`
 
-&gt; 📄 `duration.vx` L4-7
+> 📄 `native.linux.vxc` L3-7
 
 ```vex
-export struct Duration
+struct timespec
 ```
 
-**Implements:** `Display` & `Clone`
+**Implements:** `Copy`
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `ns` | `i64` |  public |  |
+| `tv_sec` | `i64` | 🔓 public |  |
+| `tv_nsec` | `i64` | 🔓 public |  |
+
+---
+
+### <a id="tm"></a>`tm`
+
+> 📄 `native.linux.vxc` L50-63
+
+```vex
+struct tm
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `tm_sec` | `i32` | 🔓 public |  |
+| `tm_min` | `i32` | 🔓 public |  |
+| `tm_hour` | `i32` | 🔓 public |  |
+| `tm_mday` | `i32` | 🔓 public |  |
+| `tm_mon` | `i32` | 🔓 public |  |
+| `tm_year` | `i32` | 🔓 public |  |
+| `tm_wday` | `i32` | 🔓 public |  |
+| `tm_yday` | `i32` | 🔓 public |  |
+| `tm_isdst` | `i32` | 🔓 public |  |
+| `tm_gmtoff` | `i64` | 🔓 public |  |
+| `tm_zone` | `Ptr&lt;u8&gt;` | 🔓 public |  |
+
+---
+
+### <a id="DateParts"></a>`DateParts` `🔓 export`
+
+> 📄 `conversions.vx` L7-12
+
+```vex
+export struct DateParts
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `y` | `i32` | 🔒 readonly |  |
+| `m` | `i32` | 🔒 readonly |  |
+| `d` | `i32` | 🔒 readonly |  |
+
+---
+
+### <a id="Duration"></a>`Duration` `🔓 export`
+
+> 📄 `duration.vx` L5-8
+
+```vex
+export struct Duration
+```
+
+**Implements:** `Display` & `Clone` & `Copy` & `Eq` & `Ord`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `ns` | `i64` | 🔒 readonly |  |
 
 **Methods:**
 
@@ -25801,31 +26519,106 @@ export struct Duration
 | `Duration.nanoseconds`[↗](#Duration.nanoseconds) | `export fn Duration.nanoseconds(ns: i64): Duration` |  |
 | `Duration.minutes`[↗](#Duration.minutes) | `export fn Duration.minutes(m: i64): Duration` |  |
 | `Duration.hours`[↗](#Duration.hours) | `export fn Duration.hours(h: i64): Duration` |  |
-| `asSeconds`[↗](#Duration.asSeconds) | `export fn (self: &Duration) asSeconds(): i64` |  |
-| `asMillis`[↗](#Duration.asMillis) | `export fn (self: &Duration) asMillis(): i64` |  |
-| `asMicros`[↗](#Duration.asMicros) | `export fn (self: &Duration) asMicros(): i64` |  |
-| `asNanos`[↗](#Duration.asNanos) | `export fn (self: &Duration) asNanos(): i64` |  |
-| `asMinutes`[↗](#Duration.asMinutes) | `export fn (self: &Duration) asMinutes(): i64` |  |
-| `asHours`[↗](#Duration.asHours) | `export fn (self: &Duration) asHours(): i64` |  |
-| `add`[↗](#Duration.add) | `export fn (self: &Duration) add(other: Duration): ` |  |
-| `sub`[↗](#Duration.sub) | `export fn (self: &Duration) sub(other: Duration): ` |  |
-| `mul`[↗](#Duration.mul) | `export fn (self: &Duration) mul(n: i64): Duration` |  |
-| `div`[↗](#Duration.div) | `export fn (self: &Duration) div(n: i64): Duration` |  |
-| `isZero`[↗](#Duration.isZero) | `export fn (self: &Duration) isZero(): bool` |  |
-| `isNegative`[↗](#Duration.isNegative) | `export fn (self: &Duration) isNegative(): bool` |  |
-| `abs`[↗](#Duration.abs) | `export fn (self: &Duration) abs(): Duration` |  |
-| `clone`[↗](#Duration.clone) | `export fn (self: &Duration) clone(): Duration` |  |
-| `neg`[↗](#Duration.neg) | `export fn (self: &Duration) neg(): Duration` |  |
-| `cmp`[↗](#Duration.cmp) | `export fn (self: &Duration) cmp(other: &Duration):` |  |
-| `toString`[↗](#Duration.toString) | `export fn (self: &Duration) toString(): string` |  |
+| `asSeconds`[↗](#Duration.asSeconds) | `export fn (self: &amp;Duration) asSeconds(): i64` |  |
+| `asMillis`[↗](#Duration.asMillis) | `export fn (self: &amp;Duration) asMillis(): i64` |  |
+| `asMicros`[↗](#Duration.asMicros) | `export fn (self: &amp;Duration) asMicros(): i64` |  |
+| `asNanos`[↗](#Duration.asNanos) | `export fn (self: &amp;Duration) asNanos(): i64` |  |
+| `asMinutes`[↗](#Duration.asMinutes) | `export fn (self: &amp;Duration) asMinutes(): i64` |  |
+| `asHours`[↗](#Duration.asHours) | `export fn (self: &amp;Duration) asHours(): i64` |  |
+| `add`[↗](#Duration.add) | `export fn (self: &amp;Duration) add(other: Duration): ` |  |
+| `sub`[↗](#Duration.sub) | `export fn (self: &amp;Duration) sub(other: Duration): ` |  |
+| `mul`[↗](#Duration.mul) | `export fn (self: &amp;Duration) mul(n: i64): Duration` |  |
+| `div`[↗](#Duration.div) | `export fn (self: &amp;Duration) div(n: i64): Duration` |  |
+| `checkedAdd`[↗](#Duration.checkedAdd) | `export fn (self: &amp;Duration) checkedAdd(other: Dura` |  |
+| `checkedSub`[↗](#Duration.checkedSub) | `export fn (self: &amp;Duration) checkedSub(other: Dura` |  |
+| `checkedMul`[↗](#Duration.checkedMul) | `export fn (self: &amp;Duration) checkedMul(n: i64): Op` |  |
+| `checkedDiv`[↗](#Duration.checkedDiv) | `export fn (self: &amp;Duration) checkedDiv(n: i64): Op` |  |
+| `saturatingAdd`[↗](#Duration.saturatingAdd) | `export fn (self: &amp;Duration) saturatingAdd(other: D` |  |
+| `saturatingSub`[↗](#Duration.saturatingSub) | `export fn (self: &amp;Duration) saturatingSub(other: D` |  |
+| `saturatingMul`[↗](#Duration.saturatingMul) | `export fn (self: &amp;Duration) saturatingMul(n: i64):` |  |
+| `isZero`[↗](#Duration.isZero) | `export fn (self: &amp;Duration) isZero(): bool` |  |
+| `isNegative`[↗](#Duration.isNegative) | `export fn (self: &amp;Duration) isNegative(): bool` |  |
+| `abs`[↗](#Duration.abs) | `export fn (self: &amp;Duration) abs(): Duration` |  |
+| `saturatingAbs`[↗](#Duration.saturatingAbs) | `export fn (self: &amp;Duration) saturatingAbs(): Durat` |  |
+| `clone`[↗](#Duration.clone) | `export fn (self: &amp;Duration) clone(): Duration` |  |
+| `neg`[↗](#Duration.neg) | `export fn (self: &amp;Duration) neg(): Duration` |  |
+| `cmp`[↗](#Duration.cmp) | `export fn (self: &amp;Duration) cmp(other: &amp;Duration):` |  |
+| `op==`[↗](#Duration.op==) | `export fn (self: &amp;Duration) op==(other: &amp;Duration)` |  |
+| `op<`[↗](#Duration.op<) | `export fn (self: &amp;Duration) op&lt;(other: &amp;Duration):` |  |
+| `op>`[↗](#Duration.op>) | `export fn (self: &amp;Duration) op&gt;(other: &amp;Duration):` |  |
+| `op<=`[↗](#Duration.op<=) | `export fn (self: &amp;Duration) op&lt;=(other: &amp;Duration)` |  |
+| `op>=`[↗](#Duration.op>=) | `export fn (self: &amp;Duration) op&gt;=(other: &amp;Duration)` |  |
+| `toString`[↗](#Duration.toString) | `export fn (self: &amp;Duration) toString(): string` |  |
+
+---
+
+### <a id="FILETIME"></a>`FILETIME`
+
+> 📄 `native.windows.vxc` L3-6
+
+```vex
+struct FILETIME
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `dwLowDateTime` | `u32` | 🔒 private |  |
+| `dwHighDateTime` | `u32` | 🔒 private |  |
+
+---
+
+### <a id="SYSTEMTIME"></a>`SYSTEMTIME`
+
+> 📄 `native.windows.vxc` L108-117
+
+```vex
+struct SYSTEMTIME
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `wYear` | `u16` | 🔒 private |  |
+| `wMonth` | `u16` | 🔒 private |  |
+| `wDayOfWeek` | `u16` | 🔒 private |  |
+| `wDay` | `u16` | 🔒 private |  |
+| `wHour` | `u16` | 🔒 private |  |
+| `wMinute` | `u16` | 🔒 private |  |
+| `wSecond` | `u16` | 🔒 private |  |
+| `wMilliseconds` | `u16` | 🔒 private |  |
+
+---
+
+### <a id="TIME_ZONE_INFORMATION"></a>`TIME_ZONE_INFORMATION`
+
+> 📄 `native.windows.vxc` L119-128
+
+```vex
+struct TIME_ZONE_INFORMATION
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `Bias` | `i32` | 🔓 public |  |
+| `StandardName` | `[u16; 32]` | 🔓 public |  |
+| `StandardDate` | `SYSTEMTIME` | 🔓 public |  |
+| `StandardBias` | `i32` | 🔓 public |  |
+| `DaylightName` | `[u16; 32]` | 🔓 public |  |
+| `DaylightDate` | `SYSTEMTIME` | 🔓 public |  |
+| `DaylightBias` | `i32` | 🔓 public |  |
 
 ---
 
 ## Enums
 
-### <a id="Month"></a>`Month` ` export`
+### <a id="Month"></a>`Month` `🔓 export`
 
-&gt; 📄 `constants.vx` L5-18
+> 📄 `constants.vx` L5-18
 
 ```vex
 export enum Month
@@ -25848,9 +26641,9 @@ export enum Month
 
 ---
 
-### <a id="Weekday"></a>`Weekday` ` export`
+### <a id="Weekday"></a>`Weekday` `🔓 export`
 
-&gt; 📄 `constants.vx` L20-28
+> 📄 `constants.vx` L20-28
 
 ```vex
 export enum Weekday
@@ -25870,9 +26663,9 @@ export enum Weekday
 
 ## Functions
 
-### <a id="UTC"></a>`UTC` ` export`
+### <a id="UTC"></a>`UTC` `🔓 export`
 
-&gt; 📄 `location.vx` L62-64
+> 📄 `location.vx` L70-72
 
 ```vex
 export fn UTC(): Location
@@ -25882,9 +26675,9 @@ export fn UTC(): Location
 
 ---
 
-### <a id="Local"></a>`Local` ` export`
+### <a id="Local"></a>`Local` `🔓 export`
 
-&gt; 📄 `location.vx` L66-69
+> 📄 `location.vx` L74-77
 
 ```vex
 export fn Local(): Location
@@ -25894,9 +26687,9 @@ export fn Local(): Location
 
 ---
 
-### <a id="fixedZone"></a>`fixedZone` ` export`
+### <a id="fixedZone"></a>`fixedZone` `🔓 export`
 
-&gt; 📄 `location.vx` L71-73
+> 📄 `location.vx` L79-81
 
 ```vex
 export fn fixedZone(name: string, offsetSeconds: i64): Location
@@ -25913,9 +26706,9 @@ export fn fixedZone(name: string, offsetSeconds: i64): Location
 
 ---
 
-### <a id="loadLocation"></a>`loadLocation` ` export`
+### <a id="loadLocation"></a>`loadLocation` `🔓 export`
 
-&gt; 📄 `location.vx` L82-98
+> 📄 `location.vx` L90-110
 
 ```vex
 export fn loadLocation(name: string): Result<Location, string>
@@ -25931,9 +26724,9 @@ export fn loadLocation(name: string): Result<Location, string>
 
 ---
 
-### <a id="EST"></a>`EST` ` export`
+### <a id="EST"></a>`EST` `🔓 export`
 
-&gt; 📄 `location.vx` L160-160
+> 📄 `location.vx` L173-173
 
 ```vex
 export fn EST(): Location
@@ -25943,9 +26736,9 @@ export fn EST(): Location
 
 ---
 
-### <a id="PST"></a>`PST` ` export`
+### <a id="PST"></a>`PST` `🔓 export`
 
-&gt; 📄 `location.vx` L161-161
+> 📄 `location.vx` L174-174
 
 ```vex
 export fn PST(): Location
@@ -25955,9 +26748,9 @@ export fn PST(): Location
 
 ---
 
-### <a id="CET"></a>`CET` ` export`
+### <a id="CET"></a>`CET` `🔓 export`
 
-&gt; 📄 `location.vx` L162-162
+> 📄 `location.vx` L175-175
 
 ```vex
 export fn CET(): Location
@@ -25967,9 +26760,9 @@ export fn CET(): Location
 
 ---
 
-### <a id="TRT"></a>`TRT` ` export`
+### <a id="TRT"></a>`TRT` `🔓 export`
 
-&gt; 📄 `location.vx` L163-163
+> 📄 `location.vx` L176-176
 
 ```vex
 export fn TRT(): Location
@@ -25979,9 +26772,9 @@ export fn TRT(): Location
 
 ---
 
-### <a id="JST"></a>`JST` ` export`
+### <a id="JST"></a>`JST` `🔓 export`
 
-&gt; 📄 `location.vx` L164-164
+> 📄 `location.vx` L177-177
 
 ```vex
 export fn JST(): Location
@@ -25991,9 +26784,98 @@ export fn JST(): Location
 
 ---
 
+### <a id="vex_time_current_ns"></a>`vex_time_current_ns` `🔓 export`
+
+> 📄 `native.macos.vxc` L15-20
+
+```vex
+export fn vex_time_current_ns(): u64
+```
+
+**Returns:** `u64`
+
+---
+
+### <a id="vex_nanosleep"></a>`vex_nanosleep` `🔓 export`
+
+> 📄 `native.macos.vxc` L22-40
+
+```vex
+export fn vex_nanosleep(ns: u64)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `u64` |  |
+
+---
+
+### <a id="vex_monotonic_ns"></a>`vex_monotonic_ns` `🔓 export`
+
+> 📄 `native.macos.vxc` L42-47
+
+```vex
+export fn vex_monotonic_ns(): u64
+```
+
+**Returns:** `u64`
+
+---
+
+### <a id="vex_tz_offset_at_shim"></a>`vex_tz_offset_at_shim` `🔓 export`
+
+> 📄 `native.macos.vxc` L74-76
+
+```vex
+export fn vex_tz_offset_at_shim(name: Ptr<u8>, unix_sec: i64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+| `unix_sec` | `i64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_tz_exists_shim"></a>`vex_tz_exists_shim` `🔓 export`
+
+> 📄 `native.macos.vxc` L78-80
+
+```vex
+export fn vex_tz_exists_shim(name: Ptr<u8>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_get_local_offset"></a>`vex_get_local_offset` `🔓 export`
+
+> 📄 `native.macos.vxc` L82-92
+
+```vex
+export fn vex_get_local_offset(): i64
+```
+
+**Returns:** `i64`
+
+---
+
 ### <a id="isDigit"></a>`isDigit`
 
-&gt; 📄 `parse.vx` L18-20
+> 📄 `parse.vx` L17-19
 
 ```vex
 fn isDigit(c: u8): bool
@@ -26011,7 +26893,7 @@ fn isDigit(c: u8): bool
 
 ### <a id="scan_int_at"></a>`scan_int_at`
 
-&gt; 📄 `parse.vx` L22-36
+> 📄 `parse.vx` L21-35
 
 ```vex
 fn scan_int_at(s: str, pos: usize, digits: i32): ScanResult
@@ -26029,28 +26911,9 @@ fn scan_int_at(s: str, pos: usize, digits: i32): ScanResult
 
 ---
 
-### <a id="scan_number_at"></a>`scan_number_at`
-
-&gt; 📄 `parse.vx` L38-50
-
-```vex
-fn scan_number_at(s: str, pos: usize): ScanResult64
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `s` | `str` |  |
-| `pos` | `usize` |  |
-
-**Returns:** `ScanResult64`
-
----
-
 ### <a id="scan_nanos_at"></a>`scan_nanos_at`
 
-&gt; 📄 `parse.vx` L52-66
+> 📄 `parse.vx` L37-51
 
 ```vex
 fn scan_nanos_at(s: str, pos: usize): ScanResult64
@@ -26067,12 +26930,55 @@ fn scan_nanos_at(s: str, pos: usize): ScanResult64
 
 ---
 
-### <a id="parts_to_ns"></a>`parts_to_ns`
+### <a id="daysFromCivil"></a>`daysFromCivil`
 
-&gt; 📄 `parse.vx` L70-79
+> 📄 `parse.vx` L57-67
 
 ```vex
-fn parts_to_ns(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64): i64
+fn daysFromCivil(year: i32, month: i32, day: i32): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `year` | `i32` |  |
+| `month` | `i32` |  |
+| `day` | `i32` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="validDateTime"></a>`validDateTime`
+
+> 📄 `parse.vx` L69-76
+
+```vex
+fn validDateTime(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `y` | `i32` |  |
+| `m` | `i32` |  |
+| `d` | `i32` |  |
+| `h` | `i32` |  |
+| `min` | `i32` |  |
+| `s` | `i32` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="partsToNs"></a>`partsToNs`
+
+> 📄 `parse.vx` L78-102
+
+```vex
+fn partsToNs(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64, offsetSeconds: i32): Option<i64>
 ```
 
 **Parameters:**
@@ -26086,14 +26992,15 @@ fn parts_to_ns(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64): i64
 | `min` | `i32` |  |
 | `s` | `i32` |  |
 | `ns` | `i64` |  |
+| `offsetSeconds` | `i32` |  |
 
-**Returns:** `i64`
+**Returns:** `Option&lt;i64&gt;`
 
 ---
 
-### <a id="parse"></a>`parse` ` export`
+### <a id="parse"></a>`parse` `🔓 export`
 
-&gt; 📄 `parse.vx` L81-130
+> 📄 `parse.vx` L104-157
 
 ```vex
 export fn parse(layout: str, input: str): Result<Time, string>
@@ -26110,9 +27017,9 @@ export fn parse(layout: str, input: str): Result<Time, string>
 
 ---
 
-### <a id="parse_rfc3339"></a>`parse_rfc3339` ` export`
+### <a id="parse_rfc3339"></a>`parse_rfc3339` `🔓 export`
 
-&gt; 📄 `parse.vx` L132-166
+> 📄 `parse.vx` L159-222
 
 ```vex
 export fn parse_rfc3339(input: str): Result<Time, string>
@@ -26128,9 +27035,9 @@ export fn parse_rfc3339(input: str): Result<Time, string>
 
 ---
 
-### <a id="parse_duration"></a>`parse_duration` ` export`
+### <a id="parse_duration"></a>`parse_duration` `🔓 export`
 
-&gt; 📄 `parse.vx` L168-196
+> 📄 `parse.vx` L224-307
 
 ```vex
 export fn parse_duration(input: str): Result<Duration, string>
@@ -26146,9 +27053,28 @@ export fn parse_duration(input: str): Result<Duration, string>
 
 ---
 
-### <a id="now"></a>`now` ` export`
+### <a id="signedDurationBetween"></a>`signedDurationBetween`
 
-&gt; 📄 `helpers.vx` L12-14
+> 📄 `instant.vx` L12-27
+
+```vex
+fn signedDurationBetween(later: u64, earlier: u64): Duration
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `later` | `u64` |  |
+| `earlier` | `u64` |  |
+
+**Returns:** `Duration`
+
+---
+
+### <a id="now"></a>`now` `🔓 export`
+
+> 📄 `helpers.vx` L13-15
 
 ```vex
 export fn now(): Time
@@ -26158,9 +27084,9 @@ export fn now(): Time
 
 ---
 
-### <a id="sleep"></a>`sleep` ` export`
+### <a id="sleep"></a>`sleep` `🔓 export`
 
-&gt; 📄 `helpers.vx` L17-21
+> 📄 `helpers.vx` L18-22
 
 ```vex
 export fn sleep(d: i64)
@@ -26174,24 +27100,12 @@ export fn sleep(d: i64)
 
 ---
 
-### <a id="monotonicNow"></a>`monotonicNow` ` export`
+### <a id="sleep"></a>`sleep` `🔓 export`
 
-&gt; 📄 `helpers.vx` L24-27
-
-```vex
-export fn monotonicNow(): u64
-```
-
-**Returns:** `u64`
-
----
-
-### <a id="sleepDuration"></a>`sleepDuration` ` export`
-
-&gt; 📄 `helpers.vx` L30-34
+> 📄 `helpers.vx` L25-30
 
 ```vex
-export fn sleepDuration(d: Duration)
+export fn sleep(d: Duration)
 ```
 
 **Parameters:**
@@ -26202,9 +27116,9 @@ export fn sleepDuration(d: Duration)
 
 ---
 
-### <a id="getLocalOffset"></a>`getLocalOffset` ` export`
+### <a id="getLocalOffset"></a>`getLocalOffset` `🔓 export`
 
-&gt; 📄 `helpers.vx` L37-39
+> 📄 `helpers.vx` L33-35
 
 ```vex
 export fn getLocalOffset(): i64
@@ -26214,9 +27128,9 @@ export fn getLocalOffset(): i64
 
 ---
 
-### <a id="since"></a>`since` ` export`
+### <a id="since"></a>`since` `🔓 export`
 
-&gt; 📄 `helpers.vx` L49-52
+> 📄 `helpers.vx` L45-48
 
 ```vex
 export fn since(t: Time): Duration
@@ -26232,9 +27146,9 @@ export fn since(t: Time): Duration
 
 ---
 
-### <a id="until"></a>`until` ` export`
+### <a id="until"></a>`until` `🔓 export`
 
-&gt; 📄 `helpers.vx` L55-58
+> 📄 `helpers.vx` L51-54
 
 ```vex
 export fn until(t: Time): Duration
@@ -26250,9 +27164,9 @@ export fn until(t: Time): Duration
 
 ---
 
-### <a id="truncate"></a>`truncate` ` export`
+### <a id="truncate"></a>`truncate` `🔓 export`
 
-&gt; 📄 `helpers.vx` L61-65
+> 📄 `helpers.vx` L57-63
 
 ```vex
 export fn truncate(t: Time, d: Duration): Time
@@ -26269,9 +27183,9 @@ export fn truncate(t: Time, d: Duration): Time
 
 ---
 
-### <a id="round"></a>`round` ` export`
+### <a id="round"></a>`round` `🔓 export`
 
-&gt; 📄 `helpers.vx` L68-75
+> 📄 `helpers.vx` L66-75
 
 ```vex
 export fn round(t: Time, d: Duration): Time
@@ -26288,9 +27202,9 @@ export fn round(t: Time, d: Duration): Time
 
 ---
 
-### <a id="unix"></a>`unix` ` export`
+### <a id="unix"></a>`unix` `🔓 export`
 
-&gt; 📄 `helpers.vx` L78-80
+> 📄 `helpers.vx` L78-80
 
 ```vex
 export fn unix(sec: i64, nsec: i64): Time
@@ -26307,9 +27221,9 @@ export fn unix(sec: i64, nsec: i64): Time
 
 ---
 
-### <a id="unix_seconds"></a>`unix_seconds` ` export`
+### <a id="unix_seconds"></a>`unix_seconds` `🔓 export`
 
-&gt; 📄 `helpers.vx` L83-83
+> 📄 `helpers.vx` L83-83
 
 ```vex
 export fn unix_seconds(t: Time): i64
@@ -26325,9 +27239,9 @@ export fn unix_seconds(t: Time): i64
 
 ---
 
-### <a id="unix_nanosecond"></a>`unix_nanosecond` ` export`
+### <a id="unix_nanosecond"></a>`unix_nanosecond` `🔓 export`
 
-&gt; 📄 `helpers.vx` L84-84
+> 📄 `helpers.vx` L84-84
 
 ```vex
 export fn unix_nanosecond(t: Time): i64
@@ -26343,9 +27257,9 @@ export fn unix_nanosecond(t: Time): i64
 
 ---
 
-### <a id="unix_milli"></a>`unix_milli` ` export`
+### <a id="unix_milli"></a>`unix_milli` `🔓 export`
 
-&gt; 📄 `helpers.vx` L85-85
+> 📄 `helpers.vx` L85-85
 
 ```vex
 export fn unix_milli(t: Time): i64
@@ -26361,9 +27275,9 @@ export fn unix_milli(t: Time): i64
 
 ---
 
-### <a id="unix_micro"></a>`unix_micro` ` export`
+### <a id="unix_micro"></a>`unix_micro` `🔓 export`
 
-&gt; 📄 `helpers.vx` L86-86
+> 📄 `helpers.vx` L86-86
 
 ```vex
 export fn unix_micro(t: Time): i64
@@ -26379,9 +27293,9 @@ export fn unix_micro(t: Time): i64
 
 ---
 
-### <a id="compare"></a>`compare` ` export`
+### <a id="compare"></a>`compare` `🔓 export`
 
-&gt; 📄 `helpers.vx` L89-93
+> 📄 `helpers.vx` L89-91
 
 ```vex
 export fn compare(t1: Time, t2: Time): i32
@@ -26398,9 +27312,9 @@ export fn compare(t1: Time, t2: Time): i32
 
 ---
 
-### <a id="before"></a>`before` ` export`
+### <a id="before"></a>`before` `🔓 export`
 
-&gt; 📄 `helpers.vx` L95-95
+> 📄 `helpers.vx` L93-93
 
 ```vex
 export fn before(t1: Time, t2: Time): bool
@@ -26417,9 +27331,9 @@ export fn before(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="after"></a>`after` ` export`
+### <a id="after"></a>`after` `🔓 export`
 
-&gt; 📄 `helpers.vx` L96-96
+> 📄 `helpers.vx` L94-94
 
 ```vex
 export fn after(t1: Time, t2: Time): bool
@@ -26436,9 +27350,9 @@ export fn after(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="equal"></a>`equal` ` export`
+### <a id="equal"></a>`equal` `🔓 export`
 
-&gt; 📄 `helpers.vx` L97-97
+> 📄 `helpers.vx` L95-95
 
 ```vex
 export fn equal(t1: Time, t2: Time): bool
@@ -26455,9 +27369,9 @@ export fn equal(t1: Time, t2: Time): bool
 
 ---
 
-### <a id="after"></a>`after` ` export`
+### <a id="after"></a>`after` `🔓 export`
 
-&gt; 📄 `helpers.vx` L100-107
+> 📄 `helpers.vx` L98-105
 
 ```vex
 export fn after(d: Duration): Channel<Time>
@@ -26473,9 +27387,9 @@ export fn after(d: Duration): Channel<Time>
 
 ---
 
-### <a id="weekday"></a>`weekday` ` export`
+### <a id="weekday"></a>`weekday` `🔓 export`
 
-&gt; 📄 `helpers.vx` L110-110
+> 📄 `helpers.vx` L108-108
 
 ```vex
 export fn weekday(t: Time): Weekday
@@ -26491,9 +27405,9 @@ export fn weekday(t: Time): Weekday
 
 ---
 
-### <a id="date"></a>`date` ` export`
+### <a id="date"></a>`date` `🔓 export`
 
-&gt; 📄 `helpers.vx` L112-114
+> 📄 `helpers.vx` L110-112
 
 ```vex
 export fn date(t: Time): (i32, Month, i32)
@@ -26509,9 +27423,9 @@ export fn date(t: Time): (i32, Month, i32)
 
 ---
 
-### <a id="clock"></a>`clock` ` export`
+### <a id="clock"></a>`clock` `🔓 export`
 
-&gt; 📄 `helpers.vx` L116-118
+> 📄 `helpers.vx` L114-116
 
 ```vex
 export fn clock(t: Time): (i32, i32, i32)
@@ -26527,27 +27441,9 @@ export fn clock(t: Time): (i32, i32, i32)
 
 ---
 
-### <a id="normalized_delay_ns"></a>`normalized_delay_ns`
+### <a id="newTimer"></a>`newTimer` `🔓 export`
 
-&gt; 📄 `helpers.vx` L131-136
-
-```vex
-fn normalized_delay_ns(d: Duration): u64
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `d` | `Duration` |  |
-
-**Returns:** `u64`
-
----
-
-### <a id="newTimer"></a>`newTimer` ` export`
-
-&gt; 📄 `helpers.vx` L148-150
+> 📄 `helpers.vx` L139-141
 
 ```vex
 export fn newTimer(d: Duration): Timer
@@ -26563,9 +27459,9 @@ export fn newTimer(d: Duration): Timer
 
 ---
 
-### <a id="newTicker"></a>`newTicker` ` export`
+### <a id="newTicker"></a>`newTicker` `🔓 export`
 
-&gt; 📄 `helpers.vx` L228-230
+> 📄 `helpers.vx` L212-214
 
 ```vex
 export fn newTicker(d: Duration): Ticker
@@ -26581,9 +27477,9 @@ export fn newTicker(d: Duration): Ticker
 
 ---
 
-### <a id="afterDuration"></a>`afterDuration` ` export`
+### <a id="afterDuration"></a>`afterDuration` `🔓 export`
 
-&gt; 📄 `helpers.vx` L257-260
+> 📄 `helpers.vx` L252-255
 
 ```vex
 export fn afterDuration(d: Duration): Time
@@ -26601,7 +27497,7 @@ export fn afterDuration(d: Duration): Time
 
 ### <a id="tz_pad2"></a>`tz_pad2`
 
-&gt; 📄 `helpers.vx` L266-269
+> 📄 `helpers.vx` L261-264
 
 ```vex
 fn tz_pad2(n: i64): string
@@ -26619,7 +27515,7 @@ fn tz_pad2(n: i64): string
 
 ### <a id="tz_pad4"></a>`tz_pad4`
 
-&gt; 📄 `helpers.vx` L271-276
+> 📄 `helpers.vx` L266-271
 
 ```vex
 fn tz_pad4(n: i64): string
@@ -26635,12 +27531,12 @@ fn tz_pad4(n: i64): string
 
 ---
 
-### <a id="formatInLocation"></a>`formatInLocation` ` export`
+### <a id="formatInLocation"></a>`formatInLocation` `🔓 export`
 
-&gt; 📄 `helpers.vx` L280-283
+> 📄 `helpers.vx` L275-278
 
 ```vex
-export fn formatInLocation(t: Time, layout: str, loc: Location): string
+export fn formatInLocation(t: Time, layout: str, loc: &Location): string
 ```
 
 **Parameters:**
@@ -26649,18 +27545,18 @@ export fn formatInLocation(t: Time, layout: str, loc: Location): string
 |------|------|-------------|
 | `t` | `Time` |  |
 | `layout` | `str` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `string`
 
 ---
 
-### <a id="toRFC3339InLocation"></a>`toRFC3339InLocation` ` export`
+### <a id="toRFC3339InLocation"></a>`toRFC3339InLocation` `🔓 export`
 
-&gt; 📄 `helpers.vx` L286-311
+> 📄 `helpers.vx` L281-306
 
 ```vex
-export fn toRFC3339InLocation(t: Time, loc: Location): string
+export fn toRFC3339InLocation(t: Time, loc: &Location): string
 ```
 
 **Parameters:**
@@ -26668,18 +27564,18 @@ export fn toRFC3339InLocation(t: Time, loc: Location): string
 | Name | Type | Description |
 |------|------|-------------|
 | `t` | `Time` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `string`
 
 ---
 
-### <a id="inLocation"></a>`inLocation` ` export`
+### <a id="inLocation"></a>`inLocation` `🔓 export`
 
-&gt; 📄 `helpers.vx` L315-318
+> 📄 `helpers.vx` L310-313
 
 ```vex
-export fn inLocation(t: Time, loc: Location): Time
+export fn inLocation(t: Time, loc: &Location): Time
 ```
 
 **Parameters:**
@@ -26687,18 +27583,18 @@ export fn inLocation(t: Time, loc: Location): Time
 | Name | Type | Description |
 |------|------|-------------|
 | `t` | `Time` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `Time`
 
 ---
 
-### <a id="isDST"></a>`isDST` ` export`
+### <a id="isDST"></a>`isDST` `🔓 export`
 
-&gt; 📄 `helpers.vx` L321-323
+> 📄 `helpers.vx` L316-318
 
 ```vex
-export fn isDST(t: Time, loc: Location): bool
+export fn isDST(t: Time, loc: &Location): bool
 ```
 
 **Parameters:**
@@ -26706,15 +27602,15 @@ export fn isDST(t: Time, loc: Location): bool
 | Name | Type | Description |
 |------|------|-------------|
 | `t` | `Time` |  |
-| `loc` | `Location` |  |
+| `loc` | `&amp;Location` |  |
 
 **Returns:** `bool`
 
 ---
 
-### <a id="days_in_month"></a>`days_in_month` ` export`
+### <a id="days_in_month"></a>`days_in_month` `🔓 export`
 
-&gt; 📄 `time_type.vx` L13-21
+> 📄 `time_type.vx` L14-22
 
 ```vex
 export fn days_in_month(m: i32, year: i32): i32
@@ -26731,9 +27627,9 @@ export fn days_in_month(m: i32, year: i32): i32
 
 ---
 
-### <a id="ns_to_datetime"></a>`ns_to_datetime` ` export`
+### <a id="ns_to_datetime"></a>`ns_to_datetime` `🔓 export`
 
-&gt; 📄 `time_type.vx` L54-79
+> 📄 `time_type.vx` L47-72
 
 ```vex
 export fn ns_to_datetime(ns: i64): DateTimeParts
@@ -26749,9 +27645,28 @@ export fn ns_to_datetime(ns: i64): DateTimeParts
 
 ---
 
-### <a id="add"></a>`add` ` export`
+### <a id="floor_div"></a>`floor_div`
 
-&gt; 📄 `time_type.vx` L149-151
+> 📄 `time_type.vx` L110-117
+
+```vex
+fn floor_div(value: i64, unit: i64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `i64` |  |
+| `unit` | `i64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="add"></a>`add` `🔓 export`
+
+> 📄 `time_type.vx` L219-221
 
 ```vex
 export fn add(t: Time, d: Duration): Time
@@ -26768,9 +27683,9 @@ export fn add(t: Time, d: Duration): Time
 
 ---
 
-### <a id="sub"></a>`sub` ` export`
+### <a id="sub"></a>`sub` `🔓 export`
 
-&gt; 📄 `time_type.vx` L153-155
+> 📄 `time_type.vx` L223-225
 
 ```vex
 export fn sub(t1: Time, t2: Time): Duration
@@ -26787,99 +27702,116 @@ export fn sub(t1: Time, t2: Time): Duration
 
 ---
 
-### <a id="pad2"></a>`pad2`
+### <a id="write_padded_int"></a>`write_padded_int`
 
-&gt; 📄 `time_type.vx` L248-251
+> 📄 `time_type.vx` L317-329
 
 ```vex
-fn pad2(n: i64): string
+fn write_padded_int(sb: &StringBuilder!, val: i64, width: i32)
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `n` | `i64` |  |
-
-**Returns:** `string`
+| `sb` | `&amp;StringBuilder!` |  |
+| `val` | `i64` |  |
+| `width` | `i32` |  |
 
 ---
 
-### <a id="pad4"></a>`pad4`
+### <a id="vex_time_current_ns"></a>`vex_time_current_ns` `🔓 export`
 
-&gt; 📄 `time_type.vx` L253-258
+> 📄 `native.linux.vxc` L14-19
 
 ```vex
-fn pad4(n: i64): string
+export fn vex_time_current_ns(): u64
 ```
 
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `n` | `i64` |  |
-
-**Returns:** `string`
+**Returns:** `u64`
 
 ---
 
-### <a id="abs_date"></a>`abs_date` ` export`
+### <a id="vex_nanosleep"></a>`vex_nanosleep` `🔓 export`
 
-&gt; 📄 `conversations.vx` L5-24
+> 📄 `native.linux.vxc` L21-36
 
 ```vex
-export fn abs_date(abs_sec: i64): DateParts
+export fn vex_nanosleep(ns: u64)
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `abs_sec` | `i64` |  |
-
-**Returns:** `DateParts`
+| `ns` | `u64` |  |
 
 ---
 
-### <a id="is_leap"></a>`is_leap` ` export`
+### <a id="vex_monotonic_ns"></a>`vex_monotonic_ns` `🔓 export`
 
-&gt; 📄 `conversations.vx` L30-32
+> 📄 `native.linux.vxc` L38-43
 
 ```vex
-export fn is_leap(year: i32): bool
+export fn vex_monotonic_ns(): u64
 ```
 
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `year` | `i32` |  |
-
-**Returns:** `bool`
+**Returns:** `u64`
 
 ---
 
-### <a id="nsToDateTime"></a>`nsToDateTime` ` export`
+### <a id="vex_tz_offset_at_shim"></a>`vex_tz_offset_at_shim` `🔓 export`
 
-&gt; 📄 `conversations.vx` L36-69
+> 📄 `native.linux.vxc` L70-72
 
 ```vex
-export fn nsToDateTime(ns: i64): (i32, i32, i32, i32, i32, i32, i32)
+export fn vex_tz_offset_at_shim(name: Ptr<u8>, unix_sec: i64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `ns` | `i64` |  |
+| `name` | `Ptr&lt;u8&gt;` |  |
+| `unix_sec` | `i64` |  |
 
-**Returns:** `(i32, i32, i32, i32, i32, i32, i32)`
+**Returns:** `i64`
+
+---
+
+### <a id="vex_tz_exists_shim"></a>`vex_tz_exists_shim` `🔓 export`
+
+> 📄 `native.linux.vxc` L74-76
+
+```vex
+export fn vex_tz_exists_shim(name: Ptr<u8>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_get_local_offset"></a>`vex_get_local_offset` `🔓 export`
+
+> 📄 `native.linux.vxc` L78-88
+
+```vex
+export fn vex_get_local_offset(): i64
+```
+
+**Returns:** `i64`
 
 ---
 
 ### <a id="fmt_int"></a>`fmt_int`
 
-&gt; 📄 `format.vxc` L5-25
+> 📄 `format.vxc` L5-25
 
 ```vex
 fn fmt_int(val: i32, width: i32): string
@@ -26898,9 +27830,9 @@ Pad integer with zeros to width
 
 ---
 
-### <a id="format_layout"></a>`format_layout` ` export`
+### <a id="format_layout"></a>`format_layout` `🔓 export`
 
-&gt; 📄 `format.vxc` L29-107
+> 📄 `format.vxc` L29-107
 
 ```vex
 export fn format_layout(y: i32, m: i32, d: i32, h: i32, min: i32, s: i32, ns: i64, layout: string): string
@@ -26927,9 +27859,9 @@ Supported tokens: YYYY, MM, DD, HH, mm, ss, SSS, Z
 
 ---
 
-### <a id="utc"></a>`utc` ` export`
+### <a id="utc"></a>`utc` `🔓 export`
 
-&gt; 📄 `lib.vx` L6-6
+> 📄 `lib.vx` L5-5
 
 ```vex
 export fn utc(): Location
@@ -26939,9 +27871,9 @@ export fn utc(): Location
 
 ---
 
-### <a id="local"></a>`local` ` export`
+### <a id="local"></a>`local` `🔓 export`
 
-&gt; 📄 `lib.vx` L7-7
+> 📄 `lib.vx` L6-6
 
 ```vex
 export fn local(): Location
@@ -26951,9 +27883,9 @@ export fn local(): Location
 
 ---
 
-### <a id="fixed_zone"></a>`fixed_zone` ` export`
+### <a id="fixed_zone"></a>`fixed_zone` `🔓 export`
 
-&gt; 📄 `lib.vx` L8-8
+> 📄 `lib.vx` L7-7
 
 ```vex
 export fn fixed_zone(name: string, offset: i32): Location
@@ -26970,9 +27902,9 @@ export fn fixed_zone(name: string, offset: i32): Location
 
 ---
 
-### <a id="load_location"></a>`load_location` ` export`
+### <a id="load_location"></a>`load_location` `🔓 export`
 
-&gt; 📄 `lib.vx` L9-9
+> 📄 `lib.vx` L8-8
 
 ```vex
 export fn load_location(name: string): Result<Location, string>
@@ -26988,9 +27920,81 @@ export fn load_location(name: string): Result<Location, string>
 
 ---
 
-### <a id="seconds"></a>`seconds` ` export`
+### <a id="abs_date"></a>`abs_date` `🔓 export`
 
-&gt; 📄 `duration.vx` L38-40
+> 📄 `conversions.vx` L15-30
+
+```vex
+export fn abs_date(abs_sec: i64): DateParts
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `abs_sec` | `i64` |  |
+
+**Returns:** `DateParts`
+
+---
+
+### <a id="is_leap"></a>`is_leap` `🔓 export`
+
+> 📄 `conversions.vx` L32-34
+
+```vex
+export fn is_leap(year: i32): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `year` | `i32` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="nsToDateTime"></a>`nsToDateTime` `🔓 export`
+
+> 📄 `conversions.vx` L37-58
+
+```vex
+export fn nsToDateTime(ns: i64): (i32, i32, i32, i32, i32, i32, i32)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `i64` |  |
+
+**Returns:** `(i32, i32, i32, i32, i32, i32, i32)`
+
+---
+
+### <a id="magnitude"></a>`magnitude`
+
+> 📄 `duration.vx` L10-16
+
+```vex
+fn magnitude(value: i64): u64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `i64` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="seconds"></a>`seconds` `🔓 export`
+
+> 📄 `duration.vx` L47-49
 
 ```vex
 export fn seconds(s: i64): Duration
@@ -27006,9 +28010,9 @@ export fn seconds(s: i64): Duration
 
 ---
 
-### <a id="milliseconds"></a>`milliseconds` ` export`
+### <a id="milliseconds"></a>`milliseconds` `🔓 export`
 
-&gt; 📄 `duration.vx` L42-44
+> 📄 `duration.vx` L51-53
 
 ```vex
 export fn milliseconds(ms: i64): Duration
@@ -27024,9 +28028,9 @@ export fn milliseconds(ms: i64): Duration
 
 ---
 
-### <a id="microseconds"></a>`microseconds` ` export`
+### <a id="microseconds"></a>`microseconds` `🔓 export`
 
-&gt; 📄 `duration.vx` L46-48
+> 📄 `duration.vx` L55-57
 
 ```vex
 export fn microseconds(us: i64): Duration
@@ -27042,9 +28046,9 @@ export fn microseconds(us: i64): Duration
 
 ---
 
-### <a id="nanoseconds"></a>`nanoseconds` ` export`
+### <a id="nanoseconds"></a>`nanoseconds` `🔓 export`
 
-&gt; 📄 `duration.vx` L50-52
+> 📄 `duration.vx` L59-61
 
 ```vex
 export fn nanoseconds(ns: i64): Duration
@@ -27060,9 +28064,9 @@ export fn nanoseconds(ns: i64): Duration
 
 ---
 
-### <a id="minutes"></a>`minutes` ` export`
+### <a id="minutes"></a>`minutes` `🔓 export`
 
-&gt; 📄 `duration.vx` L54-56
+> 📄 `duration.vx` L63-65
 
 ```vex
 export fn minutes(m: i64): Duration
@@ -27078,9 +28082,9 @@ export fn minutes(m: i64): Duration
 
 ---
 
-### <a id="hours"></a>`hours` ` export`
+### <a id="hours"></a>`hours` `🔓 export`
 
-&gt; 📄 `duration.vx` L58-60
+> 📄 `duration.vx` L67-69
 
 ```vex
 export fn hours(h: i64): Duration
@@ -27096,9 +28100,114 @@ export fn hours(h: i64): Duration
 
 ---
 
+### <a id="vex_time_current_ns"></a>`vex_time_current_ns` `🔓 export`
+
+> 📄 `native.windows.vxc` L32-42
+
+```vex
+export fn vex_time_current_ns(): u64
+```
+
+**Returns:** `u64`
+
 ---
 
-*Generated by vex-doc v2.0 • 2026-07-06*
+### <a id="sleepMilliseconds"></a>`sleepMilliseconds`
+
+> 📄 `native.windows.vxc` L44-55
+
+```vex
+fn sleepMilliseconds(ns: u64)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `u64` |  |
+
+---
+
+### <a id="vex_nanosleep"></a>`vex_nanosleep` `🔓 export`
+
+> 📄 `native.windows.vxc` L57-93
+
+```vex
+export fn vex_nanosleep(ns: u64)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ns` | `u64` |  |
+
+---
+
+### <a id="vex_monotonic_ns"></a>`vex_monotonic_ns` `🔓 export`
+
+> 📄 `native.windows.vxc` L95-106
+
+```vex
+export fn vex_monotonic_ns(): u64
+```
+
+**Returns:** `u64`
+
+---
+
+### <a id="vex_tz_offset_at_shim"></a>`vex_tz_offset_at_shim` `🔓 export`
+
+> 📄 `native.windows.vxc` L139-141
+
+```vex
+export fn vex_tz_offset_at_shim(name: Ptr<u8>, unix_sec: i64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+| `unix_sec` | `i64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_tz_exists_shim"></a>`vex_tz_exists_shim` `🔓 export`
+
+> 📄 `native.windows.vxc` L143-145
+
+```vex
+export fn vex_tz_exists_shim(name: Ptr<u8>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_get_local_offset"></a>`vex_get_local_offset` `🔓 export`
+
+> 📄 `native.windows.vxc` L147-181
+
+```vex
+export fn vex_get_local_offset(): i64
+```
+
+**Returns:** `i64`
+
+---
+
+---
+
+*Generated by vex-doc v2.0 • 2026-09-03*
 
 
 // ============================================================================
@@ -27216,44 +28325,87 @@ enum Weekday { Sunday, Monday, ..., Saturday }
 // ============================================================================
 // File: ./std/time/index.md
 // ============================================================================
-# time — Overview
+# `time`
 
-The `time` module provides comprehensive time and date functionality, inspired by Go's `time` package with Day.js-style fluent APIs.
+`std/time` separates three concepts that must not be mixed:
 
-## Module Map
+| Type | Meaning | Use |
+|---|---|---|
+| `Time` | UTC Unix timestamp | storage, protocols, calendar and display |
+| `Instant` | process-local monotonic reading | elapsed time, deadlines, timers |
+| `Duration` | signed nanosecond interval | arithmetic and delays |
 
-| File | Purpose |
-|------|---------|
-| `time_type.vx` | Core `Time` struct, calendar accessors, `startOf`/`endOf` |
-| `duration.vx` | `Duration` type with arithmetic |
-| `constants.vx` | `Month` and `Weekday` enums, time unit constants |
-| `parse.vx` | Time string parsing (ISO 8601, RFC 3339, custom formats) |
-| `format.vxc` | Time formatting with layout strings |
-| `conversations.vx` | Internal date math (leap years, epoch conversion) |
-| `helpers.vx` | Utility functions |
-| `location.vx` | Timezone / location support |
-| `native.vxc` | OS clock FFI (monotonic, wall clock) |
-
-## Quick Start
+## Monotonic timing
 
 ```vex
-import { Time, now, Duration, sleep, SECOND, MILLISECOND } from "time";
+import { Duration, Instant, sleep } from "time";
 
-// Current time
-let t = now();
-println("Now: {t}");               // 2024-06-15T14:30:00Z
-println("Unix: {t.unix()}");       // 1718458200
-println("Year: {t.year()}");       // 2024
-println("Month: {t.month()}");     // June
-println("Weekday: {t.weekday()}"); // Saturday
-
-// Arithmetic
-let later = t.add(3600 * SECOND);
-let elapsed = t.sub(earlier);
-
-// Sleep
-sleep(500 * MILLISECOND);
+let started = Instant.now();
+sleep(Duration.milliseconds(2));
+let elapsed = started.elapsed();
 ```
+
+Do not persist or transmit `Instant.asNanos()`: its epoch is process-local.
+Raw `monotonicNow()` and `sleepDuration()` compatibility APIs no longer exist.
+
+## Wall time and checked arithmetic
+
+```vex
+import { Duration, Time } from "time";
+
+let now = Time.now();
+match now.checkedAdd(Duration.seconds(30)) {
+    Some(deadline) => $println(deadline.toString()),
+    None => $panic("timestamp overflow"),
+}
+```
+
+Default arithmetic panics on overflow. Use `checked*` for recoverable failure or
+`saturating*` when clamping is the intended policy.
+
+## Parsing
+
+```vex
+import { parse_duration, parse_rfc3339 } from "time";
+
+let timestamp = parse_rfc3339("2024-03-15T14:30:45.123456789+03:00");
+let timeout = parse_duration("2d3h4m5.006007008s");
+```
+
+RFC 3339 parsing validates civil dates, leap years, clock fields, numeric
+offsets, trailing input and the exact signed-nanosecond range. Calendar
+conversion is constant-time. Duration parsing supports `d`, `h`, `m`, `s`,
+`ms`, `us`, `µs` and `ns` with signs and fractional components.
+
+## Timers
+
+`Timer` and `Ticker` use the monotonic clock. Tickers advance from their prior
+phase and skip missed periods, avoiding cumulative drift. `after(Duration)`
+delivers one wall-clock `Time` through a `Channel<Time>`.
+
+## Platform behavior
+
+The package resolves `native.macos.vxc`, `native.linux.vxc` or
+`native.windows.vxc`; it has no generic native fallback. POSIX sleep resumes
+after signal interruption. Windows prefers a high-resolution waitable timer.
+
+IANA zone lookup is currently a manifest-owned native feature. A pure-Vex TZif
+parser is the remaining portability milestone.
+
+## Module map
+
+| File | Purpose |
+|---|---|
+| `time_type.vx` | `Time`, calendar accessors and checked arithmetic |
+| `instant.vx` | monotonic `Instant` and deadline arithmetic |
+| `duration.vx` | `Duration` policies and formatting |
+| `parse.vx` | RFC 3339 and Duration parsing |
+| `conversions.vx` | O(1) Gregorian conversion |
+| `helpers.vx` | timers, tickers and package helpers |
+| `location.vx` | UTC, local, fixed and IANA locations |
+| `native.*.vxc` | target-specific clock and sleep boundaries |
+
+See [the generated API reference](./reference.md) for the complete surface.
 
 
 // ============================================================================
@@ -27318,6 +28470,30 @@ Mem.freeCompat(memory as Ptr<Opaque>);
 
 Strict caller-buffer decoders first validate the complete input and capacity,
 then write. A failure leaves the output buffer untouched.
+
+## SIMD without a platform-specific API
+
+Long Base64 and Base32 inputs use the same public API on every target. The
+implementation expresses register transforms with ordinary `[u8; 16]`
+operators, constant `shuffle`, and `Mask<16>` comparisons. The compiler lowers
+that semantic graph to the target backend; library code does not branch on CPU
+names and does not call a C/Rust codec.
+
+Complete blocks are loaded only after their exact readable range is proven.
+Base64 transforms 12 input bytes to 16 output bytes and decodes 16 symbols to
+12 bytes. Base32 transforms 10 bytes to 16 symbols and decodes 16 symbols to 10
+bytes. Exact-capacity tails stay scalar, so vector speed does not weaken bounds
+or padding rules.
+
+Strict decoding remains two-phase: vector validation and length calculation
+finish before output mutation, then the valid payload is decoded. If a vector
+contains an invalid lane, only that cold block falls back to scalar inspection
+to retain the exact `DecodeError.position`.
+
+On an Apple M2 Max with O3 and caller-owned 64 KiB buffers, the 2026-08-16
+development baseline is approximately 4.6 GB/s Base64 encode, 3.0 GB/s strict
+Base64 decode, 3.4 GB/s Base32 encode and 2.2 GB/s strict Base32 decode. These
+are regression baselines for that machine, not cross-platform guarantees.
 
 ## Canonical input rules
 
@@ -27389,7 +28565,8 @@ vex test lib/std/encoding --bench -O2 --benchmem
 // ============================================================================
 # semver
 
-The `semver` module parses, compares, and matches semantic versions.
+The `semver` module parses, compares, and matches strict Semantic Versioning
+2.0 values using borrowed input and typed comparator semantics.
 
 ## Usage
 
@@ -27408,78 +28585,212 @@ $println(v1.patch)
 
 ## Current Surface
 
-- `Version.parse(input: string): Version`
+- `Version.parse(input: str): Version`
+- `Version.tryParse(input: str): Result<Version, VersionParseError>`
 - `Version(major, minor, patch): Version`
 - public fields: `major`, `minor`, `patch`, `pre`, `build`, `valid`
 - comparison helpers: `lt`, `gt`, `eq`, `lte`, `gte`
 - mutating helpers: `bumpMajor`, `bumpMinor`, `bumpPatch`
-- version requirements via `VersionReq.parse(...)`
+- version requirements via `VersionReq.parse(...)` / `tryParse(...)`
+- typed `ComparatorOp` values rather than operator spelling strings
 
-This page intentionally documents the tested surface from `lib/std/semver/tests/basic.test.vx`, rather than accessor-style examples like `v1.major()` or `parse(...).unwrap()` that do not match the current Vex API.
+Requirement syntax includes exact and ordered comparators, caret, tilde,
+comma-separated AND, `*`/`x`/`X`, bare partials (`1`, `1.2`) and component
+wildcards (`1.*`, `1.2.x`). Stable-only ranges do not admit arbitrary
+prereleases: a requirement must explicitly contain a prerelease comparator on
+the same major/minor/patch tuple.
+
+Parsing is single-pass over borrowed views. Precedence comparison walks
+prerelease identifiers directly and allocates no split vectors. On the
+2026-08-17 Apple M2 Max O3 baseline, simple parse is roughly 15–17 ns, SSO
+metadata parse 28–32 ns, core comparison 1.5 ns, prerelease comparison 14 ns,
+and two-comparator matching 6–7 ns. Long owned metadata remains a visible
+one-allocation path.
+
+OR and hyphen ranges are not silently interpreted as npm syntax. They remain a
+future explicit grammar decision. This page documents the tested surface from
+`lib/std/semver/tests`, rather than accessor-style examples like `v1.major()`
+or `parse(...).unwrap()` that do not match the current Vex API.
 
 
 // ============================================================================
 // File: ./std/log.md
 // ============================================================================
-# log — Structured Logging
+# `log` — typed structured logging
 
-Simple, leveled logging with ANSI color output.
+`std/log` provides immutable contextual loggers, typed fields, dynamic level
+control and synchronized persistent destinations. A rejected record returns
+before reading the clock or allocating its formatting buffer.
 
-## Log Levels
-
-| Level | Value | Color | Use Case |
-|-------|-------|-------|----------|
-| `DEBUG` | 0 | Gray | Development details |
-| `INFO` | 1 | Green | Normal operation messages |
-| `WARN` | 2 | Yellow | Potential problems |
-| `ERROR` | 3 | Red | Failures requiring attention |
-
-## Quick Start (Global Functions)
+## Quick start
 
 ```vex
-import { debug, info, warn, err } from "log";
+import { Format, Level, Logger, field } from "log";
 
-debug("Cache hit for key=user:42");
-info("Server started on :8080");
-warn("Connection pool at 90% capacity");
-err("Failed to write to disk");
+let logger = Logger.stderr(Level.Info)
+    .withFormat(Format.Json)
+    .withService("checkout".toString());
+
+let fields = [
+    field("order_id".toString(), 42 as u64),
+    field("cached".toString(), false),
+];
+
+match logger.info("order accepted", &fields[0..2]) {
+    Ok(_) => { /* complete record written */ }
+    Err(err) => { /* apply the application's I/O failure policy */ }
+}
 ```
 
-Output:
-```
-[90m[DEBUG]: Cache hit for key=user:42
-[32m[INFO ]: Server started on :8080
-[33m[WARN ]: Connection pool at 90% capacity
-[31m[ERROR]: Failed to write to disk
+JSON output is one complete object per line:
+
+```json
+{"time":"2026-08-17T12:34:56.789Z","level":"INFO","msg":"order accepted","service":"checkout","order_id":42,"cached":false}
 ```
 
-## Instance-Based Logger
+## Levels and destinations
 
-For scoped logging with minimum level filtering:
+Levels are ordered `Level.Trace`, `Debug`, `Info`, `Warn`, `Error`, and `Off`.
+`Off` rejects every record.
+
+| Constructor | Destination |
+|---|---|
+| `Logger.new(level)` | stderr |
+| `Logger.stderr(level)` | stderr |
+| `Logger.stdout(level)` | stdout |
+| `Logger.file(path, level)` | one persistent append descriptor |
+| `Logger.discard()` | disabled sink |
+
+`Logger.file` returns `Result<Logger, IoError>`. It opens the destination once;
+clones share that descriptor and serialize complete records through one lock.
 
 ```vex
-import { Logger, newLogger, INFO, WARN } from "log";
-
-let logger = newLogger(WARN);  // Only WARN and ERROR
-
-logger.debug("Ignored");    // Filtered (below WARN)
-logger.info("Ignored");     // Filtered
-logger.warn("Disk space below 10%");    // Yes Printed
-logger.err("Out of memory");            // Yes Printed
-
-println("Logger level: {logger.getLevel()}");  // 2
+let logger = match Logger.file("service.log".toString(), Level.Debug) {
+    Ok(value) => value.withFormat(Format.Json),
+    Err(err) => $panic("could not open log file"),
+};
 ```
 
-## API
+## Typed fields
 
-| Method | Description |
-|--------|-------------|
-| `newLogger(level)` | Create logger with minimum level |
-| `.debug(msg)` | Log at DEBUG level |
-| `.info(msg)` | Log at INFO level |
-| `.warn(msg)` | Log at WARN level |
-| `.err(msg)` | Log at ERROR level |
-| `.getLevel()` | Get current minimum level |
+`field` overloads accept `bool`, `i64`, `u64`, `f64`, and owned `string`.
+`nullField` emits null. `group` creates a nested structured object rather than
+flattening keys into text.
+
+```vex
+import { field, group, nullField } from "log";
+
+let requestFields = [
+    field("method".toString(), "GET".toString()),
+    field("status".toString(), 200 as i64),
+    nullField("error".toString()),
+];
+let fields = [group("request".toString(), &requestFields[0..3])];
+
+let result = logger.info("request complete", &fields[0..1]);
+```
+
+Retained string fields are owned. A derived logger never keeps a borrow into a
+request buffer after that buffer's lifetime.
+
+## Immutable context and groups
+
+Builder methods consume and return a logger. Clone a base logger when deriving
+independent contextual children:
+
+```vex
+let common = [field("region".toString(), "eu-west".toString())];
+let base = Logger.stderr(Level.Info).withFields(&common[0..1]);
+
+let requestLogger = base.clone()
+    .withGroup("request".toString())
+    .withTraceparent(
+        "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    );
+```
+
+Available derivations:
+
+- `withFormat(Format.Text | Format.Json)`;
+- `withTimestamp(bool)`;
+- `withFields(&[Field])` and `withGroup(string)`;
+- `withService(string)`;
+- `withTrace(traceId, spanId)`;
+- `withTraceparent(str)` for canonical W3C trace context;
+- `withLevelSwitch(LevelSwitch)`.
+
+Invalid, uppercase, future-version or all-zero traceparent identifiers leave
+the logger unchanged.
+
+## Dynamic filtering
+
+`LevelSwitch` is shared across all loggers derived from it. Updates use
+acquire/release atomics and do not rebuild logger context.
+
+```vex
+import { LevelSwitch } from "log";
+
+let levels = LevelSwitch.new(Level.Info);
+let logger = Logger.stderr(Level.Info)
+    .withLevelSwitch(levels.clone());
+
+levels.set(Level.Debug);
+```
+
+Use `logger.enabled(level)` before constructing application-level expensive
+fields. The logger performs its own second check before clock/format work.
+
+## Emission API
+
+Convenience methods `trace`, `debug`, `info`, `warn`, and `err` have
+message-only and message-plus-fields overloads. Every method returns
+`Result<(), IoError>`.
+
+`log(level, message, fields)` selects a level explicitly. `logAt` also accepts
+a supplied `Time`, which is useful for replay and imported events.
+
+Source metadata is explicit and compile-time discoverable:
+
+```vex
+import { Field, Source } from "log";
+
+let source = Source.new(
+    #Source.fileName().toString(),
+    #Source.module().toString(),
+    #Source.line(),
+    #Source.column(),
+);
+let fields: [Field; 0] = [];
+let result = logger.log(Level.Error, "request failed", &fields[0..0], &source);
+```
+
+This avoids an opaque runtime stack walk. `formatRecordAt` is available for
+deterministic custom formatting and tests.
+
+## Flush and close
+
+`flush()` forwards to the destination. `close()` closes a file destination at
+most once across all clones; stdout, stderr, and discard remain process-owned.
+Later writes through a closed file logger return the canonical `IoError`.
+
+The package is intentionally synchronous. Async batching, sampling, rotation,
+and telemetry export require explicit loss/backpressure and lifecycle policies;
+they are not hidden behind a process-global logger.
+
+## Performance baseline
+
+M2 Max, O3, 200 ms:
+
+| Operation | Result |
+|---|---:|
+| disabled level check | 1.62 ns |
+| disabled record | 2.10 ns |
+| empty JSON record | 275.60 ns |
+| JSON record with six fields | 408.85 ns |
+| text record with six fields | 414.88 ns |
+
+Formatting measurements include the returned owned string allocation; they do
+not include destination I/O.
 
 
 // ============================================================================
@@ -27499,6 +28810,9 @@ import {
     category,
     isAlphabetic,
     isDigit,
+    isLetter,
+    isMark,
+    isNumber,
     isLowercase,
     isPunctuation,
     isUppercase,
@@ -27509,6 +28823,8 @@ import {
 $assert(isAlphabetic('Ω'), "Greek omega is alphabetic");
 $assert(isWhitespace('\u{2003}'), "EM SPACE is whitespace");
 $assert(category('A') == CAT_LU, "exact General_Category");
+$assert(isLetter('Ω') && isMark('\u{0301}'), "exact category groups");
+$assert(isNumber('\u{2160}'), "letter-number category");
 ```
 
 `isAlphabetic`, `isUppercase`, and `isLowercase` use the normative properties
@@ -27520,6 +28836,12 @@ combining marks and enclosed letters.
 `category(char)` returns an exact `CAT_*` General_Category identifier. The
 package exports the letter, mark, number, punctuation, symbol, separator,
 control, surrogate, private-use, and unassigned category constants.
+
+The convenience predicates `isLetter`, `isMark`, `isNumber`, `isSeparator`,
+`isSymbol`, `isControl`, `isFormat`, `isPrivateUse`, `isAssigned`,
+`isTitlecase`, and `isGraphic` group those exact categories without allocating.
+`isLetter` is intentionally narrower than `isAlphabetic`: the latter is a
+normative derived property and includes some combining marks.
 
 ## Simple case mapping
 
@@ -27551,6 +28873,22 @@ $assert(caseFoldTurkic("Iİ") == "ıi", "explicit Turkic overrides");
 does not preserve normalization forms; normalization is a separate API layer.
 Both functions return an owned `string`, making their allocation effect visible.
 
+For reusable output, `caseFoldInto(value, builder)` and
+`caseFoldTurkicInto(value, builder)` append into an existing `StringBuilder`:
+
+```vex
+import { caseFoldInto } from "unicode";
+import { StringBuilder } from "strings";
+
+let! output = StringBuilder(64 as usize);
+output.writeStr("key=");
+caseFoldInto("Straße", &output!);
+$assert(output.toString() == "key=strasse");
+```
+
+This form preserves the same malformed-input and Unicode mapping semantics but
+lets parsers, indexes and protocol writers reuse capacity across operations.
+
 ## Runtime and performance model
 
 - Scalar property and simple-case queries allocate nothing.
@@ -27565,13 +28903,13 @@ Both functions return an owned `string`, making their allocation effect visible.
   `str` views and owned `string` values. It preserves non-ASCII bytes and does
   not pull the unrelated Unicode simple-case table into the fused program.
 
-The package benchmark suite measures scalar queries with `0 B/op` and
-`0 allocs/op` separately from owning fold operations. On the 2026-08-10 macOS
-arm64 development machine, the 10-byte ASCII SSO fold measured about 1.62 µs
-with zero allocations; an expanding non-ASCII fold measured about 11.2 µs,
-72 bytes, and two allocations. These are regression baselines, not portable
-performance guarantees. The expanding path also has a 100,000-iteration
-AddressSanitizer stress gate.
+On the 2026-08-16 Apple M2 Max, the optimizer-safe O3 `BenchCtx.iter` baseline
+is 2.34 ns for ASCII Alphabetic, 11.63 ns for non-ASCII Alphabetic, 18–19.5 ns
+for non-ASCII simple casing, 16.23 ns for an ASCII fold and 151.64 ns for the
+expanding `Straße ﬃ İ` fold. Reusing a caller builder reduces that expanding
+fold to 92.80 ns. All measured rows report `0 B/op` and `0 allocs/op`; these
+are host-specific regression baselines, not portable guarantees. The expanding
+path also has an AddressSanitizer stress gate.
 
 Full context/locale-sensitive upper/lower/title casing, normalization, and
 extended grapheme segmentation remain separate production milestones and are
@@ -27591,10 +28929,13 @@ The Vex Standard Library (`std`) provides a set of highly optimized, parallelism
 |---|---|
 | **[`bit`](./bit.md)** | Bitwise manipulation, population counts, masking, leading/trailing zero counts mapped directly to hardware vector intrinsics. |
 | **[`cli`](./cli.md)** | Subcommand, argument, and flag parsing utilities for rapid CLI application development. |
+| **[`collections`](./collections.md)** | Owning queues, stacks, binary priority heaps, and stable-index linked lists with allocation reuse. |
 | **[`compress`](./compress.md)** | Pure Vex DEFLATE and GZIP compression and decompression paths optimized for the vectorizer. |
+| **[`context`](./context.md)** | Immutable request contexts with cooperative cancellation, monotonic deadlines, typed causes, and persistent metadata. |
 | **[`crypto`](./crypto.md)** | Core cryptographic algorithms and checksums (e.g. CRC32, AES, MD5) leveraging crypto SIMD instructions (AES-NI) with software fallbacks. |
 | **[`db`](./db.md)** | Database connections, async pooling, and Native PostgreSQL bindings written purely in Vex without C driver dependencies. |
-| **[`fs`](./fs.md)** | Buffered asynchronous and synchronous File System operations integrated into the Vex M:N scheduler. |
+| **[`fs`](./fs/index.md)** | RAII files and mappings, bounded whole-file I/O, portable metadata, native paths, and O(n) directory streaming. |
+| **[`filter`](./filter.md)** | Stable predicate filtering, reusable output storage, and fixed-mask SIMD/SIMT compaction. |
 | **[`hash`](./hash.md)** | Extremely fast, non-cryptographic hashing algorithms (FNV-1a, xxHash3, WyHash) optimized for Hash Maps and general probing. |
 | **[`http`](./http.md)** | Zero-allocation HTTP/1.1 Protocol parsers and baseline Web Server constructs. |
 | **[`inference`](./inference.md)** | LLM specific primitive abstractions. Holds logic for RoPE, K/V Cache, and Hardware quantizations. |
@@ -27603,6 +28944,7 @@ The Vex Standard Library (`std`) provides a set of highly optimized, parallelism
 | **[`ml`](./ml.md)** | High performance Neural Network blocks (RMSNorm, Softmax) executed via Graph blocks. |
 | **[`net`](./net.md)** | Asynchronous TCP/UDP networking sockets mapped natively to the Vex M:N scheduler loop. |
 | **[`regex`](./regex.md)** | SIMD-Accelerated zero-copy regex engine compiling to bytecode NFAs. |
+| **[`rand`](./rand.md)** | Explicit xoshiro256** streams, unbiased ranges, parallel jumps, and reusable zero-allocation distributions. |
 | **[`semver`](./semver.md)** | Semantic Versioning definitions and query engines. |
 | **[`serde`](./serde.md)** | A powerful, zero-copy serialization/deserialization framework supporting JSON, TOML, CSV, and MessagePack formats. |
 | **[`strings`](./strings.md)** | String building utilities centered on `StringBuilder`. |
@@ -42755,154 +44097,265 @@ Returns `Ok(0)` on complete traversal, `Ok(1)` if stopped early.
 // ============================================================================
 // File: ./std/fs/file.md
 // ============================================================================
-# File I/O (`fs/file`)
+# File I/O
 
-The `File` struct represents an open file descriptor. It provides static constructors and implements the `Drop` contract for safe, automatic resource cleanup upon leaving scope.
+`File` is a move-only owning descriptor. Dropping it closes the descriptor;
+`close()` is available when the error or exact release point matters and is
+idempotent.
+
+## Opening files
+
+Use `OpenOptions` when behavior must be explicit:
 
 ```vex
-import { File } from "std/fs";
+import { OpenOptions } from "fs";
 
-match File.open("data.txt") {
+let options = OpenOptions.new()
+    .read(true)
+    .write(true)
+    .create(true);
+
+match options.open("state.bin") {
     Ok(file) => {
-        // file is auto-closed when it goes out of scope here
-        let content = file.readAll();
-        $println(content);
+        let! opened = file;
+        match opened.metadata() {
+            Ok(info) => $println(info.len()),
+            Err(error) => $println(error.toString()),
+        }
+        let _ = opened.close();
     },
-    Err(_) => $println("open failed")
+    Err(error) => $println(error.toString()),
 }
 ```
 
-## Common Operations
+Available options are `read`, `write`, `append`, `truncate`, `create`,
+atomic `createNew`, and the creation `mode`. Invalid combinations fail with
+`IoErrorKind.InvalidInput` before a provider call. Convenience constructors
+include `File.open`, `File.create`, `File.openReadWrite`,
+`File.openAppend` and `File.temp`.
 
-### Static Constructors
+## Streaming operations
 
-- `File.open(path)`: Open an existing file for reading only.
-- `File.create(path)`: Create a new file or truncate an existing one for writing.
-- `File.openReadWrite(path)`: Open a file for both reading and writing.
-- `File.openAppend(path)`: Open or create a file for appending.
-- `File.temp()`: Create a unique temporary file open for reading and writing.
+`File` implements the canonical `io` reader, writer, seeker and closer
+contracts. Core methods include:
 
-### Instance Methods
+- `read` and `write`: partial `usize` operations;
+- `readByte`, `writeByte` and `writeStr`;
+- `pread`: positional read without changing the shared seek cursor;
+- `seek`, `tell`, `size`, `truncate`, `flush` and `sync`;
+- `metadata`, `filePath`, `isOpen` and `close`.
 
-- `.read(buf, len)`: Read up to `len` bytes into a buffer.
-- `.write(buf, len)`: Write `len` bytes from a buffer.
-- `.writeString(s)`: Write a Vex string to the file.
-- `.seek(offset, whence)`: Seek to a relative or absolute position.
-- `.tell()`: Get the current file position.
-- `.size()`: Get the file size in bytes.
-- `.sync()`: Flush file data to storage.
-- `.close()`: Explicitly close the file (optional, as `Drop` closes it automatically).
-- `.readAll()`: Read all remaining bytes into a `Vec&lt;u8&gt;`.
+Use `bufReader(file)`, `bufWriter(file)`, `copyBuffer` and other `io`
+adapters for reusable buffering. The filesystem package intentionally does not
+carry package-local reader or writer implementations.
 
-The present standard library also exports deprecated free-function compatibility wrappers (`openFile`, `createFile`, `openReadWrite`, `openAppend`, `tempFile`) which delegate to the static methods under the hood.
+## Whole-file operations
+
+`readBytes` and `readFile` consume the complete input. For untrusted or
+externally controlled files, use `readBytesLimit` or `readFileLimit`; an
+oversized input is rejected instead of silently truncated. `writeFile` and
+`appendFile` complete the requested write or return an error.
+
+Other one-shot operations include `copyFile`, `renameFile`, `removeFile`,
+`createDir`, `removeDir`, `cwd`, `chdir`, `changeMode`,
+`createSymlink`, `hardlink` and `readSymlink`.
+
+## Memory mapping
+
+`mapRead` returns an owning `MappedRegion` with bounds-checked `readByte`
+and `copyTo`. The mapping is automatically released. Raw `mmap`/`munmap`
+methods remain explicit unsafe compatibility boundaries for low-level code.
 
 
 // ============================================================================
 // File: ./std/fs/paths.md
 // ============================================================================
-# Paths & Directories (`fs/path`, `fs/dir`)
+# Paths and directories
 
-## `Path`
+## Path
 
-Current `Path` is a value type with methods such as:
+`Path` is an owned native-path value. `clean()` performs lexical O(n)
+normalization without consulting the filesystem; `canonicalize()` resolves
+the filesystem, follows links according to the native provider and returns an
+absolute path or an `IoError`.
 
-- `join(...)`
-- `parent()`
-- `fileName()`
-- `extension()`
-- `stem()`
-- `exists()`
-- `isReadable()` / `isWritable()`
-- `isAbsolute()` / `isRelative()`
-- `isDir()` / `isFile()` / `isSymlink()`
-- `canonicalize()`
-- `withExtension(...)`
+```vex
+import { Path } from "fs";
 
-## Directory Helpers
+let source = Path("src/./frontend/../main.vx").clean();
+$println(source.toString()); // src/main.vx
 
-Current directory-facing helpers include:
+match source.canonicalize() {
+    Ok(absolute) => $println(absolute.toString()),
+    Err(error) => $println(error.toString()),
+}
+```
 
-- `readDir(path, &DirList!)`
-- `readDirVec(path)`
-- `readDirPage(path, offset, limit)`
-- `mkdirAll(path)`
-- `removeAll(path)`
-- `walkDir(...)`
+The surface includes `asStr`, `len`, `join`, `parent`, `fileName`,
+`extension`, `stem`, `withExtension`, `components`, `exists`,
+`isReadable`, `isWritable`, `isAbsolute`, `isRelative`, `isDir`,
+`isFile` and `isSymlink`.
 
-## Notes
+Windows behavior is native rather than POSIX-shaped: drive-relative paths,
+rooted paths, mixed separators and UNC prefixes remain distinct. Public paths
+stay UTF-8 while the provider uses UTF-16 wide Win32 APIs.
 
-This page intentionally avoids stale `unwrap()`-style examples and top-level function names that do not match the current exported surface.
+## Directory collection
+
+- `readDir` fills caller-provided `DirList` storage.
+- `readDirVecLimit` collects at most an explicit number of entries.
+- `readDirVec` collects the full directory and is intended for trusted sizes.
+- `readDirPage` provides stateless offset/limit pagination.
+
+Dot entries are excluded. Provider counts are validated before Vec lengths are
+committed.
+
+## Streaming traversal
+
+`DirCursor` is the preferred API for large or untrusted directories. It opens
+the provider once, advances monotonically in O(n), and closes automatically.
+
+```vex
+import { DirCursor } from "fs";
+
+match DirCursor.open(".", 256 as usize) {
+    Ok(cursor) => {
+        let! stream = cursor;
+        match stream.nextPage() {
+            Ok(entries) => $println(entries.len()),
+            Err(error) => $println(error.toString()),
+        }
+        let _ = stream.close();
+    },
+    Err(error) => $println(error.toString()),
+}
+```
+
+`mkdirAll`, `removeAll` and `walkDir` provide recursive operations.
+`walkDir` stops when its callback returns `false` and reports whether the
+walk completed.
 
 
 // ============================================================================
 // File: ./std/fs/index.md
 // ============================================================================
-# fs — Overview
+# fs — filesystem
 
-The `fs` module provides a comprehensive suite for file system operations. It offers synchronous and async I/O, buffered readers/writers, directory traversal, path manipulation, file metadata, and permission management — all natively integrated with Vex's async runtime.
-
-# fs — Overview
-
-The current `fs` surface exports:
-
-- `Path`
-- `Permissions`
-- `File`, `openFile`, `createFile`, `openReadWrite`, `openAppend`, `tempFile`
-- one-shot helpers such as `readFile`, `writeFile`, `appendFile`, `copyFile`, `renameFile`, `removeFile`, `exists`, `mkdir`, `rmdir`, `cwd`, `chdir`, `chmod`
-- stat helpers such as `stat`, `lstat`, `fileSize`, `modTime`
-- directory helpers such as `readDir`, `readDirVec`, `readDirPage`, `mkdirAll`, `removeAll`, `walkDir`
-
-## Example
+The `fs` package is Vex's canonical synchronous filesystem boundary. It combines
+owned file and mapping handles, portable metadata, native path handling,
+directory streaming and bounded whole-file helpers. Byte I/O composes with the
+contracts and adapters from `io`; `fs` does not maintain a second buffering
+stack.
 
 ```vex
-match readFile("config.toml") {
+import { Path, readFileLimit } from "fs";
+
+let config = Path("config/../config/app.toml").clean();
+match readFileLimit(config.toString(), 1024 as usize * 1024 as usize) {
     Ok(content) => $println(content),
-    Err(_) => $println("read failed")
+    Err(error) => $println(error.toString()),
 }
 ```
 
-This page intentionally avoids `unwrap()`-style examples and other Rust-leaning helper names that do not reflect the current Vex stdlib surface.
+## Public areas
+
+- `Path`: lexical cleaning, joining and inspection plus filesystem
+  canonicalization.
+- `OpenOptions` and `File`: validated opening, RAII descriptors, partial I/O,
+  positional reads, seeking, metadata, sync and mapping.
+- Whole-file helpers: complete and explicitly bounded byte/string reads,
+  writes, appends, copy, rename and removal.
+- `Metadata`, `FileType` and `Permissions`: one portable surface over
+  macOS, Linux and Windows providers.
+- `DirCursor`, collection and pagination helpers: bounded O(n) traversal,
+  recursive walk/create/remove and temporary-directory lookup.
+- Links and temporary files: native symlink, hard-link, readlink and
+  race-resistant temporary-file operations.
+
+## Error and limit policy
+
+Operations that can fail return `Result<_, IoError>`. `tryExists` preserves
+permission and provider failures; `exists` intentionally collapses them to
+`false` as a convenience. Code reading untrusted files or directories should
+prefer `readFileLimit`, `readBytesLimit`, `readDirVecLimit` or
+`DirCursor` and choose an application-specific bound.
+
+## Platform boundary
+
+Paths are public UTF-8 values. Windows providers use wide Win32 APIs and
+preserve drive-relative, rooted and UNC semantics. macOS and Linux use explicit
+target-routed providers. Native structs, handles, errno values and libc
+constants do not escape the package.
 
 
 // ============================================================================
 // File: ./std/sort.md
 // ============================================================================
-# sort — Sorting & Searching
+# sort — Sorting and searching
 
-Hybrid sorting with Introsort (Quicksort + Heapsort + Insertion Sort) and binary search.
+The `sort` package provides ownership-safe in-place sorting, stable sorting,
+ordered searches, and sequence utilities. Generic ordering uses the `Ord`
+contract; there is no type-name dispatch or hidden C runtime dependency.
 
-## Sorting
+## Unstable sorting
 
 ```vex
 import { sort, sortDesc } from "sort";
 
-let! arr = [5, 3, 8, 1, 9, 2];
-sort(&arr);         // [1, 2, 3, 5, 8, 9]
-sortDesc(&arr);     // [9, 8, 5, 3, 2, 1]
+let! values = [5, 3, 8, 1, 9, 2];
+sort(&values);      // [1, 2, 3, 5, 8, 9]
+sortDesc(&values);  // [9, 8, 5, 3, 2, 1]
 ```
 
-## Binary Search
+`sort` and `sortDesc` are hybrid introsorts. They combine ordered-input fast
+paths, insertion sort for tiny ranges, median-of-three partitioning, a
+duplicate-aware three-way path, and a heapsort fallback. Worst-case time is
+O(n log n), stack use is O(log n), and no element workspace is allocated.
+Equal elements are not guaranteed to keep their original order.
+
+## Stable sorting
 
 ```vex
-import { binarySearch } from "sort";
+import { stableSort } from "sort";
 
-let arr = [1, 3, 5, 7, 9, 11];
-let idx = binarySearch(&arr, 7);    // → Some(3)
-let idx = binarySearch(&arr, 4);    // → None
+let! events = loadEvents();
+stableSort(&events);
 ```
 
-## Algorithm Details
+`stableSort` keeps equal elements in their original relative order and does not
+require `Clone`. Copy values use a direct contiguous merge buffer; owning values
+stable-sort indices and then apply the permutation with ownership-safe
+`Vec.swap` operations. The choice is structural at comptime, not based on a
+type name. Time is O(n log n), auxiliary storage is O(n), and an already sorted
+vector returns before allocating workspace.
 
-The default sort uses **Introsort**:
-1. Start with Quicksort (fast average case)
-2. Fall back to Heapsort if recursion depth exceeds `2 × log₂(n)` (guarantees O(n log n) worst case)
-3. Switch to Insertion Sort for small subarrays (n ≤ 16)
+## Ordered search
 
-| File | Purpose |
-|------|---------|
-| `introsort.vx` | Main Introsort implementation |
-| `search.vx` | Binary search |
-| `util.vx` | Swap, comparison helpers |
+```vex
+import { binarySearch, lowerBound, upperBound } from "sort";
+
+let values = [1, 3, 3, 5, 7, 9];
+let found = binarySearch(&values, 5); // 3
+let missing = binarySearch(&values, 4); // -1
+let firstThree = lowerBound(&values, 3); // 1
+let afterThree = upperBound(&values, 3); // 3
+```
+
+`binarySearch` returns an `i64` index or `-1` when absent. `lowerBound` and
+`upperBound` return insertion positions in `0..=values.len()`. Use the
+`binarySearchRef`, `lowerBoundRef`, `upperBoundRef`, and `linearSearchRef`
+variants when the target is an owning value that should only be borrowed.
+
+## Utilities
+
+The package also exports `linearSearch`, `isSorted`, `isSortedDesc`, `unique`,
+`minElement`, and `maxElement`. Prefer `minElementRef` and `maxElementRef` in
+allocation-sensitive code; their owned counterparts require `Clone` and clone
+only the selected result. `unique` removes consecutive duplicates, so sort the
+vector first when duplicates are not already adjacent.
+
+All ordered operations require a lawful total `Ord` implementation. A custom
+ordering must remain transitive and consistent for the duration of the call.
 
 
 // ============================================================================
@@ -43301,62 +44754,202 @@ MessagePack uses type-prefix bytes to encode values efficiently:
 // ============================================================================
 // File: ./std/io.md
 // ============================================================================
-# io — Core I/O Abstractions
+# io — composable byte I/O
 
-The `io` module defines the fundamental I/O contracts (`Reader`, `Writer`, `Seeker`, `Closer`) plus standard streams and helper utilities.
+The `io` package is the shared synchronous I/O layer for files, streams,
+protocols, serializers and loggers. It provides small statically dispatched
+contracts, reusable buffering, bounded input APIs and a portable error model.
 
-## Core Contracts
+```vex
+import {
+    Reader, Writer, ByteReader, ByteWriter, StringWriter,
+    BufReader, BufWriter, bufReader, bufWriter,
+    IoError, IoErrorKind
+} from "io";
+```
 
-Current exported contracts use raw byte pointers plus lengths:
+## Contracts
 
 ```vex
 contract Reader {
-	read(self: &Self!, buf: &u8!, len: u64): Result<u64, IoError>;
+    read(buf: Ptr<u8!>, len: usize)!: Result<usize, IoError>;
 }
 
 contract Writer {
-	write(self: &Self!, data: &u8, len: u64): Result<u64, IoError>;
-	flush(self: &Self!): Result<(), IoError>;
+    write(data: Ptr<u8>, len: usize)!: Result<usize, IoError>;
+    flush()!: Result<(), IoError>;
 }
 
-contract Seeker {
-	seek(self: &Self!, pos: SeekFrom): Result<u64, IoError>;
+contract ByteReader {
+    readByte()!: Result<u8, IoError>;
 }
 
-contract Closer {
-	close(self: &Self!): Result<(), IoError>;
+contract ByteWriter {
+    writeByte(value: u8)!: Result<(), IoError>;
+}
+
+contract StringWriter {
+    writeStr(value: str)!: Result<usize, IoError>;
 }
 ```
 
-## Standard I/O
+`Reader` writes into caller-owned mutable storage. `Writer` only borrows its
+input for the duration of the call. A zero-byte read means EOF; a writer may
+accept a partial prefix. Use `writeAll` when the complete input must be written.
+
+The package also exports `Seeker`, `Closer` and composed contracts such as
+`ReadWriter`, `ReadSeeker`, `ReadWriteSeeker` and `ReadWriteCloser`.
+
+## Files and streams
 
 ```vex
-let! out = stdout();
-let! err = stderr();
+import { openRead, openWrite, readToStringLimit, writeAll } from "io";
 
-$println("Hello, Vex!")
-eprintln("Error message")
-
-match readLine() {
-	Ok(line) => $println(line),
-	Err(_) => $println("read failed")
+match openRead("config.txt".toString()) {
+    Ok(stream) => {
+        let! input = stream;
+        match readToStringLimit(&input, 1024 * 1024) {
+            Ok(text) => { $println(text); },
+            Err(err) => { $panic(err.toString()); },
+        }
+        let _ = input.close();
+    },
+    Err(err) => { $panic(err.toString()); },
 }
 ```
 
-## Helpers
+`openRead`, `openWrite` and `openAppend` return `Stream`. Owned streams close on
+drop; `close()` is idempotent and should be used when flush/close errors matter.
+`stdin()`, `stdout()` and `stderr()` return runtime-owned stream wrappers and
+are not closed by their wrappers.
 
-- `stdin()` → `Stream`
-- `stdout()` → `Stream`
-- `stderr()` → `Stream`
-- `readLine()` → `Result&lt;string, IoError&gt;`
-- `prompt(message: string)` → `Result&lt;string, IoError&gt;`
-- `printInt`, `printFloat`, `printBool`
+## Generic buffering
 
-## Notes
+`BufReader<R>` and `BufWriter<W>` hold a caller-owned reference to the
+underlying implementation and use a private 16 KiB buffer. Dispatch remains
+static—there is no trait object or per-operation heap allocation. Large reads
+and writes bypass the intermediate buffer.
 
-- Current `Reader` / `Writer` contracts are pointer-and-length based, not `Span&lt;u8&gt;` based.
-- Prefer `readLine()` / `prompt()` for simple terminal input examples.
-- Use `stdout().flush()` when prompt text must appear before a blocking read.
+```vex
+let! source = openRead("records.txt".toString()).unwrap();
+let! reader = bufReader(&source);
+let! lineBytes = Vec.withCapacity<u8>(4096);
+
+loop {
+    match reader.readLineInto(&lineBytes, 1024 * 1024) {
+        Ok(None) => { break; },
+        Ok(Some(length)) => {
+            // `lineBytes` is reused; LF and an optional CR were removed.
+            consumeRecord(lineBytes.asSpan());
+        },
+        Err(err) => { $panic(err.toString()); },
+    }
+}
+```
+
+`readLineInto` distinguishes EOF (`None`) from an empty line (`Some(0)`). If a
+line exceeds the supplied payload limit, it returns `InvalidData` and drains
+the rest of that record so the next call starts at the following line.
+
+Use `readLineLimit` when an owned UTF-8 string is desired:
+
+```vex
+match reader.readLineLimit(64 * 1024) {
+    Ok(Some(line)) => { useLine(line); },
+    Ok(None) => { /* EOF */ },
+    Err(err) => { /* invalid UTF-8, limit or provider failure */ },
+}
+```
+
+`BufWriter.flush()` is explicit. It retries partial writes, reports
+`WriteZero`, and preserves unwritten buffered bytes after an error. No
+destructor silently discards a flush failure.
+
+## In-memory cursor
+
+```vex
+import { newCursor, SeekFrom } from "io";
+
+let! cursor = newCursor();
+let _ = cursor.writeStr("header");
+let _ = cursor.seek(SeekFrom.Start(0));
+let first = cursor.readByte();
+```
+
+`Cursor` implements read, write, byte, string and seek contracts. It supports
+reuse, zero-fills sparse writes and safely handles input/output views that
+alias its own backing storage.
+
+## Transfer and bounded reads
+
+```vex
+copy(src, dst)                         // 16 KiB convenience scratch
+copyBuffer(src, dst, scratch, length) // caller-owned, allocation-free core
+copyN(src, dst, maximum)
+writeAll(dst, data, length)
+
+readAll(src)
+readAllLimit(src, maximum)
+readAtLeast(src, buffer, length, minimum)
+readExact(src, buffer, length)
+readToStringLimit(src, maximum)
+```
+
+Prefer bounded variants for files supplied by users, network input and parser
+front ends. `copyBuffer` lets large applications use stack, arena or pooled
+scratch storage without a hidden allocation.
+
+## Adapters
+
+- `emptyReader()` is permanently at EOF.
+- `sinkWriter()` accepts and discards bytes without allocation.
+- `chainReader(a, b)` reads `a` to EOF and then `b`.
+- `teeReader(reader, writer)` mirrors every returned byte.
+- `countingReader` and `countingWriter` expose checked `u64` totals.
+- `limitReader(reader, maximum)` exposes at most the configured byte count.
+
+All adapters are generic and statically dispatched.
+
+## Errors
+
+`IoError.kind()` returns a portable `IoErrorKind`; `osCode()` preserves the
+VexArch-normalized native code and `messageView()` returns diagnostic text
+without allocating. Common kinds include:
+
+- `NotFound`, `PermissionDenied`, `AlreadyExists`;
+- `WouldBlock`, `Interrupted`, `TimedOut`;
+- `UnexpectedEof`, `WriteZero`, `InvalidInput`, `InvalidData`;
+- connection, address, filesystem-capacity and resource-limit failures.
+
+Only `Interrupted` and `WouldBlock` are reported by `isRetryable()`.
+
+## Standard I/O helpers
+
+```vex
+printStr("without newline")
+eprint("diagnostic")
+eprintln("diagnostic with newline")
+
+match readLineLimit(64 * 1024) {
+    Ok(line) => { useLine(line); },
+    Err(err) => { $panic(err.toString()); },
+}
+```
+
+The simple stdin `readLine()` returns an owned `string`, so EOF and an empty
+line are both represented by `""`. Use `BufReader.readLineInto` or
+`BufReader.readLineLimit` when a protocol needs to distinguish them.
+
+## Performance and safety notes
+
+- Reusable Cursor, buffering and `copyBuffer` paths allocate no memory.
+- ASCII UTF-8 validation and byte scanning use target-independent Vex
+  fixed-array/Mask operations; the backend selects CPU SIMD or GPU/SIMT
+  lowering.
+- Non-empty null buffers, oversized provider counts, counter overflows and
+  zero-progress writes are rejected.
+- `std/io` does not import libc directly. Native behavior enters through the
+  selected VexArch provider, preserving Vex's freestanding core.
 
 
 // ============================================================================
@@ -43922,7 +45515,12 @@ This layer includes infrastructure for:
 
 Vex compiles to native code ahead-of-time (AOT). Both `vex run` and `vex compile` produce native binaries via LLVM. `vex run` compiles to a temporary executable and runs it as a subprocess; `vex compile` produces a standalone binary.
 
-The runtime is linked as a static library (`libvexruntime.a`) alongside the compiled Vex code. The system linker resolves all symbols at build time -- no runtime symbol registration is needed.
+VexArch is rehydrated from the compiler's embedded VRI and lowered into the
+same backend module as user and prelude code. Release packages do not carry a
+VexArch bitcode module or static/dynamic runtime library. A tiny
+target-selected native support object may be materialized for irreducible
+assembly; system and package-native dependencies remain explicit in the final
+link plan.
 
 ## CLI Tooling
 
@@ -43938,6 +45536,7 @@ The CLI owns orchestration around:
 
 - dependency resolution
 - compiler-driver invocation
+- embedded VRI target selection and semantic fusion
 - linking
 - execution model selection
 - test discovery and execution
@@ -43956,9 +45555,9 @@ These tools matter because they all depend on the same semantic model staying al
 
 Many user-facing “language” issues are actually toolchain or runtime issues:
 
-- link mode differences
-- symbol registration gaps
-- runtime state constraints
+- requested-target ABI and native-support selection
+- reachable provider/link-plan differences
+- fused runtime reachability constraints
 - test-runner discovery assumptions
 - editor/compiler semantic drift
 
@@ -45035,7 +46634,8 @@ That means the operational pipeline is often:
 ```text
 vex run / vex compile / vex test
   -> compiler driver
-  -> runtime + linker integration
+  -> embedded VRI selection + semantic fusion
+  -> explicit target/native link plan
   -> execution or test reporting
 ```
 
@@ -46568,7 +48168,9 @@ The concept has a design or implementation direction, but the current compiler s
 | Package management and registry workflows | Partial | Project and package commands exist, while registry behavior and ecosystem conventions are still being formed. |
 | WASM and non-primary platforms | Experimental | Support depends on the target, runtime subset, and available system libraries. See [platform support](/guide/platform-support). |
 
-Source analysis and native execution are separate validation levels. A successful `vex lint` run does not execute runtime compilation, linking, or the produced program.
+Source analysis and native execution are separate validation levels. A
+successful `vex lint` run does not perform fused backend codegen, native
+linking, or execution of the produced program.
 
 ## How to use examples
 
@@ -46621,6 +48223,7 @@ vex lint --diff --only pointer_migration .
 vex lint --format json --deny-warnings .
 vex lint --format sarif .
 vex lint --format json --timings .
+vex lint --analyze-comptime .
 vex lint --explain-boxing src/main.vx
 vex lint --explain-arena src/main.vx
 ```
@@ -46631,6 +48234,11 @@ have been removed. Use `vex lint`, `vex lint --fix`, or `vex lint --diff`.
 `--explain-boxing` exposes VUMM ownership/boxing decisions and
 `--explain-arena` exposes AutoArena allocation decisions. They are diagnostic
 views over the same semantic session, not separate analysis commands.
+
+`--analyze-comptime` runs the shared typed staging probe after successful
+semantic analysis and writes an aggregate known/residual/error summary to
+stderr. Lint findings in text, JSON, and SARIF remain unchanged. The option is
+default-off and never applies staged replacements.
 
 ## Analysis targets
 
@@ -47176,6 +48784,48 @@ The current V2 closure gates include full HIR and native suites, architecture
 invariants, HIR/CLI parity, persistent-cache envelope tests, and a semantic
 performance fixture.
 
+### Staging rollout and explicit canary
+
+Opportunistic staging is disabled by default. Native compile, run, and IR
+commands expose the closed state directly:
+
+```bash
+vex compile --comptime-staging disabled app.vx
+vex compile --comptime-staging analyze app.vx
+vex compile --comptime-staging apply-known app.vx
+```
+
+`disabled` is the default. `analyze` classifies known, residual, and error
+outcomes but preserves the original codegen HIR. `apply-known` is an explicit
+experimental canary: it transactionally replaces only materialization-ready
+known islands in user/std HIR. Runtime effects and unsupported values remain
+ordinary typed HIR. Compiler-owned VexArch/prelude support is not
+opportunistically reinterpreted; it still participates in the normal fused
+module.
+
+Lint and test retain the observation-only `--analyze-comptime` option; test
+mode forwards it to generated test and benchmark compilation. LSP uses the
+default-false `analyzeComptime` setting in initialization options or `vex.lsp`
+configuration. These tooling controls cannot select `ApplyKnown`. Lint writes
+its aggregate semantic summary to stderr; test and benchmark runners forward
+the compiler summary; LSP retains only the latest summary per URI and clears
+it when the setting is disabled.
+
+For compiler telemetry, combine a non-disabled compile/run staging mode with
+`--comptime-telemetry FILE`. The versioned `vex.ctfe-staging` schema v4 includes
+stable semantic decisions, cache status, VRI inventory, VexArch fusion and
+capability reasons, backend phases, object/link timing, and separate host-side
+policy discovery plus persistent-cache lookup, decode, semantic-validation,
+installation, and publication clocks. Missing phases are `null`, not zero.
+These clocks never enter semantic query identity. Telemetry cannot implicitly
+turn staging on.
+
+The canary is reversible: returning to `disabled` consumes the original Salsa
+HIR snapshot. Native corpus parity, exact custom-drop counts, known-island IR
+removal, and seeded differential programs are checked by
+`tools/run_apply_known_canary.sh`. Automatic/default `ApplyKnown` remains
+post-V2.
+
 ## Performance baseline
 
 The release staging benchmark separates analysis overhead from known-root
@@ -47470,3 +49120,461 @@ There is no source-string fallback and no best-effort declaration emission.
 - [Contracts](/guide/types/contracts)
 - [Pattern Matching](/guide/types/pattern-matching)
 - [Comptime Pipeline Architecture](/architecture/comptime-pipeline)
+
+
+// ============================================================================
+// File: ./guide/simd/simd-simt-contract.md
+// ============================================================================
+# SIMD / SIMT Unified Execution Contract
+
+Vex uses one user-visible compute model for both CPU vectorization and GPU execution.
+
+The goal is simple:
+
+- write normal Vex code (`array` / `Tensor<T,N>` / `Tensor<T>` / `Span<T>`)
+- keep semantics in one place
+- let runtime pick CPU SIMD, SIMD-like CPU kernels, or GPU SIMT backend
+
+There is **no separate “SIMT API”** in user code; kernel concepts come from the same
+algebraic operations and the same `Tensor`/`Mask` abstractions.
+
+## 1) Core cross-backend contract
+
+Every operation category below has the same source-level meaning independent of backend:
+
+- `Map` (unary/binary element-wise ops): `f(a)` / `f(a,b)`
+- `Reduce`: `sum`, `prod`, `min`, `max`, `all`, `any`, etc.
+- `Compare`: `==`, `<`, `>`, `<=`, `>=`
+- `Mask` creation + mask algebra: `&`, `|`, `^`, `~`
+- `Select`: `cond ? a : b` / `mask.select(a,b)`
+- `Index`: `gather`, `scatter`, `scatter_add`, `scatter_max`...
+- `Prefix/scan` style kernels used in higher-level algorithms
+
+The compiler emits the same semantic node for both backends where possible; execution
+engine choice is done only by dispatch policy and capability.
+
+## 2) Ownership and shape contract
+
+- `Mask<N>` and `Tensor<T, N>` represent **fixed-shape** values and are suitable for register-level codegen when width/shape allow it.
+- `DynMask` / `Tensor<T>` represent **runtime-shape** values. `DynMask` stores packed bits and an owner field; it is not a `{ptr,len}` byte slice.
+- Scalar forms always stay scalar. Vectorized backends must not change user-visible scalar behavior.
+- `Span<T>` is a borrowed view; moving into owned tensor values follows the ownership rules documented in memory sections.
+
+## 3) CPU SIMD vs GPU SIMT behavior
+
+- **SIMD backend** = register/vector execution (`+simd` style codegen, loop-vectorized kernels, and fixed-width tensor lowering).
+- **SIMT backend** = one lane/thread lane mapping (GPU warp/wavefront model).
+
+They differ in scheduling:
+
+- register width / lane count
+- memory model (`cache` vs `threadgroup`/`global`)
+- launch granularity (`for`-body vs kernel/thread semantics)
+
+They **must not** differ in:
+
+- operator identities
+- mask semantics
+- comparison truth tables
+- overflow and clamp policies
+- ownership transitions (when a result is borrowed vs owned)
+
+## 4) What "same interface" looks like in practice
+
+The same source stays identical:
+
+```vex
+// same user code for both fallback SIMD and GPU path
+fn relu(x: Tensor<f32>): Tensor<f32> {
+    return x.max(0.0)
+}
+
+fn keep_positive(x: Tensor<f32>): Tensor<f32> {
+    let m = x > 0.0
+    return m.select(x, 0.0)
+}
+```
+
+If a backend cannot support the exact fast path, it must preserve correctness and
+fall back to a valid implementation of the same contract instead of changing semantics.
+
+## 5) Backend capability matrix (contracted)
+
+| API family | CPU SIMD (fixed + dynamic) | GPU SIMT (Metal/CUDA/ROCm/SPIR-V/WGSL) | Contract requirement |
+|---|---|---|---|
+| Map (`+`, `*`, custom `Math.*`) | Yes | Yes | elementwise identity must match |
+| Compare + `Mask` | Yes | Yes | same boolean result layout rules per type |
+| Reduce (`+`, `*`, `min`, `max`, `all`, `any`) | Yes | Yes | scalar return type and NaN/compare policy aligned |
+| Select (`cond ? a : b`) | Yes | Yes | predicated result for each logical lane/thread |
+| Gather/Scatter | Yes (where supported) | Yes (where supported) | deterministic indexing semantics |
+| Mask bit operations | Yes | Yes | same logical truth tables |
+| Prefix scan / cumulative ops | Partial | Partial | keep same algebraic associativity expectations |
+| `Mask.compress` | Yes: LLVM vector intrinsic or legal register network | native subgroup/warp/wave fast path plus bounded portable fixed-mask legalization | stable selected prefix, exact count, deterministic zero tail |
+
+## 6) Lane width and compaction
+
+`#Target.simdLanes<T>()` reports the logical lane count selected for `T` at
+compile time. The meaning is shared, while the physical executor differs:
+
+- on CPU it is the number of `T` elements in the selected native vector width,
+- on CUDA and Metal it is the native 32-lane warp/simdgroup width,
+- on ROCm it follows the selected device's wave32/wave64 profile,
+- on portable SPIR-V/WGSL it is unavailable until a concrete device profile
+  guarantees subgroup capabilities and width.
+
+The last case is deliberately fail-closed. A `#` intrinsic cannot truthfully
+return a subgroup size that is known only after runtime adapter selection.
+
+For dynamically routed `graph fn` code, lane-dependent graph specialization
+must therefore happen after the backend/device profile is selected. A lane
+constant produced for the CPU variant must not be reused by a GPU variant.
+HIR lowers the exact intrinsic identity to a symbolic SIR `ExecutionLanes`
+node. The selected backend then clones the graph and replaces that node with a
+constant: element-width-aware on CPU, 32 on CUDA/Metal, wave32/wave64 on ROCm,
+or the exact adapter subgroup width for SPIR-V/WGSL. The source graph is never
+mutated, so independently compiled CPU and GPU variants cannot leak constants
+into each other.
+
+Inside `graph fn`, use the value as an ordinary expression. It is not legal in
+`#if` or `#const`, because backend/device routing happens after graph creation.
+The backend-specialized value is still emitted as a constant and has no runtime
+query cost.
+
+For a fixed `Mask<N>` and `[T; N]`, `mask.compress(values)` has one definition
+on every backend:
+
+```vex
+let (packed, count) = mask.compress(values)
+```
+
+- selected values occupy `packed[0..count]` in their original order,
+- `packed[count..N]` is deterministically zero,
+- `count` is `usize`,
+- inactive physical GPU lanes do not participate,
+- and a mask wider than one native subgroup uses a bounded whole-mask
+  legalization; a backend never presents independent subgroup compactions as
+  one result.
+
+Current SIR lowering covers CPU scalar/SIMD, Metal, CUDA, ROCm, and
+SPIR-V/WGSL. Profiled SPIR-V/WGSL compaction uses subgroup arithmetic
+for an exact stable rank plus a subgroup barrier; it does not pay for a ballot
+unless an actual bitmask is requested. The WebGPU runtime requests `SUBGROUP`
+and `SUBGROUP_BARRIER` and reads the selected adapter's subgroup range. An exact
+range (`min == max`) can specialize `simdLanes`; a variable range cannot. It can
+still run the native `compress` path when `N <= min`. Without that proof—or
+when the fixed mask is wider—the backend emits a bounded portable whole-mask
+kernel. This does not manufacture a `simdLanes` constant and therefore keeps
+the compile-time query honest while preserving operation semantics.
+
+The standalone-kernel boundary validates this structurally before any backend
+sees the graph: `Mask<N>` is fixed to `1..=64`, operands and results must have
+matching lane counts and dtypes, and unrelated SIR nodes or extra buffers are
+rejected instead of being silently discarded. `toBitmask` uses one `i64/u64`
+transport scalar. Packed `Int4`/`Fp4` compaction uses two nibbles per logical
+host byte and eight nibbles per canonical GPU `u32` word. Conversion is owned
+by the descriptor boundary, so no backend can reinterpret packed values as
+byte lanes.
+
+`Mask` also has one transport contract. Its source and host representation
+remains abstract (fixed masks may be packed), while GPU storage buffers use one
+`u32` per lane because WGSL/SPIR-V do not permit boolean storage-buffer lanes.
+The shared SIR runtime expands packed or byte-per-lane inputs at the GPU
+boundary and restores mask outputs to logical one-byte values. This is an
+internal ABI detail: CUDA, ROCm and Metal source code does not acquire a
+different `Mask` API.
+
+The versioned execution descriptor carries the exact kernel representation,
+entry point, ordered inputs and outputs, per-buffer logical encoding, and
+grid/workgroup geometry. Metal, WebGPU and CUDA consume this same contract;
+backend-specific positional FFI conventions are not part of `Mask` or
+`Tensor` semantics.
+
+Kernel representation is selected by the concrete executor, not by the host
+OS: a Metal executor requests MSL, while a WebGPU executor requests SPIR-V even
+when WebGPU is the fallback on macOS. This keeps device routing and subgroup
+specialization attached to the same capability source.
+
+Metal, CUDA and ROCm lower the canonical `(packed, count)` result as one real
+standalone kernel with inputs followed by outputs in the runtime binding order.
+Each selected lane computes a stable rank, the lane group clears the tail,
+synchronizes once, and writes the selected prefix. Metal output is compiled by
+Apple's shader compiler in the regression suite; CUDA PTX and ROCm HIP receive
+structural codegen tests and require their native toolchains/hardware in the
+platform CI matrix.
+
+Codegen parity and runtime-routing parity are deliberately separate. Metal,
+WebGPU and feature-gated CUDA PTX implement the common descriptor-based SIR
+graph executor. CUDA honors the descriptor's exact entry point, ordered
+buffers and grid/block geometry. ROCm can execute a descriptor containing
+precompiled HSACO; HIP source and compiled HSACO are
+different kernel representations, so HIP source fails closed until hipRTC or
+an AOT compilation step produces a real code object. Vulkan SPIR-V codegen is
+also not confused with a native Vulkan dispatcher. This preserves one public
+SIMD/SIMT interface without pretending that every deployment bridge is already
+complete.
+
+The AOT compiler bridge is gated independently from the runtime executor.
+Metal currently has a compatible compiler call bridge. WebGPU remains fully
+usable through the SIR runtime executor, but compiler-generated calls fall back
+until the legacy N-input/single-output FFI is replaced with the same descriptor
+contract. This prevents an ABI mismatch while preserving WebGPU's real runtime
+capability.
+
+Backend capability failure never changes value semantics. For example, Metal
+has no native `f64` lane type, so Metal codegen rejects `Mask.compress` over
+`f64` and the planner must route it elsewhere rather than narrowing values to
+`float`. Native standalone Mask kernels use one warp/wave/simdgroup when
+possible. Wider fixed masks use the bounded whole-mask path rather than
+changing the result or requiring source-level backend branching.
+
+The descriptor-based SIR runtime carries both outputs and performs the mask
+transport conversion. The older compiler GPU FFI bridge still accepts only one
+ordinary output buffer; it now rejects fixed/DynMask transport and multi-output
+graphs so dispatch falls back to CPU instead of risking a buffer overrun. It
+will be enabled for this path only after the same descriptor ABI is wired into
+that bridge.
+
+All cross-lane operations (`toBitmask`, `any`, `all`, `countBits`, `firstSet`,
+and `compress`) use a proven native execution-lane group when possible and a
+bounded whole-mask legalization otherwise. No backend may independently reduce
+or compact each warp/wave and present that as a whole-mask result.
+
+## 7) How we keep backend parity safe
+
+- Keep the language surface in `Tensor`/`Mask` operations and do not branch on backend in user code.
+- Treat SIMD width and GPU workgroup size as hints chosen by compiler/runtimes.
+- Use the docs’ operator tables and pipeline pages as the behavioral source of truth.
+- Validate important kernels both on CPU SIMD and GPU paths when changing contracts (especially reductions).
+
+## 8) Why this matters
+
+When this contract is respected:
+
+- compiler codegen can optimize one operation into many backends
+- `graph fn` can stay backend-agnostic
+- benchmark deltas come from schedule/capability, not API drift
+
+If you want raw backend-specific tuning, do it behind a feature-gated call boundary
+without replacing this base contract.
+
+## Related docs
+
+- [SIMD Overview](/guide/simd/)
+- [SIR Pipeline](/guide/simd/sir-pipeline)
+- [Tensor and Mask Types](/guide/simd/tensor-mask)
+- [GPU Programming](/guide/gpu/)
+
+
+// ============================================================================
+// File: ./std/collections.md
+// ============================================================================
+# `collections` — supplemental owning containers
+
+Vex provides `Vec`, `Map`, and `Set` in the prelude. The `collections` package
+adds data structures with different access policies: `Queue`, `Stack`,
+`PriorityQueue`, and `LinkedList`. It does not duplicate the prelude hash-table
+implementation.
+
+Every container owns its stored values. Insertion transfers ownership,
+removal transfers it back to the caller, and peeking/iteration borrows without
+cloning. There is no reference-counting or manual thread-lifetime API.
+
+## Queue
+
+`Queue<T>` is a circular FIFO buffer with amortized O(1) enqueue and dequeue.
+
+```vex
+import { Queue } from "collections";
+
+let! pending = Queue.withCapacity<Job>(256);
+pending.enqueue(job);
+
+match pending.dequeue() {
+    Some(next) => run(next),
+    None => {},
+};
+```
+
+`peek()` borrows the next value. `reserve()` grows in advance, `clear()` drops
+live values while retaining storage, and `iter()` visits values in FIFO order
+even when the physical buffer wraps.
+
+## Stack
+
+`Stack<T>` is the small LIFO surface over the canonical Vex `Vec<T>` storage.
+It provides `push`, `pop`, borrowed `peek`, capacity management, `clear`, and
+bottom-to-top borrowed iteration.
+
+## PriorityQueue
+
+Priority queues are max-heaps by default. Use `min()` or `minWithCapacity()`
+when the smallest value must be selected first.
+
+```vex
+import { PriorityQueue } from "collections";
+
+let! ready = PriorityQueue.withCapacity<Task>(1024);
+ready.push(task);
+
+match ready.pop() {
+    Some(highest) => dispatch(highest),
+    None => {},
+};
+```
+
+`push` and `pop` are O(log n), while `peek` is O(1). Borrowed iteration exposes
+heap layout; it is intentionally not sorted.
+
+### Linear construction and merge
+
+```vex
+let! heap = PriorityQueue.fromVec(values);       // max-heap, O(n)
+let! timers = PriorityQueue.minFromVec(deadlines); // min-heap, O(n)
+
+heap.append(&other!); // moves owners, empties other, rebuilds once
+```
+
+Construction consumes the Vec and reuses its allocation. `append` is O(n+m)
+and uses the destination's ordering policy; the source may be a min-heap or a
+max-heap because the combined storage is rebuilt bottom-up.
+
+### Bounded top-k operations
+
+```vex
+let removed = heap.pushPop(candidate);
+
+match heap.replaceTop(replacement) {
+    Some(previous) => consume(previous),
+    None => {}, // the empty heap kept replacement
+};
+```
+
+`pushPop` has the same selected-value result as pushing and immediately
+popping, but keeps the heap length fixed. If the candidate would itself be
+selected, it is returned after one comparison and the heap is untouched;
+otherwise the root is replaced and sifted once. `replaceTop` always replaces
+the root without allocating or cloning. `retain(predicate)` evaluates the
+predicate once per value and restores heap order in O(n).
+
+## LinkedList
+
+`LinkedList<T>` is a stable-index doubly linked list for workloads that need
+O(1) operations at both ends. `pushFront`, `pushBack`, `popFront`, and
+`popBack` transfer ownership. Removed node slots are retained and reused;
+`clear()` drops all live values without discarding that pool.
+
+Prefer `Vec`, `Queue`, or `PriorityQueue` when contiguous storage expresses the
+workload. `LinkedList` is specialized: its extra links and indirect accesses
+are not a general replacement for cache-friendly arrays.
+
+## Complexity summary
+
+| Container operation | Time |
+|---|---:|
+| Queue enqueue/dequeue | amortized O(1) |
+| Stack push/pop | amortized O(1) |
+| PriorityQueue peek | O(1) |
+| PriorityQueue push/pop/replace | O(log n) |
+| PriorityQueue fromVec/append/retain rebuild | O(n) or O(n+m) |
+| LinkedList operations at either end | O(1) |
+
+
+// ============================================================================
+// File: ./std/filter.md
+// ============================================================================
+# `filter` — stable, allocation-aware filtering
+
+The `filter` package selects values from borrowed contiguous data while making
+allocation and alias behavior explicit. It provides a fresh-output convenience
+API, caller-owned storage reuse, and fixed-block mask compaction. Output order
+is stable in every API.
+
+## Predicate filtering
+
+```vex
+import { filter, filterInto } from "filter";
+
+fn isReady(value: &Job): bool {
+    return value.ready;
+}
+
+let ready = filter(jobs.asSpan(), isReady);
+
+let! scratch = Vec.withCapacity<Job>(jobs.len());
+let written = filterInto(jobs.asSpan(), &scratch, isReady);
+```
+
+`filter` constructs a fresh `Vec<T>`. `filterInto` replaces the logical
+contents of the supplied destination and reuses its allocation when capacity
+is sufficient. It returns the destination's final length.
+
+The predicate runs exactly once for every source element. A borrowed Copy
+value is copied at no ownership cost; an ownership-bearing value requires
+`Clone` and every retained value is cloned exactly once. If the source is the
+destination's complete live view, `filterInto` uses the in-place `Vec.retain`
+path and keeps existing owners. Partial overlap is safely staged before the
+destination is mutated.
+
+## Fixed-mask filtering
+
+Use a fixed `Mask<N>` when selection has already been computed as a vector
+predicate:
+
+```vex
+import { filterByMask, filterByMaskInto } from "filter";
+
+let values: [i32; 8] = [4, -1, 8, 0, 3, -6, 9, 2];
+let keep = values > [0, 0, 0, 0, 0, 0, 0, 0];
+
+let positive = filterByMask(values, keep);
+
+let! reusable = Vec.withCapacity<i32>(8);
+let count = filterByMaskInto(values, keep, &reusable);
+```
+
+The mask is compacted once through the canonical `Mask.compress` operation.
+Selected lanes occupy the output prefix in their original order. The returned
+count is exact, and the reusable API commits that initialized prefix with one
+bulk copy rather than an element-by-element `push` loop.
+
+Fixed-mask filtering accepts numeric Copy lanes. It does not claim SIMD
+authority for ownership-bearing structs; use predicate filtering for those
+values.
+
+## Allocation and alias guarantees
+
+| Operation | Allocation policy |
+|---|---|
+| `filter` | one fresh upper-bound result allocation |
+| `filterInto`, independent source | no allocation when destination capacity covers the source length |
+| `filterInto`, exact self-view | in-place, no allocation |
+| `filterInto`, partial overlap | temporary staging to preserve unread values and ownership |
+| `filterByMask` | one fixed-capacity result allocation |
+| `filterByMaskInto` | no allocation when destination capacity covers `N` |
+
+Reusable destinations retain their allocator or arena binding. Fresh results
+capture the active allocation region when they are constructed. Capacity is
+reserved before old destination contents are cleared, so an allocation failure
+cannot destroy the previous logical value.
+
+## CPU and GPU semantics
+
+`Mask.compress` has one backend-independent meaning: stable selected prefix,
+exact `usize` count, and a deterministic zero tail in its fixed-array result.
+CPU SIMD and GPU SIMT backends legalize that semantic operation according to
+their hardware; the `filter` API does not expose architecture names or a
+backend switch.
+
+Dynamic `DynMask` filtering is not part of this package surface yet. Runtime
+mask widths require a separate block-processing and alias contract; fixed-mask
+APIs do not silently fall back to a scalar compatibility loop. See the
+[SIMD/SIMT unified execution contract](../guide/simd/simd-simt-contract.md) for
+the cross-backend compaction rules.
+
+## Choosing an API
+
+- Use `Span.filter` for the shortest fresh-output spelling.
+- Use `filter` when package-level discoverability is preferable.
+- Use `filterInto` in loops, parsers, and services that can reuse a destination.
+- Use `filterByMaskInto` when a numeric fixed-block comparison already produced
+  a `Mask<N>` and storage reuse matters.

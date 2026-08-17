@@ -55,7 +55,10 @@ let cube: Tensor<f64> = flat.reshape([2, 3, 4])  // 2x3x4 cube
 
 ## DynMask
 
-`Mask` is a fat pointer for runtime-sized boolean masks: `{ ptr: Ptr<i8>, len: i64 }`.
+`DynMask` is a packed, runtime-sized boolean mask with canonical ABI
+`{ packedBits: Ptr<u8>, len: usize, owner: Ptr<None> }`.
+This is the dynamic contract that is also used by GPU and CPU backend paths; backends
+share the same logical mask semantics while their scheduling differs.
 
 ### Construction
 
@@ -84,7 +87,7 @@ let negated = !m1            // element-wise NOT
 // Query
 let any_true = m1.any()     // any element true?
 let all_true = m1.all()     // all elements true?
-let count = m1.countTrue() // number of true elements
+let count = m1.countBits()  // number of true elements
 ```
 
 ### Selective Operations with Masks
@@ -158,3 +161,4 @@ graph fn matmulKernel(input: Tensor<f32>, weights: Tensor<f32>): Tensor<f32> {
 - [SIR Pipeline](/guide/simd/sir-pipeline) -- how SIMD lowers through SIR
 - [Operators Reference](/guide/advanced/operators-reference) -- SIMD operators catalog
 - [GPU Programming](/guide/gpu/) -- graph functions for GPU compute
+- [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract)

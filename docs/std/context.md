@@ -1,77 +1,161 @@
-# context — Request-Scoped Context
+# context — request lifetime and cancellation
 
-> **Experimental:** the current flat implementation does not yet provide
-> parent-to-child cancellation propagation, real monotonic timeout expiry, or
-> persistent multi-key values. Do not rely on the examples below as a
-> production contract. The replacement architecture is tracked in the
-> 2026-08-09 standard-library context audit.
-
-Go-style context propagation for cancellation signals, deadlines, timeouts, and request-scoped values through call chains.
-
-## Background Context
+`context` carries cooperative cancellation, monotonic deadlines and small
+request metadata through a call tree. Contexts are immutable persistent
+handles: deriving a child never mutates its parent or siblings.
 
 ```vex
-import { background, todo, withCancel, withTimeout, withValue } from "context";
+import { Context } from "context";
+import { Error, ErrorKind } from "errors";
+import { Duration } from "time";
 
-// Root context (never canceled)
-let ctx = background();
+fn serve(request: &Context): Result<string, Error> {
+    match request.check() {
+        Result.Err(cause) => return Result.Err(cause),
+        Result.Ok(_) => { /* continue */ },
+    }
 
-// Placeholder (for WIP code)
-let ctx = todo();
+    match request.valueStringView("request-id") {
+        Some(id) => return Result.Ok("request " + id),
+        None => return Result.Ok("anonymous request"),
+    }
+}
+
+let root = Context.background();
+let timed = root.withTimeout(Duration.seconds(5));
+let request = timed.withValue("request-id", "req-42");
+let result = serve(&request);
 ```
+
+## Roots and derivation
+
+```vex
+let root = Context.background();
+let placeholder = Context.todo();
+
+let absolute = root.withDeadline(deadline); // deadline: Instant
+let relative = root.withTimeout(Duration.milliseconds(250));
+let tagged = relative.withValue("attempt", 3 as i64);
+```
+
+`Context.todo()` behaves like a background root but remains distinguishable
+through `kind()` for diagnostics. `withDeadline` accepts an absolute monotonic
+`Instant`; wall-clock `Time` and raw Unix timestamps cannot be mixed into this
+API. An earlier inherited deadline always wins.
+
+Deadline creation does not spawn a timer or thread. Consumers observe expiry
+at `isDone()`, `cause()`, `check()` or `remaining()` calls.
 
 ## Cancellation
 
 ```vex
-import { withCancel, cancel, isDone, isCanceled } from "context";
+let root = Context.background();
+let (request, cancel) = root.withCancelCause(
+    Error.withKind("server shutdown", ErrorKind.Closed),
+);
 
-let! ctx = withCancel(background());
+// Pass `request` or a clone to workers.
+let first = cancel.cancel();  // true: this caller published the event
+let again = cancel.cancel();  // false: cancellation is idempotent
 
-// Pass ctx to workers...
-cancel(&ctx);
-
-isDone(ctx);      // → true
-isCanceled(ctx);  // → true
-cause(ctx);       // → "context canceled"
+$assert(request.isDone(), "worker must observe cancellation");
+match request.cause() {
+    Some(cause) => $println(cause.messageView()),
+    None => $panic("missing cancellation cause"),
+}
 ```
 
-## Timeouts & Deadlines
+`CancelHandle.cancel()` is thread-safe. Exactly one concurrent caller publishes
+the event; other callers return only after the timestamp and immutable typed
+cause are visible. Child cancellation and parent cancellation remain separate
+events. `cause()` returns whichever cancellation or deadline occurred first.
+
+`withCancel()` is the convenience form using `ErrorKind.Canceled`.
+
+## Cooperative checkpoints
+
+Use `check()` at meaningful boundaries in request handlers and long-running
+loops:
 
 ```vex
-import { withTimeout, withDeadline, second, millis } from "context";
-
-// Cancel after 5 seconds
-let! ctx = withTimeout(background(), 5 * second());
-
-// Cancel at specific deadline (nanoseconds)
-let! ctx = withDeadline(background(), deadlineNs);
-
-isTimeout(ctx);       // → true (after timeout fires)
-getTimeout(ctx);      // → original timeout duration
-remainingTime(ctx);   // → nanoseconds remaining
+let! offset = 0 as usize;
+while offset < input.len() {
+    match request.check() {
+        Result.Err(cause) => return Result.Err(cause),
+        Result.Ok(_) => { /* process the next bounded chunk */ },
+    }
+    offset = offset + processChunk(input, offset);
+}
 ```
 
-## Request-Scoped Values
+`check()` returns the same typed `Error` as `cause()`. It does not panic, block,
+allocate a notification channel or introduce a scheduler dependency.
+
+## Values
+
+The current safe value surface supports `i64` and owned `string` entries:
 
 ```vex
-import { withValue, withValueStr, getValue, getValueStr } from "context";
+let first = root.withValue("attempt", 0 as i64);
+let second = first.withValue("request-id", "req-42");
 
-let ctx = withValue(background(), "request_id", 42);
-let ctx = withValueStr(ctx, "user", "alice");
+match second.valueI64("attempt") {
+    Some(value) => $assert(value == 0, "zero is a valid value"),
+    None => $panic("attempt missing"),
+}
 
-getValue(ctx, "request_id");     // → 42
-getValueStr(ctx, "user");        // → "alice"
-hasValue(ctx, "request_id");     // → true
+let borrowed: Option<str> = second.valueStringView("request-id");
+let owned: Option<string> = second.valueString("request-id");
 ```
 
-## Duration Helpers
+Absence is always `None`; integer zero and an empty string are ordinary values.
+`valueStringView` is allocation-free and tied to the context borrow.
+`valueString` returns an owned copy.
 
-| Function | Value |
-|----------|-------|
-| `nanosecond()` | 1 ns |
-| `microsecond()` | 1,000 ns |
-| `millisecond()` | 1,000,000 ns |
-| `second()` | 1,000,000,000 ns |
-| `minute()` | 60 × second |
-| `hour()` | 3,600 × second |
-| `seconds(n)` / `millis(n)` / `minutes(n)` / `hours(n)` | Conversion helpers |
+Values are for shallow cross-cutting metadata, not application state or
+dependency injection. Arbitrary typed payloads are intentionally unavailable
+until Vex has safe existential storage, exact generic drop glue and borrowed
+downcasting. Use an explicit typed request struct for domain data.
+
+## Cost model
+
+Each derivation creates one persistent node in the active request arena.
+Cloning a handle shares the chain through VUMM; developers never select or
+manage `Rc`/`Arc`.
+
+Cancellation state and request values use separate persistent chains. Every
+node caches its effective deadline and nearest cancellation state, so adding
+value nodes does not slow down polling.
+
+M2 Max O3 medians (500 ms, three runs, 2026-08-17):
+
+| Operation | Median |
+|---|---:|
+| context clone | 7.88 ns |
+| cancelable child creation and publication | 95.13 ns |
+| active cancellation poll | 2.13 ns |
+| active poll below 256 value nodes | 2.08 ns |
+| cooperative `check` below 256 value nodes | 4.84 ns |
+| cached deadline lookup below 256 value nodes | 1.27 ns |
+| latest value lookup at depth 256 | 4.82 ns |
+| oldest value lookup at depth 256 | 1.65 us |
+
+Value lookup is newest-to-oldest and O(depth). Keep metadata chains shallow;
+the 256-node row is an explicit adversarial regression baseline.
+
+## API summary
+
+| API | Meaning |
+|---|---|
+| `Context.background()` / `Context.todo()` | Create a root |
+| `withCancel()` / `withCancelCause(error)` | Derive a cancelable child and handle |
+| `withDeadline(Instant)` / `withTimeout(Duration)` | Derive a monotonic deadline |
+| `isDone()` | Cheap boolean poll |
+| `cause()` / `check()` | Retrieve or propagate the typed earliest cause |
+| `deadline()` / `timeout()` / `remaining()` | Inspect effective timing |
+| `withValue(key, i64|string)` | Add persistent metadata |
+| `valueI64`, `valueString`, `valueStringView` | Typed lookup |
+| `containsKey` / `kind` | Metadata and diagnostic inspection |
+
+The source distribution includes a generated `lib/std/context/REFERENCE.md`
+with complete signatures.

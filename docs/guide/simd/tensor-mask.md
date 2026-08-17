@@ -157,4 +157,4 @@ The compiler routes target workloads based on shapes and constraints:
 - [SIMD and Auto-Vectorization](./index)
 - [SIR Optimization Pipeline](./sir-pipeline)
 - [GPU Programming](/guide/gpu)
-
+- [SIMD/SIMT Unified Execution Contract](./simd-simt-contract)

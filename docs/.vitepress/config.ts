@@ -167,6 +167,7 @@ export default defineConfig({
             { text: "SIMD Operations", link: "/guide/simd/simd-operations" },
             { text: "Tensor & Mask", link: "/guide/simd/tensor-mask" },
             { text: "Dynamic Tensors", link: "/guide/simd/dynamic-tensors" },
+            { text: "SIMD / SIMT Contract", link: "/guide/simd/simd-simt-contract" },
             { text: "SIR Pipeline", link: "/guide/simd/sir-pipeline" },
           ],
         },
@@ -308,6 +309,7 @@ export default defineConfig({
             { text: "Overview", link: "/std/" },
             { text: "Bit", link: "/std/bit" },
             { text: "CLI", link: "/std/cli" },
+            { text: "Collections", link: "/std/collections" },
             {
               text: "Compress",
               collapsed: true,
@@ -341,6 +343,7 @@ export default defineConfig({
             },
             { text: "Encoding", link: "/std/encoding" },
             { text: "Errors", link: "/std/errors" },
+            { text: "Filter", link: "/std/filter" },
             {
               text: "FS",
               collapsed: true,

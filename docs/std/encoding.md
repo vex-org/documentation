@@ -58,6 +58,30 @@ Mem.freeCompat(memory as Ptr<Opaque>);
 Strict caller-buffer decoders first validate the complete input and capacity,
 then write. A failure leaves the output buffer untouched.
 
+## SIMD without a platform-specific API
+
+Long Base64 and Base32 inputs use the same public API on every target. The
+implementation expresses register transforms with ordinary `[u8; 16]`
+operators, constant `shuffle`, and `Mask<16>` comparisons. The compiler lowers
+that semantic graph to the target backend; library code does not branch on CPU
+names and does not call a C/Rust codec.
+
+Complete blocks are loaded only after their exact readable range is proven.
+Base64 transforms 12 input bytes to 16 output bytes and decodes 16 symbols to
+12 bytes. Base32 transforms 10 bytes to 16 symbols and decodes 16 symbols to 10
+bytes. Exact-capacity tails stay scalar, so vector speed does not weaken bounds
+or padding rules.
+
+Strict decoding remains two-phase: vector validation and length calculation
+finish before output mutation, then the valid payload is decoded. If a vector
+contains an invalid lane, only that cold block falls back to scalar inspection
+to retain the exact `DecodeError.position`.
+
+On an Apple M2 Max with O3 and caller-owned 64 KiB buffers, the 2026-08-16
+development baseline is approximately 4.6 GB/s Base64 encode, 3.0 GB/s strict
+Base64 decode, 3.4 GB/s Base32 encode and 2.2 GB/s strict Base32 decode. These
+are regression baselines for that machine, not cross-platform guarantees.
+
 ## Canonical input rules
 
 - `Base64` requires standard alphabet and canonical padding.

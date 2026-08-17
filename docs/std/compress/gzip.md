@@ -1,42 +1,55 @@
-# Gzip & Deflate (`compress/gzip`)
+# Gzip, Deflate and Zlib
 
-Industry-standard compression for HTTP responses, `.gz` archives, and legacy file formats (RFC 1952 / RFC 1951).
+The Gzip codec implements RFC 1952 framing over the package's pure-Vex Deflate
+core. Zlib uses the same core with RFC 1950 framing.
 
-## Usage
+## One-shot API
 
 ```vex
-import { gzipCompress, gzipDecompress, crc32, crc32Update } from "compress/gzip";
+import {
+    compress, decompress,
+    CompressOptions, CompressionFormat,
+} from "compress";
 
-let data = "Gzip in pure Vex!";
-let ptr = data.asPtr() as Ptr<Opaque>;
-let len = data.len() as i64;
-
-let outCap = len + (len / 65535 + 1) * 5 + 18;
-let comp = alloc(outCap as u64);
-let compLen = gzipCompress(ptr, len, comp, outCap);
-
-let decomp = alloc(len as u64);
-let decompLen = gzipDecompress(comp, compLen, decomp, len);
+let encoded = compress(
+    source.asSpan(),
+    CompressOptions.forFormat(CompressionFormat.Gzip).withLevel(6),
+)?;
+let decoded = decompress(
+    encoded.asSpan(),
+    CompressionFormat.Gzip,
+    source.len(),
+)?;
 ```
 
-## API
+Gzip and Zlib accept levels 1–9. The safe facade checks size arithmetic and
+requires an explicit decompressed-output ceiling.
 
-| Function | Description |
-|----------|-------------|
-| `gzipCompress(src, srcLen, dst, dstCap): i64` | Compress into `.gz` format |
-| `gzipDecompress(src, srcLen, dst, dstCap): i64` | Decompress `.gz` data |
-| `crc32(data, len): u32` | Compute CRC-32 checksum |
-| `crc32Update(crc, data, len): u32` | Update a running CRC-32 |
+## Streaming writer
 
-## Internal Architecture
+`GzipWriter` owns an `io.Stream`, incrementally tracks CRC-32/ISIZE, buffers
+64 KiB Deflate chunks and propagates `IoError` from partial writes and close.
 
-| File | Purpose |
-|------|---------|
-| `compress.vx` | Gzip frame encoder with header/trailer |
-| `decompress.vx` | Gzip frame decoder |
-| `deflate.vx` | Deflate algorithm (RFC 1951) — LZ77 + Huffman |
-| `crc32.vx` | CRC-32 checksum (table-driven) |
+```vex
+import { GzipWriter } from "compress/gzip/writer";
+import { openWrite } from "io/stream";
 
-## Zlib Variant
+let stream = openWrite("archive.gz")?;
+let! writer = GzipWriter.new(stream, 6);
+writer.write(RawBuf.of(source.asPtr()), source.len() as i64)?;
+writer.close()?;
+```
 
-A separate `compress/zlib` module wraps the same Deflate core with Zlib framing (RFC 1950) for compatibility with PNG and other legacy protocols.
+`close()` finalizes the Deflate stream and writes the trailer. The writer owns
+the wrapped stream.
+
+## Checksums and low-level API
+
+`crc32` and `crc32Update` provide one-shot and incremental CRC-32. The hot path
+uses slicing-by-32 tables. `adler32`/`adler32Update` serve Zlib framing.
+
+Raw `gzipCompress`/`gzipDecompress` and `zlibCompress`/`zlibDecompress` kernels
+remain available to specialized callers. Ordinary code should use the typed
+facade.
+
+Official Gzip tooling validates generated streams in the interoperability gate.

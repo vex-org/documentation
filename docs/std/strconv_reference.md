@@ -83,6 +83,7 @@ match parseInt64("12x") {
 | `formatHex`, `formatHexUpper`, `formatHexPrefix` | Owned hexadecimal `string` |
 | `formatBinary` | Owned binary `string` |
 | `formatFloat64`, `formatFloat32` | Owned rounded decimal `string` |
+| `formatFloat64To` | Write rounded f64 text into caller-owned storage without allocation |
 | `formatBool` | Owned `true`/`false` string |
 
 `formatFloat64(value, precision)` clamps precision to 0 through 18. Common
@@ -101,6 +102,28 @@ $assert(formatFloat64(1.0e100, 2) == "1.00e+100");
 Aliases include `intToString`, `floatToString`, `boolToString`, `formatInt`,
 and `formatFloat`.
 
+### Caller-buffer float formatting
+
+`formatFloat64To(value, precision, out, outCap)` is the allocation-free source
+of truth used by `strings.StringBuilder`. The caller supplies a writable
+`RawBuf` with at least 64 bytes of capacity. The function returns the number of
+initialized bytes and never appends a terminator. If the buffer is null or too
+small, it returns zero without modifying the destination.
+
+```vex
+import { formatFloat64To } from "strconv/format"
+
+let! storage: [u8; 64] = [0; 64]
+let output = RawBuf.fromMutPtr(&storage[0])
+let length = formatFloat64To(9.999e100, 2, output, 64 as usize)
+let rendered = str.fromRawParts(storage.asPtr(), length)
+$assert(rendered == "1.00e+101")
+```
+
+This API is intended for builders, serializers and protocol writers that
+already own output capacity. Application code that needs an owned value should
+continue to use `formatFloat64`.
+
 ## Runtime properties
 
 - No libc, native shim, C-string scan, or external package dependency.
@@ -108,7 +131,8 @@ and `formatFloat`.
   handle unambiguous wide exponents, while rare exact fallbacks re-read the
   borrowed digits without copying them.
 - Integer formatting uses backward writing with digit-pair lookup.
-- Formatting performs one final copy into a Vex-owned string.
+- Owned formatting performs one final copy into a Vex-owned string;
+  `formatFloat64To` writes directly into existing caller storage.
 - Extreme float normalization has bounded work.
 - O0 through O3 keep strict IEEE floating-point semantics; optimization level
   alone never enables relaxed math.

@@ -1,41 +1,69 @@
-# File I/O (`fs/file`)
+# File I/O
 
-The `File` struct represents an open file descriptor. It provides static constructors and implements the `Drop` contract for safe, automatic resource cleanup upon leaving scope.
+`File` is a move-only owning descriptor. Dropping it closes the descriptor;
+`close()` is available when the error or exact release point matters and is
+idempotent.
+
+## Opening files
+
+Use `OpenOptions` when behavior must be explicit:
 
 ```vex
-import { File } from "std/fs";
+import { OpenOptions } from "fs";
 
-match File.open("data.txt") {
+let options = OpenOptions.new()
+    .read(true)
+    .write(true)
+    .create(true);
+
+match options.open("state.bin") {
     Ok(file) => {
-        // file is auto-closed when it goes out of scope here
-        let content = file.readAll();
-        $println(content);
+        let! opened = file;
+        match opened.metadata() {
+            Ok(info) => $println(info.len()),
+            Err(error) => $println(error.toString()),
+        }
+        let _ = opened.close();
     },
-    Err(_) => $println("open failed")
+    Err(error) => $println(error.toString()),
 }
 ```
 
-## Common Operations
+Available options are `read`, `write`, `append`, `truncate`, `create`,
+atomic `createNew`, and the creation `mode`. Invalid combinations fail with
+`IoErrorKind.InvalidInput` before a provider call. Convenience constructors
+include `File.open`, `File.create`, `File.openReadWrite`,
+`File.openAppend` and `File.temp`.
 
-### Static Constructors
+## Streaming operations
 
-- `File.open(path)`: Open an existing file for reading only.
-- `File.create(path)`: Create a new file or truncate an existing one for writing.
-- `File.openReadWrite(path)`: Open a file for both reading and writing.
-- `File.openAppend(path)`: Open or create a file for appending.
-- `File.temp()`: Create a unique temporary file open for reading and writing.
+`File` implements the canonical `io` reader, writer, seeker and closer
+contracts. Core methods include:
 
-### Instance Methods
+- `read` and `write`: partial `usize` operations;
+- `readByte`, `writeByte` and `writeStr`;
+- `pread`: positional read without changing the shared seek cursor;
+- `seek`, `tell`, `size`, `truncate`, `flush` and `sync`;
+- `metadata`, `filePath`, `isOpen` and `close`.
 
-- `.read(buf, len)`: Read up to `len` bytes into a buffer.
-- `.write(buf, len)`: Write `len` bytes from a buffer.
-- `.writeString(s)`: Write a Vex string to the file.
-- `.seek(offset, whence)`: Seek to a relative or absolute position.
-- `.tell()`: Get the current file position.
-- `.size()`: Get the file size in bytes.
-- `.sync()`: Flush file data to storage.
-- `.close()`: Explicitly close the file (optional, as `Drop` closes it automatically).
-- `.readAll()`: Read all remaining bytes into a `Vec&lt;u8&gt;`.
+Use `bufReader(file)`, `bufWriter(file)`, `copyBuffer` and other `io`
+adapters for reusable buffering. The filesystem package intentionally does not
+carry package-local reader or writer implementations.
 
-The present standard library also exports deprecated free-function compatibility wrappers (`openFile`, `createFile`, `openReadWrite`, `openAppend`, `tempFile`) which delegate to the static methods under the hood.
+## Whole-file operations
+
+`readBytes` and `readFile` consume the complete input. For untrusted or
+externally controlled files, use `readBytesLimit` or `readFileLimit`; an
+oversized input is rejected instead of silently truncated. `writeFile` and
+`appendFile` complete the requested write or return an error.
+
+Other one-shot operations include `copyFile`, `renameFile`, `removeFile`,
+`createDir`, `removeDir`, `cwd`, `chdir`, `changeMode`,
+`createSymlink`, `hardlink` and `readSymlink`.
+
+## Memory mapping
+
+`mapRead` returns an owning `MappedRegion` with bounds-checked `readByte`
+and `copyTo`. The mapping is automatically released. Raw `mmap`/`munmap`
+methods remain explicit unsafe compatibility boundaries for low-level code.
 

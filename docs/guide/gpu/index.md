@@ -19,6 +19,10 @@ graph fn dot(a: Span<f32>, b: Span<f32>): f32 {
 
 The compiler detects the element-wise multiplication followed by a sum reduction and lowers it to a SIR `Map` and `Reduce` DAG. The runtime then chooses the best execution path based on the input size.
 
+The same `Map`/`Reduce`/`Mask` contract is used on CPU SIMD and GPU SIMT backends (same operation semantics, different schedulers). See the shared contract here:
+
+- [SIMD/SIMT Unified Execution Contract](/guide/simd/simd-simt-contract)
+
 ---
 
 ## Metal GPU Backend Architecture
@@ -149,3 +153,11 @@ VEX_DISPATCH_VERBOSE=1 vex run program.vx
 - [SIMD Auto-Vectorization](/guide/simd) - CPU SIMD details
 - [VUMM Memory Model](/guide/memory/vumm) - Automatic memory management
 - [Performance](/guide/advanced/performance) - Optimization techniques
+
+## Contract First
+
+If you are tuning kernel performance, keep this rule:
+
+- do not write `if` branches in user code for CPU vs GPU behavior,
+- keep algorithm code in shared `Tensor`/`Mask` operations,
+- and verify backend-specific differences only through benchmark deltas, not API splits.

@@ -1,33 +1,94 @@
-# rand — Random Number Generation
+# rand — explicit, fast random streams
 
-Fast, high-quality pseudo-random number generation using the **Xoshiro256++** algorithm.
-
-## Usage
+`rand` provides independently owned `Rng` values based on xoshiro256**. It is
+intended for simulation, randomized algorithms, games, sampling and tests. It
+has no hidden global generator.
 
 ```vex
-import { Rng } from "rand";
+import { Rng } from "rand"
 
-// Auto-seeded (from system entropy)
-let! rng = Rng.init();
+let! replayable = Rng.withSeed(42)
+let! independentlySeeded = Rng.init()
 
-// Deterministic (reproducible)
-let! rng = Rng.withSeed(42);
-
-// Generate values
-let u = rng.nextU64();              // Random u64
-let i = rng.nextI64();              // Random i64
-let f = rng.nextF64();              // Random f64 in [0.0, 1.0)
-let n = rng.nextInRange(1, 100);    // Random in [1, 100]
-let b = rng.nextBool();             // Random bool
+let word = replayable.nextU64()
+let ratio = replayable.nextFloat()        // [0.0, 1.0)
+let index = replayable.nextRange(0, 100)  // [0, 100)
 ```
 
-## Xoshiro256++ Algorithm
+`Rng.init()` seeds from the target's fail-closed `Crypto.secureRand()`
+capability. xoshiro output remains non-cryptographic: use the crypto API itself
+for keys, tokens, nonces and secrets.
 
-| Property | Value |
-|----------|-------|
-| State size | 256 bits (4 × u64) |
-| Period | 2²⁵⁶ - 1 |
-| Speed | ~1 ns per u64 |
-| Quality | Passes BigCrush, PractRand |
+## Core API
 
-Significantly faster than Mersenne Twister with better statistical properties.
+| API | Result |
+|---|---|
+| `nextU64`, `nextI64`, `nextU32`, `nextI32` | full-width integer output |
+| `nextFloat`, `nextFloat32` | uniform semi-open floating output |
+| `nextBelow(upper)` | unbiased `u64` in `[0, upper)` |
+| `nextRange`, `nextRangeU64`, `nextRangeF` | uniform semi-open ranges |
+| `choose`, `chooseSpan` | borrowed selection without cloning |
+| `shuffle`, `unsafe shuffleSpan` | ownership-neutral Fisher–Yates shuffle |
+| `fillBytes(&Vec<u8>!)` | safe deterministic pseudorandom fill |
+| `unsafe fillBytes(&Span<u8>!)` | raw-backed fill with caller-proven exclusivity |
+| `jump`, `longJump` | advance by `2^128` or `2^192` transitions |
+| `fork` | return the current stream and jump the parent |
+
+Bounded integers use Lemire multiply-high sampling with a rejection threshold,
+so arbitrary bounds are unbiased without division on the ordinary accepted
+path. Signed range width is calculated in unsigned space and therefore handles
+almost the complete `i64` domain without overflow.
+
+## Reusable distributions
+
+```vex
+import { Normal, Rng, WeightedIndex } from "rand"
+
+let! rng = Rng.withSeed(42)
+let! normal = match Normal.new(10.0, 2.0) {
+    Result.Ok(value) => value,
+    Result.Err(err) => $panic(err.message()),
+}
+let value = normal.sample(&rng!)
+```
+
+| Type | Constructor contract | Sample behavior |
+|---|---|---|
+| `Bernoulli` | finite probability in `[0, 1]` | O(1); exact edges consume no RNG state |
+| `Normal` | finite mean, finite non-negative deviation | cached Box–Muller pair, zero allocation |
+| `Exponential` | positive finite rate | stable `log1p` transform, zero allocation |
+| `WeightedIndex` | finite non-negative weights, positive finite total | owned cumulative table, O(log n), zero allocation |
+
+All constructors return `Result<..., DistributionError>` and validate before a
+reusable distribution becomes observable.
+
+## Parallel streams
+
+Give every worker its own `Rng`. Use `longJump()` to partition top-level jobs
+and `jump()` or `fork()` to partition worker streams. These operations neither
+allocate nor synchronize.
+
+## Measured baseline
+
+Apple M2 Max, release `-O3`, 2026-08-17, 300 ms-per-case median of three runs:
+
+| Operation | Median | Allocation |
+|---|---:|---:|
+| `nextU64` | 3.06 ns | 0 |
+| dynamic `nextBelow` | 3.18 ns | 0 |
+| 1 KiB `fillBytes` | 169.16 ns / 5.64 GB/s | 0 |
+| Bernoulli | 3.21 ns | 0 |
+| cached-pair Normal | 10.37 ns | 0 |
+| Exponential | 9.29 ns | 0 |
+| eight-entry `WeightedIndex` | 5.40 ns | 0 |
+
+These values are target-specific evidence, not portable latency guarantees.
+
+## Verification
+
+```bash
+vex lint lib/std/rand --deny-warnings
+vex test lib/std/rand/tests/basic.test.vx
+vex test -O3 lib/std/rand/tests/basic.test.vx
+vex test -O3 --bench --benchmem lib/std/rand/tests/bench.test.vx
+```

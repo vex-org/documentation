@@ -1,37 +1,54 @@
-# LZ4 (`compress/lz4`)
+# LZ4
 
-Ultra-fast lossless compression with best-in-class speed. LZ4 is the go-to algorithm when decompression speed matters more than compression ratio—ideal for real-time streaming, game assets, and in-memory caching.
+LZ4 is the low-latency choice for caches, transport buffers and transient data.
+The package supports both raw blocks and interoperable LZ4 frames.
 
-## Usage
+## Safe frame API
 
 ```vex
-import { compress, decompress, maxCompressedSize } from "compress/lz4";
+import {
+    compress, decompress,
+    CompressOptions, CompressionFormat,
+} from "compress";
 
-let data = "Hello, Vex compression!";
-let ptr = data.asPtr() as Ptr<Opaque>;
-let len = data.len() as i64;
-
-// Compress
-let outCap = maxCompressedSize(len);
-let comp = Mem.allocCompat(outCap as u64);
-let compLen = compress(ptr, len, comp, outCap);
-
-// Decompress
-let decomp = Mem.allocCompat(len as u64);
-let decompLen = decompress(comp, compLen, decomp, len);
-
-Mem.freeCompat(comp);
-Mem.freeCompat(decomp);
+let encoded = compress(
+    source.asSpan(),
+    CompressOptions.forFormat(CompressionFormat.Lz4),
+)?;
+let decoded = decompress(
+    encoded.asSpan(),
+    CompressionFormat.Lz4,
+    source.len(),
+)?;
 ```
 
-## API
+The facade writes LZ4 frames, validates headers and XXH32 checksums, supports
+multi-block payloads and enforces the caller's output limit.
 
-| Function | Description |
-|----------|-------------|
-| `compress(src, srcLen, dst, dstCap): i64` | Compress data into LZ4 block format |
-| `decompress(src, srcLen, dst, dstCap): i64` | Decompress LZ4 block |
-| `maxCompressedSize(srcLen): i64` | Max output buffer size for allocation |
+## Streaming writer
 
-## Implementation
+`Lz4Writer` owns an `io.Stream`, writes the frame header lazily, divides input
+into bounded blocks and propagates `IoError`.
 
-LZ4 uses a hash table for matching. The Vex implementation fits in ~350 lines vs ~2,000 lines in C, while remaining fully optimizable by the LLVM backend.
+```vex
+import { Lz4Writer } from "compress/lz4/writer";
+import { openWrite } from "io/stream";
+
+let stream = openWrite("payload.lz4")?;
+let! writer = Lz4Writer.new(stream);
+writer.write(payload.asStr())?;
+writer.close()?;
+```
+
+The current streaming writer emits valid uncompressed LZ4 frame blocks. The
+one-shot facade chooses compressed or raw blocks according to size.
+
+## Low-level API
+
+`compress`/`decompress` in the `compress/lz4` submodule operate on raw LZ4
+blocks. `compressFrame`/`decompressFrame` operate on frames;
+`maxCompressedSize` and `maxFrameCompressedSize` provide destination bounds.
+These `RawBuf` functions are intended for codec implementers.
+
+Generated frames are checked by the official LZ4 tool and round-tripped against
+the original bytes.

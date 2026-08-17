@@ -78,7 +78,7 @@ let restored: Mask<8> = Mask.fromBitmask(bits)
 // Query mask state
 let anyTrue = mask.any()          // true if any lane is true
 let allTrue = mask.all()          // true if all lanes are true
-let count = mask.countSetBits()   // number of true lanes (POPCNT)
+let count = mask.countBits()      // number of true lanes (POPCNT)
 let firstIdx = mask.firstSet()    // index of first true lane (TZCNT)
 ```
 
