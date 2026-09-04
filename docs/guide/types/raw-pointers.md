@@ -96,7 +96,7 @@ let memory = Mem.allocAligned(64, 32)
 let words = memory as Ptr<u32!>
 
 unsafe { words.write(7) }
-Mem.free(memory, 64)
+Mem.freeAligned(memory)
 ```
 
 An explicit `as Ptr<U>` cast changes the compiler's pointee contract, not the

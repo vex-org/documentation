@@ -11,6 +11,19 @@ Internal representation: nanoseconds since Unix epoch (`i64`).
 | `now()` | Current wall-clock time |
 | `Time { ns: value }` | From raw nanoseconds |
 
+`Time.now()` and `now()` use the same target-selected VexArch wall clock.
+Valid pre-1970 readings remain negative, and native failures or timestamps
+outside the signed `i64` nanosecond range terminate with a runtime diagnostic.
+They never silently return the epoch or wrap into a different date. Wall time
+can move backwards after system-clock corrections; use `Instant.now()` for
+elapsed-time measurement and deadlines.
+
+`Instant.now()` also uses the shared VexArch provider, including its checked
+monotonic conversion and Windows frequency cache. Linux clock reads do not
+require libc `clock_gettime`. Blocking sleep also uses the runtime directly;
+only timezone operations retain their separate native requirements here.
+No application-facing clock configuration is needed.
+
 ### Calendar Accessors
 
 | Method | Return | Description |
@@ -89,6 +102,23 @@ sleep(500 * MILLISECOND);
 let timeout = 30 * SECOND;
 let interval = 1 * HOUR;
 ```
+
+## Blocking sleep
+
+`sleep(nanoseconds: i64)` and `sleep(duration: Duration)` share VexArch’s
+target-selected sleeper. Zero and negative durations return immediately without
+yielding. This blocking API is distinct from scheduler `await sleep(...)`.
+
+On Linux, the runtime uses an absolute monotonic `clock_nanosleep` syscall
+without libc. On macOS, interrupted `nanosleep` calls retry only the time left
+until the original monotonic deadline. Windows uses a one-shot waitable timer,
+rounding positive durations upward to 100 ns ticks; it does not clip long
+durations to a 32-bit millisecond timeout. A kernel that rejects the
+high-resolution timer flag is retried with the standard timer flag.
+
+Native failure or deadline overflow emits a runtime diagnostic and terminates
+with exit status 70 instead of pretending that time elapsed. Operating-system
+scheduling can delay the wake; no real-time scheduling guarantee is implied.
 
 ## Parsing
 

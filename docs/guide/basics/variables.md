@@ -58,6 +58,12 @@ fn main(): i32 {
 
 Unsuffixed integer literals default to i32 when there is no expected type. Function parameters, return types, field declarations, and explicit annotations can provide that expected type. Use an annotation when numeric width or ABI compatibility matters.
 
+An admitted widening conversion also applies when the initializer is another
+immutable local. For example, `let small: i8 = -7; let wide: i64 = small;`
+preserves `-7` whether evaluated at runtime or folded at compile time. Constant
+folding must retain the destination's exact type; it does not make narrowing
+or signed-to-unsigned conversions implicit.
+
 ## Shadowing
 
 A later let can introduce a new binding with the same name. The new binding hides the old one in the current scope:
@@ -87,7 +93,7 @@ fn main(): i32 {
 }
 ~~~
 
-Struct patterns are available for data models that expose their fields:
+Struct patterns can select exposed fields in `match` arms:
 
 ~~~text
 struct Point {
@@ -97,8 +103,13 @@ struct Point {
 }
 
 let point = Point { x: 3, y: 4 }
-let Point { x, y } = point
+let total = match point { Point { x, y } => x + y }
 ~~~
+
+The current `let` parser accepts flat tuple bindings. For nested tuples, use
+successive bindings (`let (inner, other) = value; let (left, right) = inner;`)
+or a nested `match` pattern. A struct-pattern `let` declaration is not currently
+accepted.
 
 Patterns participate in ownership and visibility checks just like ordinary bindings. See [Pattern Matching](/guide/types/pattern-matching) for match arms and [Ownership](/guide/memory/ownership) for move behavior.
 

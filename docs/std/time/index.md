@@ -50,6 +50,10 @@ offsets, trailing input and the exact signed-nanosecond range. Calendar
 conversion is constant-time. Duration parsing supports `d`, `h`, `m`, `s`,
 `ms`, `us`, `µs` and `ns` with signs and fractional components.
 
+The fixed-width RFC 3339 calendar/time core uses direct inline decimal scans;
+the variable fraction and UTC-offset tails retain their strict validating path.
+Parsing stays allocation-free and does not use a native date parser.
+
 ## Timers
 
 `Timer` and `Ticker` use the monotonic clock. Tickers advance from their prior

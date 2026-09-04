@@ -36,7 +36,7 @@ for `WyHash` and `XxHash3`.
 ## Incremental API
 
 ```vex
-import { Fnv1a, SipHasher, XxHash3 } from "hash";
+import { Crc32c, Fnv1a, SipHasher, XxHash3 } from "hash";
 
 let! stable = Fnv1a.new();
 stable.update("header");
@@ -52,12 +52,20 @@ let! fast = XxHash3.new();
 fast.update("header");
 fast.update(payload);
 let fastDigest = fast.finish();
+
+let! crc = Crc32c.new();
+crc.update("header");
+crc.update(payload);
+let checksum = crc.finish();
 ```
 
 Chunks may be strings or byte spans and may split at any byte. Every hasher
 keeps bounded state. `XxHash3.new(seed)` selects the seeded form; its state is
 eight accumulator lanes plus a fixed 256-byte tail and never grows with the
 input. `finish()` is non-mutating and `reset()` preserves the constructor seed.
+`Crc32c.reset()` restores its initial Castagnoli state. CRC-32C processes safe
+little-endian 64-bit chunks through the compiler intrinsic, then its byte tail;
+the compiler selects hardware only when the target proves it legal.
 
 ## Compatibility and guarantees
 

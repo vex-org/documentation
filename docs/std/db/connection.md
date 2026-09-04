@@ -1,88 +1,99 @@
-# Connection & Queries (`db`)
+# Connections, statements and results
 
-The `db` module provides database driver bindings. Both `Connection` and `QueryResult` implement the `Drop` contract, guaranteeing that database handles are safely closed and query result set handles are freed when they go out of scope.
+## `Connection`
 
-## `Connection` — Database Handle
+Every constructor returns `Result<Connection, DbError>`.
 
-| Method | Description |
-|--------|-------------|
-| `Connection.sqlite(path)` | Connect to SQLite database |
-| `Connection.postgres(conninfo)` | Connect to PostgreSQL |
-| `Connection.mysql(conninfo)` | Connect to MySQL |
-| `Connection.redis(conninfo)` | Connect to Redis |
-| `Connection.open(driver, conninfo)` | Generic driver connection |
-| `.ok(): bool` | Check if connection succeeded |
-| `.errMsg(): string` | Get error message |
-| `.exec(sql): i64` | Execute statement, return rows affected |
-| `.query(sql): QueryResult` | Execute query, return result set |
-| `.execWithParams(sql, params)` | Parameterized execute |
-| `.queryWithParams(sql, params)` | Parameterized query |
-| `.queryValue(sql): string` | Get single value (auto-frees result) |
-| `.execOk(sql): bool` | Execute and return success/failure |
-| `.begin(): bool` | Start transaction |
-| `.commit(): bool` | Commit transaction |
-| `.rollback(): bool` | Rollback transaction |
-| `.close()` | Close connection (optional, as `Drop` closes it automatically) |
+| API | Purpose |
+|---|---|
+| `Connection.sqlite(path)` | Open SQLite |
+| `Connection.postgres(conninfo)` | Open optional PostgreSQL provider |
+| `Connection.mysql(conninfo)` | Open optional MySQL provider |
+| `Connection.redis(conninfo)` | Open optional Redis provider |
+| `Connection.mongo(conninfo)` | Open optional MongoDB provider |
+| `Connection.open(driver, conninfo)` | Typed generic constructor |
+| `exec(sql)` | One-shot statement, returning affected rows |
+| `execParams(sql, params)` | One-shot typed parameter statement |
+| `query(sql)` | One-shot result cursor |
+| `queryParams(sql, params)` | One-shot typed parameter cursor |
+| `queryValue(sql)` | First column as owning `Option<string>` |
+| `prepare(sql)` | Reusable provider plan |
+| `beginTransaction()` | RAII transaction guard |
 
-## `QueryResult` — Result Set
+`DbCapabilities` exposes only callable public features: `sql()`,
+`preparedStatements()`, `binaryParams()` and `transactions()`.
 
-| Method | Description |
-|--------|-------------|
-| `.ok(): bool` | Check if query succeeded |
-| `.errMsg(): string` | Get error message |
-| `.rowsAffected(): i64` | Number of affected rows |
-| `.columnCount(): i32` | Number of columns |
-| `.columnName(col): string` | Get column name by index |
-| `.next(): bool` | Advance to next row |
-| `.text(col): string` | Get column value as string |
-| `.isNull(col): bool` | Check if column is NULL |
-| `.length(col): u64` | Get column data length |
-| `.free()` | Free result set (optional, as `Drop` frees it automatically) |
+## Typed parameters
 
-## Standard Resource Management (Drop)
-
-Connections and query results do not require manual resource closing/freeing when scoped:
+`DbValue` variants are `Null`, `Bool`, `I64`, `F64`, `Text`, `Bytes` and
+`Json`. Payload lengths are exact; embedded NUL bytes in text parameters are
+preserved because the native ABI receives an explicit length.
 
 ```vex
-import { Connection, QueryResult } from "std/db";
+let! params = Vec.new<DbValue>();
+params.push(DbValue.Text("Ada".toString()));
+params.push(DbValue.I64(37 as i64));
 
-fn runQuery() {
-    let conn = Connection.sqlite(":memory:");
-    if !conn.ok() { return; }
-    
-    // SQLite connection is automatically closed when `conn` goes out of scope.
-    
-    let rs = conn.query("SELECT name FROM users");
-    while rs.next() {
-        let name = rs.text(0);
-        $println(name);
-    }
-    // rs (QueryResult) is automatically freed when leaving the function.
+match connection.execParams(
+    "INSERT INTO users (name, age) VALUES (?, ?)",
+    &params,
+) {
+    Result.Ok(rows) => $println(rows),
+    Result.Err(err) => $panic(err.message()),
 }
 ```
+
+## `PreparedStatement`
+
+Prepared statements are cloneable shared owners. Clones refer to the same
+native plan. Exactly one `QueryResult` may be active; re-entry returns
+`DbErrorKind.InvalidState` instead of racing or allocating a second hidden plan.
+
+| API | Purpose |
+|---|---|
+| `parameterCount()` | Exact placeholder count |
+| `query()` | Zero-parameter query |
+| `queryParams(params)` | Typed reusable query |
+| `exec()` | Zero-parameter execution |
+| `execParams(params)` | Typed reusable execution |
+
+Drop the active result before reusing the statement. The result retains both
+the statement and connection, so returning a cursor from a helper is safe.
+
+## `QueryResult`
+
+| API | Return |
+|---|---|
+| `next()` | `Result<bool, DbError>` |
+| `rowsAffected()` | `i64` |
+| `columnCount()` | `usize` |
+| `columnName(index)` | `Result<string, DbError>` |
+| `columnType(index)` | `Result<DbColumnType, DbError>` |
+| `isNull(index)` | `Result<bool, DbError>` |
+| `length(index)` | `Result<usize, DbError>` |
+| `text(index)` | `Result<Option<string>, DbError>` |
+| `bytes(index)` | `Result<Option<Vec<u8>>, DbError>` |
+| `getI64/getF64/getBool(index)` | typed optional scalar |
+
+Reading a column before `next()` or outside its bounds returns a typed error.
+Typed SQLite scalars use native readers; textual providers fall back to
+allocation-free Vex parsing. Public text and byte results are owning copies.
 
 ## Transactions
 
 ```vex
-conn.begin();
-conn.exec("INSERT INTO orders VALUES (1, 'pending')");
-conn.exec("UPDATE inventory SET stock = stock - 1 WHERE id = 42");
-if success {
-    conn.commit();
-} else {
-    conn.rollback();
+let! transaction = match connection.beginTransaction() {
+    Result.Ok(value) => value,
+    Result.Err(err) => $panic(err.message()),
+};
+
+// Execute through transaction.connection().
+match transaction.commit() {
+    Result.Ok(_) => { /* committed */ }
+    Result.Err(err) => $panic(err.message()),
 }
 ```
 
-## Parameterized Queries
-
-```vex
-let! params = Vec.new<string>();
-params.push("Alice");
-params.push("30");
-
-let rows = conn.execWithParams(
-    "INSERT INTO users (name, age) VALUES ($1, $2)", &params
-);
-```
+An active transaction rolls back on drop. A committed or rolled-back guard
+rejects a second finish operation.
 

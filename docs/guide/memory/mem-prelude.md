@@ -13,8 +13,8 @@ allocation extent, alignment, initialization, aliasing, and allocator pairing.
 
 | Function | Purpose |
 | --- | --- |
-| `Mem.alloc(size: usize): Ptr<Opaque!>` | allocate `size` bytes, 16-byte aligned |
-| `Mem.allocAligned(size: usize, align: usize): Ptr<Opaque!>` | allocate with a power-of-two alignment |
+| `Mem.alloc(size: usize): Ptr<Opaque!>` | allocate `size` bytes from the active region or persistent heap, 16-byte aligned |
+| `Mem.allocAligned(size: usize, align: usize): Ptr<Opaque!>` | allocate from the active region or heap with a power-of-two alignment |
 | `Mem.realloc(p, oldSize, newSize): Ptr<Opaque!>` | resize a block while preserving the common prefix |
 | `Mem.free(p, size): ()` | free a block with its exact allocation size |
 
@@ -29,13 +29,16 @@ header.store<u32>(0, 0x56455821)
 Mem.free(memory, size)
 ```
 
+`Mem.allocAligned` is paired with `Mem.freeAligned`; the aligned pointer may
+carry a private prefix and must not be passed directly to `Mem.free`.
+
 `Mem.free` expects the exact allocation size. For `Ptr.allocN<T>(count)`, use
 `Ptr.freeN(count)` so the element count is converted to the correct byte size.
 
-For checked dynamic layouts, `Layout` and its owning `Block` are also prelude
-types. They require no package import. `Block` records the exact size and
-alignment, frees itself through `Drop`, supports transactional `resize`, and
-can transfer ownership as a `(pointer, layout)` pair through `release`.
+For checked dynamic layouts, `Layout` is also a prelude type and requires no
+package import. It validates size/alignment arithmetic but deliberately does
+not introduce a second allocator or ownership abstraction: low-level owners
+retain the `Layout` needed to pair their `Mem` allocation and release.
 
 ## Heap- and region-bound allocation
 
@@ -49,10 +52,22 @@ an arena reset.
 | `Mem.currentRegion()` | return the active allocator region, or null |
 | `Mem.regionAlloc(region, size)` | allocate through a captured region; null selects heap behavior |
 | `Mem.regionRealloc(region, p, oldSize, newSize)` | resize through the same captured region |
+| `Mem.allocFor<T>(size)` | active-region allocation preserving the exact target alignment of `T` |
+| `Mem.heapAllocFor<T>(size)` | persistent-heap allocation preserving the exact target alignment of `T` |
+| `Mem.regionAllocFor<T>(region, size)` | captured-region typed allocation |
+| `Mem.regionReallocFor<T>(region, p, oldSize, newSize)` | captured-region typed resize |
+| `Mem.freeFor<T>(p, size)` | release storage selected by a typed allocation route |
 
 Containers capture `Mem.currentRegion()` when they are created and route their
 backing-buffer growth through that captured region. This prevents a container
 from silently changing allocator lifetime after construction.
+
+The `*For<T>` forms select ordinary versus over-aligned storage at compile time.
+Types whose ABI alignment is at most 16 bytes retain the native fast path with
+no runtime branch or metadata. Prelude container implementations use these
+forms so `Ptr<T>`, `Vec<T>`, `Deque<T>`, and `Map<K,V>` remain valid for
+over-aligned element layouts. Application code should normally prefer their
+typed owning APIs instead of calling `Mem.*For<T>` directly.
 
 These functions are public so prelude and low-level library types can share the
 same allocator contract. Application code should not select an arena/heap path
@@ -95,8 +110,8 @@ prelude-only. It is not a developer-facing intrinsic.
 `Mem.freeCompat(p)`, and `Mem.reallocCompat(p, newSize)` form the canonical path
 for APIs that cannot carry allocation size metadata to deallocation. They use
 an inline size header and therefore give up the faster exact-size path. New
-owning abstractions should preserve a `Layout` and use `Block` or
-`Mem.alloc/realloc/free`.
+owning abstractions should preserve a `Layout` and use the exact-size
+`Mem.alloc/realloc/free` contract.
 
 There is no `std/mem` package and no parallel set of free functions. `Mem.*` is
 the single source of truth across the compiler prelude, VexArch, standard

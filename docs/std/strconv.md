@@ -36,21 +36,47 @@ conversion with `u128` products. Only ambiguous rounding boundaries use the
 pure-Vex exact bigint fallback. f32 values are checked for midpoint double
 rounding instead of blindly narrowing through f64.
 
+The fallback uses a fixed, allocation-free workspace sized from the complete
+1,100-digit finite IEEE envelope. Division and nearest-even rounding reuse the
+same owned numerator buffer for the quotient remainder instead of returning or
+copying large temporary bigints.
+
 ## Format values
 
 ```vex
-import { formatInt, formatFloat, formatHexPrefix, boolToString } from "strconv";
+import { formatInt, formatFloat, formatFloat64Shortest, formatHexPrefix, boolToString } from "strconv";
 
 let count: string = formatInt(42);             // "42"
 let ratio: string = formatFloat(3.14159, 2);   // "3.14"
+let exact: string = formatFloat64Shortest(5.0e-324); // "5e-324"
 let flags: string = formatHexPrefix(255);      // "0xff"
 let enabled: string = boolToString(true);      // "true"
 ```
+
+All integer radices from 2 through 36 have explicit lowercase/uppercase owned
+and caller-buffer APIs. For example, `formatIntBase(-255, 16)` produces
+`"-ff"`, while `formatUIntBaseUpper(35, 36)` produces `"Z"`. The `*To`
+variants write into a supplied `RawBuf`, allocate nothing, and return a typed
+error without partially mutating an undersized destination.
 
 Float formatting handles NaN, infinities, negative zero, rounding carry, and
 huge/tiny finite values without unsafe float-to-integer conversion. See the
 [complete reference](./strconv_reference.md) for all functions and exact
 grammar.
+
+Shortest formatting is a separate exact mode. `formatFloat64Shortest` and
+`formatFloat32Shortest` select the shortest decimal that parses back to the
+same IEEE value. Their `*To` variants write transactionally into 24-byte f64
+or 16-byte f32 caller storage without allocation. Binary32 uses its own Ryu
+path instead of widening through f64.
+
+Decimal integer formatting is implemented in pure Vex. The runtime formatter
+consumes two digits per iteration using constant divisors, writes directly into
+the caller-owned destination, and commits no partial result when capacity is
+insufficient. Signed formatting shares the same engine instead of formatting
+and copying through a second temporary buffer.
+Power-of-two radices use mask-and-shift extraction; other radices issue one
+division per digit and derive the remainder by multiply/subtract.
 
 Compiler optimization levels do not change these semantics: O0 through O3
 retain strict IEEE floating-point behavior unless a separate explicit relaxed

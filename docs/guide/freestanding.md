@@ -76,6 +76,13 @@ Production firmware or kernels usually provide architecture-specific panic
 logging before halting. Do not assume stderr, process exit, unwinding, or a
 filesystem exists.
 
+In normal runtime builds, compiler-generated fail-fast paths call the VexArch
+`vex_sys_abort` ABI. VexArch selects the native target implementation (for
+example direct Linux system calls, Windows system services, or Apple's system
+ABI); the compiler does not inject a hidden libc `abort` dependency. A
+`--no-runtime` target that can reach such a path must provide `vex_sys_abort`
+itself or prove the path unreachable.
+
 ## Hardware access
 
 Memory-mapped I/O stays behind an unsafe boundary:

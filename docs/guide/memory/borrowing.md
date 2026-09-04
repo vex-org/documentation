@@ -86,6 +86,87 @@ fn invalid(): &i32 {
 
 The local value is destroyed when invalid returns, so the compiler rejects the dangling reference.
 
+## Returning references through known callbacks
+
+A local function value can retain the declared function's return-source
+information. The result does not automatically borrow every argument:
+
+~~~vex
+struct Record { value: i32 }
+fn first(left: &Record, right: &Record): &Record { return left; }
+fn selected(source: &Record): &Record {
+    let local = Record { value: 719 };
+    let callback = first;
+    return callback(source, &local);
+}
+~~~
+
+Here `first` returns `source`, not `local`, so the return is valid. The compiler
+tracks declaration identity through local aliases, equal-target branches and
+assignments. A contextually specialized generic function also retains its exact
+generic arguments; import aliases do not replace declaration identity.
+
+This also works inside a generic forwarding function:
+
+~~~vex
+fn firstGeneric<T>(left: &T, right: &T): &T { return left; }
+fn forward<T>(left: &T, right: &T): &T {
+    let callback: fn(&T, &T): &T = firstGeneric;
+    return callback(left, right);
+}
+~~~
+
+The template retains the known declaration and its symbolic function type.
+That is not a concrete specialization: only a complete type/const environment
+can identify an exact instance. Return-source information that is valid for
+every specialization can already be used while checking the template. This
+includes contextual array callbacks forwarding a declared const extent;
+different exact extents remain different instantiations. Same-environment
+recursive forwarding and references carried in local structs use the same
+origin analysis.
+
+This is a compile-time lifetime proof, not a different callback calling
+convention. Mixed targets, callback parameters, mutable address exposure and
+unresolved specializations remain conservative. In particular, changing
+`callback` to a function that returns its second argument must not make a
+reference to `local` escape. Passing all possible source owners with sufficient
+lifetimes remains valid even when the target is only known at runtime.
+
+Function-value target analysis still joins assignments across the body: a
+later overwrite does not yet remove an earlier possible callback target.
+Function-valued fields, returned callbacks and general closure-result origins
+are separate precision boundaries.
+
+## Writing and returning a stored reference
+
+For supported ordinary memory operations, the compiler tracks the writes that
+reach each reference load, rather than attributing the result to every earlier
+value of its holder:
+
+~~~vex
+struct StoredRecord { value: i32 }
+struct StoredHolder { source: &StoredRecord }
+
+fn replace(output: &StoredHolder!, source: &StoredRecord): &StoredRecord {
+    output.source = source;
+    return output.source;
+}
+~~~
+
+The returned reference comes from `source`; it does not borrow the storage of
+`output`. The write still imposes its normal lifetime requirements on the
+stored reference. A definite overwrite replaces the previous source. A write
+on only one branch, a possibly zero-iteration loop or a possibly aliasing index
+must retain every possible source. A reference copied **before** an overwrite
+keeps its original pointee.
+
+This precision currently covers direct stores/loads, typed field and constant
+index paths, stable aliases, conditionals and ordinary loop control. General
+call-side memory effects, implicit reference conversions, cleanup calls and
+retargeted pointer aliases remain conservative until their ordered effects are
+represented. Some valid programs can still be rejected at those boundaries;
+no unsafe conversion or alternate library API is required by the language.
+
 ## Field-level access
 
 The checker can reason about disjoint fields for supported struct operations:
@@ -105,6 +186,21 @@ use(x_ref)
 
 Access to point.y does not overlap point.x. A write to point.x while x_ref is live would be rejected.
 
+A reference field's storage slot is distinct from the object it points to.
+Replacing `holder.source` does not mutate the old or new source object;
+ordinary scalar sibling updates and repeated field assignments use that same
+distinction. A live reference to the slot itself still prevents overwriting it.
+
+References stored behind a live alias remain observable even when the original
+holder variable is no longer directly used. Their source cannot be mutated or
+destroyed while that alias can still observe it. This follows selected fields:
+an alias to one subobject does not automatically keep unrelated sibling
+references live, and an alias whose last use has passed does not extend a borrow.
+The conservative call-side and implicit-effect boundaries described above
+still apply. Copying a reference out of caller-owned storage does not borrow
+its reference slot; borrowing the slot with `&holder.source` does. Unknown
+pointees and whole-owner operations remain conservative.
+
 ## Method receivers
 
 Methods use the same reference types as ordinary functions:
@@ -121,6 +217,12 @@ fn (point: &Point!) move_by(dx: i32, dy: i32) {
 ~~~
 
 The call-site value must satisfy the receiver's mutability requirement.
+
+A freshly written `&value` can also take its shared/exclusive reference type
+from its consuming field or parameter. This applies after generic literal
+inference too. The borrow checker uses that inferred capability: if the field
+requires `&T!`, a simultaneous shared borrow of the same live pointee is not
+allowed. This does not upgrade an already stored `&T` reference to `&T!`.
 
 ## Concurrency boundaries
 

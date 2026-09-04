@@ -18,10 +18,10 @@ This guide covers how to build Vex from source, run tests, debug the compiler, a
 
 ```bash
 # Install LLVM via Homebrew
-brew install llvm@22 cmake
+brew install llvm@23 cmake
 
 # Set LLVM path
-export LLVM_SYS_220_PREFIX=$(brew --prefix llvm@22)
+export LLVM_SYS_231_PREFIX=$(brew --prefix llvm@23)
 
 # Build
 git clone https://github.com/meftunca/vex

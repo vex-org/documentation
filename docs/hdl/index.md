@@ -10,7 +10,7 @@ description: Concept — VexHDL Hardware Description Language (Future Work)
 > for Vex. The following pages describe a design vision. Implementation has not
 > begun. Syntax and features may change significantly.
 
-VexHDL is a next-generation Hardware Description Language (HDL) and Development Ecosystem designed to replace the verbosity, unsafe paradigms, and poor developer experience (DX) of traditional hardware design (Verilog, VHDL). 
+VexHDL is a next-generation Hardware Description Language (HDL) and Development Ecosystem designed to replace the verbosity, unsafe paradigms, and poor developer experience (DX) of traditional hardware design (Verilog, VHDL).
 
 By pairing a Rust-inspired compiler backend (`vex-hdl-compiler`) with a lightweight, glassmorphic desktop IDE (`Vex Studio`), VexHDL delivers compile-time safety checks, a built-in interactive simulator, and automatic board synthesis out of the box.
 

@@ -1,6 +1,13 @@
 # Core Server (`http/server`)
 
-While most users will build APIs with the `http/fiber` framework, `http/server` gives you direct access to the the raw accept loop, request parser, and response builder.
+`http/server` is the compact direct-callback entry point. It delegates to the
+same `http/fiber::App` HTTP/1 state machine used by routed services, so there
+is no second parser, accept loop, or deadline policy to drift from production.
+
+Use `Server` for a single direct request/response callback. Use `App` directly
+when a service needs routes or middleware. Both paths have bounded incremental
+bodies, pipelined suffixes, deadlines, connection admission, worker lifecycle
+and response coalescing.
 
 ## Minimal Hello World
 
@@ -20,22 +27,29 @@ fn handler(req: &Request, res: &Response!) {
 
 ---
 
-## Request Parsing
+## Direct callback contract
 
-Every incoming connection is consumed by the zero-copy `parseRequest(fd)` function. It reads up to 8KB from the socket and extracts the full request in a single pass using a byte-level scanner—**no regex, no intermediate string allocations**.
+The request is valid for the callback only. `Response` is encoded into
+connection-owned reusable storage and drained after the callback returns. A
+handler may still use the familiar `res.sendString(req.fd, ...)` form; in this
+mode it is buffered rather than performing an independent socket write.
+
+For cancellation-aware serving, use `server.serveWithContext(context, handler)`.
+For direct raw-socket parsing experiments, `parseRequest(fd)` remains an
+explicit low-level function, not a competing server runtime.
 
 ### `Request` Struct
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `method` | `string` | `"GET"`, `"POST"`, `"PUT"`, `"DELETE"`, `"PATCH"`, `"HEAD"`, `"OPTIONS"` |
-| `path` | `string` | URL path without query string (e.g. `/api/users`) |
-| `query` | `string` | Raw query string (e.g. `page=1&sort=name`) |
-| `version` | `string` | `"HTTP/1.1"` or `"HTTP/1.0"` |
+| `method` | `str` | `"GET"`, `"POST"`, `"PUT"`, `"DELETE"`, `"PATCH"`, `"HEAD"`, `"OPTIONS"` |
+| `path` | `str` | URL path without query string (e.g. `/api/users`) |
+| `query` | `str` | Raw query string (e.g. `page=1&sort=name`) |
+| `version` | `str` | `"HTTP/1.1"` or `"HTTP/1.0"` |
 | `headers` | `Headers` | Parsed header collection (case-insensitive) |
-| `body` | `string` | Request body (for `POST`/`PUT`/`PATCH`) |
-| `fd` | `i32` | Socket file descriptor |
-| `streamId` | `i32` | HTTP/2 stream ID (0 for HTTP/1.1) |
+| `body` | `str` | Request body (for `POST`/`PUT`/`PATCH`) |
+| `fd` | `i64` | Native-width socket handle |
+| `streamId` | `i32` | Reserved stream identifier; the direct HTTP/1 `Server` facade uses `0` (Fiber HTTP/2 routes use `Ctx`) |
 | `valid` | `bool` | `true` if parsing succeeded |
 | `contentLength` | `i64` | Parsed `Content-Length` value (-1 if absent) |
 | `keepAlive` | `bool` | `true` if `Connection != close` |
@@ -50,16 +64,6 @@ req.hasBody()                  // true if body.len() > 0
 req.contentType()              // Get Content-Type header value
 req.isJSON()                   // true if Content-Type == "application/json"
 ```
-
-### Async Variant
-
-For goroutine-per-connection servers, use the non-blocking parser:
-
-```vex
-let req = parseRequestAsync(fd);  // yields to scheduler on EAGAIN
-```
-
----
 
 ## Headers (`Headers` Collection)
 

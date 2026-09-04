@@ -1,54 +1,45 @@
 # TOML (`serde/toml`)
 
-TOML (Tom's Obvious, Minimal Language) is the preferred configuration format for Vex projects (`vex.json` may migrate to `vex.toml`). The `serde/toml` module provides a complete parser, encoder, decoder, and a `TomlValue` AST.
-
-## Modules
-
-| File | Purpose |
-|------|---------|
-| `parse.vx` | TOML text → `TomlValue` AST parser |
-| `value.vx` | `TomlValue` type (Table, Array, String, Integer, Float, Bool, DateTime) |
-| `encoder.vx` | Struct → TOML string via Serde `Serializer` contract |
-| `decoder.vx` | TOML string → Struct via Serde `Deserializer` contract |
-
-## Parsing into AST
+The TOML module provides the `TomlValue` dynamic tree, `TomlParser`,
+`TomlSerializer` and `TomlDecoder`. The current public parsing helper is
+`parseDynamic`, `parseDynamicSafe` and `parseDynamicWithLimits`; there is no
+exported generic `encode` or `decode` helper. The root facade exposes the safe
+forms as `parseTomlSafe` and `parseTomlWithLimits`.
 
 ```vex
-import { parse } from "serde/toml";
+import { parseDynamicSafe } from "serde/toml";
 
-let input = "[server]\nhost = \"0.0.0.0\"\nport = 8080\n\n[database]\nurl = \"postgres://localhost/app\"";
-
-let toml = parse(input);
-// toml is a TomlValue.Table with nested tables
-```
-
-## Encoding (Struct → TOML)
-
-```vex
-import { encode } from "serde/toml";
-
-struct ServerConfig {
-    host: string
-    port: i32
-    debug: bool
+match parseDynamicSafe("[server]\nhost = \"127.0.0.1\"\nport = 8080") {
+    Ok(document) => {
+        match document.get("server") {
+            Some(server) => match server.get("port") {
+                Some(port) => { $println(port.asInteger()); }
+                None => {}
+            },
+            None => {}
+        }
+    }
+    Err(failure) => { $println(failure.message()); }
 }
-
-let cfg = ServerConfig { host: "localhost", port: 3000, debug: false };
-let toml_str = encode<ServerConfig>(&cfg);
-// → host = "localhost"\nport = 3000\ndebug = false
 ```
 
-## Decoding (TOML → Struct)
+The tested surface includes basic values, arrays, inline tables, nested table
+preservation, exponent and special floating-point forms, and escaped strings.
+`TomlValue` also exposes type predicates, scalar accessors, `get`, `at`, `len`
+and `toString`.
 
-```vex
-import { decode } from "serde/toml";
+On the 2026-08-21 Apple M2 Max O3 gate, simple parsing measured about 757 ns,
+nested-table parsing 1.306 us, struct serialization 106.8 ns and struct decoding
+119.9 ns. The ownership-aware path moves parsed key strings directly into Map
+storage and traverses the active table without an absolute-path clone Vec. The
+three-round long-document median is 5.409 us with 0 B/op and 0 process-heap
+allocations.
 
-let input = "host = \"0.0.0.0\"\nport = 9090\ndebug = true";
-let! cfg = ServerConfig { };
-decode<ServerConfig>(input, &cfg);
-println("Listening on {cfg.host}:{cfg.port}");
-```
+The safe API validates UTF-8, syntax, integer overflow, floating-point
+representability and `DecodeLimits` before allocating the tree. Multiline
+strings and array-of-table headers currently return `UnsupportedValue`; they
+are never silently reinterpreted. Malformed trusted input is also guaranteed to
+make forward progress.
 
-## Performance
-
-TOML decode benchmarks reach **~1,029,232 ops/s** due to the internal AST-based parsing that avoids re-scanning and uses span-sliced string extraction throughout.
+Full TOML conformance, complete datetime validation, duplicate-key policy and
+streaming remain promotion work.

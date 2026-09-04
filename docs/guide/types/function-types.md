@@ -20,13 +20,38 @@ let supplier: fn(): i32
 let action: fn(): ()
 ```
 
+An async function type is written with the same source marker as an async
+declaration. It means that invoking the value produces a compiler-owned
+`Future<T>`; users do not spell or construct that scheduler handle manually.
+
+```vex
+type Fetch = async fn(url: str): string
+
+async fn fetchText(url: str): string {
+    return "ok"
+}
+
+async fn fetchAndMeasure(fetch: Fetch): usize {
+    return (await fetch("https://example.test")).len()
+}
+```
+
+`async fn(Args): T` is distinct from `fn(Args): T`. It is not an FFI callback
+type and cannot be substituted for a synchronous callback: its pointer ABI
+returns Vex's task handle and its call must be awaited in an async context.
+
 ## Function Pointers vs Closures
 
-Vex distinguishes two kinds of callable values:
+Named functions and closures can both produce callable values:
 
-**Function pointers** (`fn(T): R`) are bare pointers to top-level functions. They carry no captured state, are pointer-sized, and can cross FFI boundaries.
+**Named functions** do not capture local variables. A native Vex `fn(T): R`
+value nevertheless uses Vex's callable representation: a code pointer and an
+environment/context pointer. Do not assume that it is pointer-sized or has a C
+callback ABI.
 
-**Closures** are anonymous types that may capture variables. Each closure has a unique type and may be larger than a pointer if it captures state.
+**Closures** may capture variables. Their environment stores the captures;
+the native callable value carries the entry point and its environment pointer.
+The function type describes the parameters and result, not the capture size.
 
 ```vex
 // Top-level function
@@ -38,8 +63,8 @@ fn addOne(x: i32): i32 {
 let ptr: fn(i32): i32 = addOne
 let result = ptr(41)  // 42
 
-// Closure: captures nothing, but has a unique anonymous type
-let closure = |x: i32|  x + 1  // type is NOT fn(i32): i32
+// Explicitly typed non-capturing closure
+let closure: fn(i32): i32 = |x: i32| x + 1
 ```
 
 ## Passing Functions as Arguments
@@ -120,22 +145,15 @@ let strings = mapValues(numbers, |n: i32|  n.toString())
 
 ## FFI and Function Pointers
 
-Function pointers are the mechanism for C interop callbacks:
+Native Vex callables and raw foreign callback pointers are different ABI
+contracts. A foreign callback requires the exact foreign entry signature and a
+supported adapter/declaration boundary, including any context and lifetime
+requirements. Merely writing `fn(...)` inside an extern declaration does not
+prove that an ordinary Vex function value can be passed as one raw pointer.
+Do not cast a native callable to `Ptr` to manufacture a foreign callback.
+See the [FFI guide](/guide/ffi) for foreign declaration contracts.
 
-```vex
-// Declare a C function that takes a callback
-extern "LIBC" {
-    fn qsort(base: ptr, nmemb: usize, size: usize,
-             compar: fn(ptr, ptr): i32);
-}
-
-// Vex callback passed to C -- must be a top-level fn, NOT a closure
-fn compareInts(a: ptr, b: ptr): i32 {
-    // ... comparison logic ...
-}
-```
-
-## Zero-Sized Function Types
+## Unit-Returning Function Types
 
 A function that takes no parameters and returns nothing has type `fn(): ()`. The `()` is the unit type:
 
@@ -144,10 +162,15 @@ let noop: fn(): () = ||  {}   // closure returning unit
 let alsoNoop: fn(): () = myNoopFn
 ```
 
+The unit result does not make the callable value itself zero-sized.
+
 ## Limitations
 
-- Function pointers cannot capture variables; use closures for that.
-- Closures cannot be passed across FFI boundaries; use a non-capturing function pointer with the exact declared foreign signature.
+- Named functions do not capture local variables; use closures for that.
+- A native callable is not automatically a foreign callback, even when it has
+  no captures. Use the exact declared foreign entry contract.
+- `async fn(Args): T` values are Vex-runtime callbacks, not C callbacks. Keep
+  FFI callback signatures synchronous.
 - Recursive function types (a function returning its own type) require indirection via `Box` or structs.
 - Variadic C functions require the `...` syntax (see Variadic Functions documentation).
 
@@ -155,8 +178,10 @@ let alsoNoop: fn(): () = myNoopFn
 
 1. Use `fn(T): R` as parameter types when you want to accept both top-level functions and non-capturing closures.
 2. Be explicit about function pointer types at API boundaries for clarity.
-3. Prefer closures for local callbacks -- they are more ergonomic and the compiler optimizes non-capturing closures to bare function pointers.
-4. For FFI callbacks, always use top-level `fn` declarations, never closures.
+3. Prefer closures for local callbacks when useful; optimization may remove
+   unnecessary environment work, but it does not change the source ABI contract.
+4. For FFI callbacks, verify the foreign signature and conversion explicitly;
+   a top-level Vex declaration alone is not an ABI proof.
 
 ## Related Pages
 

@@ -153,6 +153,98 @@ fn main() {
 - Cannot capture values with non-`Send`-like contracts (compiler checks `ConcurrentSafe`)
 - Stack-allocated data must be moved, not borrowed
 
+### Exact detached batches and automatic fanout
+
+When a detached integer-range group has an exact small task count, a
+non-suspending body, and a capture layout whose ownership can be completed
+before publication, the compiler may lower the source operation as one private
+batch. This is a physical optimization only: it does not change iteration
+values, ownership, completion, or source-visible concurrency semantics.
+
+The compiler chooses producer-local or 2/4/8-way publication from the target,
+the exact task population, and a transitive typed-HIR cost. Calls are followed
+by resolved semantic identity and exact generic instantiation, never by a
+function-name match. Recursion, indirect calls, dynamic control flow,
+unsupported targets, or incomplete inference retain the ordinary scheduler
+path. Suspension uses a separate persistent-frame admission path described
+below; it never uses transient inline capture storage.
+
+Automatic fanout is also subordinate to the runtime's configured worker
+ceiling. For example, an eight-way compiler request in a four-worker embedder
+uses at most four execution contexts; it never silently expands the pool.
+This keeps scheduler tuning and host resource ownership under application
+control while allowing zero-source-noise batching where the proof is complete.
+
+Exact owned indexed sources participate in the same physical optimization.
+Copy arrays move into one generation-owned aggregate, while `Vec<T>` and
+`Deque<T>` move one owning container and yield immutable `&T` items to the lane
+tasks. A Deque remains a ring: the compiler transports its semantic head and
+capacity and maps logical indices directly to wrapped physical slots without
+linearizing or copying it. The final lane releases compiler-generated drop glue
+exactly once. Borrowed Slice/Span views intentionally keep the ordinary path,
+because a view alone does not prove that its backing owner outlives detached
+execution.
+
+Read-only shared captures may also use this exact batch path when ownership can
+be completed before reservation. Today that proof is available for the exact
+`Channel<T>` language item and for `Box<T>` sites that VUMM has selected as
+thread-safe shared owners. `Box<T>` remains the public API; no Arc type or
+manual thread-aware ownership leaks into user code. Retains may be combined
+into one same-owner multiplicity operation before private task reservation. The
+compiler passes the exact owner and lane count directly; no pointer array is
+materialized, and VexArch performs one RC update or one uncontended CAS.
+Channel and VUMM ownership remain distinct internally, so this optimization
+cannot accidentally apply VUMM release or permanence rules to Channel storage.
+Owned strings and arbitrary user containers remain fail-closed because their
+clone operation may allocate or otherwise fail.
+
+Suspending Array, Vec, and Deque bodies retain the same ownership model rather
+than falling back to one universal coroutine. One allocation owns the single
+source value and exactly N persistent lane frames. Array/Vec frames carry only
+`data`, `length`, and a logical cursor; Deque adds `head` and `capacity` so every
+lane can address the ring directly. Generic iterator state is omitted.
+Vec/Deque drop glue runs exactly once after the final lane reaches terminal
+completion, including lane-local `break`; Copy arrays need no owner destructor.
+The parent evaluates the source once, even when the `go` is nested in an async
+function.
+
+For an integer-range body that can suspend, `go(cpu: N) for` likewise creates
+exactly N persistent coroutine lanes rather than one universal task. The parent
+evaluates range bounds or a trusted first-class `Range` once, allocates one
+aggregate frame generation, initializes every private lane, and publishes the
+group once. Lane `i` visits offsets `i, i + N, ...` from a widened frame field.
+Empty lanes finish normally, and inclusive integer maxima cannot wrap at the
+source width.
+
+Transient inline captures remain DONE-only. Aggregate coroutine frames instead
+survive YIELDED/WAIT returns and are released only after terminal DONE and drop
+glue. The final lane reclaims the shared allocation. Resume blocks reload bounds
+and offsets from the frame, so no entry-state SSA value is reused across a
+suspension edge. Admission is based on exact HIR identities and repeat-safe
+capture ownership; unsupported owners retain the single-coroutine fallback.
+Borrowed views and non-Copy arrays stay on that fallback until backing lifetime
+and exact-once element destruction can be proven. Generic iterator lane
+batching additionally requires a semantic partition capability: sharing one
+mutable `next()` cursor across lanes would race, while calling `iter()` once per
+lane could repeat user-visible conversion effects.
+
+This fallback is not limited to integer ranges. An inference-sealed custom
+`Iterator` keeps its normalized source value in the coroutine frame, and a
+custom `IntoIterator` keeps the converted iterator in a separate exact frame
+field when its type or ABI differs from the source. `iter`, `next`, and
+`Option<Item>` are selected by semantic identity rather than spelling. Mutable
+receivers are reloaded after resume, and converted iterator drop glue runs
+exactly once on exhaustion, `break`, return, or terminal cleanup. Re-entering
+the same source loop reinitializes the persistent field and its ownership flag
+without reusing stale state.
+
+The `ordered` modifier is reserved but not yet enabled. Ordered parallel work
+needs a source-visible result-collection contract; scheduling tasks in launch
+order alone would not define completion or result order. The compiler therefore
+reports `E0658` instead of silently treating `go(cpu: N, ordered)` as unordered
+execution. Use an explicit indexed result owner or channels until that contract
+is introduced.
+
 ## Channel `select`
 
 `select` waits on multiple channel operations, executing the first one that becomes ready:
@@ -428,23 +520,29 @@ vex compile --sanitize=thread main.vx
 
 ### Deadlock Detection
 
-The runtime can detect simple deadlocks (all workers blocked):
+The compiler-selected cooperative-local runtime has no external wake source. It
+therefore reports a deterministic deadlock when live tasks remain but its
+runnable FIFO is empty. No environment flag is required.
 
-```bash
-VEX_DEADLOCK_DETECT=1 vex run main.vx
-# If all goroutines are blocked waiting on each other, the runtime panics
-```
+The full M:N runtime cannot infer a general wait cycle from an empty runnable
+set: tasks may be waiting legitimately on I/O, timers, channels, cancellation,
+or a remote worker publication. Use bounded contexts/timeouts for application
+protocols. General cross-provider wait-cycle diagnostics are not currently a
+documented runtime guarantee.
 
 ## Performance Characteristics
 
-| Operation                 | Latency (approximate) | Notes                                    |
+| Operation                 | Latency               | Notes                                    |
 | ------------------------- | --------------------- | ---------------------------------------- |
-| `go { }` spawn            | ~50-100 ns            | Task allocated on current worker's deque |
-| Channel send (unbuffered) | ~100 ns               | Direct handoff if receiver waiting       |
-| Channel send (buffered)   | ~30 ns                | Ring buffer push                         |
-| Mutex lock (uncontended)  | ~20 ns                | Single atomic operation                  |
-| Mutex lock (contended)    | ~1-10 us              | Futex-based sleep                        |
-| Work stealing             | ~100-500 ns           | Only when worker is idle                 |
+| `go { }` spawn            | target-dependent      | Measure with the bounded benchmark matrix |
+| Channel send              | target-dependent      | Bounded MPMC ring; no direct handoff claim |
+| Mutex lock                | target-dependent      | Contention and provider policy dominate  |
+| Work stealing             | target-dependent      | Runs only on the scheduler's idle path   |
+
+Vex keeps the common task cell to one 64-byte cache line and uses owner-local
+queues plus bounded stealing. Competitive numbers must come from the
+repository's bounded benchmark matrix on the target host; these rows are
+architecture notes, not fixed nanosecond promises.
 
 ## Best Practices
 

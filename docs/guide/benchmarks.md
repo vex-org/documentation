@@ -1,36 +1,39 @@
 # Benchmarks
 
-This page describes how to benchmark Vex. It does not publish performance numbers: the current compiler and runtime are still changing, and unsupported or unrepeatable measurements would be misleading.
+Use the compiler-owned benchmark runner instead of a hand-written timer:
 
-## Benchmarking a program
+```vex
+import { BenchCtx } from "testing";
 
-Start with a checked program and keep the workload, compiler version, target, optimization settings, and input data under version control.
+fn bench_hash(b: &BenchCtx!) {
+    let! input = makeInput();
+    b.setBytes(input.len() as i64);
+    b.iterMut(&input!, |data: &Input!| hash(data));
+}
+```
 
-~~~bash
-vex --version
-vex lint benchmark.vx
-vex run benchmark.vx
-~~~
+```bash
+vex test --bench -O3 --benchtime 1s --count 5 --benchmem tests/bench.test.vx
+```
 
-Use the repository's test and benchmark tooling only when the command is present in the compiler version being evaluated. Run several warm-up and measurement iterations, and report a distribution rather than a single fastest result.
+Independent benchmark files compile in a bounded parallel pool. Their binaries
+then execute serially so concurrent workloads cannot contaminate timing. A
+selected file is compiled once; `--count 5` reuses that exact artifact for all
+five measurement rounds.
 
-## What to record
+`BenchCtx.iter` centralizes adaptive clock batching, compiler barriers and an
+isolated child allocation region. Temporary allocations are reclaimed every
+128 operations, and the caller's prior region and arena mode are restored.
+`iterMut` evolves caller-owned state; `iterString`
+consumes owned string results exactly once. Use `blackBox` in manual `b.n`
+loops. Timer control uses `resetTimer`, `startTimer` and `stopTimer`; resumed
+intervals accumulate.
 
-| Field | Example |
-| --- | --- |
-| Compiler | `vex 0.4.0-rc.39` |
-| Commit | Short repository revision |
-| Target | OS, architecture, and runtime configuration |
-| Workload | Source revision, input size, and expected result |
-| Build mode | Exact command and optimization flags |
-| Measurement | Iteration count, warm-up policy, median, and spread |
+Do not benchmark a loop whose complete result is a compile-time constant. LLVM
+may legally replace it with the closed-form result. Seed work from runtime
+state and keep the result observable through `iter`, `iterMut` or `blackBox`.
 
-Comparisons with Rust, Go, Zig, C, or C++ are meaningful only when each implementation performs the same work and the results can be reproduced from published source. Do not present estimates as measurements or infer production readiness from a benchmark.
-
-## Current status
-
-SIMD, async, channels, GPU backends, and standard-library services are not
-uniform across platforms. A successful `vex lint` proves semantic acceptance;
-it does not prove that fused backend codegen, native linking, I/O, or a selected
-accelerator works on the target machine. See the
-[language status](/guide/language-status) page for current limitations.
+For reproducible comparisons record the Vex revision, target CPU/GPU, input
+distribution, optimization level, benchmark duration, iteration count, median
+and spread. Compare equivalent algorithms and observable outputs—never source
+size, estimates or one fastest sample as a substitute for measurements.

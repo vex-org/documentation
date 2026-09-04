@@ -46,6 +46,45 @@ struct Pair<T, U> {
 
 This is the standard way to build reusable collections, wrappers, and data-model helpers.
 
+### Struct literal inference
+
+A literal can infer its owner arguments through a field's structure, not only
+when the field is directly `T`. References, typed pointers, tuples, arrays,
+function signatures and nested nominal generic types contribute constraints.
+
+```vex
+struct Record { public: value: i32 }
+struct Slot<T> { public: source: &T }
+
+let record = Record { value: 997 };
+let slot = Slot { source: &record }; // Slot<Record>
+```
+
+All occurrences of one parameter must agree, or admit the ordinary value
+coercions required by the selected field type. Numeric widening does not permit
+reinterpreting reference pointees or incompatible function-pointer signatures.
+A missing constraint requires an explicit type/context or a declared default;
+contradictory constraints are an error, not a reason to use a default.
+
+Fixed array extents can also infer a const parameter. Mixed type/const arguments
+retain declaration order, including inside a nested generic owner:
+
+```vex
+struct Samples<T, const N: usize, U> {
+    public:
+    values: [T; N],
+    extra: &U,
+}
+
+let samples = Samples { values: [10, 11, 12], extra: &record };
+// Samples<i32, 3, Record>
+```
+
+Two fields constraining the same `N` to different lengths are rejected. This
+does not introduce general symbolic equation solving for const expressions.
+Nested types and contract bounds belong to the selected declaration's module;
+an import alias or a same-spelled local type does not replace that identity.
+
 ## Generic methods
 
 Generic types use normal receiver syntax for methods:
@@ -83,6 +122,21 @@ fn print_item<T: Stringify>(item: T) {
 Use bounds when a function depends on behavior, not on one exact type.
 
 ## Default type parameters
+
+Struct parameters can have defaults, including a preceding type parameter:
+
+```vex
+struct Defaulted<T = i64> { public: value: T }
+struct Tagged<T, Tag = T> { public: value: T }
+
+let inferred = Defaulted { value: 42 as i32 }; // Defaulted<i32>
+let explicit: Defaulted<i64> = Defaulted { value: 42 as i32 };
+let tagged = Tagged { value: 42 as i32 }; // Tagged<i32, i32>
+```
+
+An explicit owner or matching expected owner supplies the field context.
+Otherwise, field inference runs first and defaults fill only unconstrained
+slots. A default never masks conflicting field types.
 
 Contracts can provide defaults for type parameters. A common pattern is `Self`:
 

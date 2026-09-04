@@ -82,8 +82,15 @@ match parseInt64("12x") {
 | `formatUInt64`, `formatUInt32` | Owned unsigned decimal `string` |
 | `formatHex`, `formatHexUpper`, `formatHexPrefix` | Owned hexadecimal `string` |
 | `formatBinary` | Owned binary `string` |
+| `formatUIntBase` / `formatUIntBaseUpper` | Owned base-2-through-36 result |
+| `formatIntBase` / `formatIntBaseUpper` | Owned signed base-2-through-36 result |
+| `formatUIntBaseTo` / `formatUIntBaseUpperTo` | Allocation-free caller-buffer result |
+| `formatIntBaseTo` / `formatIntBaseUpperTo` | Allocation-free signed caller-buffer result |
 | `formatFloat64`, `formatFloat32` | Owned rounded decimal `string` |
 | `formatFloat64To` | Write rounded f64 text into caller-owned storage without allocation |
+| `formatFloat64Shortest`, `formatFloat32Shortest` | Owned shortest-roundtrip IEEE decimal |
+| `formatFloat64ShortestTo` | Allocation-free shortest f64; requires 24 bytes |
+| `formatFloat32ShortestTo` | Allocation-free shortest f32; requires 16 bytes |
 | `formatBool` | Owned `true`/`false` string |
 
 `formatFloat64(value, precision)` clamps precision to 0 through 18. Common
@@ -92,15 +99,29 @@ below `1e-6`, use scientific notation. This prevents unsafe integer conversion
 for huge values and preserves tiny nonzero values. Special output is `nan`,
 `inf`, or `-inf`; negative zero keeps its sign.
 
+Shortest formatting uses independent binary32/binary64 pure-Vex Ryu paths.
+It preserves signed zero, writes integral finite values with `.0`, and uses
+lowercase `e` without a redundant positive exponent sign. `floatToString`
+uses this shortest-roundtrip mode; explicit precision remains available via
+`formatFloat64(value, precision)`.
+
 ```vex
 $assert(formatInt64(-42) == "-42");
 $assert(formatHexPrefix(255) == "0xff");
 $assert(formatFloat64(9.999, 2) == "10.00");
 $assert(formatFloat64(1.0e100, 2) == "1.00e+100");
+$assert(formatFloat64Shortest(1.2345678901234567) == "1.2345678901234567");
+$assert(formatFloat64Shortest(5.0e-324) == "5e-324");
 ```
 
 Aliases include `intToString`, `floatToString`, `boolToString`, `formatInt`,
 and `formatFloat`.
+
+Radix formatters return `Result<..., FormatError>`. Valid bases are 2 through
+36. The default variants use `a` through `z`; `Upper` variants use `A` through
+`Z`. Caller-buffer forms are transactional: invalid base or insufficient
+capacity returns an error without changing the destination. Signed output
+uses a leading minus sign in every radix and safely handles `MIN_I64`.
 
 ### Caller-buffer float formatting
 
@@ -124,15 +145,22 @@ This API is intended for builders, serializers and protocol writers that
 already own output capacity. Application code that needs an owned value should
 continue to use `formatFloat64`.
 
+The shortest caller-buffer variants have the same transactional contract.
+Use 24 writable bytes for f64 and 16 for f32; insufficient capacity returns
+zero without modifying the destination.
+
 ## Runtime properties
 
 - No libc, native shim, C-string scan, or external package dependency.
 - Parsing is allocation-free. Common values need one digit pass; cached powers
   handle unambiguous wide exponents, while rare exact fallbacks re-read the
   borrowed digits without copying them.
-- Integer formatting uses backward writing with digit-pair lookup.
+- Decimal integer formatting consumes two digits per loop. Radices 2/4/8/16/32
+  use masks and shifts; generic radices use one division per digit.
 - Owned formatting performs one final copy into a Vex-owned string;
   `formatFloat64To` writes directly into existing caller storage.
+- Shortest conversion uses complete cached-power tables and native `u128`
+  products; its caller-buffer forms do not allocate.
 - Extreme float normalization has bounded work.
 - O0 through O3 keep strict IEEE floating-point semantics; optimization level
   alone never enables relaxed math.
@@ -142,6 +170,10 @@ The 2026-08-14 M2 Max O3 parser baselines are 6.50 ns for fixed-width f64,
 exponent, and 75.83 ns for a cached-power long decimal. A true exact halfway
 fallback is 873.31 ns and is not paid by ordinary or interval-proven inputs.
 Timings vary by host.
+
+The 2026-08-25 M2 Max O3 caller-buffer shortest baselines are 17.34 ns for
+f32, 21.26 ns for f64 pi, 33.17 ns for an integral f64, and 27.32 ns for the
+maximum finite scientific f64. Owned f64/f32 output measured 41.09/22.43 ns.
 
 See the package's `REFERENCE.md`, tests, and benchmarks for the complete
 engineering contract.

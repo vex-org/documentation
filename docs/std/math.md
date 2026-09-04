@@ -33,3 +33,18 @@ let vRes = Math.sqrt(b); // Emits vectorized vsqrt instruction
 - **Trigonometry**: `.sin()`, `.cos()`, `.tan()`, `.asin()`, `.tanh()`
 - **Rounding**: `.floor()`, `.ceil()`, `.round()`, `.trunc()`, `.abs()`
 - **Floating Point Ops**: `.isNan()`, `.isInfinite()`, `.copysign()`
+
+## Exact float representation
+
+The builtin `Math.toBits` / `Math.fromBits` pair provides width-exact scalar
+reinterpretation:
+
+```vex
+let bits: u64 = Math.toBits(value);   // f64 -> u64
+let exact: f64 = Math.fromBits(bits); // u64 -> f64
+```
+
+The `f32 <-> u32` pair is also supported. Signed integer widths and mismatched
+sizes are rejected. These are semantic compiler operations that lower to an
+LLVM SSA `bitcast`; they do not allocate, touch memory, call libc or cross FFI.
+Signed zero and NaN payloads therefore round-trip exactly.

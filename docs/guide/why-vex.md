@@ -101,7 +101,7 @@ This page compares Vex to other systems programming languages, highlighting wher
 | Async/await      | Yes             | Yes          | No (goroutines) | No (async/await)   | C++20           | Yes         |
 | Null safety      | Option\<T\>     | Option\<T\>  | No (nil)        | Optional type      | std::optional   | Optional    |
 | Package manager  | Built-in        | Cargo        | Go modules      | Built-in           | External        | External    |
-| Compiler backend | LLVM 21         | LLVM         | Custom          | LLVM               | LLVM/GCC        | MLIR        |
+| Compiler backend | LLVM 23         | LLVM         | Custom          | LLVM               | LLVM/GCC        | MLIR        |
 | License          | MIT             | MIT/Apache2  | BSD             | MIT                | (various)       | Proprietary |
 
 ## When Vex is the Right Choice

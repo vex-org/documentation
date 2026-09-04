@@ -59,6 +59,49 @@ println(line);
 
 That pattern is used broadly in the examples and standard library tests.
 
+For composed output, use the built-in length-delimited formatter:
+
+```vex
+let count: i32 = 42;
+let name: str = "Vex";
+let line = $format("{} processed {:04} items", name, count);
+$println(line);
+```
+
+`{}` uses `Display.toString()` for user types. `{:?}` and `{:#?}` use
+`Debug.debug()`. Width, alignment, fill, radix, zero-padding, and precision are
+applied after the selected representation is produced.
+
+Radix formatting is prefix-free by default. Add `#` when the representation
+must carry its base prefix; zero padding is inserted after that prefix:
+
+```vex
+$assert($format("{:x}", 255) == "ff");
+$assert($format("{:#x}", 255) == "0xff");
+$assert($format("{:08x}", 255) == "000000ff");
+$assert($format("{:#08x}", 255) == "0x0000ff");
+```
+
+The same rule applies to binary (`b`/`0b`) and octal (`o`/`0o`); uppercase
+hexadecimal changes the digits, not the lowercase `0x` prefix.
+
+Formatting is freestanding across every compiler-owned path: Vex carries exact
+byte lengths, uses the pure-Vex VexArch number formatters, and never routes a
+value through C `printf`/`snprintf`/`puts`. `$format` allocates its final owned
+string once. Text precision and width are Unicode-scalar aware and never split
+a UTF-8 sequence. A user type must implement the exact `Display.toString()` or
+`Debug.debug()` contract requested by the placeholder; unsupported structural
+values are compile-time errors rather than ABI-guessed fallback output.
+
+`$dbg` shares the same exact `Debug` contract. It evaluates its operand once,
+writes a labelled line to stderr, flushes it, and returns the original value:
+
+```vex
+let parsed = $dbg(parseHeader(input))
+// stderr: [DBG] <the Debug representation>
+// `parsed` is the single value produced by parseHeader(input).
+```
+
 ## Common operations
 
 ### Concatenation

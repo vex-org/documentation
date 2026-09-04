@@ -1,202 +1,124 @@
 # OrderedMap\<K, V\>
 
-`OrderedMap<K, V>` is a hash map that preserves insertion order. It combines the O(1) lookup of `Map<K, V>` with predictable iteration order. Internally, it uses a hash table paired with a doubly-linked list tracking insertion order.
+`OrderedMap<K, V>` is the prelude's insertion-ordered owning hash map. It keeps
+average O(1) key lookup and removal while iteration follows the current
+insertion order. No import is required.
 
-## When to Use OrderedMap vs Map
+Use `OrderedMap` when order is part of the data model: deterministic output,
+configuration, protocol fields, caches, or user-visible sequences. Prefer
+`Map` when order is irrelevant and minimum metadata/cache cost matters.
 
-| Feature          | `Map<K, V>`            | `OrderedMap<K, V>`            |
-| ---------------- | ---------------------- | ----------------------------- |
-| Lookup           | O(1) average           | O(1) average                  |
-| Insertion        | O(1) average           | O(1) average                  |
-| Iteration order  | Arbitrary (hash order) | Insertion order               |
-| Memory overhead  | Lower                  | Higher (linked list pointers) |
-| Cache efficiency | Better                 | Slightly worse                |
-
-Use `OrderedMap` when:
-
-- Iteration order matters (e.g., configuration keys displayed to users)
-- You need both fast lookup AND ordered traversal
-- You're serializing to a format where key order matters (JSON with ordered keys)
-- You want deterministic behavior across runs
-
-Use `Map` when:
-
-- You only need key-value lookup
-- Memory is tight
-- Iteration order is irrelevant
+`OrderedMap` is not a sorted map. A future B-tree family will provide key-order
+ranges and logarithmic ordered lookup.
 
 ## Construction
 
 ```vex
-// Empty ordered map
-let! map: OrderedMap<string, i32> = OrderedMap.new()
+let! values = OrderedMap.new<string, i32>();
+let! reserved = OrderedMap.withCapacity<string, i32>(256 as usize);
 
-// With initial capacity
-let! prealloc = OrderedMap.withCapacity<string, i32>(100)
-
-// From array of key-value pairs
-let kvPairs = [("alice", 30), ("bob", 25), ("charlie", 35)]
-let fromPairs: OrderedMap<string, i32> = OrderedMap.from(kvPairs)
+let builder = DeterministicState.seed(42 as u64);
+let! reproducible = OrderedMap.withHasherCapacity<string, i32, DeterministicState>(
+    builder,
+    256 as usize,
+);
 ```
 
-## Basic Operations
+`withCapacity(n)` guarantees node capacity for at least `n` live entries.
+`withHasher` and `withHasherCapacity` accept any `BuildHasher` policy.
+
+## Lookup and ownership
 
 ```vex
-let! scores = OrderedMap.new<string, i32>()
+let! scores = OrderedMap.new<string, i32>();
+scores.insert("alice".toString(), 95 as i32);
+scores.insert("bob".toString(), 87 as i32);
 
-// Insert (preserves insertion order)
-scores.insert("alice", 95)
-scores.insert("bob", 87)
-scores.insert("charlie", 92)
+let alice = "alice".toString();
+match scores.get(&alice) {
+    Some(score) => $println(*score),
+    None => {},
+};
 
-// Lookup
-let alice_score = scores.get("alice")    // Some(95)
-let missing = scores.get("dave")          // None
-
-// Get with default
-let dave_score = scores.getOr("dave", 0)  // 0
-
-// Check existence
-let has_alice = scores.contains("alice")  // true
-
-// Remove
-let removed = scores.remove("bob")        // Some(87)
-scores.remove("nobody")                    // None
-
-// Size
-let count = scores.len()                  // 2
-let empty = scores.isEmpty()              // false
+match scores.getMut(&alice) {
+    Some(score) => { *score = 96 as i32; },
+    None => {},
+};
 ```
 
-## Insertion-Order Iteration
+`insert` transfers key and value ownership. A new key returns `true`. An equal
+key returns `false`, replaces only the value, and preserves both the first
+canonical stored key and its order position. Insertion and update do not
+require `Clone`.
+
+- `get` and `getMut` borrow a value;
+- `getKeyValue` borrows the canonical stored key and value;
+- `contains` performs a key lookup;
+- `removeValue` transfers the stored value and drops the canonical key;
+- `removeEntry` transfers both canonical owners;
+- `remove` is the boolean compatibility form and drops both removed owners.
+
+## Ordered traversal
 
 ```vex
-let! config = OrderedMap.new<string, string>()
-config.insert("host", "localhost")
-config.insert("port", "8080")
-config.insert("debug", "true")
+let! fields = OrderedMap.new<string, string>();
+fields.insert("host".toString(), "localhost".toString());
+fields.insert("port".toString(), "8080".toString());
 
-// Iteration preserves insertion order
-for (key, value) in config {
-    $println(f"{key} = {value}")
-}
-// Output (always this order):
-// host = localhost
-// port = 8080
-// debug = true
-
-// Keys in insertion order
-let keys = config.keys()    // ["host", "port", "debug"]
-
-// Values in insertion order
-let values = config.values()  // ["localhost", "8080", "true"]
+let! entries = fields.iter();
+while true {
+    match entries.next() {
+        Some(pair) => $println(pair.0, " = ", pair.1),
+        None => break,
+    };
+};
 ```
 
-## Reordering Operations
+`iter`, `keys`, and `values` return allocation-free borrowed iterators in
+current order. `first` and `last` borrow the end pairs. `popFront` and
+`popBack` transfer an end pair out.
 
-Unlike `Map`, `OrderedMap` supports order manipulation:
+`moveToFront(key)` and `moveToBack(key)` relink a present entry in O(1) after
+its average O(1) lookup. They return `false` for a missing key.
 
-```vex
-let! map = OrderedMap.from([("a", 1), ("b", 2), ("c", 3)])
+## Capacity and filtering
 
-// Move to front
-map.moveToFront("c")
-// Order: c, a, b
+- `capacity()` reports stable-node capacity;
+- `reserve(minimum)` pre-grows node and hash-index storage;
+- `clear()` drops live owners and retains allocations;
+- `retain(predicate)` visits entries once, drops rejects, and preserves survivor
+  order without cloning or rehashing them;
+- `shrinkToFit()` compacts vacant stable slots in insertion order. It transfers
+  owners once and rebuilds the private index from cached hashes, so user keys
+  are neither cloned nor hashed again.
 
-// Move to back
-map.moveToBack("a")
-// Order: c, b, a
+## Indexed compatibility access
 
-// Insert before/after existing key
-map.insertBefore("b", "x", 99)
-// Order: c, x, b, a
+`getAtIndex`, `getAtIndexRef`, and `getAtIndexMut` address the current order.
+They traverse from the nearer end and cost O(min(i, n-i)). Use `iter()` for a
+full scan; `OrderedMap` deliberately optimizes stable O(1) removal/reordering
+instead of pretending that linked order also offers O(1) random indexing.
 
-map.insertAfter("x", "y", 100)
-// Order: c, x, y, b, a
-```
+## Complexity
 
-## Bulk Operations
+| Operation | Time |
+|---|---:|
+| `get`, `getMut`, `contains`, `insert` | average O(1) |
+| `remove*` | average O(1) |
+| `moveToFront`, `moveToBack` | average O(1) including lookup |
+| `first`, `last`, `popFront`, `popBack` | O(1) |
+| iterator step | O(1) |
+| `retain`, `clear`, `shrinkToFit` | O(n) |
+| `getAtIndex*(i)` | O(min(i, n-i)) |
 
-```vex
-let! map = OrderedMap.new<string, i32>()
+The implementation owns each key/value pair exactly once in a stable node.
+A private Swiss-table index maps the caller-policy full hash to a
+collision-correct node chain; it uses an identity policy for that already
+hashed `u64`, avoiding a second cryptographic hash. Doubly linked stable-node
+indices maintain order and a free-slot stack reuses removed storage.
 
-// Extend from another ordered map
-map.extend(other)
+## Related pages
 
-// Extend from array of pairs
-map.extend([("d", 4), ("e", 5)])
-
-// Clear all entries
-map.clear()
-
-// Reserve capacity
-map.reserve(1000)
-```
-
-## Equality and Hashing
-
-```vex
-let a = OrderedMap.from([("x", 1), ("y", 2)])
-let b = OrderedMap.from([("x", 1), ("y", 2)])
-let c = OrderedMap.from([("y", 2), ("x", 1)])  // different order!
-
-let same = a == b    // true (same entries, same order)
-let diff = a == c    // false (same entries, DIFFERENT order)
-```
-
-OrderedMap equality considers BOTH entries AND their order. Two ordered maps with the same key-value pairs in different orders are NOT equal.
-
-## Serialization
-
-OrderedMap serializes with keys in insertion order -- important for JSON:
-
-```vex
-let! response = OrderedMap.new<string, string>()
-response.insert("status", "ok")
-response.insert("message", "success")
-response.insert("data", "...")
-
-// Serialize to JSON with predictable key order
-let json = response.toJson()
-// {"status":"ok","message":"success","data":"..."}
-// Keys are ALWAYS in this order, unlike regular Map
-```
-
-## Performance Characteristics
-
-| Operation            | Complexity   | Notes                                  |
-| -------------------- | ------------ | -------------------------------------- |
-| `insert`             | O(1) average | Hash table insert + linked list append |
-| `get`                | O(1) average | Hash table lookup                      |
-| `remove`             | O(1) average | Hash table remove + linked list unlink |
-| `contains`           | O(1) average | Hash table check                       |
-| `moveToFront/Back`   | O(1)         | Linked list relink                     |
-| `insertBefore/After` | O(1)         | Hash + linked list operations          |
-| Iteration            | O(n)         | Linked list traversal                  |
-
-## Implementation
-
-OrderedMap uses a Swiss Table hash map paired with a doubly-linked list:
-
-```
-Hash Table:  [bucket0] [bucket1] [bucket2] ...
-                  |         |         |
-                  v         v         v
-Linked List:  <-> Entry <-> Entry <-> Entry <->
-              (head)                         (tail)
-```
-
-Each entry is stored once with both hash table links AND linked list pointers.
-
-## Best Practices
-
-1. Use `OrderedMap` when insertion order is semantically meaningful.
-2. Prefer `Map` for pure lookup workloads -- it has lower overhead.
-3. Use `OrderedMap` for configuration, HTTP headers, and serialization where key order matters.
-4. Specify capacity with `withCapacity` when you know the size upfront to avoid rehashing.
-5. Remember that equality comparison includes order, unlike `Map`.
-
-## Related Pages
-
-- [Map & Set](/guide/types/map-set) -- standard unordered collections
-- [Contracts Reference](/guide/types/contracts-reference) -- `Hash`, `Eq`, `Iterator`
+- [Map and Set](/guide/types/map-set)
+- [Collections](/std/collections)
+- [Contracts reference](/guide/types/contracts-reference)

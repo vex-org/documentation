@@ -1,6 +1,6 @@
 # inference
 
-Coupled directly with `ml`, the `inference` module provides higher-level abstractions targeted towards local LLM execution. 
+Coupled directly with `ml`, the `inference` module provides higher-level abstractions targeted towards local LLM execution.
 
 If `ml` is the raw linear algebra, `inference` is the architecture. It maps model weights extracted from architectures (like GGUF or Safetensors) and routes them through Vex's `VUMM` and Graph architecture efficiently.
 

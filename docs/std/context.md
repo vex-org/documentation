@@ -41,10 +41,15 @@ let tagged = relative.withValue("attempt", 3 as i64);
 `Context.todo()` behaves like a background root but remains distinguishable
 through `kind()` for diagnostics. `withDeadline` accepts an absolute monotonic
 `Instant`; wall-clock `Time` and raw Unix timestamps cannot be mixed into this
-API. An earlier inherited deadline always wins.
+API. An earlier inherited deadline always wins. Zero and negative timeout
+durations are already expired, with the typed `TimedOut` cause and zero
+remaining duration.
 
-Deadline creation does not spawn a timer or thread. Consumers observe expiry
-at `isDone()`, `cause()`, `check()` or `remaining()` calls.
+Deadline creation does not spawn a timer or thread. Cooperative consumers
+observe expiry at `isDone()`, `cause()`, `check()` or `remaining()` calls. When
+a context is passed to a context-aware TCP operation, VexArch registers the
+same absolute monotonic deadline with that in-flight operation and actively
+wakes the parked task at expiry.
 
 ## Cancellation
 
@@ -71,6 +76,12 @@ cause are visible. Child cancellation and parent cancellation remain separate
 events. `cause()` returns whichever cancellation or deadline occurred first.
 
 `withCancel()` is the convenience form using `ErrorKind.Canceled`.
+
+Context-aware TCP accept, connect, read and write bind the nearest cancellation
+identity directly to the generation-owned runtime operation. `cancel()` scans
+only on this exceptional path and wakes matching parked operations; ordinary
+context creation, polling and successful context-free I/O pay no subscription
+or callback allocation.
 
 ## Cooperative checkpoints
 
@@ -127,18 +138,18 @@ Cancellation state and request values use separate persistent chains. Every
 node caches its effective deadline and nearest cancellation state, so adding
 value nodes does not slow down polling.
 
-M2 Max O3 medians (500 ms, three runs, 2026-08-17):
+M2 Max O3 medians (500 ms, three runs, 2026-08-23):
 
 | Operation | Median |
 |---|---:|
-| context clone | 7.88 ns |
-| cancelable child creation and publication | 95.13 ns |
-| active cancellation poll | 2.13 ns |
-| active poll below 256 value nodes | 2.08 ns |
-| cooperative `check` below 256 value nodes | 4.84 ns |
-| cached deadline lookup below 256 value nodes | 1.27 ns |
-| latest value lookup at depth 256 | 4.82 ns |
-| oldest value lookup at depth 256 | 1.65 us |
+| context clone | 8.87 ns |
+| cancelable child creation and publication | 119.18 ns |
+| active cancellation poll | 2.05 ns |
+| active poll below 256 value nodes | 2.07 ns |
+| cooperative `check` below 256 value nodes | 4.94 ns |
+| cached deadline lookup below 256 value nodes | 1.21 ns |
+| latest value lookup at depth 256 | 5.00 ns |
+| oldest value lookup at depth 256 | 1.70 us |
 
 Value lookup is newest-to-oldest and O(depth). Keep metadata chains shallow;
 the 256-node row is an explicit adversarial regression baseline.

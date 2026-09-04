@@ -33,7 +33,9 @@ stay UTF-8 while the provider uses UTF-16 wide Win32 APIs.
 - `readDir` fills caller-provided `DirList` storage.
 - `readDirVecLimit` collects at most an explicit number of entries.
 - `readDirVec` collects the full directory and is intended for trusted sizes.
-- `readDirPage` provides stateless offset/limit pagination.
+- `readDirPage` provides stateless offset/limit pagination. Its returned page
+  reserves the validated provider count before copying native entries, so a
+  full page has no incidental `Vec` growth step.
 
 Dot entries are excluded. Provider counts are validated before Vec lengths are
 committed.
@@ -62,4 +64,3 @@ match DirCursor.open(".", 256 as usize) {
 `mkdirAll`, `removeAll` and `walkDir` provide recursive operations.
 `walkDir` stops when its callback returns `false` and reports whether the
 walk completed.
-

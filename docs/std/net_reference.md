@@ -2,13 +2,27 @@
 
 ## Overview
 
-**Structs:** [`TcpListener`](#TcpListener) · [`TcpStream`](#TcpStream) · [`sockaddr_in`](#sockaddr_in) · [`Event`](#Event) · [`EventLoop`](#EventLoop) · [`UdpSocket`](#UdpSocket) · [`UdpRecvFromResult`](#UdpRecvFromResult) · [`WsFrame`](#WsFrame) · [`sockaddr_in`](#sockaddr_in) · [`Conn`](#Conn) · [`Socket`](#Socket) · [`sockaddr_in`](#sockaddr_in) · [`epoll_event`](#epoll_event) · [`sockaddr_in`](#sockaddr_in)
+**Structs:** [`Ipv4FormatBufferState`](#Ipv4FormatBufferState) · [`Ipv6FormatBufferState`](#Ipv6FormatBufferState) · [`SocketFormatBufferState`](#SocketFormatBufferState) · [`SocketAppendState`](#SocketAppendState) · [`WsParseState`](#WsParseState) · [`WsEncodeState`](#WsEncodeState) · [`WsUnmaskState`](#WsUnmaskState) · [`ConnHeaderState`](#ConnHeaderState) · [`ConnRecycleState`](#ConnRecycleState) · [`TcpListener`](#TcpListener) · [`TcpStream`](#TcpStream) · [`Event`](#Event) · [`EventLoop`](#EventLoop) · [`UdpSocket`](#UdpSocket) · [`UdpRecvFromResult`](#UdpRecvFromResult) · [`UdpDatagram`](#UdpDatagram) · [`WsFrame`](#WsFrame) · [`WsFrameStream`](#WsFrameStream) · [`ResolveError`](#ResolveError) · [`ResolveOptions`](#ResolveOptions) · [`sockaddr_in`](#sockaddr_in) · [`sockaddr_ip`](#sockaddr_ip) · [`Conn`](#Conn) · [`ArenaCheckpoint`](#ArenaCheckpoint) · [`Socket`](#Socket) · [`sockaddr_in`](#sockaddr_in) · [`sockaddr_ip`](#sockaddr_ip) · [`epoll_event`](#epoll_event) · [`AddressParseError`](#AddressParseError) · [`AddressFormatError`](#AddressFormatError) · [`Ipv4Addr`](#Ipv4Addr) · [`Ipv6Addr`](#Ipv6Addr) · [`SocketAddr`](#SocketAddr) · [`ParsedIpv6Side`](#ParsedIpv6Side) · [`sockaddr_in`](#sockaddr_in) · [`sockaddr_ip`](#sockaddr_ip)
 
-**Functions:** [`TcpListener`](#TcpListener) · [`TcpStream`](#TcpStream) · [`get_errno`](#get_errno) · [`parse_ip_port`](#parse_ip_port) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write) · [`readEvent`](#readEvent) · [`UdpSocket`](#UdpSocket) · [`parseFrame`](#parseFrame) · [`encodeFrame`](#encodeFrame) · [`encodeText`](#encodeText) · [`encodeClose`](#encodeClose) · [`encodePing`](#encodePing) · [`encodePong`](#encodePong) · [`unmask`](#unmask) · [`isControlFrame`](#isControlFrame) · [`isDataFrame`](#isDataFrame) · [`get_errno`](#get_errno) · [`parse_ip_port`](#parse_ip_port) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write) · [`monotonicNs`](#monotonicNs) · [`prepareWorkers`](#prepareWorkers) · [`flushSpawnBatch`](#flushSpawnBatch) · [`arenaSave`](#arenaSave) · [`arenaRestore`](#arenaRestore) · [`arenaTotalBytesUsed`](#arenaTotalBytesUsed) · [`regionCurrent`](#regionCurrent) · [`regionSetCurrent`](#regionSetCurrent) · [`setArenaMode`](#setArenaMode) · [`getArenaMode`](#getArenaMode) · [`cpuCount`](#cpuCount) · [`makePipe`](#makePipe) · [`tcpBlockingFd`](#tcpBlockingFd) · [`connectFd`](#connectFd) · [`bindFd`](#bindFd) · [`listenFd`](#listenFd) · [`acceptFd`](#acceptFd) · [`setReuseAddrFd`](#setReuseAddrFd) · [`setNoDelayFd`](#setNoDelayFd) · [`recvFd`](#recvFd) · [`sendFd`](#sendFd) · [`closeFd`](#closeFd) · [`peekFd`](#peekFd) · [`writeFd`](#writeFd) · [`readFd`](#readFd) · [`asyncAcceptFd`](#asyncAcceptFd) · [`asyncRecvFd`](#asyncRecvFd) · [`asyncSendFd`](#asyncSendFd) · [`setNonBlockFd`](#setNonBlockFd) · [`socket`](#socket) · [`bind`](#bind) · [`listen`](#listen) · [`accept`](#accept) · [`connect`](#connect) · [`close`](#close) · [`recvfrom`](#recvfrom) · [`sendto`](#sendto) · [`setsockopt`](#setsockopt) · [`pipe2`](#pipe2) · [`fcntl`](#fcntl) · [`epoll_create1`](#epoll_create1) · [`epoll_ctl`](#epoll_ctl) · [`epoll_wait`](#epoll_wait) · [`parse_ip_port`](#parse_ip_port) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_fd_write`](#vex_fd_write) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write) · [`vex_ws_parse_frame`](#vex_ws_parse_frame) · [`vex_ws_encode_frame`](#vex_ws_encode_frame) · [`vex_ws_unmask`](#vex_ws_unmask) · [`ensure_wsa`](#ensure_wsa) · [`parse_ip_port`](#parse_ip_port) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_fd_write`](#vex_fd_write) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write)
+**Enums:** [`ResolveFamily`](#ResolveFamily) · [`ResolveErrorKind`](#ResolveErrorKind) · [`IpFamily`](#IpFamily) · [`AddressParseErrorKind`](#AddressParseErrorKind) · [`IpAddr`](#IpAddr)
 
-**Constants:** [`EVT_READ`](#EVT_READ) · [`EVT_WRITE`](#EVT_WRITE) · [`EVT_HUP`](#EVT_HUP) · [`EVT_ERR`](#EVT_ERR) · [`WS_CONTINUATION`](#WS_CONTINUATION) · [`WS_TEXT`](#WS_TEXT) · [`WS_BINARY`](#WS_BINARY) · [`WS_CLOSE`](#WS_CLOSE) · [`WS_PING`](#WS_PING) · [`WS_PONG`](#WS_PONG) · [`WS_OK`](#WS_OK) · [`WS_NEED_MORE`](#WS_NEED_MORE) · [`WS_ERR_INVALID`](#WS_ERR_INVALID) · [`RBUF_INIT`](#RBUF_INIT) · [`RBUF_MAX`](#RBUF_MAX) · [`WBUF_INIT`](#WBUF_INIT) · [`WBUF_MAX`](#WBUF_MAX)
+**Functions:** [`test_tcp_socket_create_close`](#test_tcp_socket_create_close) · [`test_udp_socket_create_close`](#test_udp_socket_create_close) · [`test_multiple_sockets_are_distinct`](#test_multiple_sockets_are_distinct) · [`test_invalid_event_loop_fails_closed`](#test_invalid_event_loop_fails_closed) · [`test_resolver_numeric_ipv4_fast_path`](#test_resolver_numeric_ipv4_fast_path) · [`test_resolver_numeric_ipv6_family_filter`](#test_resolver_numeric_ipv6_family_filter) · [`test_resolver_rejects_numeric_family_mismatch`](#test_resolver_rejects_numeric_family_mismatch) · [`test_resolver_validates_hostname_and_capacity`](#test_resolver_validates_hostname_and_capacity) · [`test_resolver_system_localhost_is_ordered_and_unique`](#test_resolver_system_localhost_is_ordered_and_unique) · [`test_resolver_family_filtering_is_semantic`](#test_resolver_family_filtering_is_semantic) · [`test_resolver_socket_addresses_preserve_port`](#test_resolver_socket_addresses_preserve_port) · [`test_encode_decode_text`](#test_encode_decode_text) · [`test_encode_close`](#test_encode_close) · [`test_encode_ping_pong`](#test_encode_ping_pong) · [`test_control_data_check`](#test_control_data_check) · [`test_need_more`](#test_need_more) · [`test_frame_stream_preserves_partial_and_trailing_frames`](#test_frame_stream_preserves_partial_and_trailing_frames) · [`test_frame_stream_rejects_invalid_capacity_transitions`](#test_frame_stream_rejects_invalid_capacity_transitions) · [`test_masked_payload_unmask`](#test_masked_payload_unmask) · [`test_masked_payload_unmask_simd_boundaries`](#test_masked_payload_unmask_simd_boundaries) · [`test_masked_payload_unmask_tail_matrix`](#test_masked_payload_unmask_tail_matrix) · [`test_rejects_invalid_protocol_shapes`](#test_rejects_invalid_protocol_shapes) · [`test_encode_bounds_and_extended_length`](#test_encode_bounds_and_extended_length) · [`test_encode_header_is_zero_copy_and_canonical`](#test_encode_header_is_zero_copy_and_canonical) · [`test_tcp_stream_adopt_consumes_socket_and_preserves_async_io`](#test_tcp_stream_adopt_consumes_socket_and_preserves_async_io) · [`mustIpv4`](#mustIpv4) · [`mustIpv6`](#mustIpv6) · [`expectInvalidIpv4`](#expectInvalidIpv4) · [`expectInvalidIpv6`](#expectInvalidIpv6) · [`bufferEquals`](#bufferEquals) · [`test_ipv4_typed_parse_format_and_classification`](#test_ipv4_typed_parse_format_and_classification) · [`test_ipv4_parser_is_canonical_and_bounded`](#test_ipv4_parser_is_canonical_and_bounded) · [`test_ipv6_parse_expansion_and_rfc5952_formatting`](#test_ipv6_parse_expansion_and_rfc5952_formatting) · [`test_ipv6_embedded_ipv4_and_roundtrip`](#test_ipv6_embedded_ipv4_and_roundtrip) · [`test_ipv6_parser_rejects_ambiguous_and_oversized_input`](#test_ipv6_parser_rejects_ambiguous_and_oversized_input) · [`test_ipaddr_and_socketaddr_typed_roundtrip`](#test_ipaddr_and_socketaddr_typed_roundtrip) · [`test_socketaddr_rejects_missing_or_out_of_range_port`](#test_socketaddr_rejects_missing_or_out_of_range_port) · [`test_address_caller_buffer_formatting_is_exact_and_transactional`](#test_address_caller_buffer_formatting_is_exact_and_transactional) · [`test_ipv6_format_repeated_preserves_value_and_result_ownership`](#test_ipv6_format_repeated_preserves_value_and_result_ownership) · [`test_ipv6_copy_aggregate_survives_optimizer_barrier`](#test_ipv6_copy_aggregate_survives_optimizer_barrier) · [`test_async_accept_parks_until_loopback_connect`](#test_async_accept_parks_until_loopback_connect) · [`test_context_cancellation_retires_parked_accept`](#test_context_cancellation_retires_parked_accept) · [`test_context_deadline_retires_parked_accept`](#test_context_deadline_retires_parked_accept) · [`test_context_aware_tcp_read_write_roundtrip`](#test_context_aware_tcp_read_write_roundtrip) · [`test_context_aware_udp_datagram_roundtrip`](#test_context_aware_udp_datagram_roundtrip) · [`test_context_cancellation_retires_parked_udp_receive`](#test_context_cancellation_retires_parked_udp_receive) · [`test_context_deadline_retires_parked_udp_receive`](#test_context_deadline_retires_parked_udp_receive) · [`test_socket_close_retires_parked_accept_exactly_once`](#test_socket_close_retires_parked_accept_exactly_once) · [`test_socket_close_and_context_cancel_elect_one_terminal`](#test_socket_close_and_context_cancel_elect_one_terminal) · [`test_arena_checkpoint_round_trip`](#test_arena_checkpoint_round_trip) · [`parseIpv4Observed`](#parseIpv4Observed) · [`parseIpv6Observed`](#parseIpv6Observed) · [`parseSocketObserved`](#parseSocketObserved) · [`bench_parse_ipv4`](#bench_parse_ipv4) · [`bench_parse_ipv6_compressed`](#bench_parse_ipv6_compressed) · [`bench_parse_socketaddr_ipv6`](#bench_parse_socketaddr_ipv6) · [`bench_format_ipv4`](#bench_format_ipv4) · [`bench_format_ipv6`](#bench_format_ipv6) · [`bench_format_ipv4_to_buffer`](#bench_format_ipv4_to_buffer) · [`bench_format_ipv6_to_buffer`](#bench_format_ipv6_to_buffer) · [`bench_format_socketaddr_ipv6_to_buffer`](#bench_format_socketaddr_ipv6_to_buffer) · [`bench_format_socketaddr_ipv6_append_reused`](#bench_format_socketaddr_ipv6_append_reused) · [`bench_websocket_parse_4k_zero_copy`](#bench_websocket_parse_4k_zero_copy) · [`bench_websocket_encode_4k_reused`](#bench_websocket_encode_4k_reused) · [`makeWsUnmaskState`](#makeWsUnmaskState) · [`runWsUnmask`](#runWsUnmask) · [`bench_websocket_unmask_125b_in_place`](#bench_websocket_unmask_125b_in_place) · [`bench_websocket_unmask_4k_in_place`](#bench_websocket_unmask_4k_in_place) · [`bench_conn_find_header_end_4k_late`](#bench_conn_find_header_end_4k_late) · [`bench_conn_recycle_read_queue_8k`](#bench_conn_recycle_read_queue_8k) · [`test_net_benchmark_fixtures_roundtrip`](#test_net_benchmark_fixtures_roundtrip) · [`test_conn_wrap`](#test_conn_wrap) · [`test_conn_readable`](#test_conn_readable) · [`test_conn_consume`](#test_conn_consume) · [`test_conn_compact`](#test_conn_compact) · [`test_conn_find_header_end`](#test_conn_find_header_end) · [`test_conn_find_header_end_boundaries_and_false_candidates`](#test_conn_find_header_end_boundaries_and_false_candidates) · [`test_conn_pending_write`](#test_conn_pending_write) · [`test_conn_buffered_write_is_lossless_and_bounded`](#test_conn_buffered_write_is_lossless_and_bounded) · [`test_conn_reset`](#test_conn_reset) · [`test_conn_buffered_zero_copy_input_and_limits`](#test_conn_buffered_zero_copy_input_and_limits) · [`parsed`](#parsed) · [`expectAddress`](#expectAddress) · [`expectInvalidAddress`](#expectInvalidAddress) · [`test_net_negative_result_preserves_canonical_error`](#test_net_negative_result_preserves_canonical_error) · [`test_ipv4_parser_accepts_exact_network_order_octets`](#test_ipv4_parser_accepts_exact_network_order_octets) · [`test_ipv4_parser_rejects_malformed_and_out_of_range_input`](#test_ipv4_parser_rejects_malformed_and_out_of_range_input) · [`test_high_level_constructors_validate_before_native_access`](#test_high_level_constructors_validate_before_native_access) · [`test_typed_ipv4_endpoints_reach_the_native_boundary`](#test_typed_ipv4_endpoints_reach_the_native_boundary) · [`test_udp_port_zero_local_addr_and_typed_roundtrip`](#test_udp_port_zero_local_addr_and_typed_roundtrip) · [`test_ipv6_endpoints_reach_sockaddr_in6_without_text_parsing`](#test_ipv6_endpoints_reach_sockaddr_in6_without_text_parsing) · [`closeHandle`](#closeHandle) · [`contextFailure`](#contextFailure) · [`nativeAddress`](#nativeAddress) · [`tcpStreamTakeSocket`](#tcpStreamTakeSocket) · [`vex_net_resolve_host`](#vex_net_resolve_host) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_bind_ip`](#vex_net_bind_ip) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_connect_ip`](#vex_net_connect_ip) · [`vex_net_connect_ip_async`](#vex_net_connect_ip_async) · [`vex_net_connect_ip_async_context`](#vex_net_connect_ip_async_context) · [`vex_net_local_addr`](#vex_net_local_addr) · [`vex_net_peer_addr`](#vex_net_peer_addr) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_sendto_ip`](#vex_net_sendto_ip) · [`vex_net_sendto_ip_async_context`](#vex_net_sendto_ip_async_context) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_recvfrom_ip`](#vex_net_recvfrom_ip) · [`vex_net_recvfrom_ip_async_context`](#vex_net_recvfrom_ip_async_context) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write) · [`readEvent`](#readEvent) · [`decodedSocketAddress`](#decodedSocketAddress) · [`localSocketAddress`](#localSocketAddress) · [`peerSocketAddress`](#peerSocketAddress) · [`closeHandle`](#closeHandle) · [`contextFailure`](#contextFailure) · [`nativeAddress`](#nativeAddress) · [`isValidOpcode`](#isValidOpcode) · [`parseFrame`](#parseFrame) · [`encodeFrameHeader`](#encodeFrameHeader) · [`encodeFrame`](#encodeFrame) · [`encodeText`](#encodeText) · [`encodeClose`](#encodeClose) · [`encodePing`](#encodePing) · [`encodePong`](#encodePong) · [`isControlFrame`](#isControlFrame) · [`isDataFrame`](#isDataFrame) · [`resolveError`](#resolveError) · [`familyCode`](#familyCode) · [`familyAccepts`](#familyAccepts) · [`validateAndCopyHost`](#validateAndCopyHost) · [`decodeProviderAddress`](#decodeProviderAddress) · [`mapProviderFailure`](#mapProviderFailure) · [`resolveHostBlocking`](#resolveHostBlocking) · [`resolveHostBlocking`](#resolveHostBlocking) · [`resolveSocketAddrsBlocking`](#resolveSocketAddrsBlocking) · [`resolveSocketAddrsBlocking`](#resolveSocketAddrsBlocking) · [`get_errno`](#get_errno) · [`negative_errno`](#negative_errno) · [`map_resolver_status`](#map_resolver_status) · [`vex_net_resolve_host`](#vex_net_resolve_host) · [`build_ip_port`](#build_ip_port) · [`decode_ip_port`](#decode_ip_port) · [`write_ipv4_text`](#write_ipv4_text) · [`parse_ip_port`](#parse_ip_port) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_bind_ip`](#vex_net_bind_ip) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_connect_ip`](#vex_net_connect_ip) · [`vex_net_connect_ip_async`](#vex_net_connect_ip_async) · [`vex_net_connect_ip_async_context`](#vex_net_connect_ip_async_context) · [`vex_net_local_addr`](#vex_net_local_addr) · [`vex_net_peer_addr`](#vex_net_peer_addr) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_sendto_ip`](#vex_net_sendto_ip) · [`vex_net_sendto_ip_async_context`](#vex_net_sendto_ip_async_context) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_recvfrom_ip`](#vex_net_recvfrom_ip) · [`vex_net_recvfrom_ip_async_context`](#vex_net_recvfrom_ip_async_context) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write) · [`monotonicNs`](#monotonicNs) · [`prepareWorkers`](#prepareWorkers) · [`registeredWorkerCount`](#registeredWorkerCount) · [`flushSpawnBatch`](#flushSpawnBatch) · [`arenaSave`](#arenaSave) · [`arenaRestore`](#arenaRestore) · [`arenaCheckpoint`](#arenaCheckpoint) · [`arenaRewind`](#arenaRewind) · [`arenaTotalBytesUsed`](#arenaTotalBytesUsed) · [`regionCurrent`](#regionCurrent) · [`regionSetCurrent`](#regionSetCurrent) · [`setArenaMode`](#setArenaMode) · [`getArenaMode`](#getArenaMode) · [`cpuCount`](#cpuCount) · [`makePipe`](#makePipe) · [`tcpBlockingFd`](#tcpBlockingFd) · [`connectFd`](#connectFd) · [`bindFd`](#bindFd) · [`listenFd`](#listenFd) · [`acceptFd`](#acceptFd) · [`setReuseAddrFd`](#setReuseAddrFd) · [`setNoDelayFd`](#setNoDelayFd) · [`recvFd`](#recvFd) · [`sendFd`](#sendFd) · [`closeFd`](#closeFd) · [`peekFd`](#peekFd) · [`writeFd`](#writeFd) · [`readFd`](#readFd) · [`asyncAcceptFd`](#asyncAcceptFd) · [`asyncAcceptFd`](#asyncAcceptFd) · [`asyncRecvFd`](#asyncRecvFd) · [`asyncRecvFd`](#asyncRecvFd) · [`asyncSendFd`](#asyncSendFd) · [`asyncSendFd`](#asyncSendFd) · [`setNonBlockFd`](#setNonBlockFd) · [`map_resolver_status`](#map_resolver_status) · [`vex_net_resolve_host`](#vex_net_resolve_host) · [`socket`](#socket) · [`bind`](#bind) · [`listen`](#listen) · [`accept`](#accept) · [`connect`](#connect) · [`getsockname`](#getsockname) · [`getpeername`](#getpeername) · [`close`](#close) · [`recvfrom`](#recvfrom) · [`sendto`](#sendto) · [`setsockopt`](#setsockopt) · [`pipe2`](#pipe2) · [`fcntl`](#fcntl) · [`epoll_create1`](#epoll_create1) · [`epoll_ctl`](#epoll_ctl) · [`epoll_wait`](#epoll_wait) · [`build_ip_port`](#build_ip_port) · [`decode_ip_port`](#decode_ip_port) · [`write_ipv4_text`](#write_ipv4_text) · [`parse_ip_port`](#parse_ip_port) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_bind_ip`](#vex_net_bind_ip) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_connect_ip`](#vex_net_connect_ip) · [`vex_net_connect_ip_async`](#vex_net_connect_ip_async) · [`vex_net_connect_ip_async_context`](#vex_net_connect_ip_async_context) · [`vex_net_local_addr`](#vex_net_local_addr) · [`vex_net_peer_addr`](#vex_net_peer_addr) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_sendto_ip`](#vex_net_sendto_ip) · [`vex_net_sendto_ip_async_context`](#vex_net_sendto_ip_async_context) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_recvfrom_ip`](#vex_net_recvfrom_ip) · [`vex_net_recvfrom_ip_async_context`](#vex_net_recvfrom_ip_async_context) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write) · [`formatError`](#formatError) · [`parseError`](#parseError) · [`Ipv4Addr`](#Ipv4Addr) · [`SocketAddr`](#SocketAddr) · [`byteAt`](#byteAt) · [`decimalDigit`](#decimalDigit) · [`hexValue`](#hexValue) · [`parseIpv4Range`](#parseIpv4Range) · [`failedSide`](#failedSide) · [`parseIpv6Side`](#parseIpv6Side) · [`parseIpv6Range`](#parseIpv6Range) · [`parsePortRange`](#parsePortRange) · [`writeByte`](#writeByte) · [`writeDecimal`](#writeDecimal) · [`decimalLength`](#decimalLength) · [`writePort`](#writePort) · [`writeIpv4`](#writeIpv4) · [`ipv4TextLength`](#ipv4TextLength) · [`writeHex`](#writeHex) · [`writeIpv6`](#writeIpv6) · [`ipv6TextLength`](#ipv6TextLength) · [`portTextLength`](#portTextLength) · [`formatCapacityError`](#formatCapacityError) · [`parseIpv4`](#parseIpv4) · [`errorFromNegativeResult`](#errorFromNegativeResult) · [`closedSocketError`](#closedSocketError) · [`invalidBufferError`](#invalidBufferError) · [`invalidIpv4AddressError`](#invalidIpv4AddressError) · [`invalidIpAddressError`](#invalidIpAddressError) · [`oversizedIoResultError`](#oversizedIoResultError) · [`ensure_wsa`](#ensure_wsa) · [`map_resolver_status`](#map_resolver_status) · [`vex_net_resolve_host`](#vex_net_resolve_host) · [`build_ip_port`](#build_ip_port) · [`decode_ip_port`](#decode_ip_port) · [`write_ipv4_text`](#write_ipv4_text) · [`parse_ip_port`](#parse_ip_port) · [`negative_socket_error`](#negative_socket_error) · [`bounded_socket_length`](#bounded_socket_length) · [`vex_net_socket_tcp`](#vex_net_socket_tcp) · [`vex_net_socket_tcp_blocking`](#vex_net_socket_tcp_blocking) · [`vex_net_socket_udp`](#vex_net_socket_udp) · [`vex_net_set_reuseaddr`](#vex_net_set_reuseaddr) · [`vex_net_set_reuseport`](#vex_net_set_reuseport) · [`vex_net_set_nonblock`](#vex_net_set_nonblock) · [`vex_net_set_nodelay`](#vex_net_set_nodelay) · [`vex_net_set_nopush`](#vex_net_set_nopush) · [`vex_net_bind`](#vex_net_bind) · [`vex_net_bind_ip`](#vex_net_bind_ip) · [`vex_net_listen`](#vex_net_listen) · [`vex_net_connect`](#vex_net_connect) · [`vex_net_connect_ip`](#vex_net_connect_ip) · [`vex_net_connect_ip_async`](#vex_net_connect_ip_async) · [`vex_net_connect_ip_async_context`](#vex_net_connect_ip_async_context) · [`vex_net_local_addr`](#vex_net_local_addr) · [`vex_net_peer_addr`](#vex_net_peer_addr) · [`vex_net_accept`](#vex_net_accept) · [`vex_net_recv`](#vex_net_recv) · [`vex_net_recv_peek`](#vex_net_recv_peek) · [`vex_net_send`](#vex_net_send) · [`vex_net_sendto`](#vex_net_sendto) · [`vex_net_sendto_ip`](#vex_net_sendto_ip) · [`vex_net_sendto_ip_async_context`](#vex_net_sendto_ip_async_context) · [`vex_net_recvfrom`](#vex_net_recvfrom) · [`vex_net_recvfrom_ip`](#vex_net_recvfrom_ip) · [`vex_net_recvfrom_ip_async_context`](#vex_net_recvfrom_ip_async_context) · [`vex_net_close`](#vex_net_close) · [`vex_net_pipe`](#vex_net_pipe) · [`vex_net_loop_create`](#vex_net_loop_create) · [`vex_net_loop_close`](#vex_net_loop_close) · [`vex_net_register`](#vex_net_register) · [`vex_net_modify`](#vex_net_modify) · [`vex_net_unregister`](#vex_net_unregister) · [`vex_net_tick`](#vex_net_tick) · [`vex_net_thread_yield`](#vex_net_thread_yield) · [`vex_fd_set_nonblock`](#vex_fd_set_nonblock) · [`vex_fd_write`](#vex_fd_write) · [`vex_fd_read`](#vex_fd_read) · [`vex_fd_write`](#vex_fd_write)
+
+**Constants:** [`NET_UNSUPPORTED`](#NET_UNSUPPORTED) · [`EVT_READ`](#EVT_READ) · [`EVT_WRITE`](#EVT_WRITE) · [`EVT_HUP`](#EVT_HUP) · [`EVT_ERR`](#EVT_ERR) · [`WS_CONTINUATION`](#WS_CONTINUATION) · [`WS_TEXT`](#WS_TEXT) · [`WS_BINARY`](#WS_BINARY) · [`WS_CLOSE`](#WS_CLOSE) · [`WS_PING`](#WS_PING) · [`WS_PONG`](#WS_PONG) · [`WS_OK`](#WS_OK) · [`WS_NEED_MORE`](#WS_NEED_MORE) · [`WS_ERR_INVALID`](#WS_ERR_INVALID) · [`WS_MAX_BUFFER_BYTES`](#WS_MAX_BUFFER_BYTES) · [`RESOLVE_MAX_RESULTS`](#RESOLVE_MAX_RESULTS) · [`RESOLVE_HOST_CAPACITY`](#RESOLVE_HOST_CAPACITY) · [`RBUF_INIT`](#RBUF_INIT) · [`RBUF_MAX`](#RBUF_MAX) · [`WBUF_INIT`](#WBUF_INIT) · [`WBUF_MAX`](#WBUF_MAX)
 
 ## Constants
+
+### <a id="NET_UNSUPPORTED"></a>`NET_UNSUPPORTED`
+
+> 📄 `native.vxc` L10-10
+
+```vex
+const NET_UNSUPPORTED: i32=-95;
+```
+
+**Returns:** `i32=-95;`
+
+---
 
 ### <a id="EVT_READ"></a>`EVT_READ` `🔓 export`
 
@@ -60,7 +74,7 @@ export const EVT_ERR: i32=8;
 
 ### <a id="WS_CONTINUATION"></a>`WS_CONTINUATION` `🔓 export`
 
-> 📄 `ws_parser.vx` L18-18
+> 📄 `ws_parser.vx` L13-13
 
 ```vex
 export const WS_CONTINUATION: u8=0;
@@ -72,7 +86,7 @@ export const WS_CONTINUATION: u8=0;
 
 ### <a id="WS_TEXT"></a>`WS_TEXT` `🔓 export`
 
-> 📄 `ws_parser.vx` L19-19
+> 📄 `ws_parser.vx` L14-14
 
 ```vex
 export const WS_TEXT: u8=1;
@@ -84,7 +98,7 @@ export const WS_TEXT: u8=1;
 
 ### <a id="WS_BINARY"></a>`WS_BINARY` `🔓 export`
 
-> 📄 `ws_parser.vx` L20-20
+> 📄 `ws_parser.vx` L15-15
 
 ```vex
 export const WS_BINARY: u8=2;
@@ -96,7 +110,7 @@ export const WS_BINARY: u8=2;
 
 ### <a id="WS_CLOSE"></a>`WS_CLOSE` `🔓 export`
 
-> 📄 `ws_parser.vx` L21-21
+> 📄 `ws_parser.vx` L16-16
 
 ```vex
 export const WS_CLOSE: u8=8;
@@ -108,7 +122,7 @@ export const WS_CLOSE: u8=8;
 
 ### <a id="WS_PING"></a>`WS_PING` `🔓 export`
 
-> 📄 `ws_parser.vx` L22-22
+> 📄 `ws_parser.vx` L17-17
 
 ```vex
 export const WS_PING: u8=9;
@@ -120,7 +134,7 @@ export const WS_PING: u8=9;
 
 ### <a id="WS_PONG"></a>`WS_PONG` `🔓 export`
 
-> 📄 `ws_parser.vx` L23-23
+> 📄 `ws_parser.vx` L18-18
 
 ```vex
 export const WS_PONG: u8=10;
@@ -132,7 +146,7 @@ export const WS_PONG: u8=10;
 
 ### <a id="WS_OK"></a>`WS_OK` `🔓 export`
 
-> 📄 `ws_parser.vx` L26-26
+> 📄 `ws_parser.vx` L20-20
 
 ```vex
 export const WS_OK: i32=0;
@@ -144,31 +158,72 @@ export const WS_OK: i32=0;
 
 ### <a id="WS_NEED_MORE"></a>`WS_NEED_MORE` `🔓 export`
 
-> 📄 `ws_parser.vx` L27-27
+> 📄 `ws_parser.vx` L21-21
 
 ```vex
-export const WS_NEED_MORE: i32=- 1;
+export const WS_NEED_MORE: i32=-1;
 ```
 
-**Returns:** `i32=- 1;`
+**Returns:** `i32=-1;`
 
 ---
 
 ### <a id="WS_ERR_INVALID"></a>`WS_ERR_INVALID` `🔓 export`
 
-> 📄 `ws_parser.vx` L28-28
+> 📄 `ws_parser.vx` L22-22
 
 ```vex
-export const WS_ERR_INVALID: i32=- 2;
+export const WS_ERR_INVALID: i32=-2;
 ```
 
-**Returns:** `i32=- 2;`
+**Returns:** `i32=-2;`
+
+---
+
+### <a id="WS_MAX_BUFFER_BYTES"></a>`WS_MAX_BUFFER_BYTES` `🔓 export`
+
+> 📄 `ws_parser.vx` L27-27
+
+```vex
+export const WS_MAX_BUFFER_BYTES: usize=16 * 1024 * 1024 as usize;
+```
+
+Shared receive-buffer ceiling for connection-oriented WebSocket users.
+
+This is deliberately a transport-neutral frame boundary rather than an
+application message policy; consumers still bound fragmented messages.
+
+**Returns:** `usize=16 * 1024 * 1024 as usize;`
+
+---
+
+### <a id="RESOLVE_MAX_RESULTS"></a>`RESOLVE_MAX_RESULTS`
+
+> 📄 `resolver.vx` L12-12
+
+```vex
+const RESOLVE_MAX_RESULTS: usize=64 as usize;
+```
+
+**Returns:** `usize=64 as usize;`
+
+---
+
+### <a id="RESOLVE_HOST_CAPACITY"></a>`RESOLVE_HOST_CAPACITY`
+
+> 📄 `resolver.vx` L13-13
+
+```vex
+const RESOLVE_HOST_CAPACITY: usize=254 as usize;
+```
+
+**Returns:** `usize=254 as usize;`
 
 ---
 
 ### <a id="RBUF_INIT"></a>`RBUF_INIT`
 
-> 📄 `conn.vx` L20-20
+> 📄 `conn.vx` L18-18
 
 ```vex
 const RBUF_INIT: usize=8192;
@@ -180,7 +235,7 @@ const RBUF_INIT: usize=8192;
 
 ### <a id="RBUF_MAX"></a>`RBUF_MAX`
 
-> 📄 `conn.vx` L21-21
+> 📄 `conn.vx` L19-19
 
 ```vex
 const RBUF_MAX: usize=1048576;
@@ -192,7 +247,7 @@ const RBUF_MAX: usize=1048576;
 
 ### <a id="WBUF_INIT"></a>`WBUF_INIT`
 
-> 📄 `conn.vx` L22-22
+> 📄 `conn.vx` L20-20
 
 ```vex
 const WBUF_INIT: usize=4096;
@@ -204,7 +259,7 @@ const WBUF_INIT: usize=4096;
 
 ### <a id="WBUF_MAX"></a>`WBUF_MAX`
 
-> 📄 `conn.vx` L23-23
+> 📄 `conn.vx` L21-21
 
 ```vex
 const WBUF_MAX: usize=1048576;
@@ -216,13 +271,173 @@ const WBUF_MAX: usize=1048576;
 
 ## Structs
 
+### <a id="Ipv4FormatBufferState"></a>`Ipv4FormatBufferState`
+
+> 📄 `bench.test.vx` L73-76
+
+```vex
+struct Ipv4FormatBufferState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `address` | `Ipv4Addr` | 🔒 private |  |
+| `output` | `[u8; 64]` | 🔒 private |  |
+
+---
+
+### <a id="Ipv6FormatBufferState"></a>`Ipv6FormatBufferState`
+
+> 📄 `bench.test.vx` L97-100
+
+```vex
+struct Ipv6FormatBufferState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `address` | `Ipv6Addr` | 🔒 private |  |
+| `output` | `[u8; 64]` | 🔒 private |  |
+
+---
+
+### <a id="SocketFormatBufferState"></a>`SocketFormatBufferState`
+
+> 📄 `bench.test.vx` L121-124
+
+```vex
+struct SocketFormatBufferState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `address` | `SocketAddr` | 🔒 private |  |
+| `output` | `[u8; 64]` | 🔒 private |  |
+
+---
+
+### <a id="SocketAppendState"></a>`SocketAppendState`
+
+> 📄 `bench.test.vx` L145-148
+
+```vex
+struct SocketAppendState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `address` | `SocketAddr` | 🔒 private |  |
+| `output` | `Vec&lt;u8&gt;` | 🔒 private |  |
+
+---
+
+### <a id="WsParseState"></a>`WsParseState`
+
+> 📄 `bench.test.vx` L169-173
+
+```vex
+struct WsParseState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `encoded` | `Vec&lt;u8&gt;` | 🔒 private |  |
+| `frame` | `WsFrame` | 🔒 private |  |
+| `consumed` | `u64` | 🔒 private |  |
+
+---
+
+### <a id="WsEncodeState"></a>`WsEncodeState`
+
+> 📄 `bench.test.vx` L211-215
+
+```vex
+struct WsEncodeState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `payload` | `Vec&lt;u8&gt;` | 🔒 private |  |
+| `encoded` | `Vec&lt;u8&gt;` | 🔒 private |  |
+| `written` | `u64` | 🔒 private |  |
+
+---
+
+### <a id="WsUnmaskState"></a>`WsUnmaskState`
+
+> 📄 `bench.test.vx` L238-244
+
+```vex
+struct WsUnmaskState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `encoded` | `Vec&lt;u8&gt;` | 🔒 private |  |
+| `frame` | `WsFrame` | 🔒 private |  |
+| `payloadOffset` | `usize` | 🔒 private |  |
+| `payloadLength` | `usize` | 🔒 private |  |
+| `observed` | `u64` | 🔒 private |  |
+
+---
+
+### <a id="ConnHeaderState"></a>`ConnHeaderState`
+
+> 📄 `bench.test.vx` L307-310
+
+```vex
+struct ConnHeaderState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `connection` | `Conn` | 🔒 private |  |
+| `observed` | `i32` | 🔒 private |  |
+
+---
+
+### <a id="ConnRecycleState"></a>`ConnRecycleState`
+
+> 📄 `bench.test.vx` L335-338
+
+```vex
+struct ConnRecycleState
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `connection` | `Conn` | 🔒 private |  |
+| `source` | `Vec&lt;u8&gt;` | 🔒 private |  |
+
+---
+
 ### <a id="TcpListener"></a>`TcpListener` `🔓 export`
 
-> 📄 `tcp.vx` L22-25
+> 📄 `tcp.vx` L34-36
 
 ```vex
 export struct TcpListener
 ```
+
+An owning, non-blocking TCP listener.
 
 **Implements:** `Drop`
 
@@ -230,62 +445,74 @@ export struct TcpListener
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
+| `handle` | `i64` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `TcpListener.bind`[↗](#TcpListener.bind) | `export fn TcpListener.bind(ip: string, port: i32):` | Create a blocking TCP listener bound to ip:port. |
-| ⚡`accept`[↗](#TcpListener.accept) | `export fn (self: &amp;TcpListener) accept(): TcpStream` | Accept a new connection (goroutine-aware, parks on EAGAIN). |
-| `incoming`[↗](#TcpListener.incoming) | `export fn (self: &amp;TcpListener) incoming(): Channel` | Returns a channel that receives incoming connections. |
-| `close`[↗](#TcpListener.close) | `export fn (self: &amp;TcpListener!) close()` | Close the listener socket. |
+| `TcpListener.bind`[↗](#TcpListener.bind) | `export fn TcpListener.bind(ip: str, port: u16): Re` | Creates a non-blocking listener and completes all socket setup atomically. |
+| `TcpListener.bind`[↗](#TcpListener.bind) | `export fn TcpListener.bind(endpoint: SocketAddr): ` | Creates a listener from a typed IPv4 or IPv6 endpoint. Address text parsing |
+| ⚡`accept`[↗](#TcpListener.accept) | `export fn (self: &amp;TcpListener) accept(): Result&lt;Tc` | Accepts one connection, parking the current Vex task while the listener is |
+| ⚡`accept`[↗](#TcpListener.accept) | `export fn (self: &amp;TcpListener) accept(context: &amp;Co` | Accepts with cancellation/deadline propagation into the native wait |
+| `rawHandle`[↗](#TcpListener.rawHandle) | `export fn (self: &amp;TcpListener) rawHandle(): i64` | Returns the platform-width native socket handle for poller integration. |
+| `isOpen`[↗](#TcpListener.isOpen) | `export fn (self: &amp;TcpListener) isOpen(): bool` |  |
+| `localAddr`[↗](#TcpListener.localAddr) | `export fn (self: &amp;TcpListener) localAddr(): Result` | Returns the endpoint selected by the OS. This is authoritative when bind |
+| `close`[↗](#TcpListener.close) | `export fn (self: &amp;TcpListener!) close(): Result&lt;()` | Closes exactly once. The local handle is invalidated before entering the OS |
 | `drop`[↗](#TcpListener.drop) | `export fn (self: &amp;TcpListener!) drop()` |  |
 
 ---
 
 ### <a id="TcpStream"></a>`TcpStream` `🔓 export`
 
-> 📄 `tcp.vx` L107-110
+> 📄 `tcp.vx` L177-179
 
 ```vex
 export struct TcpStream
 ```
 
-**Implements:** `Drop`
+An owning connected TCP stream.
+
+TcpStream is the canonical AsyncReadWriter implementation. The
+cancellation-aware overloads below satisfy the contract; context-free
+overloads remain an explicit zero-overhead convenience for callers that
+intentionally do not need cancellation propagation.
+
+**Implements:** `AsyncReadWriter` & `Drop`
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
+| `handle` | `i64` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `TcpStream.connect`[↗](#TcpStream.connect) | `export fn TcpStream.connect(ip: string, port: i32)` | Connect to a remote TCP server at ip:port. |
-| ⚡`read`[↗](#TcpStream.read) | `export fn (self: &amp;TcpStream) read(buf: Ptr&lt;u8&gt;, le` | Read data into buffer. Returns bytes read, 0 on EOF, negative on error. |
-| ⚡`write`[↗](#TcpStream.write) | `export fn (self: &amp;TcpStream) write(data: Ptr&lt;u8&gt;, ` | Write raw bytes. Returns bytes written or negative on error. |
-| ⚡`writeStr`[↗](#TcpStream.writeStr) | `export fn (self: &amp;TcpStream) writeStr(s: string): ` | Write a string. Returns bytes written or negative on error. |
-| `close`[↗](#TcpStream.close) | `export fn (self: &amp;TcpStream!) close()` | Close the stream. |
+| `TcpStream.adopt`[↗](#TcpStream.adopt) | `export fn TcpStream.adopt(socket: &amp;Socket!): Resul` | Adopt an already-connected `Socket` into the canonical task-aware stream |
+| ⚡`TcpStream.connect`[↗](#TcpStream.connect) | `export fn TcpStream.connect(ip: str, port: u16): R` | Establishes a task-aware non-blocking connection without exposing a |
+| ⚡`TcpStream.connect`[↗](#TcpStream.connect) | `export fn TcpStream.connect(endpoint: SocketAddr):` |  |
+| ⚡`TcpStream.connect`[↗](#TcpStream.connect) | `export fn TcpStream.connect(ip: str, port: u16, co` |  |
+| ⚡`TcpStream.connect`[↗](#TcpStream.connect) | `export fn TcpStream.connect(endpoint: SocketAddr, ` |  |
+| `TcpStream.connectBlocking`[↗](#TcpStream.connectBlocking) | `export fn TcpStream.connectBlocking(ip: str, port:` | Explicit blocking connection establishment for synchronous bootstrap code. |
+| `TcpStream.connectBlocking`[↗](#TcpStream.connectBlocking) | `export fn TcpStream.connectBlocking(endpoint: Sock` |  |
+| ⚡`read`[↗](#TcpStream.read) | `export fn (self: &amp;TcpStream) read(buf: Ptr&lt;u8!&gt;, l` | Reads at most `len` bytes, parking the current task on temporary blocking. |
+| ⚡`read`[↗](#TcpStream.read) | `export fn (self: &amp;TcpStream) read(buf: Ptr&lt;u8!&gt;, l` |  |
+| ⚡`write`[↗](#TcpStream.write) | `export fn (self: &amp;TcpStream) write(data: Ptr&lt;u8&gt;, ` | Writes at most `len` bytes, parking the current task on temporary blocking. |
+| ⚡`write`[↗](#TcpStream.write) | `export fn (self: &amp;TcpStream) write(data: Ptr&lt;u8&gt;, ` |  |
+| ⚡`writeAll`[↗](#TcpStream.writeAll) | `export fn (self: &amp;TcpStream) writeAll(data: Ptr&lt;u8` | Writes the complete buffer or returns without losing the unwritten tail. |
+| ⚡`writeAll`[↗](#TcpStream.writeAll) | `export fn (self: &amp;TcpStream) writeAll(data: Ptr&lt;u8` |  |
+| ⚡`writeStr`[↗](#TcpStream.writeStr) | `export fn (self: &amp;TcpStream) writeStr(value: str):` |  |
+| ⚡`writeStr`[↗](#TcpStream.writeStr) | `export fn (self: &amp;TcpStream) writeStr(value: str, ` |  |
+| ⚡`writeAllStr`[↗](#TcpStream.writeAllStr) | `export fn (self: &amp;TcpStream) writeAllStr(value: st` |  |
+| ⚡`writeAllStr`[↗](#TcpStream.writeAllStr) | `export fn (self: &amp;TcpStream) writeAllStr(value: st` |  |
+| `rawHandle`[↗](#TcpStream.rawHandle) | `export fn (self: &amp;TcpStream) rawHandle(): i64` |  |
+| `isOpen`[↗](#TcpStream.isOpen) | `export fn (self: &amp;TcpStream) isOpen(): bool` |  |
+| `localAddr`[↗](#TcpStream.localAddr) | `export fn (self: &amp;TcpStream) localAddr(): Result&lt;S` |  |
+| `peerAddr`[↗](#TcpStream.peerAddr) | `export fn (self: &amp;TcpStream) peerAddr(): Result&lt;So` |  |
+| `close`[↗](#TcpStream.close) | `export fn (self: &amp;TcpStream!) close(): Result&lt;(), ` |  |
 | `drop`[↗](#TcpStream.drop) | `export fn (self: &amp;TcpStream!) drop()` |  |
-
----
-
-### <a id="sockaddr_in"></a>`sockaddr_in`
-
-> 📄 `native.vxc` L35-38
-
-```vex
-struct sockaddr_in
-```
-
-**Fields:**
-
-| Name | Type | Access | Description |
-|------|------|--------|-------------|
-| `mem` | `[u8; 16]` | 🔓 public |  |
 
 ---
 
@@ -314,6 +541,8 @@ export struct Event
 export struct EventLoop
 ```
 
+**Implements:** `Drop`
+
 **Fields:**
 
 | Name | Type | Access | Description |
@@ -330,14 +559,15 @@ export struct EventLoop
 | `register`[↗](#EventLoop.register) | `export fn (self: &amp;EventLoop!) register(fd: i32, ev` | Register an fd for events (EVT_READ, EVT_WRITE, or both). |
 | `modify`[↗](#EventLoop.modify) | `export fn (self: &amp;EventLoop!) modify(fd: i32, even` | Modify the events monitored for an fd. |
 | `unregister`[↗](#EventLoop.unregister) | `export fn (self: &amp;EventLoop!) unregister(fd: i32):` | Unregister an fd from the event loop. |
-| `poll`[↗](#EventLoop.poll) | `export fn (self: &amp;EventLoop!) poll(out: Ptr&lt;u8&gt;, c` | Poll for events. Returns number of ready events. |
+| `poll`[↗](#EventLoop.poll) | `export fn (self: &amp;EventLoop!) poll(out: Ptr&lt;u8!&gt;, ` | Poll for events. Returns number of ready events. |
 | `close`[↗](#EventLoop.close) | `export fn (self: &amp;EventLoop!) close()` | Close the event loop. |
+| `drop`[↗](#EventLoop.drop) | `export fn (self: &amp;EventLoop!) drop()` |  |
 
 ---
 
 ### <a id="UdpSocket"></a>`UdpSocket` `🔓 export`
 
-> 📄 `udp.vx` L19-22
+> 📄 `udp.vx` L30-32
 
 ```vex
 export struct UdpSocket
@@ -349,74 +579,216 @@ export struct UdpSocket
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
+| `handle` | `i64` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `sendTo`[↗](#UdpSocket.sendTo) | `export fn (self: &amp;UdpSocket) sendTo(data: Ptr&lt;u8&gt;,` | Send data to a specific ip:port. |
-| `recvFrom`[↗](#UdpSocket.recvFrom) | `export fn (self: &amp;UdpSocket) recvFrom(buf: Ptr&lt;u8&gt;` | Receive data and get sender address. |
-| `recvFromWithSource`[↗](#UdpSocket.recvFromWithSource) | `export fn (self: &amp;UdpSocket) recvFromWithSource(bu` | Receive data and preserve the native sender IPv4 text and port. The |
-| `setNonBlock`[↗](#UdpSocket.setNonBlock) | `export fn (self: &amp;UdpSocket!) setNonBlock(on: bool` | Enable or disable non-blocking receive/send operations. |
-| `close`[↗](#UdpSocket.close) | `export fn (self: &amp;UdpSocket!) close()` | Close the UDP socket. |
+| `UdpSocket.bind`[↗](#UdpSocket.bind) | `export fn UdpSocket.bind(ip: str, port: u16): Resu` | Creates and binds an owning UDP socket. Setup failure cannot leak a native |
+| `UdpSocket.bind`[↗](#UdpSocket.bind) | `export fn UdpSocket.bind(endpoint: SocketAddr): Re` |  |
+| `sendTo`[↗](#UdpSocket.sendTo) | `export fn (self: &amp;UdpSocket) sendTo(data: Ptr&lt;u8&gt;,` |  |
+| `sendTo`[↗](#UdpSocket.sendTo) | `export fn (self: &amp;UdpSocket) sendTo(data: Ptr&lt;u8&gt;,` |  |
+| ⚡`sendTo`[↗](#UdpSocket.sendTo) | `export fn (self: &amp;UdpSocket) sendTo(data: Ptr&lt;u8&gt;,` | Sends one datagram while propagating Context cancellation/deadline into the |
+| ⚡`sendTo`[↗](#UdpSocket.sendTo) | `export fn (self: &amp;UdpSocket) sendTo(data: Ptr&lt;u8&gt;,` |  |
+| `recvFrom`[↗](#UdpSocket.recvFrom) | `export fn (self: &amp;UdpSocket) recvFrom(buf: Ptr&lt;u8!` |  |
+| ⚡`recvFrom`[↗](#UdpSocket.recvFrom) | `export fn (self: &amp;UdpSocket) recvFrom(buf: Ptr&lt;u8!` |  |
+| `recvDatagram`[↗](#UdpSocket.recvDatagram) | `export fn (self: &amp;UdpSocket) recvDatagram(buf: Ptr` |  |
+| ⚡`recvDatagram`[↗](#UdpSocket.recvDatagram) | `export fn (self: &amp;UdpSocket) recvDatagram(buf: Ptr` |  |
+| `recvFromWithSource`[↗](#UdpSocket.recvFromWithSource) | `export fn (self: &amp;UdpSocket) recvFromWithSource(bu` |  |
+| ⚡`recvFromWithSource`[↗](#UdpSocket.recvFromWithSource) | `export fn (self: &amp;UdpSocket) recvFromWithSource(bu` |  |
+| `setNonBlock`[↗](#UdpSocket.setNonBlock) | `export fn (self: &amp;UdpSocket!) setNonBlock(on: bool` |  |
+| `rawHandle`[↗](#UdpSocket.rawHandle) | `export fn (self: &amp;UdpSocket) rawHandle(): i64` |  |
+| `isOpen`[↗](#UdpSocket.isOpen) | `export fn (self: &amp;UdpSocket) isOpen(): bool` |  |
+| `localAddr`[↗](#UdpSocket.localAddr) | `export fn (self: &amp;UdpSocket) localAddr(): Result&lt;S` | Returns the actual bound endpoint, including the ephemeral port selected |
+| `close`[↗](#UdpSocket.close) | `export fn (self: &amp;UdpSocket!) close(): Result&lt;(), ` |  |
 | `drop`[↗](#UdpSocket.drop) | `export fn (self: &amp;UdpSocket!) drop()` |  |
 
 ---
 
 ### <a id="UdpRecvFromResult"></a>`UdpRecvFromResult` `🔓 export`
 
-> 📄 `udp.vx` L27-32
+> 📄 `udp.vx` L36-41
 
 ```vex
 export struct UdpRecvFromResult
 ```
 
-One bounded recvfrom result including the native source tuple. The legacy
+One datagram receive result including its source tuple. `sourceIp` is a
 
-`recvFrom` API intentionally returns only a byte count; protocol stacks
-that need datagram demultiplexing should use this value instead.
+zero-terminated IPv4 text buffer; `bytes` never exceeds the caller buffer.
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `bytes` | `i64` | 🔓 public |  |
+| `bytes` | `usize` | 🔓 public |  |
 | `sourceIp` | `[u8; 64]` | 🔓 public |  |
 | `sourcePort` | `u16` | 🔓 public |  |
 
 ---
 
-### <a id="WsFrame"></a>`WsFrame` `🔓 export`
+### <a id="UdpDatagram"></a>`UdpDatagram` `🔓 export`
 
-> 📄 `ws_parser.vx` L31-34
+> 📄 `udp.vx` L45-49
 
 ```vex
-export struct WsFrame
+export struct UdpDatagram
 ```
+
+Allocation-free modern datagram result. Source address bytes are decoded
+
+directly from sockaddr storage and are never round-tripped through text.
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `raw` | `[u8; 48]` | 🔓 public |  |
+| `bytes` | `usize` | 🔓 public |  |
+| `source` | `SocketAddr` | 🔓 public |  |
+
+---
+
+### <a id="WsFrame"></a>`WsFrame` `🔓 export`
+
+> 📄 `ws_parser.vx` L31-38
+
+```vex
+export struct WsFrame
+```
+
+Parsed frame metadata. Payload storage remains owned by the caller's input
+
+buffer; this value only carries a zero-copy pointer into it.
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `finValue` | `u8` | 🔒 private |  |
+| `opcodeValue` | `u8` | 🔒 private |  |
+| `maskedValue` | `u8` | 🔒 private |  |
+| `payloadLength` | `u64` | 🔒 private |  |
+| `maskValue` | `[u8; 4]` | 🔒 private |  |
+| `payloadPointer` | `Ptr&lt;u8&gt;` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `fin`[↗](#WsFrame.fin) | `export fn (self: &amp;WsFrame) fin(): bool` | Get the FIN bit (1 = final frame). |
-| `opcode`[↗](#WsFrame.opcode) | `export fn (self: &amp;WsFrame) opcode(): u8` | Get the opcode (WS_TEXT, WS_BINARY, WS_CLOSE, WS_PING, WS_PONG). |
-| `masked`[↗](#WsFrame.masked) | `export fn (self: &amp;WsFrame) masked(): bool` | Check if the frame payload is masked (client → server). |
-| `payloadLen`[↗](#WsFrame.payloadLen) | `export fn (self: &amp;WsFrame) payloadLen(): u64` | Get payload length. |
-| `maskBytes`[↗](#WsFrame.maskBytes) | `export fn (self: &amp;WsFrame) maskBytes(): Ptr&lt;u8&gt;` | Get mask bytes (4 bytes at offset 16). |
-| `payload`[↗](#WsFrame.payload) | `export fn (self: &amp;WsFrame) payload(): Ptr&lt;u8&gt;` | Get payload pointer (at offset 24 on 64-bit). |
+| `WsFrame.empty`[↗](#WsFrame.empty) | `export fn WsFrame.empty(): WsFrame` |  |
+| `fin`[↗](#WsFrame.fin) | `export fn (self: &amp;WsFrame) fin(): bool` |  |
+| `opcode`[↗](#WsFrame.opcode) | `export fn (self: &amp;WsFrame) opcode(): u8` |  |
+| `masked`[↗](#WsFrame.masked) | `export fn (self: &amp;WsFrame) masked(): bool` |  |
+| `payloadLen`[↗](#WsFrame.payloadLen) | `export fn (self: &amp;WsFrame) payloadLen(): u64` |  |
+| `payload`[↗](#WsFrame.payload) | `export fn (self: &amp;WsFrame) payload(): Ptr&lt;u8&gt;` |  |
+| `unmaskPayload`[↗](#WsFrame.unmaskPayload) | `export fn (self: &amp;WsFrame) unmaskPayload(data: Ptr` | XOR this frame's masking key into caller-owned payload storage. |
+
+---
+
+### <a id="WsFrameStream"></a>`WsFrameStream` `🔓 export`
+
+> 📄 `ws_parser.vx` L60-62
+
+```vex
+export struct WsFrameStream
+```
+
+Socket-independent incremental input state for RFC 6455 frames.
+
+A frame parser must never equate `recv()` boundaries with frame boundaries.
+This type retains incomplete headers/payloads and trailing frames, while
+leaving the transport in charge of readiness, deadlines and I/O ownership.
+`WsConn` uses it today; Fiber can feed it directly without recreating a
+second parser or another peer-controlled growable buffer.
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `input` | `Conn` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `WsFrameStream.new`[↗](#WsFrameStream.new) | `export fn WsFrameStream.new(): WsFrameStream` |  |
+| `pending`[↗](#WsFrameStream.pending) | `export fn (self: &amp;WsFrameStream) pending(): usize` | Number of bytes not yet consumed by a parsed frame. |
+| `readPtr`[↗](#WsFrameStream.readPtr) | `export fn (self: &amp;WsFrameStream) readPtr(): Ptr&lt;u8` | Start of unread storage. Valid even when `pending() == 0` so callers can |
+| `writePtr`[↗](#WsFrameStream.writePtr) | `export fn (self: &amp;WsFrameStream!) writePtr(): Ptr&lt;` | Tail storage for one transport read after `ensureFree` succeeds. |
+| `freeSpace`[↗](#WsFrameStream.freeSpace) | `export fn (self: &amp;WsFrameStream) freeSpace(): usiz` | Physical writable tail after a successful `ensureFree` reservation. |
+| `ensureFree`[↗](#WsFrameStream.ensureFree) | `export fn (self: &amp;WsFrameStream!) ensureFree(requi` | Ensure at least `required` contiguous bytes at the writable tail. |
+| `advance`[↗](#WsFrameStream.advance) | `export fn (self: &amp;WsFrameStream!) advance(count: u` | Commit bytes written by the transport. Invalid counts are rejected rather |
+| `feed`[↗](#WsFrameStream.feed) | `export fn (self: &amp;WsFrameStream!) feed(data: Ptr&lt;u` | Copy a caller-owned chunk into the stream. Event-loop adapters may instead |
+| `parseNext`[↗](#WsFrameStream.parseNext) | `export fn (self: &amp;WsFrameStream) parseNext(frame: ` | Parse the next complete frame. Frame payload storage remains owned by this |
+| `consume`[↗](#WsFrameStream.consume) | `export fn (self: &amp;WsFrameStream!) consume(count: u` | Release the exact bytes reported by a successful `parseNext` call. |
+
+---
+
+### <a id="ResolveError"></a>`ResolveError` `🔓 export`
+
+> 📄 `resolver.vx` L32-35
+
+```vex
+export struct ResolveError
+```
+
+Allocation-free resolver failure. `nativeCode` retains the target
+
+provider's diagnostic code without making its numeric value public API.
+
+**Implements:** `Copy` & `Display` & `Debug`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `kindValue` | `ResolveErrorKind` | 🔒 private |  |
+| `nativeCodeValue` | `i32` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `kind`[↗](#ResolveError.kind) | `export fn (self: &amp;ResolveError) kind(): ResolveErr` |  |
+| `nativeCode`[↗](#ResolveError.nativeCode) | `export fn (self: &amp;ResolveError) nativeCode(): i32` |  |
+| `message`[↗](#ResolveError.message) | `export fn (self: &amp;ResolveError) message(): str` |  |
+| `toString`[↗](#ResolveError.toString) | `export fn (self: &amp;ResolveError) toString(): string` |  |
+| `debug`[↗](#ResolveError.debug) | `export fn (self: &amp;ResolveError) debug(): string` |  |
+
+---
+
+### <a id="ResolveOptions"></a>`ResolveOptions` `🔓 export`
+
+> 📄 `resolver.vx` L64-67
+
+```vex
+export struct ResolveOptions
+```
+
+**Implements:** `Copy`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `familyValue` | `ResolveFamily` | 🔒 private |  |
+| `maxResultsValue` | `usize` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `ResolveOptions.default`[↗](#ResolveOptions.default) | `export fn ResolveOptions.default(): ResolveOptions` |  |
+| `ResolveOptions.new`[↗](#ResolveOptions.new) | `export fn ResolveOptions.new(family: ResolveFamily` |  |
+| `family`[↗](#ResolveOptions.family) | `export fn (self: &amp;ResolveOptions) family(): Resolv` |  |
+| `maxResults`[↗](#ResolveOptions.maxResults) | `export fn (self: &amp;ResolveOptions) maxResults(): us` |  |
 
 ---
 
 ### <a id="sockaddr_in"></a>`sockaddr_in`
 
-> 📄 `native.macos.vxc` L35-38
+> 📄 `native.macos.vxc` L134-137
 
 ```vex
 struct sockaddr_in
@@ -430,62 +802,129 @@ struct sockaddr_in
 
 ---
 
+### <a id="sockaddr_ip"></a>`sockaddr_ip`
+
+> 📄 `native.macos.vxc` L139-142
+
+```vex
+struct sockaddr_ip
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `mem` | `[u8; 28]` | 🔓 public |  |
+
+---
+
 ### <a id="Conn"></a>`Conn` `🔓 export`
 
-> 📄 `conn.vx` L28-41
+> 📄 `conn.vx` L26-41
 
 ```vex
 export struct Conn
 ```
 
+**Implements:** `Drop`
+
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
-| `rbuf` | `Vec&lt;u8&gt;` | 🔓 public |  |
-| `rpos` | `usize` | 🔓 public |  |
-| `rlen` | `usize` | 🔓 public |  |
-| `wbuf` | `Vec&lt;u8&gt;` | 🔓 public |  |
-| `wpos` | `usize` | 🔓 public |  |
-| `wlen` | `usize` | 🔓 public |  |
-| `closed` | `bool` | 🔓 public |  |
+| `fd` | `i64` | 🔒 private |  |
+| `rbuf` | `Vec&lt;u8&gt;` | 🔒 private |  |
+| `rpos` | `usize` | 🔒 private |  |
+| `rlen` | `usize` | 🔒 private |  |
+| `rbufMax` | `usize` | 🔒 private |  |
+| `wbuf` | `Vec&lt;u8&gt;` | 🔒 private |  |
+| `wpos` | `usize` | 🔒 private |  |
+| `wlen` | `usize` | 🔒 private |  |
+| `wbufMax` | `usize` | 🔒 private |  |
+| `closed` | `bool` | 🔒 private |  |
+| `ownsFd` | `bool` | 🔒 private |  |
 
 **Methods:**
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `Conn.wrap`[↗](#Conn.wrap) | `export fn Conn.wrap(fd: i32): Conn` | Wrap a raw fd into a buffered connection. |
+| `Conn.wrap`[↗](#Conn.wrap) | `export fn Conn.wrap(fd: i64): Conn` | Wrap a raw fd into a buffered connection. |
+| `Conn.wrapBorrowed`[↗](#Conn.wrapBorrowed) | `export fn Conn.wrapBorrowed(fd: i64): Conn` | Wrap a descriptor without taking ownership of it. |
+| `Conn.wrapWithLimits`[↗](#Conn.wrapWithLimits) | `export fn Conn.wrapWithLimits(fd: i64, readLimit: ` | Wrap an owned descriptor with explicit bounded input/output queues. |
+| `Conn.wrapBorrowedWithLimits`[↗](#Conn.wrapBorrowedWithLimits) | `export fn Conn.wrapBorrowedWithLimits(fd: i64, rea` | Borrow a descriptor with explicit bounded input/output queues. |
+| `Conn.wrapBorrowedWithBuffering`[↗](#Conn.wrapBorrowedWithBuffering) | `export fn Conn.wrapBorrowedWithBuffering(fd: i64, ` | Borrow a descriptor with explicit queue limits and initial allocations. |
+| `Conn.buffered`[↗](#Conn.buffered) | `export fn Conn.buffered(readLimit: usize, writeLim` | Create queue-only transport storage. It owns no descriptor, so `recv` and |
+| `Conn.init`[↗](#Conn.init) | `fn Conn.init(fd: i64, ownsFd: bool, readLimit: usi` |  |
+| `Conn.initWithBuffering`[↗](#Conn.initWithBuffering) | `fn Conn.initWithBuffering(fd: i64, ownsFd: bool, r` |  |
+| `rawFd`[↗](#Conn.rawFd) | `export fn (self: &amp;Conn) rawFd(): i64` | The wrapped descriptor. Ownership remains with this connection unless it |
+| `isClosed`[↗](#Conn.isClosed) | `export fn (self: &amp;Conn) isClosed(): bool` |  |
 | `readable`[↗](#Conn.readable) | `export fn (self: &amp;Conn) readable(): usize` | Number of unread bytes available in the buffer. |
 | `readPtr`[↗](#Conn.readPtr) | `export fn (self: &amp;Conn) readPtr(): Ptr&lt;u8&gt;` | Pointer to start of unread data. |
+| `readTailSpace`[↗](#Conn.readTailSpace) | `export fn (self: &amp;Conn) readTailSpace(): usize` | Physical writable bytes currently available at the input tail. Callers that |
+| `ensureReadSpace`[↗](#Conn.ensureReadSpace) | `export fn (self: &amp;Conn!) ensureReadSpace(required:` | Reserve contiguous tail space for an outer non-blocking transport read. |
+| `readWritePtr`[↗](#Conn.readWritePtr) | `export fn (self: &amp;Conn!) readWritePtr(): Ptr&lt;u8!&gt;` | Writable tail after `ensureReadSpace` succeeds. |
+| `commitRead`[↗](#Conn.commitRead) | `export fn (self: &amp;Conn!) commitRead(count: usize):` | Commit bytes written through `readWritePtr`. Counts beyond reserved free |
+| `stageRead`[↗](#Conn.stageRead) | `export fn (self: &amp;Conn!) stageRead(data: Ptr&lt;u8&gt;, ` | Append bytes that were obtained by an outer transport layer (for example a |
 | `recv`[↗](#Conn.recv) | `export fn (self: &amp;Conn!) recv(): i64` | Read from socket into the read buffer. |
-| `consume`[↗](#Conn.consume) | `export fn (self: &amp;Conn!) consume(n: usize)` | Consume `n` bytes from the read buffer. |
-| `consume`[↗](#Conn.consume) | `export fn (self: &amp;Conn!) consume(n: i32)` |  |
+| `consume`[↗](#Conn.consume) | `export fn (self: &amp;Conn!) consume(n: usize): bool` | Consume `n` bytes from the read buffer. Returns false without mutation when |
+| `consume`[↗](#Conn.consume) | `export fn (self: &amp;Conn!) consume(n: i32): bool` |  |
 | `compactRead`[↗](#Conn.compactRead) | `export fn (self: &amp;Conn!) compactRead()` | Compact read buffer — shift unread data to front. |
 | `growRead`[↗](#Conn.growRead) | `fn (self: &amp;Conn!) growRead(): bool` | Grow read buffer (double, up to RBUF_MAX). |
 | `findHeaderEnd`[↗](#Conn.findHeaderEnd) | `export fn (self: &amp;Conn) findHeaderEnd(): i32` | Scan read buffer for \r\n\r\n (HTTP header terminator). |
 | `write`[↗](#Conn.write) | `export fn (self: &amp;Conn!) write(data: Ptr&lt;u8&gt;, len:` | Write data to the write buffer. Does NOT send to socket yet. |
 | `bufferWrite`[↗](#Conn.bufferWrite) | `fn (self: &amp;Conn!) bufferWrite(data: Ptr&lt;u8&gt;, len: ` | Buffer data for later flush. |
+| `stageWrite`[↗](#Conn.stageWrite) | `export fn (self: &amp;Conn!) stageWrite(data: Ptr&lt;u8&gt;,` | Queue bytes without attempting a socket write. This is useful for framed |
 | `flush`[↗](#Conn.flush) | `export fn (self: &amp;Conn!) flush(): i64` | Flush write buffer to socket. |
 | `hasPendingWrite`[↗](#Conn.hasPendingWrite) | `export fn (self: &amp;Conn) hasPendingWrite(): bool` | Check if there's unsent data in the write buffer. |
+| `pendingWriteBytes`[↗](#Conn.pendingWriteBytes) | `export fn (self: &amp;Conn) pendingWriteBytes(): usize` |  |
+| `writeAvailable`[↗](#Conn.writeAvailable) | `export fn (self: &amp;Conn) writeAvailable(): usize` | Remaining bounded output capacity. Framed transports use this to reserve a |
 | `close`[↗](#Conn.close) | `export fn (self: &amp;Conn!) close()` | Close the connection and fd. |
+| `drop`[↗](#Conn.drop) | `export fn (self: &amp;Conn!) drop()` |  |
 | `reset`[↗](#Conn.reset) | `export fn (self: &amp;Conn!) reset()` | Reset for keep-alive reuse (zero alloc). |
 
 ---
 
-### <a id="Socket"></a>`Socket` `🔓 export`
+### <a id="ArenaCheckpoint"></a>`ArenaCheckpoint` `🔓 export`
 
-> 📄 `socket.vx` L38-41
+> 📄 `runtime.vxc` L19-25
 
 ```vex
-export struct Socket
+export struct ArenaCheckpoint
 ```
 
 **Fields:**
 
 | Name | Type | Access | Description |
 |------|------|--------|-------------|
-| `fd` | `i32` | 🔓 public |  |
+| `state` | `Ptr&lt;Opaque&gt;` | 🔒 private |  |
+| `chunk` | `Ptr&lt;Opaque&gt;` | 🔒 private |  |
+| `activeSavePoint` | `Ptr&lt;Opaque&gt;` | 🔒 private |  |
+| `used` | `i64` | 🔒 private |  |
+| `deferredCount` | `i32` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `ArenaCheckpoint.new`[↗](#ArenaCheckpoint.new) | `export fn ArenaCheckpoint.new(): ArenaCheckpoint` |  |
+
+---
+
+### <a id="Socket"></a>`Socket` `🔓 export`
+
+> 📄 `socket.vx` L41-44
+
+```vex
+export struct Socket
+```
+
+**Implements:** `Drop`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `fd` | `i64` | 🔓 public |  |
 
 **Methods:**
 
@@ -499,20 +938,22 @@ export struct Socket
 | `setNonBlock`[↗](#Socket.setNonBlock) | `export fn (self: &amp;Socket!) setNonBlock(on: bool)` | Enable/disable O_NONBLOCK. |
 | `setNoDelay`[↗](#Socket.setNoDelay) | `export fn (self: &amp;Socket!) setNoDelay(on: bool)` | Enable/disable TCP_NODELAY (Nagle's algorithm off). |
 | `setNoPush`[↗](#Socket.setNoPush) | `export fn (self: &amp;Socket!) setNoPush(on: bool)` | Enable/disable TCP_NOPUSH (macOS/BSD) / TCP_CORK (Linux). |
-| `bind`[↗](#Socket.bind) | `export fn (self: &amp;Socket) bind(ip: string, port: i` | Bind socket to ip:port. Returns 0 on success, negative on error. |
+| `bind`[↗](#Socket.bind) | `export fn (self: &amp;Socket) bind(ip: str, port: u16)` | Bind socket to ip:port. Returns 0 on success, negative on error. |
 | `listen`[↗](#Socket.listen) | `export fn (self: &amp;Socket) listen(backlog: i32): i3` | Start listening with given backlog. Returns 0 on success. |
-| `connect`[↗](#Socket.connect) | `export fn (self: &amp;Socket) connect(ip: string, port` | Connect to remote ip:port. Returns 0 on success. |
+| `connect`[↗](#Socket.connect) | `export fn (self: &amp;Socket) connect(ip: str, port: u` | Connect to remote ip:port. Returns 0 on success. |
 | `accept`[↗](#Socket.accept) | `export fn (self: &amp;Socket) accept(): Socket` | Accept a new connection. Returns a Socket with the client fd. |
-| `recv`[↗](#Socket.recv) | `export fn (self: &amp;Socket) recv(buf: Ptr&lt;u8&gt;, len: ` | Read into buffer. Returns bytes read, 0 on EOF, negative on error/EAGAIN. |
+| `recv`[↗](#Socket.recv) | `export fn (self: &amp;Socket) recv(buf: Ptr&lt;u8!&gt;, len:` | Read into buffer. Returns bytes read, 0 on EOF, negative on error/EAGAIN. |
 | `send`[↗](#Socket.send) | `export fn (self: &amp;Socket) send(buf: Ptr&lt;u8&gt;, len: ` | Write bytes. Returns bytes written or negative on error/EAGAIN. |
-| `close`[↗](#Socket.close) | `export fn (self: &amp;Socket) close()` | Close the socket. |
+| `close`[↗](#Socket.close) | `export fn (self: &amp;Socket!) close()` | Close the socket. |
+| `takeHandle`[↗](#Socket.takeHandle) | `export fn (self: &amp;Socket!) takeHandle(): i64` | Transfer ownership of the native handle out of this Socket. |
+| `drop`[↗](#Socket.drop) | `export fn (self: &amp;Socket!) drop()` |  |
 | `isValid`[↗](#Socket.isValid) | `export fn (self: &amp;Socket) isValid(): bool` | Check if socket is valid. |
 
 ---
 
 ### <a id="sockaddr_in"></a>`sockaddr_in`
 
-> 📄 `native.linux.vxc` L237-240
+> 📄 `native.linux.vxc` L173-176
 
 ```vex
 struct sockaddr_in
@@ -526,9 +967,25 @@ struct sockaddr_in
 
 ---
 
+### <a id="sockaddr_ip"></a>`sockaddr_ip`
+
+> 📄 `native.linux.vxc` L178-181
+
+```vex
+struct sockaddr_ip
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `mem` | `[u8; 28]` | 🔓 public |  |
+
+---
+
 ### <a id="epoll_event"></a>`epoll_event`
 
-> 📄 `native.linux.vxc` L425-429
+> 📄 `native.linux.vxc` L571-575
 
 ```vex
 struct epoll_event
@@ -543,9 +1000,201 @@ struct epoll_event
 
 ---
 
+### <a id="AddressParseError"></a>`AddressParseError` `🔓 export`
+
+> 📄 `address.vx` L29-32
+
+```vex
+export struct AddressParseError
+```
+
+Allocation-free parse failure. `position` is the byte offset at which the
+
+parser could first prove the input invalid.
+
+**Implements:** `Copy`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `kindValue` | `AddressParseErrorKind` | 🔒 private |  |
+| `positionValue` | `usize` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `kind`[↗](#AddressParseError.kind) | `export fn (self: &amp;AddressParseError) kind(): Addre` |  |
+| `position`[↗](#AddressParseError.position) | `export fn (self: &amp;AddressParseError) position(): u` |  |
+| `message`[↗](#AddressParseError.message) | `export fn (self: &amp;AddressParseError) message(): st` |  |
+
+---
+
+### <a id="AddressFormatError"></a>`AddressFormatError` `🔓 export`
+
+> 📄 `address.vx` L37-40
+
+```vex
+export struct AddressFormatError
+```
+
+Transactional caller-buffer formatting failure. Address formatting never
+
+partially modifies the destination: callers either receive the exact byte
+count or this value with the required capacity.
+
+**Implements:** `Copy`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `requiredValue` | `usize` | 🔒 private |  |
+| `capacityValue` | `usize` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `required`[↗](#AddressFormatError.required) | `export fn (self: &amp;AddressFormatError) required(): ` |  |
+| `capacity`[↗](#AddressFormatError.capacity) | `export fn (self: &amp;AddressFormatError) capacity(): ` |  |
+| `message`[↗](#AddressFormatError.message) | `export fn (self: &amp;AddressFormatError) message(): s` |  |
+
+---
+
+### <a id="Ipv4Addr"></a>`Ipv4Addr` `🔓 export`
+
+> 📄 `address.vx` L72-74
+
+```vex
+export struct Ipv4Addr
+```
+
+**Implements:** `Copy` & `Eq` & `Display` & `Debug`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `bytes` | `[u8; 4]` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `Ipv4Addr.unspecified`[↗](#Ipv4Addr.unspecified) | `export fn Ipv4Addr.unspecified(): Ipv4Addr` |  |
+| `Ipv4Addr.loopback`[↗](#Ipv4Addr.loopback) | `export fn Ipv4Addr.loopback(): Ipv4Addr` |  |
+| `octets`[↗](#Ipv4Addr.octets) | `export fn (self: &amp;Ipv4Addr) octets(): [u8; 4]` |  |
+| `family`[↗](#Ipv4Addr.family) | `export fn (self: &amp;Ipv4Addr) family(): IpFamily` |  |
+| `isUnspecified`[↗](#Ipv4Addr.isUnspecified) | `export fn (self: &amp;Ipv4Addr) isUnspecified(): bool` |  |
+| `isLoopback`[↗](#Ipv4Addr.isLoopback) | `export fn (self: &amp;Ipv4Addr) isLoopback(): bool` |  |
+| `op==`[↗](#Ipv4Addr.op==) | `export fn (self: &amp;Ipv4Addr) op==(other: &amp;Ipv4Addr)` |  |
+| `copyOctetsTo`[↗](#Ipv4Addr.copyOctetsTo) | `export fn (self: &amp;Ipv4Addr) copyOctetsTo(output: P` | Copies exactly four network-order octets to a native boundary. |
+| `Ipv4Addr.tryParse`[↗](#Ipv4Addr.tryParse) | `export fn Ipv4Addr.tryParse(input: str): Result&lt;Ip` |  |
+| `textLength`[↗](#Ipv4Addr.textLength) | `export fn (self: &amp;Ipv4Addr) textLength(): usize` | Exact canonical text length without allocating. |
+| `tryWriteTo`[↗](#Ipv4Addr.tryWriteTo) | `export fn (self: &amp;Ipv4Addr) tryWriteTo(output: Raw` | Write canonical text into caller-owned storage. Capacity is validated |
+| `appendTo`[↗](#Ipv4Addr.appendTo) | `export fn (self: &amp;Ipv4Addr) appendTo(output: &amp;Vec&lt;` | Append canonical text to an owning byte vector. The vector is the safe |
+| `toString`[↗](#Ipv4Addr.toString) | `export fn (self: &amp;Ipv4Addr) toString(): string` |  |
+| `debug`[↗](#Ipv4Addr.debug) | `export fn (self: &amp;Ipv4Addr) debug(): string` |  |
+
+---
+
+### <a id="Ipv6Addr"></a>`Ipv6Addr` `🔓 export`
+
+> 📄 `address.vx` L112-114
+
+```vex
+export struct Ipv6Addr
+```
+
+**Implements:** `Copy` & `Eq` & `Display` & `Debug`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `bytes` | `[u8; 16]` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `Ipv6Addr.fromOctets`[↗](#Ipv6Addr.fromOctets) | `export fn Ipv6Addr.fromOctets(bytes: [u8; 16]): Ip` |  |
+| `Ipv6Addr.unspecified`[↗](#Ipv6Addr.unspecified) | `export fn Ipv6Addr.unspecified(): Ipv6Addr` |  |
+| `Ipv6Addr.loopback`[↗](#Ipv6Addr.loopback) | `export fn Ipv6Addr.loopback(): Ipv6Addr` |  |
+| `octets`[↗](#Ipv6Addr.octets) | `export fn (self: &amp;Ipv6Addr) octets(): [u8; 16]` |  |
+| `family`[↗](#Ipv6Addr.family) | `export fn (self: &amp;Ipv6Addr) family(): IpFamily` |  |
+| `segments`[↗](#Ipv6Addr.segments) | `export fn (self: &amp;Ipv6Addr) segments(): [u16; 8]` |  |
+| `isUnspecified`[↗](#Ipv6Addr.isUnspecified) | `export fn (self: &amp;Ipv6Addr) isUnspecified(): bool` |  |
+| `isLoopback`[↗](#Ipv6Addr.isLoopback) | `export fn (self: &amp;Ipv6Addr) isLoopback(): bool` |  |
+| `op==`[↗](#Ipv6Addr.op==) | `export fn (self: &amp;Ipv6Addr) op==(other: &amp;Ipv6Addr)` |  |
+| `copyOctetsTo`[↗](#Ipv6Addr.copyOctetsTo) | `export fn (self: &amp;Ipv6Addr) copyOctetsTo(output: P` | Copies exactly sixteen network-order octets to a native boundary. |
+| `Ipv6Addr.tryParse`[↗](#Ipv6Addr.tryParse) | `export fn Ipv6Addr.tryParse(input: str): Result&lt;Ip` |  |
+| `textLength`[↗](#Ipv6Addr.textLength) | `export fn (self: &amp;Ipv6Addr) textLength(): usize` | Exact canonical text length without allocating. |
+| `tryWriteTo`[↗](#Ipv6Addr.tryWriteTo) | `export fn (self: &amp;Ipv6Addr) tryWriteTo(output: Raw` | Write canonical text into caller-owned storage. Capacity is validated |
+| `appendTo`[↗](#Ipv6Addr.appendTo) | `export fn (self: &amp;Ipv6Addr) appendTo(output: &amp;Vec&lt;` | Append canonical text to an owning byte vector. |
+| `toString`[↗](#Ipv6Addr.toString) | `export fn (self: &amp;Ipv6Addr) toString(): string` |  |
+| `debug`[↗](#Ipv6Addr.debug) | `export fn (self: &amp;Ipv6Addr) debug(): string` |  |
+
+---
+
+### <a id="SocketAddr"></a>`SocketAddr` `🔓 export`
+
+> 📄 `address.vx` L228-231
+
+```vex
+export struct SocketAddr
+```
+
+**Implements:** `Copy` & `Eq` & `Display` & `Debug`
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `addressValue` | `IpAddr` | 🔒 private |  |
+| `portValue` | `u16` | 🔒 private |  |
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `address`[↗](#SocketAddr.address) | `export fn (self: &amp;SocketAddr) address(): IpAddr` |  |
+| `port`[↗](#SocketAddr.port) | `export fn (self: &amp;SocketAddr) port(): u16` |  |
+| `family`[↗](#SocketAddr.family) | `export fn (self: &amp;SocketAddr) family(): IpFamily` |  |
+| `op==`[↗](#SocketAddr.op==) | `export fn (self: &amp;SocketAddr) op==(other: &amp;SocketA` |  |
+| `SocketAddr.tryParse`[↗](#SocketAddr.tryParse) | `export fn SocketAddr.tryParse(input: str): Result&lt;` |  |
+| `textLength`[↗](#SocketAddr.textLength) | `export fn (self: &amp;SocketAddr) textLength(): usize` | Exact canonical socket-address text length without allocating. |
+| `tryWriteTo`[↗](#SocketAddr.tryWriteTo) | `export fn (self: &amp;SocketAddr) tryWriteTo(output: R` | Write canonical text into caller-owned storage. Capacity is validated |
+| `appendTo`[↗](#SocketAddr.appendTo) | `export fn (self: &amp;SocketAddr) appendTo(output: &amp;Ve` | Append canonical endpoint text to an owning byte vector. |
+| `toString`[↗](#SocketAddr.toString) | `export fn (self: &amp;SocketAddr) toString(): string` |  |
+| `debug`[↗](#SocketAddr.debug) | `export fn (self: &amp;SocketAddr) debug(): string` |  |
+
+---
+
+### <a id="ParsedIpv6Side"></a>`ParsedIpv6Side`
+
+> 📄 `address.vx` L319-324
+
+```vex
+struct ParsedIpv6Side
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `ok` | `bool` | 🔒 private |  |
+| `count` | `usize` | 🔒 private |  |
+| `errorKind` | `AddressParseErrorKind` | 🔒 private |  |
+| `errorPosition` | `usize` | 🔒 private |  |
+
+---
+
 ### <a id="sockaddr_in"></a>`sockaddr_in`
 
-> 📄 `native.windows.vxc` L33-39
+> 📄 `native.windows.vxc` L113-119
 
 ```vex
 struct sockaddr_in
@@ -562,103 +1211,1409 @@ struct sockaddr_in
 
 ---
 
+### <a id="sockaddr_ip"></a>`sockaddr_ip`
+
+> 📄 `native.windows.vxc` L121-124
+
+```vex
+struct sockaddr_ip
+```
+
+**Fields:**
+
+| Name | Type | Access | Description |
+|------|------|--------|-------------|
+| `mem` | `[u8; 28]` | 🔓 public |  |
+
+---
+
+## Enums
+
+### <a id="ResolveFamily"></a>`ResolveFamily` `🔓 export`
+
+> 📄 `resolver.vx` L15-19
+
+```vex
+export enum ResolveFamily
+```
+
+**Variants:**
+
+- `Any`
+- `V4`
+- `V6`
+
+---
+
+### <a id="ResolveErrorKind"></a>`ResolveErrorKind` `🔓 export`
+
+> 📄 `resolver.vx` L21-28
+
+```vex
+export enum ResolveErrorKind
+```
+
+**Variants:**
+
+- `InvalidName`
+- `NotFound`
+- `TemporaryFailure`
+- `Unsupported`
+- `CapacityExceeded`
+- `System`
+
+---
+
+### <a id="IpFamily"></a>`IpFamily` `🔓 export`
+
+> 📄 `address.vx` L7-10
+
+```vex
+export enum IpFamily
+```
+
+**Variants:**
+
+- `V4`
+- `V6`
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `op==`[↗](#IpFamily.op==) | `export fn (self: &amp;IpFamily) op==(other: &amp;IpFamily)` |  |
+
+---
+
+### <a id="AddressParseErrorKind"></a>`AddressParseErrorKind` `🔓 export`
+
+> 📄 `address.vx` L19-25
+
+```vex
+export enum AddressParseErrorKind
+```
+
+**Variants:**
+
+- `Empty`
+- `InvalidSyntax`
+- `InvalidCharacter`
+- `OutOfRange`
+- `MissingPort`
+
+---
+
+### <a id="IpAddr"></a>`IpAddr` `🔓 export`
+
+> 📄 `address.vx` L182-185
+
+```vex
+export enum IpAddr
+```
+
+**Variants:**
+
+- `V4`
+- `V6`
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `family`[↗](#IpAddr.family) | `export fn (self: &amp;IpAddr) family(): IpFamily` |  |
+| `isUnspecified`[↗](#IpAddr.isUnspecified) | `export fn (self: &amp;IpAddr) isUnspecified(): bool` |  |
+| `isLoopback`[↗](#IpAddr.isLoopback) | `export fn (self: &amp;IpAddr) isLoopback(): bool` |  |
+| `op==`[↗](#IpAddr.op==) | `export fn (self: &amp;IpAddr) op==(other: &amp;IpAddr): bo` |  |
+| `copyOctetsTo`[↗](#IpAddr.copyOctetsTo) | `export fn (self: &amp;IpAddr) copyOctetsTo(output: Ptr` | Copies the address into a sixteen-byte carrier. IPv4 uses the first four |
+| `IpAddr.tryParse`[↗](#IpAddr.tryParse) | `export fn IpAddr.tryParse(input: str): Result&lt;IpAd` |  |
+| `textLength`[↗](#IpAddr.textLength) | `export fn (self: &amp;IpAddr) textLength(): usize` | Exact canonical text length without allocating. |
+| `tryWriteTo`[↗](#IpAddr.tryWriteTo) | `export fn (self: &amp;IpAddr) tryWriteTo(output: RawBu` | Write canonical text into caller-owned storage. Capacity is validated |
+| `appendTo`[↗](#IpAddr.appendTo) | `export fn (self: &amp;IpAddr) appendTo(output: &amp;Vec&lt;u8` | Append canonical text to an owning byte vector. |
+| `toString`[↗](#IpAddr.toString) | `export fn (self: &amp;IpAddr) toString(): string` |  |
+| `debug`[↗](#IpAddr.debug) | `export fn (self: &amp;IpAddr) debug(): string` |  |
+
+---
+
 ## Functions
 
-### <a id="TcpListener"></a>`TcpListener` `🔓 export`
+### <a id="test_tcp_socket_create_close"></a>`test_tcp_socket_create_close`
 
-> 📄 `tcp.vx` L64-66
-
-```vex
-export fn TcpListener(ip: string, port: i32): TcpListener
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `ip` | `string` |  |
-| `port` | `i32` |  |
-
-**Returns:** `TcpListener`
-
-**Methods:**
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `TcpListener.bind`[↗](#TcpListener.bind) | `export fn TcpListener.bind(ip: string, port: i32):` | Create a blocking TCP listener bound to ip:port. |
-| ⚡`accept`[↗](#TcpListener.accept) | `export fn (self: &amp;TcpListener) accept(): TcpStream` | Accept a new connection (goroutine-aware, parks on EAGAIN). |
-| `incoming`[↗](#TcpListener.incoming) | `export fn (self: &amp;TcpListener) incoming(): Channel` | Returns a channel that receives incoming connections. |
-| `close`[↗](#TcpListener.close) | `export fn (self: &amp;TcpListener!) close()` | Close the listener socket. |
-| `drop`[↗](#TcpListener.drop) | `export fn (self: &amp;TcpListener!) drop()` |  |
-
----
-
-### <a id="TcpStream"></a>`TcpStream` `🔓 export`
-
-> 📄 `tcp.vx` L140-142
+> 📄 `net.test.vx` L9-21
 
 ```vex
-export fn TcpStream(ip: string, port: i32): TcpStream
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `ip` | `string` |  |
-| `port` | `i32` |  |
-
-**Returns:** `TcpStream`
-
-**Methods:**
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `TcpStream.connect`[↗](#TcpStream.connect) | `export fn TcpStream.connect(ip: string, port: i32)` | Connect to a remote TCP server at ip:port. |
-| ⚡`read`[↗](#TcpStream.read) | `export fn (self: &amp;TcpStream) read(buf: Ptr&lt;u8&gt;, le` | Read data into buffer. Returns bytes read, 0 on EOF, negative on error. |
-| ⚡`write`[↗](#TcpStream.write) | `export fn (self: &amp;TcpStream) write(data: Ptr&lt;u8&gt;, ` | Write raw bytes. Returns bytes written or negative on error. |
-| ⚡`writeStr`[↗](#TcpStream.writeStr) | `export fn (self: &amp;TcpStream) writeStr(s: string): ` | Write a string. Returns bytes written or negative on error. |
-| `close`[↗](#TcpStream.close) | `export fn (self: &amp;TcpStream!) close()` | Close the stream. |
-| `drop`[↗](#TcpStream.drop) | `export fn (self: &amp;TcpStream!) drop()` |  |
-
----
-
-### <a id="get_errno"></a>`get_errno`
-
-> 📄 `native.vxc` L23-29
-
-```vex
-fn get_errno(): i32
+fn test_tcp_socket_create_close(): i32
 ```
 
 **Returns:** `i32`
 
 ---
 
-### <a id="parse_ip_port"></a>`parse_ip_port`
+### <a id="test_udp_socket_create_close"></a>`test_udp_socket_create_close`
 
-> 📄 `native.vxc` L40-80
+> 📄 `net.test.vx` L23-34
 
 ```vex
-fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
+fn test_udp_socket_create_close(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_multiple_sockets_are_distinct"></a>`test_multiple_sockets_are_distinct`
+
+> 📄 `net.test.vx` L36-53
+
+```vex
+fn test_multiple_sockets_are_distinct(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_invalid_event_loop_fails_closed"></a>`test_invalid_event_loop_fails_closed`
+
+> 📄 `net.test.vx` L55-65
+
+```vex
+fn test_invalid_event_loop_fails_closed(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_resolver_numeric_ipv4_fast_path"></a>`test_resolver_numeric_ipv4_fast_path`
+
+> 📄 `resolver.test.vx` L11-18
+
+```vex
+fn test_resolver_numeric_ipv4_fast_path()
+```
+
+---
+
+### <a id="test_resolver_numeric_ipv6_family_filter"></a>`test_resolver_numeric_ipv6_family_filter`
+
+> 📄 `resolver.test.vx` L20-32
+
+```vex
+fn test_resolver_numeric_ipv6_family_filter()
+```
+
+---
+
+### <a id="test_resolver_rejects_numeric_family_mismatch"></a>`test_resolver_rejects_numeric_family_mismatch`
+
+> 📄 `resolver.test.vx` L34-46
+
+```vex
+fn test_resolver_rejects_numeric_family_mismatch()
+```
+
+---
+
+### <a id="test_resolver_validates_hostname_and_capacity"></a>`test_resolver_validates_hostname_and_capacity`
+
+> 📄 `resolver.test.vx` L48-77
+
+```vex
+fn test_resolver_validates_hostname_and_capacity()
+```
+
+---
+
+### <a id="test_resolver_system_localhost_is_ordered_and_unique"></a>`test_resolver_system_localhost_is_ordered_and_unique`
+
+> 📄 `resolver.test.vx` L79-98
+
+```vex
+fn test_resolver_system_localhost_is_ordered_and_unique()
+```
+
+---
+
+### <a id="test_resolver_family_filtering_is_semantic"></a>`test_resolver_family_filtering_is_semantic`
+
+> 📄 `resolver.test.vx` L100-116
+
+```vex
+fn test_resolver_family_filtering_is_semantic()
+```
+
+---
+
+### <a id="test_resolver_socket_addresses_preserve_port"></a>`test_resolver_socket_addresses_preserve_port`
+
+> 📄 `resolver.test.vx` L118-131
+
+```vex
+fn test_resolver_socket_addresses_preserve_port()
+```
+
+---
+
+### <a id="test_encode_decode_text"></a>`test_encode_decode_text`
+
+> 📄 `ws_parser.test.vx` L15-36
+
+```vex
+fn test_encode_decode_text(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_encode_close"></a>`test_encode_close`
+
+> 📄 `ws_parser.test.vx` L38-53
+
+```vex
+fn test_encode_close(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_encode_ping_pong"></a>`test_encode_ping_pong`
+
+> 📄 `ws_parser.test.vx` L55-79
+
+```vex
+fn test_encode_ping_pong(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_control_data_check"></a>`test_control_data_check`
+
+> 📄 `ws_parser.test.vx` L81-94
+
+```vex
+fn test_control_data_check(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_need_more"></a>`test_need_more`
+
+> 📄 `ws_parser.test.vx` L96-107
+
+```vex
+fn test_need_more(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_frame_stream_preserves_partial_and_trailing_frames"></a>`test_frame_stream_preserves_partial_and_trailing_frames`
+
+> 📄 `ws_parser.test.vx` L109-153
+
+```vex
+fn test_frame_stream_preserves_partial_and_trailing_frames(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_frame_stream_rejects_invalid_capacity_transitions"></a>`test_frame_stream_rejects_invalid_capacity_transitions`
+
+> 📄 `ws_parser.test.vx` L155-168
+
+```vex
+fn test_frame_stream_rejects_invalid_capacity_transitions(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_masked_payload_unmask"></a>`test_masked_payload_unmask`
+
+> 📄 `ws_parser.test.vx` L170-191
+
+```vex
+fn test_masked_payload_unmask(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_masked_payload_unmask_simd_boundaries"></a>`test_masked_payload_unmask_simd_boundaries`
+
+> 📄 `ws_parser.test.vx` L193-238
+
+```vex
+fn test_masked_payload_unmask_simd_boundaries(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_masked_payload_unmask_tail_matrix"></a>`test_masked_payload_unmask_tail_matrix`
+
+> 📄 `ws_parser.test.vx` L240-279
+
+```vex
+fn test_masked_payload_unmask_tail_matrix(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_rejects_invalid_protocol_shapes"></a>`test_rejects_invalid_protocol_shapes`
+
+> 📄 `ws_parser.test.vx` L281-320
+
+```vex
+fn test_rejects_invalid_protocol_shapes(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_encode_bounds_and_extended_length"></a>`test_encode_bounds_and_extended_length`
+
+> 📄 `ws_parser.test.vx` L322-345
+
+```vex
+fn test_encode_bounds_and_extended_length(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_encode_header_is_zero_copy_and_canonical"></a>`test_encode_header_is_zero_copy_and_canonical`
+
+> 📄 `ws_parser.test.vx` L347-369
+
+```vex
+fn test_encode_header_is_zero_copy_and_canonical(t: &TestCtx!)
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `ip` | `Ptr&lt;u8&gt;` |  |
-| `port` | `u16` |  |
-| `addr_out` | `Ptr&lt;sockaddr_in!&gt;` |  |
+| `t` | `&amp;TestCtx!` |  |
+
+---
+
+### <a id="test_tcp_stream_adopt_consumes_socket_and_preserves_async_io"></a>`test_tcp_stream_adopt_consumes_socket_and_preserves_async_io`
+
+> 📄 `tcp_ownership.test.vx` L11-69
+
+```vex
+fn test_tcp_stream_adopt_consumes_socket_and_preserves_async_io(t: &TestCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `t` | `&amp;TestCtx!` |  |
+
+---
+
+### <a id="mustIpv4"></a>`mustIpv4`
+
+> 📄 `address.test.vx` L4-9
+
+```vex
+fn mustIpv4(input: str): Ipv4Addr
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+
+**Returns:** `Ipv4Addr`
+
+---
+
+### <a id="mustIpv6"></a>`mustIpv6`
+
+> 📄 `address.test.vx` L11-16
+
+```vex
+fn mustIpv6(input: str): Ipv6Addr
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+
+**Returns:** `Ipv6Addr`
+
+---
+
+### <a id="expectInvalidIpv4"></a>`expectInvalidIpv4`
+
+> 📄 `address.test.vx` L18-20
+
+```vex
+fn expectInvalidIpv4(input: str)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+
+---
+
+### <a id="expectInvalidIpv6"></a>`expectInvalidIpv6`
+
+> 📄 `address.test.vx` L22-24
+
+```vex
+fn expectInvalidIpv6(input: str)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+
+---
+
+### <a id="bufferEquals"></a>`bufferEquals`
+
+> 📄 `address.test.vx` L26-34
+
+```vex
+fn bufferEquals(buffer: &[u8; 64], expected: str): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `buffer` | `&amp;[u8; 64]` |  |
+| `expected` | `str` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="test_ipv4_typed_parse_format_and_classification"></a>`test_ipv4_typed_parse_format_and_classification`
+
+> 📄 `address.test.vx` L36-48
+
+```vex
+fn test_ipv4_typed_parse_format_and_classification()
+```
+
+---
+
+### <a id="test_ipv4_parser_is_canonical_and_bounded"></a>`test_ipv4_parser_is_canonical_and_bounded`
+
+> 📄 `address.test.vx` L50-61
+
+```vex
+fn test_ipv4_parser_is_canonical_and_bounded()
+```
+
+---
+
+### <a id="test_ipv6_parse_expansion_and_rfc5952_formatting"></a>`test_ipv6_parse_expansion_and_rfc5952_formatting`
+
+> 📄 `address.test.vx` L63-91
+
+```vex
+fn test_ipv6_parse_expansion_and_rfc5952_formatting()
+```
+
+---
+
+### <a id="test_ipv6_embedded_ipv4_and_roundtrip"></a>`test_ipv6_embedded_ipv4_and_roundtrip`
+
+> 📄 `address.test.vx` L93-106
+
+```vex
+fn test_ipv6_embedded_ipv4_and_roundtrip()
+```
+
+---
+
+### <a id="test_ipv6_parser_rejects_ambiguous_and_oversized_input"></a>`test_ipv6_parser_rejects_ambiguous_and_oversized_input`
+
+> 📄 `address.test.vx` L108-120
+
+```vex
+fn test_ipv6_parser_rejects_ambiguous_and_oversized_input()
+```
+
+---
+
+### <a id="test_ipaddr_and_socketaddr_typed_roundtrip"></a>`test_ipaddr_and_socketaddr_typed_roundtrip`
+
+> 📄 `address.test.vx` L122-159
+
+```vex
+fn test_ipaddr_and_socketaddr_typed_roundtrip()
+```
+
+---
+
+### <a id="test_socketaddr_rejects_missing_or_out_of_range_port"></a>`test_socketaddr_rejects_missing_or_out_of_range_port`
+
+> 📄 `address.test.vx` L161-168
+
+```vex
+fn test_socketaddr_rejects_missing_or_out_of_range_port()
+```
+
+---
+
+### <a id="test_address_caller_buffer_formatting_is_exact_and_transactional"></a>`test_address_caller_buffer_formatting_is_exact_and_transactional`
+
+> 📄 `address.test.vx` L170-264
+
+```vex
+fn test_address_caller_buffer_formatting_is_exact_and_transactional()
+```
+
+---
+
+### <a id="test_ipv6_format_repeated_preserves_value_and_result_ownership"></a>`test_ipv6_format_repeated_preserves_value_and_result_ownership`
+
+> 📄 `address.test.vx` L266-276
+
+```vex
+fn test_ipv6_format_repeated_preserves_value_and_result_ownership()
+```
+
+---
+
+### <a id="test_ipv6_copy_aggregate_survives_optimizer_barrier"></a>`test_ipv6_copy_aggregate_survives_optimizer_barrier`
+
+> 📄 `address.test.vx` L278-288
+
+```vex
+fn test_ipv6_copy_aggregate_survives_optimizer_barrier()
+```
+
+---
+
+### <a id="test_async_accept_parks_until_loopback_connect"></a>`test_async_accept_parks_until_loopback_connect`
+
+> 📄 `async_io.test.vx` L6-63
+
+```vex
+fn test_async_accept_parks_until_loopback_connect()
+```
+
+---
+
+### <a id="test_context_cancellation_retires_parked_accept"></a>`test_context_cancellation_retires_parked_accept`
+
+> 📄 `async_io.test.vx` L65-94
+
+```vex
+fn test_context_cancellation_retires_parked_accept()
+```
+
+---
+
+### <a id="test_context_deadline_retires_parked_accept"></a>`test_context_deadline_retires_parked_accept`
+
+> 📄 `async_io.test.vx` L96-115
+
+```vex
+fn test_context_deadline_retires_parked_accept()
+```
+
+---
+
+### <a id="test_context_aware_tcp_read_write_roundtrip"></a>`test_context_aware_tcp_read_write_roundtrip`
+
+> 📄 `async_io.test.vx` L117-172
+
+```vex
+fn test_context_aware_tcp_read_write_roundtrip()
+```
+
+---
+
+### <a id="test_context_aware_udp_datagram_roundtrip"></a>`test_context_aware_udp_datagram_roundtrip`
+
+> 📄 `async_io.test.vx` L174-240
+
+```vex
+fn test_context_aware_udp_datagram_roundtrip()
+```
+
+---
+
+### <a id="test_context_cancellation_retires_parked_udp_receive"></a>`test_context_cancellation_retires_parked_udp_receive`
+
+> 📄 `async_io.test.vx` L242-272
+
+```vex
+fn test_context_cancellation_retires_parked_udp_receive()
+```
+
+---
+
+### <a id="test_context_deadline_retires_parked_udp_receive"></a>`test_context_deadline_retires_parked_udp_receive`
+
+> 📄 `async_io.test.vx` L274-296
+
+```vex
+fn test_context_deadline_retires_parked_udp_receive()
+```
+
+---
+
+### <a id="test_socket_close_retires_parked_accept_exactly_once"></a>`test_socket_close_retires_parked_accept_exactly_once`
+
+> 📄 `async_io.test.vx` L298-337
+
+```vex
+fn test_socket_close_retires_parked_accept_exactly_once()
+```
+
+---
+
+### <a id="test_socket_close_and_context_cancel_elect_one_terminal"></a>`test_socket_close_and_context_cancel_elect_one_terminal`
+
+> 📄 `async_io.test.vx` L339-387
+
+```vex
+fn test_socket_close_and_context_cancel_elect_one_terminal()
+```
+
+---
+
+### <a id="test_arena_checkpoint_round_trip"></a>`test_arena_checkpoint_round_trip`
+
+> 📄 `arena_checkpoint.test.vx` L8-39
+
+```vex
+fn test_arena_checkpoint_round_trip(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="parseIpv4Observed"></a>`parseIpv4Observed`
+
+> 📄 `bench.test.vx` L7-16
+
+```vex
+fn parseIpv4Observed(value: str): u64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `str` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="parseIpv6Observed"></a>`parseIpv6Observed`
+
+> 📄 `bench.test.vx` L18-27
+
+```vex
+fn parseIpv6Observed(value: str): u64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `str` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="parseSocketObserved"></a>`parseSocketObserved`
+
+> 📄 `bench.test.vx` L29-37
+
+```vex
+fn parseSocketObserved(value: str): u64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `str` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="bench_parse_ipv4"></a>`bench_parse_ipv4`
+
+> 📄 `bench.test.vx` L39-43
+
+```vex
+fn bench_parse_ipv4(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_parse_ipv6_compressed"></a>`bench_parse_ipv6_compressed`
+
+> 📄 `bench.test.vx` L45-49
+
+```vex
+fn bench_parse_ipv6_compressed(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_parse_socketaddr_ipv6"></a>`bench_parse_socketaddr_ipv6`
+
+> 📄 `bench.test.vx` L51-55
+
+```vex
+fn bench_parse_socketaddr_ipv6(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_format_ipv4"></a>`bench_format_ipv4`
+
+> 📄 `bench.test.vx` L57-63
+
+```vex
+fn bench_format_ipv4(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_format_ipv6"></a>`bench_format_ipv6`
+
+> 📄 `bench.test.vx` L65-71
+
+```vex
+fn bench_format_ipv6(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_format_ipv4_to_buffer"></a>`bench_format_ipv4_to_buffer`
+
+> 📄 `bench.test.vx` L78-95
+
+```vex
+fn bench_format_ipv4_to_buffer(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_format_ipv6_to_buffer"></a>`bench_format_ipv6_to_buffer`
+
+> 📄 `bench.test.vx` L102-119
+
+```vex
+fn bench_format_ipv6_to_buffer(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_format_socketaddr_ipv6_to_buffer"></a>`bench_format_socketaddr_ipv6_to_buffer`
+
+> 📄 `bench.test.vx` L126-143
+
+```vex
+fn bench_format_socketaddr_ipv6_to_buffer(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_format_socketaddr_ipv6_append_reused"></a>`bench_format_socketaddr_ipv6_append_reused`
+
+> 📄 `bench.test.vx` L150-167
+
+```vex
+fn bench_format_socketaddr_ipv6_append_reused(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_websocket_parse_4k_zero_copy"></a>`bench_websocket_parse_4k_zero_copy`
+
+> 📄 `bench.test.vx` L175-209
+
+```vex
+fn bench_websocket_parse_4k_zero_copy(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_websocket_encode_4k_reused"></a>`bench_websocket_encode_4k_reused`
+
+> 📄 `bench.test.vx` L217-236
+
+```vex
+fn bench_websocket_encode_4k_reused(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="makeWsUnmaskState"></a>`makeWsUnmaskState`
+
+> 📄 `bench.test.vx` L246-280
+
+```vex
+fn makeWsUnmaskState(payloadLength: usize): WsUnmaskState
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `payloadLength` | `usize` |  |
+
+**Returns:** `WsUnmaskState`
+
+---
+
+### <a id="runWsUnmask"></a>`runWsUnmask`
+
+> 📄 `bench.test.vx` L282-287
+
+```vex
+fn runWsUnmask(value: &WsUnmaskState!): u64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `&amp;WsUnmaskState!` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="bench_websocket_unmask_125b_in_place"></a>`bench_websocket_unmask_125b_in_place`
+
+> 📄 `bench.test.vx` L289-296
+
+```vex
+fn bench_websocket_unmask_125b_in_place(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_websocket_unmask_4k_in_place"></a>`bench_websocket_unmask_4k_in_place`
+
+> 📄 `bench.test.vx` L298-305
+
+```vex
+fn bench_websocket_unmask_4k_in_place(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_conn_find_header_end_4k_late"></a>`bench_conn_find_header_end_4k_late`
+
+> 📄 `bench.test.vx` L312-333
+
+```vex
+fn bench_conn_find_header_end_4k_late(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="bench_conn_recycle_read_queue_8k"></a>`bench_conn_recycle_read_queue_8k`
+
+> 📄 `bench.test.vx` L340-364
+
+```vex
+fn bench_conn_recycle_read_queue_8k(b: &BenchCtx!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `b` | `&amp;BenchCtx!` |  |
+
+---
+
+### <a id="test_net_benchmark_fixtures_roundtrip"></a>`test_net_benchmark_fixtures_roundtrip`
+
+> 📄 `bench.test.vx` L366-374
+
+```vex
+fn test_net_benchmark_fixtures_roundtrip()
+```
+
+---
+
+### <a id="test_conn_wrap"></a>`test_conn_wrap`
+
+> 📄 `conn.test.vx` L9-17
+
+```vex
+fn test_conn_wrap(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_readable"></a>`test_conn_readable`
+
+> 📄 `conn.test.vx` L19-30
+
+```vex
+fn test_conn_readable(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_consume"></a>`test_conn_consume`
+
+> 📄 `conn.test.vx` L32-54
+
+```vex
+fn test_conn_consume(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_compact"></a>`test_conn_compact`
+
+> 📄 `conn.test.vx` L56-69
+
+```vex
+fn test_conn_compact(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_find_header_end"></a>`test_conn_find_header_end`
+
+> 📄 `conn.test.vx` L71-92
+
+```vex
+fn test_conn_find_header_end(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_find_header_end_boundaries_and_false_candidates"></a>`test_conn_find_header_end_boundaries_and_false_candidates`
+
+> 📄 `conn.test.vx` L94-118
+
+```vex
+fn test_conn_find_header_end_boundaries_and_false_candidates(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_pending_write"></a>`test_conn_pending_write`
+
+> 📄 `conn.test.vx` L120-128
+
+```vex
+fn test_conn_pending_write(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_buffered_write_is_lossless_and_bounded"></a>`test_conn_buffered_write_is_lossless_and_bounded`
+
+> 📄 `conn.test.vx` L130-147
+
+```vex
+fn test_conn_buffered_write_is_lossless_and_bounded(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_reset"></a>`test_conn_reset`
+
+> 📄 `conn.test.vx` L149-163
+
+```vex
+fn test_conn_reset(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="test_conn_buffered_zero_copy_input_and_limits"></a>`test_conn_buffered_zero_copy_input_and_limits`
+
+> 📄 `conn.test.vx` L165-198
+
+```vex
+fn test_conn_buffered_zero_copy_input_and_limits(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="parsed"></a>`parsed`
+
+> 📄 `high_level.test.vx` L6-10
+
+```vex
+fn parsed(address: str): Option<[u8; 4]>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `str` |  |
+
+**Returns:** `Option&lt;[u8; 4]&gt;`
+
+---
+
+### <a id="expectAddress"></a>`expectAddress`
+
+> 📄 `high_level.test.vx` L12-21
+
+```vex
+fn expectAddress(address: str, a: u8, b: u8, c: u8, d: u8)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `str` |  |
+| `a` | `u8` |  |
+| `b` | `u8` |  |
+| `c` | `u8` |  |
+| `d` | `u8` |  |
+
+---
+
+### <a id="expectInvalidAddress"></a>`expectInvalidAddress`
+
+> 📄 `high_level.test.vx` L23-25
+
+```vex
+fn expectInvalidAddress(address: str)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `str` |  |
+
+---
+
+### <a id="test_net_negative_result_preserves_canonical_error"></a>`test_net_negative_result_preserves_canonical_error`
+
+> 📄 `high_level.test.vx` L27-35
+
+```vex
+fn test_net_negative_result_preserves_canonical_error()
+```
+
+---
+
+### <a id="test_ipv4_parser_accepts_exact_network_order_octets"></a>`test_ipv4_parser_accepts_exact_network_order_octets`
+
+> 📄 `high_level.test.vx` L37-42
+
+```vex
+fn test_ipv4_parser_accepts_exact_network_order_octets()
+```
+
+---
+
+### <a id="test_ipv4_parser_rejects_malformed_and_out_of_range_input"></a>`test_ipv4_parser_rejects_malformed_and_out_of_range_input`
+
+> 📄 `high_level.test.vx` L44-55
+
+```vex
+fn test_ipv4_parser_rejects_malformed_and_out_of_range_input()
+```
+
+---
+
+### <a id="test_high_level_constructors_validate_before_native_access"></a>`test_high_level_constructors_validate_before_native_access`
+
+> 📄 `high_level.test.vx` L57-71
+
+```vex
+fn test_high_level_constructors_validate_before_native_access()
+```
+
+---
+
+### <a id="test_typed_ipv4_endpoints_reach_the_native_boundary"></a>`test_typed_ipv4_endpoints_reach_the_native_boundary`
+
+> 📄 `high_level.test.vx` L73-104
+
+```vex
+fn test_typed_ipv4_endpoints_reach_the_native_boundary()
+```
+
+---
+
+### <a id="test_udp_port_zero_local_addr_and_typed_roundtrip"></a>`test_udp_port_zero_local_addr_and_typed_roundtrip`
+
+> 📄 `high_level.test.vx` L106-155
+
+```vex
+fn test_udp_port_zero_local_addr_and_typed_roundtrip()
+```
+
+---
+
+### <a id="test_ipv6_endpoints_reach_sockaddr_in6_without_text_parsing"></a>`test_ipv6_endpoints_reach_sockaddr_in6_without_text_parsing`
+
+> 📄 `high_level.test.vx` L157-179
+
+```vex
+fn test_ipv6_endpoints_reach_sockaddr_in6_without_text_parsing()
+```
+
+---
+
+### <a id="closeHandle"></a>`closeHandle`
+
+> 📄 `tcp.vx` L18-23
+
+```vex
+fn closeHandle(handle: i64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `handle` | `i64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="contextFailure"></a>`contextFailure`
+
+> 📄 `tcp.vx` L25-31
+
+```vex
+fn contextFailure(context: &Context): Option<IoError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `context` | `&amp;Context` |  |
+
+**Returns:** `Option&lt;IoError&gt;`
+
+---
+
+### <a id="nativeAddress"></a>`nativeAddress`
+
+> 📄 `tcp.vx` L38-41
+
+```vex
+fn nativeAddress(address: &IpAddr, output: Ptr<u8!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `&amp;IpAddr` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="tcpStreamTakeSocket"></a>`tcpStreamTakeSocket` `🔓 export`
+
+> 📄 `tcp.vx` L488-493
+
+```vex
+export fn tcpStreamTakeSocket(stream: &TcpStream!): Option<Socket>
+```
+
+Internal transport integration boundary: relinquish a quiescent task-aware
+
+stream back to native event-loop ownership. This is deliberately a free
+function which `net` does not re-export, so ordinary `TcpStream` users
+cannot discover descriptor handoff as part of the safe stream API.
+The caller must have completed every awaited operation before this
+boundary; the returned `Socket` is the sole closer and the stream's Drop
+becomes inert. Ownership is transferred as a value, never as a raw handle.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `stream` | `&amp;TcpStream!` |  |
+
+**Returns:** `Option&lt;Socket&gt;`
+
+---
+
+### <a id="vex_net_resolve_host"></a>`vex_net_resolve_host` `🔓 export`
+
+> 📄 `native.vxc` L12-22
+
+```vex
+export fn vex_net_resolve_host(host: Ptr<u8>, family: i32, familiesOut: Ptr<u8!>, addressesOut: Ptr<u8!>, capacity: u64, countOut: Ptr<u64!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `familiesOut` | `Ptr&lt;u8!&gt;` |  |
+| `addressesOut` | `Ptr&lt;u8!&gt;` |  |
+| `capacity` | `u64` |  |
+| `countOut` | `Ptr&lt;u64!&gt;` |  |
+
+**Returns:** `i32`
 
 ---
 
 ### <a id="vex_net_socket_tcp"></a>`vex_net_socket_tcp` `🔓 export`
 
-> 📄 `native.vxc` L84-92
+> 📄 `native.vxc` L24-24
 
 ```vex
-export fn vex_net_socket_tcp(ipv6: i32): i32
+export fn vex_net_socket_tcp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -667,16 +2622,16 @@ export fn vex_net_socket_tcp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_tcp_blocking"></a>`vex_net_socket_tcp_blocking` `🔓 export`
 
-> 📄 `native.vxc` L94-101
+> 📄 `native.vxc` L25-25
 
 ```vex
-export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
+export fn vex_net_socket_tcp_blocking(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -685,16 +2640,16 @@ export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_udp"></a>`vex_net_socket_udp` `🔓 export`
 
-> 📄 `native.vxc` L103-110
+> 📄 `native.vxc` L26-26
 
 ```vex
-export fn vex_net_socket_udp(ipv6: i32): i32
+export fn vex_net_socket_udp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -703,23 +2658,23 @@ export fn vex_net_socket_udp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_set_reuseaddr"></a>`vex_net_set_reuseaddr` `🔓 export`
 
-> 📄 `native.vxc` L112-117
+> 📄 `native.vxc` L28-28
 
 ```vex
-export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
+export fn vex_net_set_reuseaddr(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -728,17 +2683,17 @@ export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_reuseport"></a>`vex_net_set_reuseport` `🔓 export`
 
-> 📄 `native.vxc` L119-124
+> 📄 `native.vxc` L29-29
 
 ```vex
-export fn vex_net_set_reuseport(fd: i32, on: i32): i32
+export fn vex_net_set_reuseport(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -747,17 +2702,17 @@ export fn vex_net_set_reuseport(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nonblock"></a>`vex_net_set_nonblock` `🔓 export`
 
-> 📄 `native.vxc` L126-131
+> 📄 `native.vxc` L30-30
 
 ```vex
-export fn vex_net_set_nonblock(fd: i32, on: i32): i32
+export fn vex_net_set_nonblock(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -766,17 +2721,17 @@ export fn vex_net_set_nonblock(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nodelay"></a>`vex_net_set_nodelay` `🔓 export`
 
-> 📄 `native.vxc` L133-138
+> 📄 `native.vxc` L31-31
 
 ```vex
-export fn vex_net_set_nodelay(fd: i32, on: i32): i32
+export fn vex_net_set_nodelay(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -785,17 +2740,17 @@ export fn vex_net_set_nodelay(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nopush"></a>`vex_net_set_nopush` `🔓 export`
 
-> 📄 `native.vxc` L140-145
+> 📄 `native.vxc` L32-32
 
 ```vex
-export fn vex_net_set_nopush(fd: i32, on: i32): i32
+export fn vex_net_set_nopush(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -804,17 +2759,38 @@ export fn vex_net_set_nopush(fd: i32, on: i32): i32
 
 ### <a id="vex_net_bind"></a>`vex_net_bind` `🔓 export`
 
-> 📄 `native.vxc` L149-155
+> 📄 `native.vxc` L34-34
 
 ```vex
-export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_bind(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_bind_ip"></a>`vex_net_bind_ip` `🔓 export`
+
+> 📄 `native.vxc` L35-35
+
+```vex
+export fn vex_net_bind_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -824,17 +2800,17 @@ export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ### <a id="vex_net_listen"></a>`vex_net_listen` `🔓 export`
 
-> 📄 `native.vxc` L157-161
+> 📄 `native.vxc` L36-36
 
 ```vex
-export fn vex_net_listen(fd: i32, backlog: i32): i32
+export fn vex_net_listen(fd: i64, backlog: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `backlog` | `i32` |  |
 
 **Returns:** `i32`
@@ -843,17 +2819,17 @@ export fn vex_net_listen(fd: i32, backlog: i32): i32
 
 ### <a id="vex_net_connect"></a>`vex_net_connect` `🔓 export`
 
-> 📄 `native.vxc` L163-169
+> 📄 `native.vxc` L37-37
 
 ```vex
-export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_connect(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -861,41 +2837,150 @@ export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ---
 
-### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+### <a id="vex_net_connect_ip"></a>`vex_net_connect_ip` `🔓 export`
 
-> 📄 `native.vxc` L171-186
+> 📄 `native.vxc` L38-38
 
 ```vex
-export fn vex_net_accept(fd: i32, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i32
+export fn vex_net_connect_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
-| `ip_len` | `u64` |  |
-| `port_out` | `Ptr&lt;u16!&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+### <a id="vex_net_connect_ip_async"></a>`vex_net_connect_ip_async` `🔓 export`
 
-> 📄 `native.vxc` L188-192
+> 📄 `native.vxc` L39-39
 
 ```vex
-export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_connect_ip_async(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_connect_ip_async_context"></a>`vex_net_connect_ip_async_context` `🔓 export`
+
+> 📄 `native.vxc` L40-40
+
+```vex
+export fn vex_net_connect_ip_async_context(fd: i64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_local_addr"></a>`vex_net_local_addr` `🔓 export`
+
+> 📄 `native.vxc` L41-43
+
+```vex
+export fn vex_net_local_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_peer_addr"></a>`vex_net_peer_addr` `🔓 export`
+
+> 📄 `native.vxc` L44-46
+
+```vex
+export fn vex_net_peer_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+
+> 📄 `native.vxc` L47-49
+
+```vex
+export fn vex_net_accept(fd: i64, ipOut: Ptr<u8!>, ipLen: u64, portOut: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipLen` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+
+> 📄 `native.vxc` L51-51
+
+```vex
+export fn vex_net_recv(fd: i64, buf: Ptr<u8!>, len: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -904,18 +2989,18 @@ export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_recv_peek"></a>`vex_net_recv_peek` `🔓 export`
 
-> 📄 `native.vxc` L194-198
+> 📄 `native.vxc` L52-52
 
 ```vex
-export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_recv_peek(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -924,17 +3009,17 @@ export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_send"></a>`vex_net_send` `🔓 export`
 
-> 📄 `native.vxc` L200-204
+> 📄 `native.vxc` L53-53
 
 ```vex
-export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_send(fd: i64, buf: Ptr<u8>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 
@@ -944,17 +3029,17 @@ export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_sendto"></a>`vex_net_sendto` `🔓 export`
 
-> 📄 `native.vxc` L206-212
+> 📄 `native.vxc` L54-56
 
 ```vex
-export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
+export fn vex_net_sendto(fd: i64, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
@@ -964,24 +3049,122 @@ export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16
 
 ---
 
-### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+### <a id="vex_net_sendto_ip"></a>`vex_net_sendto_ip` `🔓 export`
 
-> 📄 `native.vxc` L214-227
+> 📄 `native.vxc` L57-59
 
 ```vex
-export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i64
+export fn vex_net_sendto_ip(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
-| `ip_len` | `u64` |  |
-| `port_out` | `Ptr&lt;u16!&gt;` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_sendto_ip_async_context"></a>`vex_net_sendto_ip_async_context` `🔓 export`
+
+> 📄 `native.vxc` L60-62
+
+```vex
+export fn vex_net_sendto_ip_async_context(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8&gt;` |  |
+| `len` | `u64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+
+> 📄 `native.vxc` L63-72
+
+```vex
+export fn vex_net_recvfrom(fd: i64, buf: Ptr<u8!>, len: u64, ipOut: Ptr<u8!>, ipLen: u64, portOut: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipLen` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom_ip"></a>`vex_net_recvfrom_ip` `🔓 export`
+
+> 📄 `native.vxc` L73-83
+
+```vex
+export fn vex_net_recvfrom_ip(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom_ip_async_context"></a>`vex_net_recvfrom_ip_async_context` `🔓 export`
+
+> 📄 `native.vxc` L84-96
+
+```vex
+export fn vex_net_recvfrom_ip_async_context(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
 
 **Returns:** `i64`
 
@@ -989,17 +3172,17 @@ export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_
 
 ### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
 
-> 📄 `native.vxc` L229-233
+> 📄 `native.vxc` L97-97
 
 ```vex
-export fn vex_net_close(fd: i32): i32
+export fn vex_net_close(fd: i64): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 
 **Returns:** `i32`
 
@@ -1007,18 +3190,18 @@ export fn vex_net_close(fd: i32): i32
 
 ### <a id="vex_net_pipe"></a>`vex_net_pipe` `🔓 export`
 
-> 📄 `native.vxc` L235-244
+> 📄 `native.vxc` L99-99
 
 ```vex
-export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
+export fn vex_net_pipe(readFd: Ptr<i32!>, writeFd: Ptr<i32!>): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `read_fd` | `Ptr&lt;i32!&gt;` |  |
-| `write_fd` | `Ptr&lt;i32!&gt;` |  |
+| `readFd` | `Ptr&lt;i32!&gt;` |  |
+| `writeFd` | `Ptr&lt;i32!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -1026,17 +3209,17 @@ export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
 
 ### <a id="vex_net_loop_create"></a>`vex_net_loop_create` `🔓 export`
 
-> 📄 `native.vxc` L248-255
+> 📄 `native.vxc` L101-101
 
 ```vex
-export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
+export fn vex_net_loop_create(loopPtr: Ptr<u8!>): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loopPtr` | `Ptr&lt;u8!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -1044,17 +3227,17 @@ export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_loop_close"></a>`vex_net_loop_close` `🔓 export`
 
-> 📄 `native.vxc` L257-262
+> 📄 `native.vxc` L102-102
 
 ```vex
-export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
+export fn vex_net_loop_close(loopPtr: Ptr<u8>): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loopPtr` | `Ptr&lt;u8&gt;` |  |
 
 **Returns:** `i32`
 
@@ -1062,17 +3245,17 @@ export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_register"></a>`vex_net_register` `🔓 export`
 
-> 📄 `native.vxc` L264-293
+> 📄 `native.vxc` L103-105
 
 ```vex
-export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
+export fn vex_net_register(loopPtr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loopPtr` | `Ptr&lt;u8&gt;` |  |
 | `fd` | `i32` |  |
 | `events` | `i32` |  |
 | `userdata` | `i64` |  |
@@ -1083,17 +3266,17 @@ export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i6
 
 ### <a id="vex_net_modify"></a>`vex_net_modify` `🔓 export`
 
-> 📄 `native.vxc` L295-299
+> 📄 `native.vxc` L106-108
 
 ```vex
-export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
+export fn vex_net_modify(loopPtr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loopPtr` | `Ptr&lt;u8&gt;` |  |
 | `fd` | `i32` |  |
 | `events` | `i32` |  |
 | `userdata` | `i64` |  |
@@ -1104,17 +3287,17 @@ export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64)
 
 ### <a id="vex_net_unregister"></a>`vex_net_unregister` `🔓 export`
 
-> 📄 `native.vxc` L301-314
+> 📄 `native.vxc` L109-109
 
 ```vex
-export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
+export fn vex_net_unregister(loopPtr: Ptr<u8>, fd: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loopPtr` | `Ptr&lt;u8&gt;` |  |
 | `fd` | `i32` |  |
 
 **Returns:** `i32`
@@ -1123,20 +3306,20 @@ export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
 
 ### <a id="vex_net_tick"></a>`vex_net_tick` `🔓 export`
 
-> 📄 `native.vxc` L316-352
+> 📄 `native.vxc` L110-112
 
 ```vex
-export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i32): i32
+export fn vex_net_tick(loopPtr: Ptr<u8>, out: Ptr<u8!>, cap: i32, timeoutMs: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
-| `out` | `Ptr&lt;u8&gt;` |  |
+| `loopPtr` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
 | `cap` | `i32` |  |
-| `timeout_ms` | `i32` |  |
+| `timeoutMs` | `i32` |  |
 
 **Returns:** `i32`
 
@@ -1144,7 +3327,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 
 ### <a id="vex_fd_set_nonblock"></a>`vex_fd_set_nonblock` `🔓 export`
 
-> 📄 `native.vxc` L356-358
+> 📄 `native.vxc` L114-114
 
 ```vex
 export fn vex_fd_set_nonblock(fd: i32): i32
@@ -1162,7 +3345,7 @@ export fn vex_fd_set_nonblock(fd: i32): i32
 
 ### <a id="vex_net_thread_yield"></a>`vex_net_thread_yield` `🔓 export`
 
-> 📄 `native.vxc` L374-376
+> 📄 `native.vxc` L115-115
 
 ```vex
 export fn vex_net_thread_yield(): i32
@@ -1174,10 +3357,10 @@ export fn vex_net_thread_yield(): i32
 
 ### <a id="vex_fd_read"></a>`vex_fd_read` `🔓 export`
 
-> 📄 `native.vxc` L378-382
+> 📄 `native.vxc` L116-116
 
 ```vex
-export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
+export fn vex_fd_read(fd: i32, buf: Ptr<Opaque!>, len: u64): i64
 ```
 
 **Parameters:**
@@ -1185,7 +3368,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `buf` | `Ptr&lt;Opaque&gt;` |  |
+| `buf` | `Ptr&lt;Opaque!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -1194,7 +3377,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ### <a id="vex_fd_write"></a>`vex_fd_write` `🔓 export`
 
-> 📄 `native.vxc` L384-388
+> 📄 `native.vxc` L117-117
 
 ```vex
 export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
@@ -1214,7 +3397,7 @@ export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ### <a id="readEvent"></a>`readEvent` `🔓 export`
 
-> 📄 `event_loop.vx` L101-107
+> 📄 `event_loop.vx` L114-121
 
 ```vex
 export fn readEvent(events_base: Ptr<Opaque>, index: i32): Event
@@ -1235,57 +3418,147 @@ Each event is 16 bytes: {fd: i32, flags: i32, userdata: i64}.
 
 ---
 
-### <a id="UdpSocket"></a>`UdpSocket` `🔓 export`
+### <a id="decodedSocketAddress"></a>`decodedSocketAddress`
 
-> 📄 `udp.vx` L42-58
+> 📄 `endpoint.vx` L6-17
 
 ```vex
-export fn UdpSocket(ip: string, port: i32): UdpSocket
-```
-
-Bind a UDP socket to ip:port.
-
-Returns a UdpSocket. Check fd &gt;= 0 for success.
-# Example
-```
-let sock = udpBind("0.0.0.0", 9999);
+fn decodedSocketAddress(family: i32, octets: [u8; 16], port: u16): Result<SocketAddr, IoError>
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `ip` | `string` |  |
-| `port` | `i32` |  |
+| `family` | `i32` |  |
+| `octets` | `[u8; 16]` |  |
+| `port` | `u16` |  |
 
-**Returns:** `UdpSocket`
+**Returns:** `Result&lt;SocketAddr, IoError&gt;`
 
-**Methods:**
+---
 
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| `sendTo`[↗](#UdpSocket.sendTo) | `export fn (self: &amp;UdpSocket) sendTo(data: Ptr&lt;u8&gt;,` | Send data to a specific ip:port. |
-| `recvFrom`[↗](#UdpSocket.recvFrom) | `export fn (self: &amp;UdpSocket) recvFrom(buf: Ptr&lt;u8&gt;` | Receive data and get sender address. |
-| `recvFromWithSource`[↗](#UdpSocket.recvFromWithSource) | `export fn (self: &amp;UdpSocket) recvFromWithSource(bu` | Receive data and preserve the native sender IPv4 text and port. The |
-| `setNonBlock`[↗](#UdpSocket.setNonBlock) | `export fn (self: &amp;UdpSocket!) setNonBlock(on: bool` | Enable or disable non-blocking receive/send operations. |
-| `close`[↗](#UdpSocket.close) | `export fn (self: &amp;UdpSocket!) close()` | Close the UDP socket. |
-| `drop`[↗](#UdpSocket.drop) | `export fn (self: &amp;UdpSocket!) drop()` |  |
+### <a id="localSocketAddress"></a>`localSocketAddress` `🔓 export`
+
+> 📄 `endpoint.vx` L19-28
+
+```vex
+export fn localSocketAddress(handle: i64): Result<SocketAddr, IoError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `handle` | `i64` |  |
+
+**Returns:** `Result&lt;SocketAddr, IoError&gt;`
+
+---
+
+### <a id="peerSocketAddress"></a>`peerSocketAddress` `🔓 export`
+
+> 📄 `endpoint.vx` L30-39
+
+```vex
+export fn peerSocketAddress(handle: i64): Result<SocketAddr, IoError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `handle` | `i64` |  |
+
+**Returns:** `Result&lt;SocketAddr, IoError&gt;`
+
+---
+
+### <a id="closeHandle"></a>`closeHandle`
+
+> 📄 `udp.vx` L15-20
+
+```vex
+fn closeHandle(handle: i64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `handle` | `i64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="contextFailure"></a>`contextFailure`
+
+> 📄 `udp.vx` L22-28
+
+```vex
+fn contextFailure(context: &Context): Option<IoError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `context` | `&amp;Context` |  |
+
+**Returns:** `Option&lt;IoError&gt;`
+
+---
+
+### <a id="nativeAddress"></a>`nativeAddress`
+
+> 📄 `udp.vx` L51-54
+
+```vex
+fn nativeAddress(address: &IpAddr, output: Ptr<u8!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `&amp;IpAddr` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="isValidOpcode"></a>`isValidOpcode`
+
+> 📄 `ws_parser.vx` L174-178
+
+```vex
+fn isValidOpcode(opcode: u8): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `opcode` | `u8` |  |
+
+**Returns:** `bool`
 
 ---
 
 ### <a id="parseFrame"></a>`parseFrame` `🔓 export`
 
-> 📄 `ws_parser.vx` L76-80
+> 📄 `ws_parser.vx` L184-247
 
 ```vex
-export fn parseFrame(buf: Ptr<u8>, len: u64, frame: &WsFrame!, consumed: &u64 !): i32
+export fn parseFrame(buf: Ptr<u8>, len: u64, frame: &WsFrame!, consumed: &u64!): i32
 ```
 
-Parse a WebSocket frame from a buffer.
+Parse one complete frame without copying its payload.
 
-Returns WS_OK(0) on success, WS_NEED_MORE(-1) if incomplete,
-WS_ERR_INVALID(-2) on protocol error.
-`consumed` is set to the total bytes consumed (header + payload).
+On `WS_OK`, `frame.payload()` borrows `buf` and `consumed` is the exact
+frame size. On failure, output parameters are left unchanged.
 
 **Parameters:**
 
@@ -1294,24 +3567,49 @@ WS_ERR_INVALID(-2) on protocol error.
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 | `frame` | `&amp;WsFrame!` |  |
-| `consumed` | `&amp;u64 !` |  |
+| `consumed` | `&amp;u64!` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="encodeFrame"></a>`encodeFrame` `🔓 export`
+### <a id="encodeFrameHeader"></a>`encodeFrameHeader` `🔓 export`
 
-> 📄 `ws_parser.vx` L87-94
+> 📄 `ws_parser.vx` L255-297
 
 ```vex
-export fn encodeFrame(buf: Ptr<u8!>, bufLen: u64, opcode: u8, payload: Ptr<u8>, payloadLen: u64, written: &u64 !): i32
+export fn encodeFrameHeader(buf: Ptr<u8!>, bufLen: u64, opcode: u8, payloadLen: u64): u64
 ```
 
-Encode a WebSocket frame into `buf`.
+Encode an unmasked server frame header into caller-owned storage.
 
-Server frames are NOT masked (per RFC 6455).
-Returns 0 on success. `written` = total bytes written to buf.
+The returned header length is 2, 4, or 10.  Keeping this separate from
+payload copying lets transports perform bounded write-all without a
+temporary frame-sized allocation; `encodeFrame` below remains the
+contiguous-buffer convenience adapter.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `bufLen` | `u64` |  |
+| `opcode` | `u8` |  |
+| `payloadLen` | `u64` |  |
+
+**Returns:** `u64`
+
+---
+
+### <a id="encodeFrame"></a>`encodeFrame` `🔓 export`
+
+> 📄 `ws_parser.vx` L300-314
+
+```vex
+export fn encodeFrame(buf: Ptr<u8!>, bufLen: u64, opcode: u8, payload: Ptr<u8>, payloadLen: u64, written: &u64!): i32
+```
+
+Encode one unmasked server frame into caller-owned contiguous storage.
 
 **Parameters:**
 
@@ -1322,7 +3620,7 @@ Returns 0 on success. `written` = total bytes written to buf.
 | `opcode` | `u8` |  |
 | `payload` | `Ptr&lt;u8&gt;` |  |
 | `payloadLen` | `u64` |  |
-| `written` | `&amp;u64 !` |  |
+| `written` | `&amp;u64!` |  |
 
 **Returns:** `i32`
 
@@ -1330,13 +3628,11 @@ Returns 0 on success. `written` = total bytes written to buf.
 
 ### <a id="encodeText"></a>`encodeText` `🔓 export`
 
-> 📄 `ws_parser.vx` L97-101
+> 📄 `ws_parser.vx` L316-318
 
 ```vex
-export fn encodeText(buf: Ptr<u8!>, bufLen: u64, text: Ptr<u8>, textLen: u64, written: &u64 !): i32
+export fn encodeText(buf: Ptr<u8!>, bufLen: u64, text: Ptr<u8>, textLen: u64, written: &u64!): i32
 ```
-
-Encode a text frame.
 
 **Parameters:**
 
@@ -1346,7 +3642,7 @@ Encode a text frame.
 | `bufLen` | `u64` |  |
 | `text` | `Ptr&lt;u8&gt;` |  |
 | `textLen` | `u64` |  |
-| `written` | `&amp;u64 !` |  |
+| `written` | `&amp;u64!` |  |
 
 **Returns:** `i32`
 
@@ -1354,13 +3650,11 @@ Encode a text frame.
 
 ### <a id="encodeClose"></a>`encodeClose` `🔓 export`
 
-> 📄 `ws_parser.vx` L104-111
+> 📄 `ws_parser.vx` L320-325
 
 ```vex
-export fn encodeClose(buf: Ptr<u8!>, bufLen: u64, code: u16, written: &u64 !): i32
+export fn encodeClose(buf: Ptr<u8!>, bufLen: u64, code: u16, written: &u64!): i32
 ```
-
-Encode a close frame with optional status code.
 
 **Parameters:**
 
@@ -1369,7 +3663,7 @@ Encode a close frame with optional status code.
 | `buf` | `Ptr&lt;u8!&gt;` |  |
 | `bufLen` | `u64` |  |
 | `code` | `u16` |  |
-| `written` | `&amp;u64 !` |  |
+| `written` | `&amp;u64!` |  |
 
 **Returns:** `i32`
 
@@ -1377,13 +3671,11 @@ Encode a close frame with optional status code.
 
 ### <a id="encodePing"></a>`encodePing` `🔓 export`
 
-> 📄 `ws_parser.vx` L114-118
+> 📄 `ws_parser.vx` L327-329
 
 ```vex
-export fn encodePing(buf: Ptr<u8!>, bufLen: u64, written: &u64 !): i32
+export fn encodePing(buf: Ptr<u8!>, bufLen: u64, written: &u64!): i32
 ```
-
-Encode a ping frame.
 
 **Parameters:**
 
@@ -1391,7 +3683,7 @@ Encode a ping frame.
 |------|------|-------------|
 | `buf` | `Ptr&lt;u8!&gt;` |  |
 | `bufLen` | `u64` |  |
-| `written` | `&amp;u64 !` |  |
+| `written` | `&amp;u64!` |  |
 
 **Returns:** `i32`
 
@@ -1399,13 +3691,11 @@ Encode a ping frame.
 
 ### <a id="encodePong"></a>`encodePong` `🔓 export`
 
-> 📄 `ws_parser.vx` L121-125
+> 📄 `ws_parser.vx` L331-333
 
 ```vex
-export fn encodePong(buf: Ptr<u8!>, bufLen: u64, payload: Ptr<u8>, payloadLen: u64, written: &u64 !): i32
+export fn encodePong(buf: Ptr<u8!>, bufLen: u64, payload: Ptr<u8>, payloadLen: u64, written: &u64!): i32
 ```
-
-Encode a pong frame (echo payload from ping).
 
 **Parameters:**
 
@@ -1415,43 +3705,19 @@ Encode a pong frame (echo payload from ping).
 | `bufLen` | `u64` |  |
 | `payload` | `Ptr&lt;u8&gt;` |  |
 | `payloadLen` | `u64` |  |
-| `written` | `&amp;u64 !` |  |
+| `written` | `&amp;u64!` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="unmask"></a>`unmask` `🔓 export`
-
-> 📄 `ws_parser.vx` L131-135
-
-```vex
-export fn unmask(data: Ptr<u8>, len: u64, mask: Ptr<u8>)
-```
-
-Unmask payload data in-place (XOR with 4-byte mask).
-
-Call this on client-sent frames before reading payload.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `data` | `Ptr&lt;u8&gt;` |  |
-| `len` | `u64` |  |
-| `mask` | `Ptr&lt;u8&gt;` |  |
-
----
-
 ### <a id="isControlFrame"></a>`isControlFrame` `🔓 export`
 
-> 📄 `ws_parser.vx` L138-140
+> 📄 `ws_parser.vx` L335-337
 
 ```vex
 export fn isControlFrame(opcode: u8): bool
 ```
-
-Check if an opcode is a control frame (close/ping/pong).
 
 **Parameters:**
 
@@ -1465,13 +3731,11 @@ Check if an opcode is a control frame (close/ping/pong).
 
 ### <a id="isDataFrame"></a>`isDataFrame` `🔓 export`
 
-> 📄 `ws_parser.vx` L143-145
+> 📄 `ws_parser.vx` L339-341
 
 ```vex
 export fn isDataFrame(opcode: u8): bool
 ```
-
-Check if an opcode is a data frame (text/binary/continuation).
 
 **Parameters:**
 
@@ -1483,9 +3747,204 @@ Check if an opcode is a data frame (text/binary/continuation).
 
 ---
 
+### <a id="resolveError"></a>`resolveError`
+
+> 📄 `resolver.vx` L37-39
+
+```vex
+fn resolveError(kind: ResolveErrorKind, nativeCode: i32): ResolveError
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `kind` | `ResolveErrorKind` |  |
+| `nativeCode` | `i32` |  |
+
+**Returns:** `ResolveError`
+
+---
+
+### <a id="familyCode"></a>`familyCode`
+
+> 📄 `resolver.vx` L83-89
+
+```vex
+fn familyCode(family: ResolveFamily): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `family` | `ResolveFamily` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="familyAccepts"></a>`familyAccepts`
+
+> 📄 `resolver.vx` L91-97
+
+```vex
+fn familyAccepts(family: ResolveFamily, address: &IpAddr): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `family` | `ResolveFamily` |  |
+| `address` | `&amp;IpAddr` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="validateAndCopyHost"></a>`validateAndCopyHost`
+
+> 📄 `resolver.vx` L99-116
+
+```vex
+fn validateAndCopyHost(host: str, output: Ptr<u8!>): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `str` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="decodeProviderAddress"></a>`decodeProviderAddress`
+
+> 📄 `resolver.vx` L118-137
+
+```vex
+fn decodeProviderAddress(family: u8, bytes: Ptr<u8>): Option<IpAddr>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `family` | `u8` |  |
+| `bytes` | `Ptr&lt;u8&gt;` |  |
+
+**Returns:** `Option&lt;IpAddr&gt;`
+
+---
+
+### <a id="mapProviderFailure"></a>`mapProviderFailure`
+
+> 📄 `resolver.vx` L139-149
+
+```vex
+fn mapProviderFailure(status: i32): ResolveError
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `status` | `i32` |  |
+
+**Returns:** `ResolveError`
+
+---
+
+### <a id="resolveHostBlocking"></a>`resolveHostBlocking` `🔓 export`
+
+> 📄 `resolver.vx` L154-159
+
+```vex
+export fn resolveHostBlocking(host: str): Result<Vec<IpAddr>, ResolveError>
+```
+
+Resolves a numeric address or DNS hostname through the target system
+
+resolver. Results preserve provider order and remove duplicate addresses.
+This call may block the current operating-system thread.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `str` |  |
+
+**Returns:** `Result&lt;Vec&lt;IpAddr&gt;, ResolveError&gt;`
+
+---
+
+### <a id="resolveHostBlocking"></a>`resolveHostBlocking` `🔓 export`
+
+> 📄 `resolver.vx` L161-223
+
+```vex
+export fn resolveHostBlocking(host: str, options: ResolveOptions): Result<Vec<IpAddr>, ResolveError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `str` |  |
+| `options` | `ResolveOptions` |  |
+
+**Returns:** `Result&lt;Vec&lt;IpAddr&gt;, ResolveError&gt;`
+
+---
+
+### <a id="resolveSocketAddrsBlocking"></a>`resolveSocketAddrsBlocking` `🔓 export`
+
+> 📄 `resolver.vx` L226-235
+
+```vex
+export fn resolveSocketAddrsBlocking(host: str, port: u16): Result<Vec<SocketAddr>, ResolveError>
+```
+
+Resolves a hostname and attaches one caller-provided port to every address.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `str` |  |
+| `port` | `u16` |  |
+
+**Returns:** `Result&lt;Vec&lt;SocketAddr&gt;, ResolveError&gt;`
+
+---
+
+### <a id="resolveSocketAddrsBlocking"></a>`resolveSocketAddrsBlocking` `🔓 export`
+
+> 📄 `resolver.vx` L237-253
+
+```vex
+export fn resolveSocketAddrsBlocking(host: str, port: u16, options: ResolveOptions): Result<Vec<SocketAddr>, ResolveError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `str` |  |
+| `port` | `u16` |  |
+| `options` | `ResolveOptions` |  |
+
+**Returns:** `Result&lt;Vec&lt;SocketAddr&gt;, ResolveError&gt;`
+
+---
+
 ### <a id="get_errno"></a>`get_errno`
 
-> 📄 `native.macos.vxc` L23-29
+> 📄 `native.macos.vxc` L37-43
 
 ```vex
 fn get_errno(): i32
@@ -1495,9 +3954,133 @@ fn get_errno(): i32
 
 ---
 
+### <a id="negative_errno"></a>`negative_errno`
+
+> 📄 `native.macos.vxc` L45-47
+
+```vex
+fn negative_errno(): i32
+```
+
+**Returns:** `i32`
+
+---
+
+### <a id="map_resolver_status"></a>`map_resolver_status`
+
+> 📄 `native.macos.vxc` L49-60
+
+```vex
+fn map_resolver_status(status: i32): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `status` | `i32` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_resolve_host"></a>`vex_net_resolve_host` `🔓 export`
+
+> 📄 `native.macos.vxc` L64-128
+
+```vex
+export fn vex_net_resolve_host(host: Ptr<u8>, family: i32, familiesOut: Ptr<u8!>, addressesOut: Ptr<u8!>, capacity: u64, countOut: Ptr<u64!>): i32
+```
+
+System DNS boundary. `addrinfo` is decoded through Darwin's stable ABI
+
+offsets and converted immediately into target-neutral family/octet records.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `familiesOut` | `Ptr&lt;u8!&gt;` |  |
+| `addressesOut` | `Ptr&lt;u8!&gt;` |  |
+| `capacity` | `u64` |  |
+| `countOut` | `Ptr&lt;u64!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="build_ip_port"></a>`build_ip_port`
+
+> 📄 `native.macos.vxc` L146-166
+
+```vex
+fn build_ip_port(family: i32, ip: Ptr<u8>, port: u16, output: Ptr<sockaddr_ip!>): u32
+```
+
+Builds either sockaddr_in or sockaddr_in6 from validated network-order
+
+bytes. The semantic family is 4 or 6 and is independent of Darwin values.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `output` | `Ptr&lt;sockaddr_ip!&gt;` |  |
+
+**Returns:** `u32`
+
+---
+
+### <a id="decode_ip_port"></a>`decode_ip_port`
+
+> 📄 `native.macos.vxc` L168-194
+
+```vex
+fn decode_ip_port(address: Ptr<sockaddr_ip>, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `Ptr&lt;sockaddr_ip&gt;` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="write_ipv4_text"></a>`write_ipv4_text`
+
+> 📄 `native.macos.vxc` L197-224
+
+```vex
+fn write_ipv4_text(src: Ptr<u8>, out: Ptr<u8!>, cap: u64)
+```
+
+Format the four network-order IPv4 bytes into a bounded C string.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `src` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
+| `cap` | `u64` |  |
+
+---
+
 ### <a id="parse_ip_port"></a>`parse_ip_port`
 
-> 📄 `native.macos.vxc` L40-80
+> 📄 `native.macos.vxc` L226-255
 
 ```vex
 fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
@@ -1515,10 +4098,10 @@ fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
 
 ### <a id="vex_net_socket_tcp"></a>`vex_net_socket_tcp` `🔓 export`
 
-> 📄 `native.macos.vxc` L84-92
+> 📄 `native.macos.vxc` L259-271
 
 ```vex
-export fn vex_net_socket_tcp(ipv6: i32): i32
+export fn vex_net_socket_tcp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -1527,16 +4110,16 @@ export fn vex_net_socket_tcp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_tcp_blocking"></a>`vex_net_socket_tcp_blocking` `🔓 export`
 
-> 📄 `native.macos.vxc` L94-101
+> 📄 `native.macos.vxc` L273-280
 
 ```vex
-export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
+export fn vex_net_socket_tcp_blocking(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -1545,16 +4128,16 @@ export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_udp"></a>`vex_net_socket_udp` `🔓 export`
 
-> 📄 `native.macos.vxc` L103-110
+> 📄 `native.macos.vxc` L282-289
 
 ```vex
-export fn vex_net_socket_udp(ipv6: i32): i32
+export fn vex_net_socket_udp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -1563,23 +4146,23 @@ export fn vex_net_socket_udp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_set_reuseaddr"></a>`vex_net_set_reuseaddr` `🔓 export`
 
-> 📄 `native.macos.vxc` L112-117
+> 📄 `native.macos.vxc` L291-296
 
 ```vex
-export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
+export fn vex_net_set_reuseaddr(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -1588,17 +4171,17 @@ export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_reuseport"></a>`vex_net_set_reuseport` `🔓 export`
 
-> 📄 `native.macos.vxc` L119-124
+> 📄 `native.macos.vxc` L298-303
 
 ```vex
-export fn vex_net_set_reuseport(fd: i32, on: i32): i32
+export fn vex_net_set_reuseport(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -1607,17 +4190,17 @@ export fn vex_net_set_reuseport(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nonblock"></a>`vex_net_set_nonblock` `🔓 export`
 
-> 📄 `native.macos.vxc` L126-131
+> 📄 `native.macos.vxc` L305-313
 
 ```vex
-export fn vex_net_set_nonblock(fd: i32, on: i32): i32
+export fn vex_net_set_nonblock(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -1626,17 +4209,17 @@ export fn vex_net_set_nonblock(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nodelay"></a>`vex_net_set_nodelay` `🔓 export`
 
-> 📄 `native.macos.vxc` L133-138
+> 📄 `native.macos.vxc` L315-320
 
 ```vex
-export fn vex_net_set_nodelay(fd: i32, on: i32): i32
+export fn vex_net_set_nodelay(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -1645,17 +4228,17 @@ export fn vex_net_set_nodelay(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nopush"></a>`vex_net_set_nopush` `🔓 export`
 
-> 📄 `native.macos.vxc` L140-145
+> 📄 `native.macos.vxc` L322-327
 
 ```vex
-export fn vex_net_set_nopush(fd: i32, on: i32): i32
+export fn vex_net_set_nopush(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -1664,17 +4247,38 @@ export fn vex_net_set_nopush(fd: i32, on: i32): i32
 
 ### <a id="vex_net_bind"></a>`vex_net_bind` `🔓 export`
 
-> 📄 `native.macos.vxc` L149-155
+> 📄 `native.macos.vxc` L331-337
 
 ```vex
-export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_bind(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_bind_ip"></a>`vex_net_bind_ip` `🔓 export`
+
+> 📄 `native.macos.vxc` L339-346
+
+```vex
+export fn vex_net_bind_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -1684,17 +4288,17 @@ export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ### <a id="vex_net_listen"></a>`vex_net_listen` `🔓 export`
 
-> 📄 `native.macos.vxc` L157-161
+> 📄 `native.macos.vxc` L348-352
 
 ```vex
-export fn vex_net_listen(fd: i32, backlog: i32): i32
+export fn vex_net_listen(fd: i64, backlog: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `backlog` | `i32` |  |
 
 **Returns:** `i32`
@@ -1703,17 +4307,17 @@ export fn vex_net_listen(fd: i32, backlog: i32): i32
 
 ### <a id="vex_net_connect"></a>`vex_net_connect` `🔓 export`
 
-> 📄 `native.macos.vxc` L163-169
+> 📄 `native.macos.vxc` L354-360
 
 ```vex
-export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_connect(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -1721,41 +4325,150 @@ export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ---
 
-### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+### <a id="vex_net_connect_ip"></a>`vex_net_connect_ip` `🔓 export`
 
-> 📄 `native.macos.vxc` L171-186
+> 📄 `native.macos.vxc` L362-369
 
 ```vex
-export fn vex_net_accept(fd: i32, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i32
+export fn vex_net_connect_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
-| `ip_len` | `u64` |  |
-| `port_out` | `Ptr&lt;u16!&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+### <a id="vex_net_connect_ip_async"></a>`vex_net_connect_ip_async` `🔓 export`
 
-> 📄 `native.macos.vxc` L188-192
+> 📄 `native.macos.vxc` L371-376
 
 ```vex
-export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_connect_ip_async(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_connect_ip_async_context"></a>`vex_net_connect_ip_async_context` `🔓 export`
+
+> 📄 `native.macos.vxc` L378-393
+
+```vex
+export fn vex_net_connect_ip_async_context(fd: i64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_local_addr"></a>`vex_net_local_addr` `🔓 export`
+
+> 📄 `native.macos.vxc` L395-407
+
+```vex
+export fn vex_net_local_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_peer_addr"></a>`vex_net_peer_addr` `🔓 export`
+
+> 📄 `native.macos.vxc` L409-421
+
+```vex
+export fn vex_net_peer_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+
+> 📄 `native.macos.vxc` L423-442
+
+```vex
+export fn vex_net_accept(fd: i64, ip_out: Ptr<u8!>, ip_len: u64, port_out: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `ip_out` | `Ptr&lt;u8!&gt;` |  |
+| `ip_len` | `u64` |  |
+| `port_out` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+
+> 📄 `native.macos.vxc` L444-448
+
+```vex
+export fn vex_net_recv(fd: i64, buf: Ptr<u8!>, len: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -1764,18 +4477,18 @@ export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_recv_peek"></a>`vex_net_recv_peek` `🔓 export`
 
-> 📄 `native.macos.vxc` L194-198
+> 📄 `native.macos.vxc` L450-454
 
 ```vex
-export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_recv_peek(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -1784,17 +4497,17 @@ export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_send"></a>`vex_net_send` `🔓 export`
 
-> 📄 `native.macos.vxc` L200-204
+> 📄 `native.macos.vxc` L456-460
 
 ```vex
-export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_send(fd: i64, buf: Ptr<u8>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 
@@ -1804,17 +4517,17 @@ export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_sendto"></a>`vex_net_sendto` `🔓 export`
 
-> 📄 `native.macos.vxc` L206-212
+> 📄 `native.macos.vxc` L462-468
 
 ```vex
-export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
+export fn vex_net_sendto(fd: i64, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
@@ -1824,22 +4537,70 @@ export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16
 
 ---
 
-### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+### <a id="vex_net_sendto_ip"></a>`vex_net_sendto_ip` `🔓 export`
 
-> 📄 `native.macos.vxc` L214-227
+> 📄 `native.macos.vxc` L470-477
 
 ```vex
-export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i64
+export fn vex_net_sendto_ip(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_sendto_ip_async_context"></a>`vex_net_sendto_ip_async_context` `🔓 export`
+
+> 📄 `native.macos.vxc` L479-488
+
+```vex
+export fn vex_net_sendto_ip_async_context(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8&gt;` |  |
+| `len` | `u64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+
+> 📄 `native.macos.vxc` L490-507
+
+```vex
+export fn vex_net_recvfrom(fd: i64, buf: Ptr<u8!>, len: u64, ip_out: Ptr<u8!>, ip_len: u64, port_out: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `ip_out` | `Ptr&lt;u8!&gt;` |  |
 | `ip_len` | `u64` |  |
 | `port_out` | `Ptr&lt;u16!&gt;` |  |
 
@@ -1847,19 +4608,69 @@ export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_
 
 ---
 
-### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
+### <a id="vex_net_recvfrom_ip"></a>`vex_net_recvfrom_ip` `🔓 export`
 
-> 📄 `native.macos.vxc` L229-233
+> 📄 `native.macos.vxc` L509-525
 
 ```vex
-export fn vex_net_close(fd: i32): i32
+export fn vex_net_recvfrom_ip(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom_ip_async_context"></a>`vex_net_recvfrom_ip_async_context` `🔓 export`
+
+> 📄 `native.macos.vxc` L527-549
+
+```vex
+export fn vex_net_recvfrom_ip_async_context(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
+
+> 📄 `native.macos.vxc` L551-556
+
+```vex
+export fn vex_net_close(fd: i64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
 
 **Returns:** `i32`
 
@@ -1867,7 +4678,7 @@ export fn vex_net_close(fd: i32): i32
 
 ### <a id="vex_net_pipe"></a>`vex_net_pipe` `🔓 export`
 
-> 📄 `native.macos.vxc` L235-244
+> 📄 `native.macos.vxc` L558-567
 
 ```vex
 export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
@@ -1886,17 +4697,17 @@ export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
 
 ### <a id="vex_net_loop_create"></a>`vex_net_loop_create` `🔓 export`
 
-> 📄 `native.macos.vxc` L248-255
+> 📄 `native.macos.vxc` L571-578
 
 ```vex
-export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
+export fn vex_net_loop_create(loop_ptr: Ptr<u8!>): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loop_ptr` | `Ptr&lt;u8!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -1904,7 +4715,7 @@ export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_loop_close"></a>`vex_net_loop_close` `🔓 export`
 
-> 📄 `native.macos.vxc` L257-262
+> 📄 `native.macos.vxc` L580-585
 
 ```vex
 export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
@@ -1922,7 +4733,7 @@ export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_register"></a>`vex_net_register` `🔓 export`
 
-> 📄 `native.macos.vxc` L264-293
+> 📄 `native.macos.vxc` L587-610
 
 ```vex
 export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
@@ -1943,7 +4754,7 @@ export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i6
 
 ### <a id="vex_net_modify"></a>`vex_net_modify` `🔓 export`
 
-> 📄 `native.macos.vxc` L295-299
+> 📄 `native.macos.vxc` L612-616
 
 ```vex
 export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
@@ -1964,7 +4775,7 @@ export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64)
 
 ### <a id="vex_net_unregister"></a>`vex_net_unregister` `🔓 export`
 
-> 📄 `native.macos.vxc` L301-314
+> 📄 `native.macos.vxc` L618-631
 
 ```vex
 export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
@@ -1983,10 +4794,10 @@ export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
 
 ### <a id="vex_net_tick"></a>`vex_net_tick` `🔓 export`
 
-> 📄 `native.macos.vxc` L316-352
+> 📄 `native.macos.vxc` L633-677
 
 ```vex
-export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i32): i32
+export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8!>, cap: i32, timeout_ms: i32): i32
 ```
 
 **Parameters:**
@@ -1994,7 +4805,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 | Name | Type | Description |
 |------|------|-------------|
 | `loop_ptr` | `Ptr&lt;u8&gt;` |  |
-| `out` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
 | `cap` | `i32` |  |
 | `timeout_ms` | `i32` |  |
 
@@ -2004,7 +4815,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 
 ### <a id="vex_fd_set_nonblock"></a>`vex_fd_set_nonblock` `🔓 export`
 
-> 📄 `native.macos.vxc` L356-358
+> 📄 `native.macos.vxc` L681-683
 
 ```vex
 export fn vex_fd_set_nonblock(fd: i32): i32
@@ -2022,7 +4833,7 @@ export fn vex_fd_set_nonblock(fd: i32): i32
 
 ### <a id="vex_net_thread_yield"></a>`vex_net_thread_yield` `🔓 export`
 
-> 📄 `native.macos.vxc` L374-376
+> 📄 `native.macos.vxc` L703-705
 
 ```vex
 export fn vex_net_thread_yield(): i32
@@ -2034,10 +4845,10 @@ export fn vex_net_thread_yield(): i32
 
 ### <a id="vex_fd_read"></a>`vex_fd_read` `🔓 export`
 
-> 📄 `native.macos.vxc` L378-382
+> 📄 `native.macos.vxc` L707-711
 
 ```vex
-export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
+export fn vex_fd_read(fd: i32, buf: Ptr<Opaque!>, len: u64): i64
 ```
 
 **Parameters:**
@@ -2045,7 +4856,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `buf` | `Ptr&lt;Opaque&gt;` |  |
+| `buf` | `Ptr&lt;Opaque!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -2054,7 +4865,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ### <a id="vex_fd_write"></a>`vex_fd_write` `🔓 export`
 
-> 📄 `native.macos.vxc` L384-388
+> 📄 `native.macos.vxc` L713-717
 
 ```vex
 export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
@@ -2074,7 +4885,7 @@ export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ### <a id="monotonicNs"></a>`monotonicNs` `🔓 export`
 
-> 📄 `runtime.vxc` L15-17
+> 📄 `runtime.vxc` L38-40
 
 ```vex
 export fn monotonicNs(): u64
@@ -2088,7 +4899,7 @@ Monotonic clock in nanoseconds.
 
 ### <a id="prepareWorkers"></a>`prepareWorkers` `🔓 export`
 
-> 📄 `runtime.vxc` L20-22
+> 📄 `runtime.vxc` L43-45
 
 ```vex
 export fn prepareWorkers(numWorkers: i32): i32
@@ -2106,9 +4917,25 @@ Ensure the async runtime has enough worker threads ready for server workloads.
 
 ---
 
+### <a id="registeredWorkerCount"></a>`registeredWorkerCount` `🔓 export`
+
+> 📄 `runtime.vxc` L49-51
+
+```vex
+export fn registeredWorkerCount(): u32
+```
+
+Number of worker scheduler states that have completed registration.
+
+This is a readiness observation, not a request to grow the worker pool.
+
+**Returns:** `u32`
+
+---
+
 ### <a id="flushSpawnBatch"></a>`flushSpawnBatch` `🔓 export`
 
-> 📄 `runtime.vxc` L25-27
+> 📄 `runtime.vxc` L54-56
 
 ```vex
 export fn flushSpawnBatch()
@@ -2120,7 +4947,7 @@ Flush the main-thread spawn batch immediately.
 
 ### <a id="arenaSave"></a>`arenaSave` `🔓 export`
 
-> 📄 `runtime.vxc` L29-31
+> 📄 `runtime.vxc` L58-60
 
 ```vex
 export fn arenaSave(): Ptr<Opaque>
@@ -2132,7 +4959,7 @@ export fn arenaSave(): Ptr<Opaque>
 
 ### <a id="arenaRestore"></a>`arenaRestore` `🔓 export`
 
-> 📄 `runtime.vxc` L33-35
+> 📄 `runtime.vxc` L62-64
 
 ```vex
 export fn arenaRestore(token: Ptr<Opaque>)
@@ -2146,9 +4973,49 @@ export fn arenaRestore(token: Ptr<Opaque>)
 
 ---
 
+### <a id="arenaCheckpoint"></a>`arenaCheckpoint` `🔓 export`
+
+> 📄 `runtime.vxc` L67-69
+
+```vex
+export fn arenaCheckpoint(out: Ptr<ArenaCheckpoint!>): bool
+```
+
+Capture a lexical arena watermark without allocating a savepoint node.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `out` | `Ptr&lt;ArenaCheckpoint!&gt;` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="arenaRewind"></a>`arenaRewind` `🔓 export`
+
+> 📄 `runtime.vxc` L72-74
+
+```vex
+export fn arenaRewind(checkpoint: Ptr<ArenaCheckpoint!>): bool
+```
+
+Reclaim exactly the work performed after arenaCheckpoint.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `checkpoint` | `Ptr&lt;ArenaCheckpoint!&gt;` |  |
+
+**Returns:** `bool`
+
+---
+
 ### <a id="arenaTotalBytesUsed"></a>`arenaTotalBytesUsed` `🔓 export`
 
-> 📄 `runtime.vxc` L37-39
+> 📄 `runtime.vxc` L76-78
 
 ```vex
 export fn arenaTotalBytesUsed(): u64
@@ -2160,7 +5027,7 @@ export fn arenaTotalBytesUsed(): u64
 
 ### <a id="regionCurrent"></a>`regionCurrent` `🔓 export`
 
-> 📄 `runtime.vxc` L41-43
+> 📄 `runtime.vxc` L80-82
 
 ```vex
 export fn regionCurrent(): Ptr<Opaque>
@@ -2172,7 +5039,7 @@ export fn regionCurrent(): Ptr<Opaque>
 
 ### <a id="regionSetCurrent"></a>`regionSetCurrent` `🔓 export`
 
-> 📄 `runtime.vxc` L45-47
+> 📄 `runtime.vxc` L84-86
 
 ```vex
 export fn regionSetCurrent(r: Ptr<Opaque>)
@@ -2188,7 +5055,7 @@ export fn regionSetCurrent(r: Ptr<Opaque>)
 
 ### <a id="setArenaMode"></a>`setArenaMode` `🔓 export`
 
-> 📄 `runtime.vxc` L49-51
+> 📄 `runtime.vxc` L88-90
 
 ```vex
 export fn setArenaMode(enabled: bool)
@@ -2204,7 +5071,7 @@ export fn setArenaMode(enabled: bool)
 
 ### <a id="getArenaMode"></a>`getArenaMode` `🔓 export`
 
-> 📄 `runtime.vxc` L53-55
+> 📄 `runtime.vxc` L92-94
 
 ```vex
 export fn getArenaMode(): bool
@@ -2216,7 +5083,7 @@ export fn getArenaMode(): bool
 
 ### <a id="cpuCount"></a>`cpuCount` `🔓 export`
 
-> 📄 `socket.vx` L153-158
+> 📄 `socket.vx` L174-179
 
 ```vex
 export fn cpuCount(): i32
@@ -2230,7 +5097,7 @@ Get the number of CPU cores (for multi-worker servers).
 
 ### <a id="makePipe"></a>`makePipe` `🔓 export`
 
-> 📄 `socket.vx` L162-168
+> 📄 `socket.vx` L183-189
 
 ```vex
 export fn makePipe(): [i32; 2]
@@ -2246,24 +5113,24 @@ Returns [read_fd, write_fd] on success, [-1, -1] on error.
 
 ### <a id="tcpBlockingFd"></a>`tcpBlockingFd` `🔓 export`
 
-> 📄 `socket.vx` L173-175
+> 📄 `socket.vx` L194-196
 
 ```vex
-export fn tcpBlockingFd(): i32
+export fn tcpBlockingFd(): i64
 ```
 
 Create a blocking TCP socket fd.
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="connectFd"></a>`connectFd` `🔓 export`
 
-> 📄 `socket.vx` L178-180
+> 📄 `socket.vx` L199-203
 
 ```vex
-export fn connectFd(fd: i32, ip: string, port: i32): i32
+export fn connectFd(fd: i64, ip: str, port: u16): i32
 ```
 
 Connect an existing fd to ip:port.
@@ -2272,9 +5139,9 @@ Connect an existing fd to ip:port.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `ip` | `string` |  |
-| `port` | `i32` |  |
+| `fd` | `i64` |  |
+| `ip` | `str` |  |
+| `port` | `u16` |  |
 
 **Returns:** `i32`
 
@@ -2282,10 +5149,10 @@ Connect an existing fd to ip:port.
 
 ### <a id="bindFd"></a>`bindFd` `🔓 export`
 
-> 📄 `socket.vx` L183-185
+> 📄 `socket.vx` L206-210
 
 ```vex
-export fn bindFd(fd: i32, ip: string, port: i32): i32
+export fn bindFd(fd: i64, ip: str, port: u16): i32
 ```
 
 Bind an existing fd to ip:port.
@@ -2294,9 +5161,9 @@ Bind an existing fd to ip:port.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `ip` | `string` |  |
-| `port` | `i32` |  |
+| `fd` | `i64` |  |
+| `ip` | `str` |  |
+| `port` | `u16` |  |
 
 **Returns:** `i32`
 
@@ -2304,10 +5171,10 @@ Bind an existing fd to ip:port.
 
 ### <a id="listenFd"></a>`listenFd` `🔓 export`
 
-> 📄 `socket.vx` L188-190
+> 📄 `socket.vx` L213-215
 
 ```vex
-export fn listenFd(fd: i32, backlog: i32): i32
+export fn listenFd(fd: i64, backlog: i32): i32
 ```
 
 Listen on an existing fd with backlog.
@@ -2316,7 +5183,7 @@ Listen on an existing fd with backlog.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `backlog` | `i32` |  |
 
 **Returns:** `i32`
@@ -2325,10 +5192,10 @@ Listen on an existing fd with backlog.
 
 ### <a id="acceptFd"></a>`acceptFd` `🔓 export`
 
-> 📄 `socket.vx` L193-195
+> 📄 `socket.vx` L218-220
 
 ```vex
-export fn acceptFd(fd: i32): i32
+export fn acceptFd(fd: i64): i64
 ```
 
 Accept a client fd from a listening fd.
@@ -2337,18 +5204,18 @@ Accept a client fd from a listening fd.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="setReuseAddrFd"></a>`setReuseAddrFd` `🔓 export`
 
-> 📄 `socket.vx` L198-202
+> 📄 `socket.vx` L223-227
 
 ```vex
-export fn setReuseAddrFd(fd: i32, on: bool): i32
+export fn setReuseAddrFd(fd: i64, on: bool): i32
 ```
 
 Enable/disable SO_REUSEADDR for a raw fd.
@@ -2357,7 +5224,7 @@ Enable/disable SO_REUSEADDR for a raw fd.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `bool` |  |
 
 **Returns:** `i32`
@@ -2366,10 +5233,10 @@ Enable/disable SO_REUSEADDR for a raw fd.
 
 ### <a id="setNoDelayFd"></a>`setNoDelayFd` `🔓 export`
 
-> 📄 `socket.vx` L205-209
+> 📄 `socket.vx` L230-234
 
 ```vex
-export fn setNoDelayFd(fd: i32, on: bool): i32
+export fn setNoDelayFd(fd: i64, on: bool): i32
 ```
 
 Enable/disable TCP_NODELAY for a raw fd.
@@ -2378,7 +5245,7 @@ Enable/disable TCP_NODELAY for a raw fd.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `bool` |  |
 
 **Returns:** `i32`
@@ -2387,10 +5254,10 @@ Enable/disable TCP_NODELAY for a raw fd.
 
 ### <a id="recvFd"></a>`recvFd` `🔓 export`
 
-> 📄 `socket.vx` L212-214
+> 📄 `socket.vx` L237-239
 
 ```vex
-export fn recvFd(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn recvFd(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 Receive bytes on a raw fd.
@@ -2399,8 +5266,8 @@ Receive bytes on a raw fd.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -2409,10 +5276,10 @@ Receive bytes on a raw fd.
 
 ### <a id="sendFd"></a>`sendFd` `🔓 export`
 
-> 📄 `socket.vx` L217-219
+> 📄 `socket.vx` L242-244
 
 ```vex
-export fn sendFd(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn sendFd(fd: i64, buf: Ptr<u8>, len: u64): i64
 ```
 
 Send bytes on a raw fd.
@@ -2421,7 +5288,7 @@ Send bytes on a raw fd.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 
@@ -2431,10 +5298,10 @@ Send bytes on a raw fd.
 
 ### <a id="closeFd"></a>`closeFd` `🔓 export`
 
-> 📄 `socket.vx` L222-224
+> 📄 `socket.vx` L247-249
 
 ```vex
-export fn closeFd(fd: i32): i32
+export fn closeFd(fd: i64): i32
 ```
 
 Close a raw fd.
@@ -2443,7 +5310,7 @@ Close a raw fd.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 
 **Returns:** `i32`
 
@@ -2451,10 +5318,10 @@ Close a raw fd.
 
 ### <a id="peekFd"></a>`peekFd` `🔓 export`
 
-> 📄 `socket.vx` L227-229
+> 📄 `socket.vx` L252-254
 
 ```vex
-export fn peekFd(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn peekFd(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 Peek bytes without consuming them. Returns 0 on EOF, negative on error/EAGAIN.
@@ -2463,8 +5330,8 @@ Peek bytes without consuming them. Returns 0 on EOF, negative on error/EAGAIN.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -2473,7 +5340,7 @@ Peek bytes without consuming them. Returns 0 on EOF, negative on error/EAGAIN.
 
 ### <a id="writeFd"></a>`writeFd` `🔓 export`
 
-> 📄 `socket.vx` L233-235
+> 📄 `socket.vx` L258-260
 
 ```vex
 export fn writeFd(fd: i32, buf: Ptr<u8>, len: u64): i64
@@ -2497,10 +5364,10 @@ Unlike sendFd which uses send() (socket-only), this works on pipes.
 
 ### <a id="readFd"></a>`readFd` `🔓 export`
 
-> 📄 `socket.vx` L239-241
+> 📄 `socket.vx` L264-266
 
 ```vex
-export fn readFd(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn readFd(fd: i32, buf: Ptr<u8!>, len: u64): i64
 ```
 
 Read bytes from any fd (pipe, file, socket). Uses read() syscall.
@@ -2512,7 +5379,7 @@ Unlike recvFd which uses recv() (socket-only), this works on pipes.
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -2521,10 +5388,10 @@ Unlike recvFd which uses recv() (socket-only), this works on pipes.
 
 ### <a id="asyncAcceptFd"></a>`asyncAcceptFd` `🔓 export`
 
-> 📄 `socket.vx` L256-258
+> 📄 `socket.vx` L281-283
 
 ```vex
-export fn asyncAcceptFd(fd: i32): i32
+export fn asyncAcceptFd(fd: i64): i64
 ```
 
 Accept a client fd using non-blocking I/O. Parks goroutine if no
@@ -2535,18 +5402,41 @@ connection pending. Returns client fd (pre-set to non-blocking).
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
+
+---
+
+### <a id="asyncAcceptFd"></a>`asyncAcceptFd` `🔓 export`
+
+> 📄 `socket.vx` L287-299
+
+```vex
+export fn asyncAcceptFd(fd: i64, context: &Context): i64
+```
+
+Context-aware accept. The raw cancellation identity is never retained by
+
+std/net; VexArch owns it only while the generation-checked wait is armed.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `context` | `&amp;Context` |  |
+
+**Returns:** `i64`
 
 ---
 
 ### <a id="asyncRecvFd"></a>`asyncRecvFd` `🔓 export`
 
-> 📄 `socket.vx` L261-263
+> 📄 `socket.vx` L302-304
 
 ```vex
-export fn asyncRecvFd(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn asyncRecvFd(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 Receive bytes on a raw fd, goroutine-aware. Parks on EAGAIN.
@@ -2555,9 +5445,30 @@ Receive bytes on a raw fd, goroutine-aware. Parks on EAGAIN.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="asyncRecvFd"></a>`asyncRecvFd` `🔓 export`
+
+> 📄 `socket.vx` L306-320
+
+```vex
+export fn asyncRecvFd(fd: i64, buf: Ptr<u8!>, len: u64, context: &Context): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `context` | `&amp;Context` |  |
 
 **Returns:** `i64`
 
@@ -2565,10 +5476,10 @@ Receive bytes on a raw fd, goroutine-aware. Parks on EAGAIN.
 
 ### <a id="asyncSendFd"></a>`asyncSendFd` `🔓 export`
 
-> 📄 `socket.vx` L267-269
+> 📄 `socket.vx` L324-326
 
 ```vex
-export fn asyncSendFd(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn asyncSendFd(fd: i64, buf: Ptr<u8>, len: u64): i64
 ```
 
 Send bytes on a raw fd, goroutine-aware. Parks on EAGAIN.
@@ -2579,7 +5490,7 @@ Ensures all bytes are written (handles partial writes).
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 
@@ -2587,12 +5498,33 @@ Ensures all bytes are written (handles partial writes).
 
 ---
 
-### <a id="setNonBlockFd"></a>`setNonBlockFd` `🔓 export`
+### <a id="asyncSendFd"></a>`asyncSendFd` `🔓 export`
 
-> 📄 `socket.vx` L272-274
+> 📄 `socket.vx` L328-342
 
 ```vex
-export fn setNonBlockFd(fd: i32): i32
+export fn asyncSendFd(fd: i64, buf: Ptr<u8>, len: u64, context: &Context): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8&gt;` |  |
+| `len` | `u64` |  |
+| `context` | `&amp;Context` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="setNonBlockFd"></a>`setNonBlockFd` `🔓 export`
+
+> 📄 `socket.vx` L345-347
+
+```vex
+export fn setNonBlockFd(fd: i64): i32
 ```
 
 Set a socket to non-blocking mode.
@@ -2601,7 +5533,48 @@ Set a socket to non-blocking mode.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="map_resolver_status"></a>`map_resolver_status`
+
+> 📄 `native.linux.vxc` L35-42
+
+```vex
+fn map_resolver_status(status: i32): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `status` | `i32` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_resolve_host"></a>`vex_net_resolve_host` `🔓 export`
+
+> 📄 `native.linux.vxc` L44-105
+
+```vex
+export fn vex_net_resolve_host(host: Ptr<u8>, family: i32, familiesOut: Ptr<u8!>, addressesOut: Ptr<u8!>, capacity: u64, countOut: Ptr<u64!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `familiesOut` | `Ptr&lt;u8!&gt;` |  |
+| `addressesOut` | `Ptr&lt;u8!&gt;` |  |
+| `capacity` | `u64` |  |
+| `countOut` | `Ptr&lt;u64!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -2609,7 +5582,7 @@ Set a socket to non-blocking mode.
 
 ### <a id="socket"></a>`socket`
 
-> 📄 `native.linux.vxc` L7-21
+> 📄 `native.linux.vxc` L107-109
 
 ```vex
 fn socket(domain: i32, type_: i32, protocol: i32): i32
@@ -2629,7 +5602,7 @@ fn socket(domain: i32, type_: i32, protocol: i32): i32
 
 ### <a id="bind"></a>`bind`
 
-> 📄 `native.linux.vxc` L23-37
+> 📄 `native.linux.vxc` L111-113
 
 ```vex
 fn bind(fd: i32, addr: Ptr<Opaque>, len: u32): i32
@@ -2649,7 +5622,7 @@ fn bind(fd: i32, addr: Ptr<Opaque>, len: u32): i32
 
 ### <a id="listen"></a>`listen`
 
-> 📄 `native.linux.vxc` L39-52
+> 📄 `native.linux.vxc` L115-117
 
 ```vex
 fn listen(fd: i32, backlog: i32): i32
@@ -2668,10 +5641,10 @@ fn listen(fd: i32, backlog: i32): i32
 
 ### <a id="accept"></a>`accept`
 
-> 📄 `native.linux.vxc` L54-68
+> 📄 `native.linux.vxc` L119-121
 
 ```vex
-fn accept(fd: i32, addr: Ptr<Opaque>, len_ptr: Ptr<u32>): i32
+fn accept(fd: i32, addr: Ptr<Opaque!>, len_ptr: Ptr<u32!>): i32
 ```
 
 **Parameters:**
@@ -2679,8 +5652,8 @@ fn accept(fd: i32, addr: Ptr<Opaque>, len_ptr: Ptr<u32>): i32
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `addr` | `Ptr&lt;Opaque&gt;` |  |
-| `len_ptr` | `Ptr&lt;u32&gt;` |  |
+| `addr` | `Ptr&lt;Opaque!&gt;` |  |
+| `len_ptr` | `Ptr&lt;u32!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -2688,7 +5661,7 @@ fn accept(fd: i32, addr: Ptr<Opaque>, len_ptr: Ptr<u32>): i32
 
 ### <a id="connect"></a>`connect`
 
-> 📄 `native.linux.vxc` L70-84
+> 📄 `native.linux.vxc` L123-125
 
 ```vex
 fn connect(fd: i32, addr: Ptr<Opaque>, len: u32): i32
@@ -2706,9 +5679,49 @@ fn connect(fd: i32, addr: Ptr<Opaque>, len: u32): i32
 
 ---
 
+### <a id="getsockname"></a>`getsockname`
+
+> 📄 `native.linux.vxc` L127-129
+
+```vex
+fn getsockname(fd: i32, addr: Ptr<Opaque!>, len_ptr: Ptr<u32!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i32` |  |
+| `addr` | `Ptr&lt;Opaque!&gt;` |  |
+| `len_ptr` | `Ptr&lt;u32!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="getpeername"></a>`getpeername`
+
+> 📄 `native.linux.vxc` L131-133
+
+```vex
+fn getpeername(fd: i32, addr: Ptr<Opaque!>, len_ptr: Ptr<u32!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i32` |  |
+| `addr` | `Ptr&lt;Opaque!&gt;` |  |
+| `len_ptr` | `Ptr&lt;u32!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
 ### <a id="close"></a>`close`
 
-> 📄 `native.linux.vxc` L86-98
+> 📄 `native.linux.vxc` L135-137
 
 ```vex
 fn close(fd: i32): i32
@@ -2726,10 +5739,10 @@ fn close(fd: i32): i32
 
 ### <a id="recvfrom"></a>`recvfrom`
 
-> 📄 `native.linux.vxc` L100-117
+> 📄 `native.linux.vxc` L139-141
 
 ```vex
-fn recvfrom(fd: i32, buf: Ptr<u8>, len: u64, flags: i32, addr: Ptr<Opaque>, addr_len: Ptr<u32>): i64
+fn recvfrom(fd: i32, buf: Ptr<u8!>, len: u64, flags: i32, addr: Ptr<Opaque!>, addr_len: Ptr<u32!>): i64
 ```
 
 **Parameters:**
@@ -2737,11 +5750,11 @@ fn recvfrom(fd: i32, buf: Ptr<u8>, len: u64, flags: i32, addr: Ptr<Opaque>, addr
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 | `flags` | `i32` |  |
-| `addr` | `Ptr&lt;Opaque&gt;` |  |
-| `addr_len` | `Ptr&lt;u32&gt;` |  |
+| `addr` | `Ptr&lt;Opaque!&gt;` |  |
+| `addr_len` | `Ptr&lt;u32!&gt;` |  |
 
 **Returns:** `i64`
 
@@ -2749,7 +5762,7 @@ fn recvfrom(fd: i32, buf: Ptr<u8>, len: u64, flags: i32, addr: Ptr<Opaque>, addr
 
 ### <a id="sendto"></a>`sendto`
 
-> 📄 `native.linux.vxc` L119-136
+> 📄 `native.linux.vxc` L143-145
 
 ```vex
 fn sendto(fd: i32, buf: Ptr<u8>, len: u64, flags: i32, addr: Ptr<Opaque>, addr_len: u32): i64
@@ -2772,7 +5785,7 @@ fn sendto(fd: i32, buf: Ptr<u8>, len: u64, flags: i32, addr: Ptr<Opaque>, addr_l
 
 ### <a id="setsockopt"></a>`setsockopt`
 
-> 📄 `native.linux.vxc` L138-154
+> 📄 `native.linux.vxc` L147-149
 
 ```vex
 fn setsockopt(fd: i32, level: i32, optname: i32, optval: Ptr<Opaque>, optlen: u32): i32
@@ -2794,17 +5807,17 @@ fn setsockopt(fd: i32, level: i32, optname: i32, optval: Ptr<Opaque>, optlen: u3
 
 ### <a id="pipe2"></a>`pipe2`
 
-> 📄 `native.linux.vxc` L156-169
+> 📄 `native.linux.vxc` L151-153
 
 ```vex
-fn pipe2(fds: Ptr<i32>, flags: i32): i32
+fn pipe2(fds: Ptr<i32!>, flags: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fds` | `Ptr&lt;i32&gt;` |  |
+| `fds` | `Ptr&lt;i32!&gt;` |  |
 | `flags` | `i32` |  |
 
 **Returns:** `i32`
@@ -2813,7 +5826,7 @@ fn pipe2(fds: Ptr<i32>, flags: i32): i32
 
 ### <a id="fcntl"></a>`fcntl`
 
-> 📄 `native.linux.vxc` L171-185
+> 📄 `native.linux.vxc` L155-157
 
 ```vex
 fn fcntl(fd: i32, cmd: i32, arg: i64): i32
@@ -2833,7 +5846,7 @@ fn fcntl(fd: i32, cmd: i32, arg: i64): i32
 
 ### <a id="epoll_create1"></a>`epoll_create1`
 
-> 📄 `native.linux.vxc` L187-199
+> 📄 `native.linux.vxc` L159-161
 
 ```vex
 fn epoll_create1(flags: i32): i32
@@ -2851,7 +5864,7 @@ fn epoll_create1(flags: i32): i32
 
 ### <a id="epoll_ctl"></a>`epoll_ctl`
 
-> 📄 `native.linux.vxc` L201-216
+> 📄 `native.linux.vxc` L163-165
 
 ```vex
 fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: Ptr<Opaque>): i32
@@ -2872,10 +5885,10 @@ fn epoll_ctl(epfd: i32, op: i32, fd: i32, event: Ptr<Opaque>): i32
 
 ### <a id="epoll_wait"></a>`epoll_wait`
 
-> 📄 `native.linux.vxc` L218-233
+> 📄 `native.linux.vxc` L167-169
 
 ```vex
-fn epoll_wait(epfd: i32, events: Ptr<Opaque>, maxevents: i32, timeout: i32): i32
+fn epoll_wait(epfd: i32, events: Ptr<Opaque!>, maxevents: i32, timeout: i32): i32
 ```
 
 **Parameters:**
@@ -2883,7 +5896,7 @@ fn epoll_wait(epfd: i32, events: Ptr<Opaque>, maxevents: i32, timeout: i32): i32
 | Name | Type | Description |
 |------|------|-------------|
 | `epfd` | `i32` |  |
-| `events` | `Ptr&lt;Opaque&gt;` |  |
+| `events` | `Ptr&lt;Opaque!&gt;` |  |
 | `maxevents` | `i32` |  |
 | `timeout` | `i32` |  |
 
@@ -2891,9 +5904,72 @@ fn epoll_wait(epfd: i32, events: Ptr<Opaque>, maxevents: i32, timeout: i32): i32
 
 ---
 
+### <a id="build_ip_port"></a>`build_ip_port`
+
+> 📄 `native.linux.vxc` L183-202
+
+```vex
+fn build_ip_port(family: i32, ip: Ptr<u8>, port: u16, output: Ptr<sockaddr_ip!>): u32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `output` | `Ptr&lt;sockaddr_ip!&gt;` |  |
+
+**Returns:** `u32`
+
+---
+
+### <a id="decode_ip_port"></a>`decode_ip_port`
+
+> 📄 `native.linux.vxc` L204-230
+
+```vex
+fn decode_ip_port(address: Ptr<sockaddr_ip>, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `Ptr&lt;sockaddr_ip&gt;` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="write_ipv4_text"></a>`write_ipv4_text`
+
+> 📄 `native.linux.vxc` L233-260
+
+```vex
+fn write_ipv4_text(src: Ptr<u8>, out: Ptr<u8!>, cap: u64)
+```
+
+Format the four network-order IPv4 bytes into a bounded C string.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `src` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
+| `cap` | `u64` |  |
+
+---
+
 ### <a id="parse_ip_port"></a>`parse_ip_port`
 
-> 📄 `native.linux.vxc` L242-279
+> 📄 `native.linux.vxc` L262-287
 
 ```vex
 fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
@@ -2911,10 +5987,10 @@ fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
 
 ### <a id="vex_net_socket_tcp"></a>`vex_net_socket_tcp` `🔓 export`
 
-> 📄 `native.linux.vxc` L283-290
+> 📄 `native.linux.vxc` L291-301
 
 ```vex
-export fn vex_net_socket_tcp(ipv6: i32): i32
+export fn vex_net_socket_tcp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -2923,16 +5999,16 @@ export fn vex_net_socket_tcp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_tcp_blocking"></a>`vex_net_socket_tcp_blocking` `🔓 export`
 
-> 📄 `native.linux.vxc` L292-295
+> 📄 `native.linux.vxc` L303-306
 
 ```vex
-export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
+export fn vex_net_socket_tcp_blocking(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -2941,16 +6017,16 @@ export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_udp"></a>`vex_net_socket_udp` `🔓 export`
 
-> 📄 `native.linux.vxc` L297-300
+> 📄 `native.linux.vxc` L308-311
 
 ```vex
-export fn vex_net_socket_udp(ipv6: i32): i32
+export fn vex_net_socket_udp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -2959,23 +6035,23 @@ export fn vex_net_socket_udp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_set_reuseaddr"></a>`vex_net_set_reuseaddr` `🔓 export`
 
-> 📄 `native.linux.vxc` L302-305
+> 📄 `native.linux.vxc` L313-316
 
 ```vex
-export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
+export fn vex_net_set_reuseaddr(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -2984,17 +6060,17 @@ export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_reuseport"></a>`vex_net_set_reuseport` `🔓 export`
 
-> 📄 `native.linux.vxc` L307-310
+> 📄 `native.linux.vxc` L318-321
 
 ```vex
-export fn vex_net_set_reuseport(fd: i32, on: i32): i32
+export fn vex_net_set_reuseport(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3003,17 +6079,17 @@ export fn vex_net_set_reuseport(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nonblock"></a>`vex_net_set_nonblock` `🔓 export`
 
-> 📄 `native.linux.vxc` L312-319
+> 📄 `native.linux.vxc` L323-330
 
 ```vex
-export fn vex_net_set_nonblock(fd: i32, on: i32): i32
+export fn vex_net_set_nonblock(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3022,17 +6098,17 @@ export fn vex_net_set_nonblock(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nodelay"></a>`vex_net_set_nodelay` `🔓 export`
 
-> 📄 `native.linux.vxc` L321-324
+> 📄 `native.linux.vxc` L332-335
 
 ```vex
-export fn vex_net_set_nodelay(fd: i32, on: i32): i32
+export fn vex_net_set_nodelay(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3041,17 +6117,17 @@ export fn vex_net_set_nodelay(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nopush"></a>`vex_net_set_nopush` `🔓 export`
 
-> 📄 `native.linux.vxc` L326-329
+> 📄 `native.linux.vxc` L337-340
 
 ```vex
-export fn vex_net_set_nopush(fd: i32, on: i32): i32
+export fn vex_net_set_nopush(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3060,17 +6136,38 @@ export fn vex_net_set_nopush(fd: i32, on: i32): i32
 
 ### <a id="vex_net_bind"></a>`vex_net_bind` `🔓 export`
 
-> 📄 `native.linux.vxc` L331-335
+> 📄 `native.linux.vxc` L342-346
 
 ```vex
-export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_bind(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_bind_ip"></a>`vex_net_bind_ip` `🔓 export`
+
+> 📄 `native.linux.vxc` L348-353
+
+```vex
+export fn vex_net_bind_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -3080,17 +6177,17 @@ export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ### <a id="vex_net_listen"></a>`vex_net_listen` `🔓 export`
 
-> 📄 `native.linux.vxc` L337-339
+> 📄 `native.linux.vxc` L355-357
 
 ```vex
-export fn vex_net_listen(fd: i32, backlog: i32): i32
+export fn vex_net_listen(fd: i64, backlog: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `backlog` | `i32` |  |
 
 **Returns:** `i32`
@@ -3099,17 +6196,17 @@ export fn vex_net_listen(fd: i32, backlog: i32): i32
 
 ### <a id="vex_net_connect"></a>`vex_net_connect` `🔓 export`
 
-> 📄 `native.linux.vxc` L341-345
+> 📄 `native.linux.vxc` L359-363
 
 ```vex
-export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_connect(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -3117,41 +6214,150 @@ export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ---
 
-### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+### <a id="vex_net_connect_ip"></a>`vex_net_connect_ip` `🔓 export`
 
-> 📄 `native.linux.vxc` L347-359
+> 📄 `native.linux.vxc` L365-370
 
 ```vex
-export fn vex_net_accept(fd: i32, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i32
+export fn vex_net_connect_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
-| `ip_len` | `u64` |  |
-| `port_out` | `Ptr&lt;u16!&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+### <a id="vex_net_connect_ip_async"></a>`vex_net_connect_ip_async` `🔓 export`
 
-> 📄 `native.linux.vxc` L361-363
+> 📄 `native.linux.vxc` L372-377
 
 ```vex
-export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_connect_ip_async(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_connect_ip_async_context"></a>`vex_net_connect_ip_async_context` `🔓 export`
+
+> 📄 `native.linux.vxc` L379-394
+
+```vex
+export fn vex_net_connect_ip_async_context(fd: i64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_local_addr"></a>`vex_net_local_addr` `🔓 export`
+
+> 📄 `native.linux.vxc` L396-408
+
+```vex
+export fn vex_net_local_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_peer_addr"></a>`vex_net_peer_addr` `🔓 export`
+
+> 📄 `native.linux.vxc` L410-422
+
+```vex
+export fn vex_net_peer_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+
+> 📄 `native.linux.vxc` L424-440
+
+```vex
+export fn vex_net_accept(fd: i64, ip_out: Ptr<u8!>, ip_len: u64, port_out: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `ip_out` | `Ptr&lt;u8!&gt;` |  |
+| `ip_len` | `u64` |  |
+| `port_out` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+
+> 📄 `native.linux.vxc` L442-444
+
+```vex
+export fn vex_net_recv(fd: i64, buf: Ptr<u8!>, len: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -3160,18 +6366,18 @@ export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_recv_peek"></a>`vex_net_recv_peek` `🔓 export`
 
-> 📄 `native.linux.vxc` L365-367
+> 📄 `native.linux.vxc` L446-448
 
 ```vex
-export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_recv_peek(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -3180,17 +6386,17 @@ export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_send"></a>`vex_net_send` `🔓 export`
 
-> 📄 `native.linux.vxc` L369-371
+> 📄 `native.linux.vxc` L450-452
 
 ```vex
-export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_send(fd: i64, buf: Ptr<u8>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 
@@ -3200,17 +6406,17 @@ export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_sendto"></a>`vex_net_sendto` `🔓 export`
 
-> 📄 `native.linux.vxc` L373-377
+> 📄 `native.linux.vxc` L454-458
 
 ```vex
-export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
+export fn vex_net_sendto(fd: i64, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
@@ -3220,22 +6426,70 @@ export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16
 
 ---
 
-### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+### <a id="vex_net_sendto_ip"></a>`vex_net_sendto_ip` `🔓 export`
 
-> 📄 `native.linux.vxc` L379-391
+> 📄 `native.linux.vxc` L460-465
 
 ```vex
-export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i64
+export fn vex_net_sendto_ip(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_sendto_ip_async_context"></a>`vex_net_sendto_ip_async_context` `🔓 export`
+
+> 📄 `native.linux.vxc` L467-476
+
+```vex
+export fn vex_net_sendto_ip_async_context(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8&gt;` |  |
+| `len` | `u64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+
+> 📄 `native.linux.vxc` L478-494
+
+```vex
+export fn vex_net_recvfrom(fd: i64, buf: Ptr<u8!>, len: u64, ip_out: Ptr<u8!>, ip_len: u64, port_out: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `ip_out` | `Ptr&lt;u8!&gt;` |  |
 | `ip_len` | `u64` |  |
 | `port_out` | `Ptr&lt;u16!&gt;` |  |
 
@@ -3243,19 +6497,69 @@ export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_
 
 ---
 
-### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
+### <a id="vex_net_recvfrom_ip"></a>`vex_net_recvfrom_ip` `🔓 export`
 
-> 📄 `native.linux.vxc` L393-395
+> 📄 `native.linux.vxc` L496-512
 
 ```vex
-export fn vex_net_close(fd: i32): i32
+export fn vex_net_recvfrom_ip(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom_ip_async_context"></a>`vex_net_recvfrom_ip_async_context` `🔓 export`
+
+> 📄 `native.linux.vxc` L514-536
+
+```vex
+export fn vex_net_recvfrom_ip_async_context(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
+
+> 📄 `native.linux.vxc` L538-541
+
+```vex
+export fn vex_net_close(fd: i64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
 
 **Returns:** `i32`
 
@@ -3263,7 +6567,7 @@ export fn vex_net_close(fd: i32): i32
 
 ### <a id="vex_net_pipe"></a>`vex_net_pipe` `🔓 export`
 
-> 📄 `native.linux.vxc` L397-407
+> 📄 `native.linux.vxc` L543-553
 
 ```vex
 export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
@@ -3282,17 +6586,17 @@ export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
 
 ### <a id="vex_net_loop_create"></a>`vex_net_loop_create` `🔓 export`
 
-> 📄 `native.linux.vxc` L411-418
+> 📄 `native.linux.vxc` L557-564
 
 ```vex
-export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
+export fn vex_net_loop_create(loop_ptr: Ptr<u8!>): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loop_ptr` | `Ptr&lt;u8!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -3300,7 +6604,7 @@ export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_loop_close"></a>`vex_net_loop_close` `🔓 export`
 
-> 📄 `native.linux.vxc` L420-423
+> 📄 `native.linux.vxc` L566-569
 
 ```vex
 export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
@@ -3318,7 +6622,7 @@ export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_register"></a>`vex_net_register` `🔓 export`
 
-> 📄 `native.linux.vxc` L431-440
+> 📄 `native.linux.vxc` L577-586
 
 ```vex
 export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
@@ -3339,7 +6643,7 @@ export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i6
 
 ### <a id="vex_net_modify"></a>`vex_net_modify` `🔓 export`
 
-> 📄 `native.linux.vxc` L442-451
+> 📄 `native.linux.vxc` L588-597
 
 ```vex
 export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
@@ -3360,7 +6664,7 @@ export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64)
 
 ### <a id="vex_net_unregister"></a>`vex_net_unregister` `🔓 export`
 
-> 📄 `native.linux.vxc` L453-456
+> 📄 `native.linux.vxc` L599-602
 
 ```vex
 export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
@@ -3379,10 +6683,10 @@ export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
 
 ### <a id="vex_net_tick"></a>`vex_net_tick` `🔓 export`
 
-> 📄 `native.linux.vxc` L458-485
+> 📄 `native.linux.vxc` L604-638
 
 ```vex
-export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i32): i32
+export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8!>, cap: i32, timeout_ms: i32): i32
 ```
 
 **Parameters:**
@@ -3390,7 +6694,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 | Name | Type | Description |
 |------|------|-------------|
 | `loop_ptr` | `Ptr&lt;u8&gt;` |  |
-| `out` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
 | `cap` | `i32` |  |
 | `timeout_ms` | `i32` |  |
 
@@ -3400,7 +6704,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 
 ### <a id="vex_fd_set_nonblock"></a>`vex_fd_set_nonblock` `🔓 export`
 
-> 📄 `native.linux.vxc` L489-491
+> 📄 `native.linux.vxc` L642-644
 
 ```vex
 export fn vex_fd_set_nonblock(fd: i32): i32
@@ -3416,29 +6720,9 @@ export fn vex_fd_set_nonblock(fd: i32): i32
 
 ---
 
-### <a id="vex_fd_write"></a>`vex_fd_write` `🔓 export`
-
-> 📄 `native.linux.vxc` L493-495
-
-```vex
-export fn vex_fd_write(fd: i32, buf: Ptr<u8>, len: u64): i64
-```
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
-| `len` | `u64` |  |
-
-**Returns:** `i64`
-
----
-
 ### <a id="vex_net_thread_yield"></a>`vex_net_thread_yield` `🔓 export`
 
-> 📄 `native.linux.vxc` L511-513
+> 📄 `native.linux.vxc` L658-660
 
 ```vex
 export fn vex_net_thread_yield(): i32
@@ -3450,10 +6734,10 @@ export fn vex_net_thread_yield(): i32
 
 ### <a id="vex_fd_read"></a>`vex_fd_read` `🔓 export`
 
-> 📄 `native.linux.vxc` L515-517
+> 📄 `native.linux.vxc` L662-664
 
 ```vex
-export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
+export fn vex_fd_read(fd: i32, buf: Ptr<Opaque!>, len: u64): i64
 ```
 
 **Parameters:**
@@ -3461,7 +6745,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `buf` | `Ptr&lt;Opaque&gt;` |  |
+| `buf` | `Ptr&lt;Opaque!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -3470,7 +6754,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ### <a id="vex_fd_write"></a>`vex_fd_write` `🔓 export`
 
-> 📄 `native.linux.vxc` L519-521
+> 📄 `native.linux.vxc` L666-668
 
 ```vex
 export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
@@ -3488,71 +6772,584 @@ export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ---
 
-### <a id="vex_ws_parse_frame"></a>`vex_ws_parse_frame` `🔓 export`
+### <a id="formatError"></a>`formatError`
 
-> 📄 `ws_ffi.vxc` L7-71
+> 📄 `address.vx` L42-44
 
 ```vex
-export fn vex_ws_parse_frame(buf: Ptr<u8>, len: u64, out: Ptr<u8!>, consumed: Ptr<u64!>): i32
+fn formatError(required: usize, capacity: usize): AddressFormatError
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `buf` | `Ptr&lt;u8&gt;` |  |
-| `len` | `u64` |  |
-| `out` | `Ptr&lt;u8!&gt;` |  |
-| `consumed` | `Ptr&lt;u64!&gt;` |  |
+| `required` | `usize` |  |
+| `capacity` | `usize` |  |
+
+**Returns:** `AddressFormatError`
+
+---
+
+### <a id="parseError"></a>`parseError`
+
+> 📄 `address.vx` L50-52
+
+```vex
+fn parseError(kind: AddressParseErrorKind, position: usize): AddressParseError
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `kind` | `AddressParseErrorKind` |  |
+| `position` | `usize` |  |
+
+**Returns:** `AddressParseError`
+
+---
+
+### <a id="Ipv4Addr"></a>`Ipv4Addr` `🔓 export`
+
+> 📄 `address.vx` L76-78
+
+```vex
+export fn Ipv4Addr(a: u8, b: u8, c: u8, d: u8): Ipv4Addr
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `a` | `u8` |  |
+| `b` | `u8` |  |
+| `c` | `u8` |  |
+| `d` | `u8` |  |
+
+**Returns:** `Ipv4Addr`
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `Ipv4Addr.unspecified`[↗](#Ipv4Addr.unspecified) | `export fn Ipv4Addr.unspecified(): Ipv4Addr` |  |
+| `Ipv4Addr.loopback`[↗](#Ipv4Addr.loopback) | `export fn Ipv4Addr.loopback(): Ipv4Addr` |  |
+| `octets`[↗](#Ipv4Addr.octets) | `export fn (self: &amp;Ipv4Addr) octets(): [u8; 4]` |  |
+| `family`[↗](#Ipv4Addr.family) | `export fn (self: &amp;Ipv4Addr) family(): IpFamily` |  |
+| `isUnspecified`[↗](#Ipv4Addr.isUnspecified) | `export fn (self: &amp;Ipv4Addr) isUnspecified(): bool` |  |
+| `isLoopback`[↗](#Ipv4Addr.isLoopback) | `export fn (self: &amp;Ipv4Addr) isLoopback(): bool` |  |
+| `op==`[↗](#Ipv4Addr.op==) | `export fn (self: &amp;Ipv4Addr) op==(other: &amp;Ipv4Addr)` |  |
+| `copyOctetsTo`[↗](#Ipv4Addr.copyOctetsTo) | `export fn (self: &amp;Ipv4Addr) copyOctetsTo(output: P` | Copies exactly four network-order octets to a native boundary. |
+| `Ipv4Addr.tryParse`[↗](#Ipv4Addr.tryParse) | `export fn Ipv4Addr.tryParse(input: str): Result&lt;Ip` |  |
+| `textLength`[↗](#Ipv4Addr.textLength) | `export fn (self: &amp;Ipv4Addr) textLength(): usize` | Exact canonical text length without allocating. |
+| `tryWriteTo`[↗](#Ipv4Addr.tryWriteTo) | `export fn (self: &amp;Ipv4Addr) tryWriteTo(output: Raw` | Write canonical text into caller-owned storage. Capacity is validated |
+| `appendTo`[↗](#Ipv4Addr.appendTo) | `export fn (self: &amp;Ipv4Addr) appendTo(output: &amp;Vec&lt;` | Append canonical text to an owning byte vector. The vector is the safe |
+| `toString`[↗](#Ipv4Addr.toString) | `export fn (self: &amp;Ipv4Addr) toString(): string` |  |
+| `debug`[↗](#Ipv4Addr.debug) | `export fn (self: &amp;Ipv4Addr) debug(): string` |  |
+
+---
+
+### <a id="SocketAddr"></a>`SocketAddr` `🔓 export`
+
+> 📄 `address.vx` L233-235
+
+```vex
+export fn SocketAddr(address: IpAddr, port: u16): SocketAddr
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `IpAddr` |  |
+| `port` | `u16` |  |
+
+**Returns:** `SocketAddr`
+
+**Methods:**
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| `address`[↗](#SocketAddr.address) | `export fn (self: &amp;SocketAddr) address(): IpAddr` |  |
+| `port`[↗](#SocketAddr.port) | `export fn (self: &amp;SocketAddr) port(): u16` |  |
+| `family`[↗](#SocketAddr.family) | `export fn (self: &amp;SocketAddr) family(): IpFamily` |  |
+| `op==`[↗](#SocketAddr.op==) | `export fn (self: &amp;SocketAddr) op==(other: &amp;SocketA` |  |
+| `SocketAddr.tryParse`[↗](#SocketAddr.tryParse) | `export fn SocketAddr.tryParse(input: str): Result&lt;` |  |
+| `textLength`[↗](#SocketAddr.textLength) | `export fn (self: &amp;SocketAddr) textLength(): usize` | Exact canonical socket-address text length without allocating. |
+| `tryWriteTo`[↗](#SocketAddr.tryWriteTo) | `export fn (self: &amp;SocketAddr) tryWriteTo(output: R` | Write canonical text into caller-owned storage. Capacity is validated |
+| `appendTo`[↗](#SocketAddr.appendTo) | `export fn (self: &amp;SocketAddr) appendTo(output: &amp;Ve` | Append canonical endpoint text to an owning byte vector. |
+| `toString`[↗](#SocketAddr.toString) | `export fn (self: &amp;SocketAddr) toString(): string` |  |
+| `debug`[↗](#SocketAddr.debug) | `export fn (self: &amp;SocketAddr) debug(): string` |  |
+
+---
+
+### <a id="byteAt"></a>`byteAt`
+
+> 📄 `address.vx` L245-247
+
+```vex
+fn byteAt(input: str, index: usize): u8
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+| `index` | `usize` |  |
+
+**Returns:** `u8`
+
+---
+
+### <a id="decimalDigit"></a>`decimalDigit`
+
+> 📄 `address.vx` L249-249
+
+```vex
+fn decimalDigit(valueByte: u8): bool
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `valueByte` | `u8` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="hexValue"></a>`hexValue`
+
+> 📄 `address.vx` L251-256
+
+```vex
+fn hexValue(valueByte: u8): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `valueByte` | `u8` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="vex_ws_encode_frame"></a>`vex_ws_encode_frame` `🔓 export`
+### <a id="parseIpv4Range"></a>`parseIpv4Range`
 
-> 📄 `ws_ffi.vxc` L73-124
+> 📄 `address.vx` L258-309
 
 ```vex
-export fn vex_ws_encode_frame(buf: Ptr<u8!>, buf_len: u64, opcode: u8, payload: Ptr<u8>, payload_len: u64, written: Ptr<u64!>): i32
+fn parseIpv4Range(input: str, start: usize, end: usize, output: Ptr<u8!>): Result<(), AddressParseError>
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `buf` | `Ptr&lt;u8!&gt;` |  |
-| `buf_len` | `u64` |  |
-| `opcode` | `u8` |  |
-| `payload` | `Ptr&lt;u8&gt;` |  |
-| `payload_len` | `u64` |  |
-| `written` | `Ptr&lt;u64!&gt;` |  |
+| `input` | `str` |  |
+| `start` | `usize` |  |
+| `end` | `usize` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
 
-**Returns:** `i32`
+**Returns:** `Result&lt;(), AddressParseError&gt;`
 
 ---
 
-### <a id="vex_ws_unmask"></a>`vex_ws_unmask` `🔓 export`
+### <a id="failedSide"></a>`failedSide`
 
-> 📄 `ws_ffi.vxc` L126-138
+> 📄 `address.vx` L326-328
 
 ```vex
-export fn vex_ws_unmask(data: Ptr<u8>, len: u64, mask: Ptr<u8>)
+fn failedSide(kind: AddressParseErrorKind, position: usize): ParsedIpv6Side
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `data` | `Ptr&lt;u8&gt;` |  |
-| `len` | `u64` |  |
-| `mask` | `Ptr&lt;u8&gt;` |  |
+| `kind` | `AddressParseErrorKind` |  |
+| `position` | `usize` |  |
+
+**Returns:** `ParsedIpv6Side`
+
+---
+
+### <a id="parseIpv6Side"></a>`parseIpv6Side`
+
+> 📄 `address.vx` L330-406
+
+```vex
+fn parseIpv6Side(input: str, start: usize, end: usize, output: Ptr<u16!>): ParsedIpv6Side
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+| `start` | `usize` |  |
+| `end` | `usize` |  |
+| `output` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `ParsedIpv6Side`
+
+---
+
+### <a id="parseIpv6Range"></a>`parseIpv6Range`
+
+> 📄 `address.vx` L408-464
+
+```vex
+fn parseIpv6Range(input: str, start: usize, end: usize): Result<Ipv6Addr, AddressParseError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+| `start` | `usize` |  |
+| `end` | `usize` |  |
+
+**Returns:** `Result&lt;Ipv6Addr, AddressParseError&gt;`
+
+---
+
+### <a id="parsePortRange"></a>`parsePortRange`
+
+> 📄 `address.vx` L487-503
+
+```vex
+fn parsePortRange(input: str, start: usize, end: usize): Result<u16, AddressParseError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `input` | `str` |  |
+| `start` | `usize` |  |
+| `end` | `usize` |  |
+
+**Returns:** `Result&lt;u16, AddressParseError&gt;`
+
+---
+
+### <a id="writeByte"></a>`writeByte`
+
+> 📄 `address.vx` L558-561
+
+```vex
+fn writeByte(output: Ptr<u8!>, position: &usize!, valueByte: u8)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `output` | `Ptr&lt;u8!&gt;` |  |
+| `position` | `&amp;usize!` |  |
+| `valueByte` | `u8` |  |
+
+---
+
+### <a id="writeDecimal"></a>`writeDecimal`
+
+> 📄 `address.vx` L563-567
+
+```vex
+fn writeDecimal(output: Ptr<u8!>, position: &usize!, value: u16)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `output` | `Ptr&lt;u8!&gt;` |  |
+| `position` | `&amp;usize!` |  |
+| `value` | `u16` |  |
+
+---
+
+### <a id="decimalLength"></a>`decimalLength`
+
+> 📄 `address.vx` L569-573
+
+```vex
+fn decimalLength(value: u16): usize
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `u16` |  |
+
+**Returns:** `usize`
+
+---
+
+### <a id="writePort"></a>`writePort`
+
+> 📄 `address.vx` L575-593
+
+```vex
+fn writePort(output: Ptr<u8!>, position: &usize!, value: u16)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `output` | `Ptr&lt;u8!&gt;` |  |
+| `position` | `&amp;usize!` |  |
+| `value` | `u16` |  |
+
+---
+
+### <a id="writeIpv4"></a>`writeIpv4`
+
+> 📄 `address.vx` L595-602
+
+```vex
+fn writeIpv4(address: &Ipv4Addr, output: Ptr<u8!>, position: &usize!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `&amp;Ipv4Addr` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
+| `position` | `&amp;usize!` |  |
+
+---
+
+### <a id="ipv4TextLength"></a>`ipv4TextLength`
+
+> 📄 `address.vx` L604-610
+
+```vex
+fn ipv4TextLength(address: &Ipv4Addr): usize
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `&amp;Ipv4Addr` |  |
+
+**Returns:** `usize`
+
+---
+
+### <a id="writeHex"></a>`writeHex`
+
+> 📄 `address.vx` L612-623
+
+```vex
+fn writeHex(output: Ptr<u8!>, position: &usize!, value: u16)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `output` | `Ptr&lt;u8!&gt;` |  |
+| `position` | `&amp;usize!` |  |
+| `value` | `u16` |  |
+
+---
+
+### <a id="writeIpv6"></a>`writeIpv6`
+
+> 📄 `address.vx` L625-662
+
+```vex
+fn writeIpv6(address: &Ipv6Addr, output: Ptr<u8!>, position: &usize!)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `&amp;Ipv6Addr` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
+| `position` | `&amp;usize!` |  |
+
+---
+
+### <a id="ipv6TextLength"></a>`ipv6TextLength`
+
+> 📄 `address.vx` L664-673
+
+```vex
+fn ipv6TextLength(address: &Ipv6Addr): usize
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `&amp;Ipv6Addr` |  |
+
+**Returns:** `usize`
+
+---
+
+### <a id="portTextLength"></a>`portTextLength`
+
+> 📄 `address.vx` L675-679
+
+```vex
+fn portTextLength(value: u16): usize
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `u16` |  |
+
+**Returns:** `usize`
+
+---
+
+### <a id="formatCapacityError"></a>`formatCapacityError`
+
+> 📄 `address.vx` L681-686
+
+```vex
+fn formatCapacityError(required: usize, output: RawBuf, capacity: usize): Option<AddressFormatError>
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `required` | `usize` |  |
+| `output` | `RawBuf` |  |
+| `capacity` | `usize` |  |
+
+**Returns:** `Option&lt;AddressFormatError&gt;`
+
+---
+
+### <a id="parseIpv4"></a>`parseIpv4` `🔓 export`
+
+> 📄 `ipv4.vx` L5-11
+
+```vex
+export fn parseIpv4(address: str, output: Ptr<u8!>): bool
+```
+
+Compatibility bridge for the former raw parser. New code should use
+
+`Ipv4Addr.tryParse`; both paths share that canonical parser.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `str` |  |
+| `output` | `Ptr&lt;u8!&gt;` |  |
+
+**Returns:** `bool`
+
+---
+
+### <a id="errorFromNegativeResult"></a>`errorFromNegativeResult` `🔓 export`
+
+> 📄 `error.vx` L7-17
+
+```vex
+export fn errorFromNegativeResult(result: i64): IoError
+```
+
+Converts the net/VexArch boundary's `-errno` convention into the shared
+
+std/io error model. Native providers normalize their platform error before
+crossing this boundary, so no target-name or platform-number checks belong
+in std/net.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `result` | `i64` |  |
+
+**Returns:** `IoError`
+
+---
+
+### <a id="closedSocketError"></a>`closedSocketError` `🔓 export`
+
+> 📄 `error.vx` L19-21
+
+```vex
+export fn closedSocketError(): IoError
+```
+
+**Returns:** `IoError`
+
+---
+
+### <a id="invalidBufferError"></a>`invalidBufferError` `🔓 export`
+
+> 📄 `error.vx` L23-25
+
+```vex
+export fn invalidBufferError(): IoError
+```
+
+**Returns:** `IoError`
+
+---
+
+### <a id="invalidIpv4AddressError"></a>`invalidIpv4AddressError` `🔓 export`
+
+> 📄 `error.vx` L27-29
+
+```vex
+export fn invalidIpv4AddressError(): IoError
+```
+
+**Returns:** `IoError`
+
+---
+
+### <a id="invalidIpAddressError"></a>`invalidIpAddressError` `🔓 export`
+
+> 📄 `error.vx` L31-33
+
+```vex
+export fn invalidIpAddressError(): IoError
+```
+
+**Returns:** `IoError`
+
+---
+
+### <a id="oversizedIoResultError"></a>`oversizedIoResultError` `🔓 export`
+
+> 📄 `error.vx` L35-37
+
+```vex
+export fn oversizedIoResultError(): IoError
+```
+
+**Returns:** `IoError`
 
 ---
 
 ### <a id="ensure_wsa"></a>`ensure_wsa`
 
-> 📄 `native.windows.vxc` L27-29
+> 📄 `native.windows.vxc` L35-37
 
 ```vex
 fn ensure_wsa(): bool
@@ -3562,9 +7359,113 @@ fn ensure_wsa(): bool
 
 ---
 
+### <a id="map_resolver_status"></a>`map_resolver_status`
+
+> 📄 `native.windows.vxc` L39-45
+
+```vex
+fn map_resolver_status(status: i32): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `status` | `i32` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_resolve_host"></a>`vex_net_resolve_host` `🔓 export`
+
+> 📄 `native.windows.vxc` L47-109
+
+```vex
+export fn vex_net_resolve_host(host: Ptr<u8>, family: i32, familiesOut: Ptr<u8!>, addressesOut: Ptr<u8!>, capacity: u64, countOut: Ptr<u64!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `host` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `familiesOut` | `Ptr&lt;u8!&gt;` |  |
+| `addressesOut` | `Ptr&lt;u8!&gt;` |  |
+| `capacity` | `u64` |  |
+| `countOut` | `Ptr&lt;u64!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="build_ip_port"></a>`build_ip_port`
+
+> 📄 `native.windows.vxc` L126-145
+
+```vex
+fn build_ip_port(family: i32, ip: Ptr<u8>, port: u16, output: Ptr<sockaddr_ip!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `output` | `Ptr&lt;sockaddr_ip!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="decode_ip_port"></a>`decode_ip_port`
+
+> 📄 `native.windows.vxc` L147-173
+
+```vex
+fn decode_ip_port(address: Ptr<sockaddr_ip>, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `address` | `Ptr&lt;sockaddr_ip&gt;` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="write_ipv4_text"></a>`write_ipv4_text`
+
+> 📄 `native.windows.vxc` L176-203
+
+```vex
+fn write_ipv4_text(src: Ptr<u8>, out: Ptr<u8!>, cap: u64)
+```
+
+Format the four network-order IPv4 bytes into a bounded C string.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `src` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
+| `cap` | `u64` |  |
+
+---
+
 ### <a id="parse_ip_port"></a>`parse_ip_port`
 
-> 📄 `native.windows.vxc` L41-64
+> 📄 `native.windows.vxc` L205-219
 
 ```vex
 fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
@@ -3580,12 +7481,42 @@ fn parse_ip_port(ip: Ptr<u8>, port: u16, addr_out: Ptr<sockaddr_in!>)
 
 ---
 
-### <a id="vex_net_socket_tcp"></a>`vex_net_socket_tcp` `🔓 export`
+### <a id="negative_socket_error"></a>`negative_socket_error`
 
-> 📄 `native.windows.vxc` L68-77
+> 📄 `native.windows.vxc` L223-225
 
 ```vex
-export fn vex_net_socket_tcp(ipv6: i32): i32
+fn negative_socket_error(): i64
+```
+
+**Returns:** `i64`
+
+---
+
+### <a id="bounded_socket_length"></a>`bounded_socket_length`
+
+> 📄 `native.windows.vxc` L227-229
+
+```vex
+fn bounded_socket_length(len: u64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `len` | `u64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_socket_tcp"></a>`vex_net_socket_tcp` `🔓 export`
+
+> 📄 `native.windows.vxc` L231-242
+
+```vex
+export fn vex_net_socket_tcp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -3594,16 +7525,16 @@ export fn vex_net_socket_tcp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_tcp_blocking"></a>`vex_net_socket_tcp_blocking` `🔓 export`
 
-> 📄 `native.windows.vxc` L79-84
+> 📄 `native.windows.vxc` L244-249
 
 ```vex
-export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
+export fn vex_net_socket_tcp_blocking(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -3612,16 +7543,16 @@ export fn vex_net_socket_tcp_blocking(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_socket_udp"></a>`vex_net_socket_udp` `🔓 export`
 
-> 📄 `native.windows.vxc` L86-91
+> 📄 `native.windows.vxc` L251-256
 
 ```vex
-export fn vex_net_socket_udp(ipv6: i32): i32
+export fn vex_net_socket_udp(ipv6: i32): i64
 ```
 
 **Parameters:**
@@ -3630,23 +7561,23 @@ export fn vex_net_socket_udp(ipv6: i32): i32
 |------|------|-------------|
 | `ipv6` | `i32` |  |
 
-**Returns:** `i32`
+**Returns:** `i64`
 
 ---
 
 ### <a id="vex_net_set_reuseaddr"></a>`vex_net_set_reuseaddr` `🔓 export`
 
-> 📄 `native.windows.vxc` L93-96
+> 📄 `native.windows.vxc` L258-262
 
 ```vex
-export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
+export fn vex_net_set_reuseaddr(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3655,17 +7586,17 @@ export fn vex_net_set_reuseaddr(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_reuseport"></a>`vex_net_set_reuseport` `🔓 export`
 
-> 📄 `native.windows.vxc` L98-101
+> 📄 `native.windows.vxc` L264-266
 
 ```vex
-export fn vex_net_set_reuseport(fd: i32, on: i32): i32
+export fn vex_net_set_reuseport(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3674,17 +7605,17 @@ export fn vex_net_set_reuseport(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nonblock"></a>`vex_net_set_nonblock` `🔓 export`
 
-> 📄 `native.windows.vxc` L103-106
+> 📄 `native.windows.vxc` L268-272
 
 ```vex
-export fn vex_net_set_nonblock(fd: i32, on: i32): i32
+export fn vex_net_set_nonblock(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3693,17 +7624,17 @@ export fn vex_net_set_nonblock(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nodelay"></a>`vex_net_set_nodelay` `🔓 export`
 
-> 📄 `native.windows.vxc` L108-111
+> 📄 `native.windows.vxc` L274-278
 
 ```vex
-export fn vex_net_set_nodelay(fd: i32, on: i32): i32
+export fn vex_net_set_nodelay(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3712,17 +7643,17 @@ export fn vex_net_set_nodelay(fd: i32, on: i32): i32
 
 ### <a id="vex_net_set_nopush"></a>`vex_net_set_nopush` `🔓 export`
 
-> 📄 `native.windows.vxc` L113-117
+> 📄 `native.windows.vxc` L280-284
 
 ```vex
-export fn vex_net_set_nopush(fd: i32, on: i32): i32
+export fn vex_net_set_nopush(fd: i64, on: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `on` | `i32` |  |
 
 **Returns:** `i32`
@@ -3731,17 +7662,38 @@ export fn vex_net_set_nopush(fd: i32, on: i32): i32
 
 ### <a id="vex_net_bind"></a>`vex_net_bind` `🔓 export`
 
-> 📄 `native.windows.vxc` L119-123
+> 📄 `native.windows.vxc` L286-291
 
 ```vex
-export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_bind(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_bind_ip"></a>`vex_net_bind_ip` `🔓 export`
+
+> 📄 `native.windows.vxc` L293-299
+
+```vex
+export fn vex_net_bind_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -3751,17 +7703,17 @@ export fn vex_net_bind(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ### <a id="vex_net_listen"></a>`vex_net_listen` `🔓 export`
 
-> 📄 `native.windows.vxc` L125-127
+> 📄 `native.windows.vxc` L301-304
 
 ```vex
-export fn vex_net_listen(fd: i32, backlog: i32): i32
+export fn vex_net_listen(fd: i64, backlog: i32): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `backlog` | `i32` |  |
 
 **Returns:** `i32`
@@ -3770,17 +7722,17 @@ export fn vex_net_listen(fd: i32, backlog: i32): i32
 
 ### <a id="vex_net_connect"></a>`vex_net_connect` `🔓 export`
 
-> 📄 `native.windows.vxc` L129-133
+> 📄 `native.windows.vxc` L306-311
 
 ```vex
-export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
+export fn vex_net_connect(fd: i64, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
 | `port` | `u16` |  |
 
@@ -3788,41 +7740,150 @@ export fn vex_net_connect(fd: i32, ip: Ptr<u8>, port: u16): i32
 
 ---
 
-### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+### <a id="vex_net_connect_ip"></a>`vex_net_connect_ip` `🔓 export`
 
-> 📄 `native.windows.vxc` L135-146
+> 📄 `native.windows.vxc` L313-319
 
 ```vex
-export fn vex_net_accept(fd: i32, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i32
+export fn vex_net_connect_ip(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
-| `ip_len` | `u64` |  |
-| `port_out` | `Ptr&lt;u16!&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
 
 **Returns:** `i32`
 
 ---
 
-### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+### <a id="vex_net_connect_ip_async"></a>`vex_net_connect_ip_async` `🔓 export`
 
-> 📄 `native.windows.vxc` L148-150
+> 📄 `native.windows.vxc` L321-326
 
 ```vex
-export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_connect_ip_async(fd: i64, family: i32, ip: Ptr<u8>, port: u16): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_connect_ip_async_context"></a>`vex_net_connect_ip_async_context` `🔓 export`
+
+> 📄 `native.windows.vxc` L328-343
+
+```vex
+export fn vex_net_connect_ip_async_context(fd: i64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_local_addr"></a>`vex_net_local_addr` `🔓 export`
+
+> 📄 `native.windows.vxc` L345-357
+
+```vex
+export fn vex_net_local_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_peer_addr"></a>`vex_net_peer_addr` `🔓 export`
+
+> 📄 `native.windows.vxc` L359-371
+
+```vex
+export fn vex_net_peer_addr(fd: i64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i32`
+
+---
+
+### <a id="vex_net_accept"></a>`vex_net_accept` `🔓 export`
+
+> 📄 `native.windows.vxc` L373-386
+
+```vex
+export fn vex_net_accept(fd: i64, ip_out: Ptr<u8!>, ip_len: u64, port_out: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `ip_out` | `Ptr&lt;u8!&gt;` |  |
+| `ip_len` | `u64` |  |
+| `port_out` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recv"></a>`vex_net_recv` `🔓 export`
+
+> 📄 `native.windows.vxc` L388-391
+
+```vex
+export fn vex_net_recv(fd: i64, buf: Ptr<u8!>, len: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -3831,18 +7892,18 @@ export fn vex_net_recv(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_recv_peek"></a>`vex_net_recv_peek` `🔓 export`
 
-> 📄 `native.windows.vxc` L152-154
+> 📄 `native.windows.vxc` L393-396
 
 ```vex
-export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_recv_peek(fd: i64, buf: Ptr<u8!>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
-| `buf` | `Ptr&lt;u8&gt;` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -3851,17 +7912,17 @@ export fn vex_net_recv_peek(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_send"></a>`vex_net_send` `🔓 export`
 
-> 📄 `native.windows.vxc` L156-158
+> 📄 `native.windows.vxc` L398-401
 
 ```vex
-export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
+export fn vex_net_send(fd: i64, buf: Ptr<u8>, len: u64): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 
@@ -3871,17 +7932,17 @@ export fn vex_net_send(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_net_sendto"></a>`vex_net_sendto` `🔓 export`
 
-> 📄 `native.windows.vxc` L160-164
+> 📄 `native.windows.vxc` L403-408
 
 ```vex
-export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
+export fn vex_net_sendto(fd: i64, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
 | `ip` | `Ptr&lt;u8&gt;` |  |
@@ -3891,22 +7952,70 @@ export fn vex_net_sendto(fd: i32, buf: Ptr<u8>, len: u64, ip: Ptr<u8>, port: u16
 
 ---
 
-### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+### <a id="vex_net_sendto_ip"></a>`vex_net_sendto_ip` `🔓 export`
 
-> 📄 `native.windows.vxc` L166-176
+> 📄 `native.windows.vxc` L410-416
 
 ```vex
-export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_len: u64, port_out: Ptr<u16!>): i64
+export fn vex_net_sendto_ip(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
 | `buf` | `Ptr&lt;u8&gt;` |  |
 | `len` | `u64` |  |
-| `ip_out` | `Ptr&lt;u8&gt;` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_sendto_ip_async_context"></a>`vex_net_sendto_ip_async_context` `🔓 export`
+
+> 📄 `native.windows.vxc` L418-427
+
+```vex
+export fn vex_net_sendto_ip_async_context(fd: i64, buf: Ptr<u8>, len: u64, family: i32, ip: Ptr<u8>, port: u16, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8&gt;` |  |
+| `len` | `u64` |  |
+| `family` | `i32` |  |
+| `ip` | `Ptr&lt;u8&gt;` |  |
+| `port` | `u16` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom"></a>`vex_net_recvfrom` `🔓 export`
+
+> 📄 `native.windows.vxc` L429-442
+
+```vex
+export fn vex_net_recvfrom(fd: i64, buf: Ptr<u8!>, len: u64, ip_out: Ptr<u8!>, ip_len: u64, port_out: Ptr<u16!>): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `ip_out` | `Ptr&lt;u8!&gt;` |  |
 | `ip_len` | `u64` |  |
 | `port_out` | `Ptr&lt;u16!&gt;` |  |
 
@@ -3914,19 +8023,69 @@ export fn vex_net_recvfrom(fd: i32, buf: Ptr<u8>, len: u64, ip_out: Ptr<u8>, ip_
 
 ---
 
-### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
+### <a id="vex_net_recvfrom_ip"></a>`vex_net_recvfrom_ip` `🔓 export`
 
-> 📄 `native.windows.vxc` L178-180
+> 📄 `native.windows.vxc` L444-460
 
 ```vex
-export fn vex_net_close(fd: i32): i32
+export fn vex_net_recvfrom_ip(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>): i64
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `fd` | `i32` |  |
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_recvfrom_ip_async_context"></a>`vex_net_recvfrom_ip_async_context` `🔓 export`
+
+> 📄 `native.windows.vxc` L462-484
+
+```vex
+export fn vex_net_recvfrom_ip_async_context(fd: i64, buf: Ptr<u8!>, len: u64, familyOut: Ptr<i32!>, ipOut: Ptr<u8!>, ipCapacity: u64, portOut: Ptr<u16!>, contextIdentity: Ptr<Opaque>, deadlineNs: u64): i64
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
+| `buf` | `Ptr&lt;u8!&gt;` |  |
+| `len` | `u64` |  |
+| `familyOut` | `Ptr&lt;i32!&gt;` |  |
+| `ipOut` | `Ptr&lt;u8!&gt;` |  |
+| `ipCapacity` | `u64` |  |
+| `portOut` | `Ptr&lt;u16!&gt;` |  |
+| `contextIdentity` | `Ptr&lt;Opaque&gt;` |  |
+| `deadlineNs` | `u64` |  |
+
+**Returns:** `i64`
+
+---
+
+### <a id="vex_net_close"></a>`vex_net_close` `🔓 export`
+
+> 📄 `native.windows.vxc` L486-490
+
+```vex
+export fn vex_net_close(fd: i64): i32
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fd` | `i64` |  |
 
 **Returns:** `i32`
 
@@ -3934,7 +8093,7 @@ export fn vex_net_close(fd: i32): i32
 
 ### <a id="vex_net_pipe"></a>`vex_net_pipe` `🔓 export`
 
-> 📄 `native.windows.vxc` L182-194
+> 📄 `native.windows.vxc` L492-494
 
 ```vex
 export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
@@ -3953,17 +8112,17 @@ export fn vex_net_pipe(read_fd: Ptr<i32!>, write_fd: Ptr<i32!>): i32
 
 ### <a id="vex_net_loop_create"></a>`vex_net_loop_create` `🔓 export`
 
-> 📄 `native.windows.vxc` L198-200
+> 📄 `native.windows.vxc` L503-505
 
 ```vex
-export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
+export fn vex_net_loop_create(loop_ptr: Ptr<u8!>): i32
 ```
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `loop_ptr` | `Ptr&lt;u8&gt;` |  |
+| `loop_ptr` | `Ptr&lt;u8!&gt;` |  |
 
 **Returns:** `i32`
 
@@ -3971,7 +8130,7 @@ export fn vex_net_loop_create(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_loop_close"></a>`vex_net_loop_close` `🔓 export`
 
-> 📄 `native.windows.vxc` L202-204
+> 📄 `native.windows.vxc` L507-509
 
 ```vex
 export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
@@ -3989,7 +8148,7 @@ export fn vex_net_loop_close(loop_ptr: Ptr<u8>): i32
 
 ### <a id="vex_net_register"></a>`vex_net_register` `🔓 export`
 
-> 📄 `native.windows.vxc` L206-208
+> 📄 `native.windows.vxc` L511-513
 
 ```vex
 export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
@@ -4010,7 +8169,7 @@ export fn vex_net_register(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i6
 
 ### <a id="vex_net_modify"></a>`vex_net_modify` `🔓 export`
 
-> 📄 `native.windows.vxc` L210-212
+> 📄 `native.windows.vxc` L515-517
 
 ```vex
 export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64): i32
@@ -4031,7 +8190,7 @@ export fn vex_net_modify(loop_ptr: Ptr<u8>, fd: i32, events: i32, userdata: i64)
 
 ### <a id="vex_net_unregister"></a>`vex_net_unregister` `🔓 export`
 
-> 📄 `native.windows.vxc` L214-216
+> 📄 `native.windows.vxc` L519-521
 
 ```vex
 export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
@@ -4050,10 +8209,10 @@ export fn vex_net_unregister(loop_ptr: Ptr<u8>, fd: i32): i32
 
 ### <a id="vex_net_tick"></a>`vex_net_tick` `🔓 export`
 
-> 📄 `native.windows.vxc` L218-220
+> 📄 `native.windows.vxc` L523-525
 
 ```vex
-export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i32): i32
+export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8!>, cap: i32, timeout_ms: i32): i32
 ```
 
 **Parameters:**
@@ -4061,7 +8220,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 | Name | Type | Description |
 |------|------|-------------|
 | `loop_ptr` | `Ptr&lt;u8&gt;` |  |
-| `out` | `Ptr&lt;u8&gt;` |  |
+| `out` | `Ptr&lt;u8!&gt;` |  |
 | `cap` | `i32` |  |
 | `timeout_ms` | `i32` |  |
 
@@ -4071,7 +8230,7 @@ export fn vex_net_tick(loop_ptr: Ptr<u8>, out: Ptr<u8>, cap: i32, timeout_ms: i3
 
 ### <a id="vex_net_thread_yield"></a>`vex_net_thread_yield` `🔓 export`
 
-> 📄 `native.windows.vxc` L222-224
+> 📄 `native.windows.vxc` L527-529
 
 ```vex
 export fn vex_net_thread_yield(): i32
@@ -4083,7 +8242,7 @@ export fn vex_net_thread_yield(): i32
 
 ### <a id="vex_fd_set_nonblock"></a>`vex_fd_set_nonblock` `🔓 export`
 
-> 📄 `native.windows.vxc` L228-230
+> 📄 `native.windows.vxc` L533-535
 
 ```vex
 export fn vex_fd_set_nonblock(fd: i32): i32
@@ -4101,7 +8260,7 @@ export fn vex_fd_set_nonblock(fd: i32): i32
 
 ### <a id="vex_fd_write"></a>`vex_fd_write` `🔓 export`
 
-> 📄 `native.windows.vxc` L232-234
+> 📄 `native.windows.vxc` L537-539
 
 ```vex
 export fn vex_fd_write(fd: i32, buf: Ptr<u8>, len: u64): i64
@@ -4121,10 +8280,10 @@ export fn vex_fd_write(fd: i32, buf: Ptr<u8>, len: u64): i64
 
 ### <a id="vex_fd_read"></a>`vex_fd_read` `🔓 export`
 
-> 📄 `native.windows.vxc` L249-251
+> 📄 `native.windows.vxc` L558-560
 
 ```vex
-export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
+export fn vex_fd_read(fd: i32, buf: Ptr<Opaque!>, len: u64): i64
 ```
 
 **Parameters:**
@@ -4132,7 +8291,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 | Name | Type | Description |
 |------|------|-------------|
 | `fd` | `i32` |  |
-| `buf` | `Ptr&lt;Opaque&gt;` |  |
+| `buf` | `Ptr&lt;Opaque!&gt;` |  |
 | `len` | `u64` |  |
 
 **Returns:** `i64`
@@ -4141,7 +8300,7 @@ export fn vex_fd_read(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ### <a id="vex_fd_write"></a>`vex_fd_write` `🔓 export`
 
-> 📄 `native.windows.vxc` L253-255
+> 📄 `native.windows.vxc` L562-564
 
 ```vex
 export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
@@ -4161,4 +8320,4 @@ export fn vex_fd_write(fd: i32, buf: Ptr<Opaque>, len: u64): i64
 
 ---
 
-*Generated by vex-doc v2.0 • 2026-08-25*
+*Generated by vex-doc v2.0 • 2026-08-24*

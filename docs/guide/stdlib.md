@@ -9,7 +9,7 @@ These are available everywhere without `import`:
 ### Collections
 | Type | Description |
 |-----|----------|
-| `Vec<T>` | Dynamic heap-allocated array |
+| `Vec<T>` | Dynamic array bound to its construction-time allocator region |
 | `Map<K, V>` | Hash map (SwissTable) |
 | `Set<T>` | Hash set |
 | `String` | SSO-optimized heap string |
@@ -23,7 +23,6 @@ These are available everywhere without `import`:
 | `Span<T>` | Bounds-checked fat pointer |
 | `RawBuf` | Raw byte buffer |
 | `Layout` | Checked allocation size and alignment |
-| `Block` | Exact-layout owning raw allocation with `Drop` |
 | `Mem` | Canonical low-level allocation and byte-operation namespace |
 | `Limits` | Target-aware compile-time integer minimum and maximum values |
 
@@ -39,7 +38,7 @@ These are available everywhere without `import`:
 
 Memory primitives are deliberately absent from this list: there is no
 `std/mem` package. Low-level code uses the prelude `Mem.*` boundary; most code
-uses owning types such as `Box`, `Vec`, `string`, or `Block`.
+uses owning types such as `Box`, `Vec`, or `string`.
 
 ```vex
 // File system

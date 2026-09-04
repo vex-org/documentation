@@ -5,7 +5,7 @@ The `http/fiber` framework revolves entirely around an asynchronous array of mid
 This modular architecture allows you to easily inject utilities right into the HTTP lifecycle:
 
 ```vex
-import { logger, cors, recover, staticFiles } from "http/middleware";
+import { logger, cors } from "http/middleware";
 ```
 
 ## Logger
@@ -28,30 +28,17 @@ app.use(cors);                        // Blanket access (Allow all Origins)
 app.use(corsWithOrigin("https://example.com")); // Strict environment policy
 ```
 
-## Security & Reliability (`recover`)
+## Static files
 
-Wraps subsequent endpoints and handles catastrophic faults such as array out of bounds, divisions by zero, or memory leaks without entirely crashing the Vex Server daemon.
-
-```vex
-app.use(recover);
-
-app.get("/buggy-endpoint", fn(c: &Ctx!) {
-    // This handler doesn't respond!
-    return;
-});
-
-// App returns an orderly 500 "Internal Server Error"
-```
-
-## Static Server (`staticFiles`)
-
-Out-of-the-box static resource deployment built using raw Vex stream utilities (`fs`). Features real-time automatic MIME expansion detection without any manual JSON configurations. 
+Static serving is deliberately a route API, so it shares Fiber's frozen
+router and request lifecycle rather than adding a second middleware path.
 
 ```vex
-// Matches `GET /static/...` and directs socket streams down into `./public/...`
-app.use(fn(c: &Ctx!) {
-    staticFiles(c, "./public", "/static");
-});
+app.static("/static", "./public");
 ```
 
-Automatically maps and renders `html, css, js, json, png, jpg, svg, txt, webp` and sets Content-Type headers properly based on file extensions.
+The implementation canonicalizes the configured root and the candidate before
+opening it. Traversal attempts and symlinks that resolve outside the root are
+rejected. Large-file streaming remains part of the shared transport-stream
+phase; the current static helper is intentionally not presented as a general
+asset-pipeline replacement.

@@ -2,8 +2,8 @@
 
 The `filter` package selects values from borrowed contiguous data while making
 allocation and alias behavior explicit. It provides a fresh-output convenience
-API, caller-owned storage reuse, and fixed-block mask compaction. Output order
-is stable in every API.
+API, caller-owned storage reuse, and fixed or dynamic mask compaction. Output
+order is stable in every API.
 
 ## Predicate filtering
 
@@ -57,6 +57,25 @@ Fixed-mask filtering accepts numeric Copy lanes. It does not claim SIMD
 authority for ownership-bearing structs; use predicate filtering for those
 values.
 
+## Dynamic-mask filtering
+
+Dynamic comparisons produce a packed `Mask` whose logical length follows the
+input. The same API accepts a `Span<T>` plus that mask:
+
+```vex
+let keep = samples.asSpan() >= threshold;
+let! reusable = Vec.withCapacity<i32>(samples.len());
+let count = filterByMaskInto(samples.asSpan(), &keep, &reusable);
+
+let selected = filterByMask(samples.asSpan(), &keep);
+```
+
+The source and mask lengths must match. The implementation processes full
+blocks at `#Target.simdLanes<T>()`, extracts each packed predicate with
+`Mask.block<N>`, compacts it with the same `Mask.compress`, and uses a single
+fixed-width store when spare Vec capacity covers the complete block. The final
+short block reads no source lane past the logical end.
+
 ## Allocation and alias guarantees
 
 | Operation | Allocation policy |
@@ -67,6 +86,8 @@ values.
 | `filterInto`, partial overlap | temporary staging to preserve unread values and ownership |
 | `filterByMask` | one fixed-capacity result allocation |
 | `filterByMaskInto` | no allocation when destination capacity covers `N` |
+| dynamic `filterByMask` | one source-upper-bound result allocation |
+| dynamic `filterByMaskInto` | no allocation when destination capacity covers the source length |
 
 Reusable destinations retain their allocator or arena binding. Fresh results
 capture the active allocation region when they are constructed. Capacity is
@@ -81,9 +102,8 @@ CPU SIMD and GPU SIMT backends legalize that semantic operation according to
 their hardware; the `filter` API does not expose architecture names or a
 backend switch.
 
-Dynamic `DynMask` filtering is not part of this package surface yet. Runtime
-mask widths require a separate block-processing and alias contract; fixed-mask
-APIs do not silently fall back to a scalar compatibility loop. See the
+Dynamic masks use packed-word extraction plus the same fixed-register compact
+contract; they do not silently fall back to a per-lane compatibility loop. See the
 [SIMD/SIMT unified execution contract](../guide/simd/simd-simt-contract.md) for
 the cross-backend compaction rules.
 
@@ -94,4 +114,5 @@ the cross-backend compaction rules.
 - Use `filterInto` in loops, parsers, and services that can reuse a destination.
 - Use `filterByMaskInto` when a numeric fixed-block comparison already produced
   a `Mask<N>` and storage reuse matters.
-
+- Use the Span/Mask overload when a dynamic comparison already produced a
+  packed runtime mask.

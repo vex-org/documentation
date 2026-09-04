@@ -23,7 +23,8 @@ export enum ErrorKind impl Copy {
 
 ## Error
 
-`Error` implements `Clone`, `Display`, and `Debug`. Its fields are private.
+`Error` implements `Display` and `Debug`, exposes an explicit `clone()` method,
+and keeps its fields private.
 
 | API | Signature |
 |---|---|
@@ -44,14 +45,15 @@ export enum ErrorKind impl Copy {
 | text search | `(&Error).containsMessage(needle: str): bool` |
 | current display | `(&Error).toString(): string` |
 | full display | `(&Error).renderChain(): string` |
-| deep copy | `(&Error).clone(): Error` |
+| local copy | `(&Error).clone(): Error` |
 
-Domain code `0` means “not supplied”; `hasCode(0)` is always false.
+Domain code `0` means “not supplied”; `hasCode(0)` is always false. Codes stay
+on their producing node; `hasCode` traverses sources to find them.
 
 ## ErrorGroup
 
-`ErrorGroup` implements `Clone`, `Display`, and `Debug`. It represents
-independent failures, not a causal chain.
+`ErrorGroup` implements `Display` and `Debug`, exposes `clone()`, and
+represents independent failures rather than a causal chain.
 
 | API | Signature |
 |---|---|
@@ -64,7 +66,7 @@ independent failures, not a causal chain.
 | kind traversal | `(&ErrorGroup).isKind(target: ErrorKind): bool` |
 | code traversal | `(&ErrorGroup).hasCode(target: i32): bool` |
 | full display | `(&ErrorGroup).toString(): string` |
-| deep copy | `(&ErrorGroup).clone(): ErrorGroup` |
+| clone outer nodes | `(&ErrorGroup).clone(): ErrorGroup` |
 
 No compatibility aliases are provided for the removed `StdError`, sentinel,
 `KIND_*`, `CODE_*`, or fixed-arity join APIs.

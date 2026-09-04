@@ -1,58 +1,59 @@
 # JSON (`serde/json`)
 
-The JSON module is the most heavily used format in `serde`. It provides a complete encoder, decoder, and a tree-based `JsonValue` type for dynamic data access.
+JSON exposes comptime-specialized struct codecs and the owning `JsonValue`
+dynamic tree.
 
-## Modules
-
-| File | Purpose |
-|------|---------|
-| `encoder.vx` | Struct → JSON string serialization |
-| `decoder.vx` | JSON string → Struct deserialization |
-| `value.vx` | `JsonValue` dynamic tree (Object, Array, String, Number, Bool, Null) |
-| `serde.vx` | Contract-based `Serializer`/`Deserializer` implementations |
-
-## Encoding (Struct → JSON)
+## Structured values
 
 ```vex
-import { encode } from "serde/json";
+import { jsonMarshal, jsonUnmarshal } from "serde/json";
 
 struct User {
-    id: i64
-    name: string
-    active: bool
+    public:
+    id: i64,
+    name: string,
 }
 
-let user = User { id: 1, name: "Alice", active: true };
-let json = encode<User>(&user);
-// → {"id":1,"name":"Alice","active":true}
+let source = User { id: 7, name: "Ada" };
+let encoded = jsonMarshal(&source);
+let! decoded = User { id: 0, name: "" };
+jsonUnmarshal(encoded.raw_ptr() as Ptr<u8>, encoded.len() as u64, &decoded);
 ```
 
-The encoder walks struct fields at compile-time offsets, emitting keys and values directly into a growable buffer. No reflection, no hash maps—just raw byte writes.
+`jsonMarshal<T>` and `jsonUnmarshal<T>` specialize field traversal from comptime
+type information. They do not require derive macros or runtime field maps.
 
-## Decoding (JSON → Struct)
+## Dynamic values and safe parsing
 
 ```vex
-import { decode } from "serde/json";
+import {
+    jsonParseDynamicSafe,
+    jsonStringifyDynamic,
+    jsonStringifyDynamicPretty,
+} from "serde/json";
 
-let payload = "{\"id\":42,\"name\":\"Bob\",\"active\":false}";
-let! user = User { };
-decode<User>(payload, &user);
-println("Name: {user.name}");  // Name: Bob
+match jsonParseDynamicSafe("{\"items\":[1,true,null]}") {
+    Ok(value) => {
+        $println(jsonStringifyDynamic(&value));
+        $println(jsonStringifyDynamicPretty(&value));
+    }
+    Err(message) => { $println(message); }
+}
 ```
 
-The decoder uses a streaming byte scanner to walk the JSON token stream. When it encounters a key, it uses `seekToKey` to match against known struct field names and directly writes the parsed value into the struct's memory layout.
+`JsonValue` provides `is*` predicates, scalar accessors, object `get`, array
+`at` and `len`. The safe path rejects trailing tokens, malformed numbers,
+invalid escapes, unpaired Unicode surrogates and malformed arrays/objects.
 
-## Dynamic JSON (`JsonValue`)
+Finite f64 values use the canonical shortest-roundtrip `strconv` formatter,
+so serialization preserves every representable value without fixed trailing
+zeros or a temporary string. Because RFC 8259 has no NaN or infinity number,
+the current infallible serializer emits `null` for non-finite IEEE values.
 
-For untyped or heterogeneous JSON, use `JsonValue`:
+The 2026-08-21 M2 Max O3 observable `BenchCtx.iter` baseline measured a small
+coordinate struct at about 14.59 ns to encode and 27.72 ns to decode; dynamic
+parse measured about 453 ns.
+These are local benchmark samples, not portable guarantees.
 
-```vex
-import { parseJSON } from "serde/json";
-
-let val = parseJSON("{\"users\":[{\"name\":\"Alice\"},{\"name\":\"Bob\"}]}");
-// Access nested values via the JsonValue tree
-```
-
-## String Escaping
-
-The encoder handles all JSON string escaping requirements (backslash, quotes, control characters, Unicode escapes) automatically during serialization.
+Parser resource ceilings, streaming APIs and official corpus coverage remain
+release gates.

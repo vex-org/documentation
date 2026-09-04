@@ -1,54 +1,35 @@
 # CSV (`serde/csv`)
 
-The `serde/csv` module provides blazing-fast tabular data parsing and serialization with full RFC 4180 compliance (quoted fields, embedded commas, newlines within quotes).
-
-## Modules
-
-| File | Purpose |
-|------|---------|
-| `parse.vx` | CSV text → `CsvValue` row/field parser |
-| `value.vx` | `CsvValue` type representing parsed rows and fields |
-| `encoder.vx` | Struct → CSV row via Serde `Serializer` contract |
-| `decoder.vx` | CSV row → Struct via Serde `Deserializer` contract |
-
-## Parsing CSV
+CSV exposes `parseCsv`, `parseCsvSafe`, `parseCsvWithLimits`, `CsvParser`,
+`CsvDocument`, `CsvSerializer` and `CsvDecoder`.
 
 ```vex
-import { parse } from "serde/csv";
+import { parseCsv } from "serde/csv";
 
-let input = "name,age,city\nAlice,30,Istanbul\nBob,25,Berlin";
-let rows = parse(input);
-// rows[0] = ["name", "age", "city"]
-// rows[1] = ["Alice", "30", "Istanbul"]
+let document = parseCsv("name,age\nAda,36\nGrace,37", true);
+let name = document.getField(0, "name").or("");
+$println(name);
 ```
 
-## Decoding into Structs
+`parseCsv(input, has_headers)` borrows a `str` and returns an owning document.
+`getRow` performs
+indexed row lookup; `getField` resolves a column by the parsed header. The
+current regression matrix covers header and no-header input, comma-containing
+quoted fields, escaped quotes and CRLF records.
 
-```vex
-import { decode } from "serde/csv";
+`CsvSerializer` and `CsvDecoder` implement the common serde contracts for
+explicit row-oriented codec use. There is no exported generic `encode` or
+`decode` convenience function.
 
-struct Person {
-    name: string
-    age: i32
-    city: string
-}
+The safe path validates UTF-8 and RFC-style quoting, rejects garbage after a
+closing quote and ragged rows, and enforces input/field/row/column/node budgets
+before allocating output. Quoted fields allocate their exact decoded length and
+row vectors reserve exact column capacity.
 
-let csv = "name,age,city\nAlice,30,Istanbul";
-let! person = Person { };
-decode<Person>(csv, &person);
-println("{person.name} lives in {person.city}");
-```
+The 2026-08-26 M2 Max O3 opaque-input baseline measured short trusted parse at
+338 ns / 124 MB/s, safe parse at 403 ns / 104 MB/s, quoted parse at 248 ns /
+173 MB/s and a 51-row input at 6.28 us / 183 MB/s. All reported parses used the
+bounded benchmark arena and recorded 0 process-heap allocations per operation.
 
-## Encoding from Structs
-
-```vex
-import { encode } from "serde/csv";
-
-let person = Person { name: "Charlie", age: 28, city: "Tokyo" };
-let csv_row = encode<Person>(&person);
-// → "Charlie,28,Tokyo"
-```
-
-## Performance
-
-CSV parsing uses native C-string `strtod` conversion for numeric fields and direct byte scanning for delimiters. This bypasses the heavier JSON-style tokenizer, achieving benchmark results of **~806,302 ops/s** for simple row parsing. Quoted field handling adds minimal overhead since the parser only branches on the `"` byte.
+Complete RFC 4180 differential coverage, configurable dialects and a streaming
+record reader remain promotion work.

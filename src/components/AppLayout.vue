@@ -63,11 +63,11 @@ async function logout() {
     <!-- Skip to content -->
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-vex-primary focus:text-white focus:text-sm">Skip to content</a>
     <!-- Header -->
-    <header class="sticky top-0 z-50 border-b border-vex-border bg-vex-bg/90 backdrop-blur-lg">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <RouterLink to="/" class="flex items-center gap-2 group">
-          <img src="/vex-logo.svg" alt="Vex" class="w-7 h-7" />
-          <span class="text-lg font-bold text-white">Vex</span>
+    <header class="sticky top-0 z-50 border-b border-vex-border bg-vex-bg/85 backdrop-blur-xl">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <RouterLink to="/" class="flex items-center gap-3 group" aria-label="Vex home">
+          <img src="/vex-logo.svg" alt="" class="w-8 h-8 transition-transform duration-300 group-hover:scale-105" />
+          <span class="font-display text-base font-bold tracking-[0.18em] text-vex-text">VEX</span>
         </RouterLink>
 
         <!-- Desktop nav -->
@@ -191,6 +191,7 @@ async function logout() {
           Search
         </button>
       </div>
+      <div class="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-vex-primary/60 to-transparent"></div>
     </header>
 
     <!-- Main -->
@@ -238,7 +239,7 @@ async function logout() {
         </div>
         <div class="flex items-center justify-between pt-6 border-t border-vex-border">
           <div class="flex items-center gap-2 text-vex-text-muted text-xs">
-            <img src="/vex-logo.svg" alt="Vex" class="w-4 h-4 opacity-50" />
+            <img src="/vex-logo-micro.svg" alt="Vex" class="w-4 h-4 opacity-70" />
             <span>&copy; {{ new Date().getFullYear() }} Vex Language</span>
           </div>
           <a href="https://github.com/vex-org" target="_blank" rel="noopener" class="text-vex-text-muted hover:text-white transition-colors">

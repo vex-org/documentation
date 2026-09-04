@@ -57,7 +57,7 @@ The currently well-grounded pieces are:
 Treat these areas as advanced or still moving:
 
 - generic tensor arithmetic like `Tensor<T> * Tensor<T>` across arbitrary `T`
-- automatic coercion stories between `Span<T>` and `Tensor<T>` at every call boundary
+- broader generic element-converting Tensor casts beyond the exact ownership/view rules documented in the Tensor guide
 - assuming every dynamic array expression will become a single SIMD instruction
 - assuming every matrix or signal-processing operator is equally mature on every backend
 

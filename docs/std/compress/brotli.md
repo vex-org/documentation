@@ -34,6 +34,17 @@ corpus. Every decode goes through an explicit output ceiling. Truncated input,
 invalid distance/prefix data and insufficient output space fail without
 publishing partial output through the safe facade.
 
+Backward references preserve Brotli overlap semantics without a scalar modulo
+loop: the decoder copies at most one existing period, then doubles the
+initialized prefix through non-overlapping `Mem.copy` operations. This keeps
+the implementation pure Vex and lets the shared memory backend select the
+target's best legal copy width.
+
+When a context map selects only one literal tree, decoding bypasses redundant
+context calculation and tree-pointer dispatch. Encoder match positions are
+local to each 64 KiB metablock, keeping the complete hash table at 64 KiB;
+wide match tails use endian-stable XOR plus trailing-zero count.
+
 Official Brotli decoders validate streams produced across levels 0, 1, 4, 6,
 9 and 11. The package does not claim bit-for-bit parity with Google's encoder;
 interoperability and decoded content are the contract.

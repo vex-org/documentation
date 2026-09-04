@@ -7,8 +7,14 @@ export default defineConfig({
   outDir: "../dist-docs",
   cleanUrls: true,
   ignoreDeadLinks: true,
+  vite: {
+    publicDir: "../public",
+  },
 
-  head: [["link", { rel: "icon", href: "/favicon.ico" }]],
+  head: [
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/vex-logo.svg" }],
+    ["meta", { name: "theme-color", content: "#07090B" }],
+  ],
   markdown: {
     languageAlias: {
       vex: "rust",

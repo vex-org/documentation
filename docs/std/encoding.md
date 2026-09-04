@@ -1,7 +1,12 @@
 # encoding — strict binary and percent codecs
 
 The `encoding` package provides RFC 4648 Hex, Base64, Base64URL and Base32
-codecs plus explicit RFC 3986 and form percent decoding.
+codecs, explicit RFC 3986/form percent decoding, and bounded ASN.1 DER views.
+
+`Der.parse`, `Der.elementAt`, `Der.childAt` and primitive accessors are
+allocation-free. They reject BER indefinite lengths, non-minimal lengths/high
+tags/OIDs, malformed primitive values, forged offsets, parent-boundary escapes
+and unbounded direct-child walks with typed offsets.
 
 ## Quick start
 
@@ -62,25 +67,34 @@ then write. A failure leaves the output buffer untouched.
 
 Long Base64 and Base32 inputs use the same public API on every target. The
 implementation expresses register transforms with ordinary `[u8; 16]`
-operators, constant `shuffle`, and `Mask<16>` comparisons. The compiler lowers
+operators, constant `shuffle`, lane-wise shift schedules and `Mask<16>`
+comparisons. The compiler lowers
 that semantic graph to the target backend; library code does not branch on CPU
 names and does not call a C/Rust codec.
 
 Complete blocks are loaded only after their exact readable range is proven.
 Base64 transforms 12 input bytes to 16 output bytes and decodes 16 symbols to
 12 bytes. Base32 transforms 10 bytes to 16 symbols and decodes 16 symbols to 10
-bytes. Exact-capacity tails stay scalar, so vector speed does not weaken bounds
-or padding rules.
+bytes. Repeating bit roles remain vector data rather than manually unrolled
+mask pipelines. Exact-capacity tails stay scalar, so vector speed does not
+weaken bounds or padding rules.
 
 Strict decoding remains two-phase: vector validation and length calculation
 finish before output mutation, then the valid payload is decoded. If a vector
 contains an invalid lane, only that cold block falls back to scalar inspection
 to retain the exact `DecodeError.position`.
 
-On an Apple M2 Max with O3 and caller-owned 64 KiB buffers, the 2026-08-16
-development baseline is approximately 4.6 GB/s Base64 encode, 3.0 GB/s strict
-Base64 decode, 3.4 GB/s Base32 encode and 2.2 GB/s strict Base32 decode. These
-are regression baselines for that machine, not cross-platform guarantees.
+On an Apple M2 Max with O3 and caller-owned 64 KiB buffers, the 2026-08-21
+development baseline is approximately 7.85 GB/s Base64 encode, 3.76 GB/s
+strict Base64 decode, 12.0 GB/s Base32 encode and 3.39 GB/s strict Base32
+decode. These are regression baselines for that machine, not cross-platform
+guarantees.
+
+The native assembly gate verifies that AArch64 uses register `tbl` shuffles and
+`ushl` lane shifts. Optimized entryless/library artifacts run the same stock
+LLVM O-level pipeline as executables and enforce explicit inline contracts
+after external-function merging, so the public caller does not retain a hot
+block-helper call merely because the artifact has no `main`.
 
 ## Canonical input rules
 
@@ -108,6 +122,26 @@ FormUrl.decode("a+b"); // "a b" — HTML form semantics
 Generic URL percent decoding never silently rewrites `+`. Form behavior must be
 selected explicitly.
 
+Exact serializers can plan and fill one destination:
+
+```vex
+let required = match FormUrl.encodedLength(input) {
+    Ok(n) => n,
+    Err(error) => return error.code(),
+};
+let! output = Vec.zeroedBytes(required);
+match FormUrl.tryEncodeTo(input, RawBuf.of(output.asMutPtr() as Ptr<Opaque>), required) {
+    Ok(written) => blackBox(written),
+    Err(error) => return error.code(),
+};
+```
+
+`tryEncodeTo` is the safe caller-buffer API. Advanced serializers that have
+already proved the exact length may use unsafe `encodeToUnchecked`; its output
+buffer must contain at least `encodedLength(input)` writable bytes. The unsafe
+form avoids a redundant validation scan but does not weaken UTF-8 or output
+length planning at the caller boundary.
+
 ## API overview
 
 | Namespace | Owned methods | Caller-buffer methods |
@@ -116,8 +150,8 @@ selected explicitly.
 | `Base64` | `encode`, `tryDecode`, `decode` | `encodeTo`, `tryDecodeTo`, `decodeTo` |
 | `Base64Url` | `encode`, `encodePadded`, `tryDecode`, `decode` | `encodeTo`, `encodeToPadded`, `tryDecodeTo`, `decodeTo` |
 | `Base32` | `encode`, `tryDecode`, `decode` | `encodeTo`, `tryDecodeTo`, `decodeTo` |
-| `Percent` | `encode`, `tryDecode`, `decode` | `tryDecodeTo` |
-| `FormUrl` | `tryDecode`, `decode` | `tryDecodeTo` |
+| `Percent` | `encode`, `tryDecode`, `decode`, `encodedLength` | `tryEncodeTo`, `tryDecodeTo` |
+| `FormUrl` | `tryDecode`, `decode`, `encodedLength` | `tryEncodeTo`, `tryDecodeTo` |
 
 Standalone function names remain forwarding compatibility shims. New code
 should use namespace methods.
@@ -145,3 +179,8 @@ vex test lib/std/encoding -O2
 vex lint lib/std/encoding --deny-warnings
 vex test lib/std/encoding --bench -O2 --benchmem
 ```
+
+Strict caller-buffer decoders validate all input and destination capacity
+before the first store. This is regression-tested across Hex, Base64,
+Base64URL, Base32, Percent and FormUrl, so malformed input cannot leave a
+partial decoded prefix in application-owned memory.

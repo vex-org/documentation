@@ -48,6 +48,29 @@ let result = await someAsyncFn()
 4. When the operation completes, the runtime re-queues the task.
 5. On resume, the state machine restores live variables and continues from the next instruction.
 
+### Creating a Future is not awaiting it
+
+An `async { ... }` expression captures its inputs and constructs a Future. Its
+body does not run at that point, and constructing it does not suspend the
+enclosing function. Suspension begins only when the Future is awaited or
+scheduled:
+
+```vex
+let pending = async {
+    return await loadRecord(id)
+}
+
+// Construction above did not run loadRecord or yield this task.
+let record = await pending
+```
+
+The Future owns or borrows its captures according to the normal ownership
+rules, so those inputs remain live for as long as the Future may use them. At
+`await`, the compiler transports the exact Future value through the suspension
+boundary and preserves any reference provenance carried by its result. This
+prevents an awaited view or reference from outliving the storage that produced
+it.
+
 ### Suspension Safety
 
 The compiler enforces rules about what can live across suspension points:
@@ -135,7 +158,20 @@ task back to the scheduler. The exact ABI is compiler/runtime-internal:
 | Task spawn | Push a new task to the scheduler |
 | Task yield | Suspend current task, return to scheduler |
 | Task resume | Re-queue a suspended task |
+| Timer wait | Register an exact deadline in the hierarchical timer wheel |
 | Poller wait | Block on I/O events (kqueue/epoll/IOCP) |
+
+The full scheduler tracks an exact earliest timer deadline even when timers are
+stored in coarse wheel buckets. Workers reject future-deadline scans before
+contending on the wheel lock, ignore stale clock snapshots, and preserve
+chronological expiration across the internal millisecond-counter wrap. These
+are runtime representation guarantees, not application-visible timer APIs.
+
+Long waits are not limited by the wheel's compact 32-bit bucket key. Vex keeps
+the exact saturating i64 monotonic deadline inside the active task and schedules
+bounded modular chunks. Expiration, cascade, and long scheduler pauses re-arm
+the next chunk without resuming user code; only the exact final deadline wakes
+the coroutine. This requires no extra task bytes or per-wait allocation.
 
 > **Implementation detail:** See `lib/runtime/VexArch/src/async/` for the runtime
 > implementation. Its reserved `extern "VEX"` ABI is not application API.
@@ -156,6 +192,19 @@ task back to the scheduler. The exact ABI is compiler/runtime-internal:
 - `Box<T>` values and compiler-pinned async frames
 - Calling other `async fn` with `await`
 - `go { }` blocks (fire-and-forget from async context)
+
+### Implicit suspension points
+
+`await` is the explicit suspension form. Potentially blocking channel syntax is
+also a suspension point when it appears in a coroutine: channel send, channel
+receive, and a `select` without a `default` arm split the generated state
+machine. A `select` with `default` is non-blocking and therefore does not
+suspend.
+
+The same channel operations inside an ordinary synchronous function may block
+the current OS thread, but they do not manufacture a coroutine frame or a
+synthetic `yield`. Borrow checking follows this distinction rather than
+treating every channel operation as async.
 
 ## Async with `?` Operator
 
@@ -186,9 +235,42 @@ async fn processRequest(req: Request): Result<Response, AppError> {
 | Metric                  | Approximate                          | Notes                             |
 | ----------------------- | ------------------------------------ | --------------------------------- |
 | State machine size      | Sum of live vars across await points | Compiler optimizes dead stores    |
-| Task memory overhead    | ~200 bytes + state machine           | On par with Goroutines (Go)       |
-| `await` on ready value  | ~5 ns                                | No context switch needed          |
-| `await` with suspension | ~50-100 ns                           | Save state + yield + later resume |
+| Runtime task cell       | 64 bytes                             | One cache line; frame is separate |
+| Ready `await`           | No OS context switch                 | Continues through generated state |
+| Suspended `await`       | Provider and workload dependent      | Saves state and resumes later     |
+
+Straight-line async graphs use a compiler-selected cooperative-local scheduler.
+That mode has no external wake source. If live tasks remain after its runnable
+FIFO becomes empty, Vex reports a deterministic cooperative deadlock instead of
+spinning during program finalization. Full async graphs are different: an empty
+runnable set may be waiting on channels, timers, or native I/O, so their
+scheduler uses provider-aware parking and cancellation rather than this local
+terminal check.
+
+The full scheduler becomes visible only after its native poller, global queue,
+and timer wheel have all initialized. These resources form one construction
+transaction: a failure releases every completed prefix and publishes no partial
+scheduler. Likewise, cooperative-local state can promote only before any task,
+frame, queue entry, or scheduler work exists. Live local frames can contain
+allocator and coroutine-context pointers, so Vex rejects a late promotion
+instead of copying an unsafe ownership graph; capability selection must choose
+the full scheduler before task publication. Timer suspension verifies its
+provider before marking the task waiting, preventing an allocation failure from
+turning into an invisible permanent suspension.
+
+Task publication follows the same fail-closed rule. If scheduler/task storage,
+an inline reservation token, or queue ownership is unavailable, Vex emits an
+allocation-free runtime diagnostic and terminates before publication. It never
+reports success after silently dropping a `go` task or leaves an active task
+count with no reachable queue entry.
+
+Cooperative-local frames use a thread-local VexArch allocator rather than libc
+`malloc`/`free`. Small blocks are reused from aligned size classes backed by raw
+64 KiB pages; large frames use page-rounded direct extents. Bounds are checked
+before extent tagging and rounding, and cleanup is idempotent for both pooled
+and direct storage. Linux uses the target mmap/syscall provider, macOS uses the
+system VM provider, and Windows uses `VirtualAlloc`; this does not add a libc
+allocator dependency to freestanding runtime storage.
 
 ## Best Practices
 

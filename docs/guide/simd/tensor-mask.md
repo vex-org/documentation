@@ -49,6 +49,12 @@ Dynamic tensors lower to an owning `%VexDynTensor { ptr, i64 }` layout.
 
 The data buffer is heap-managed via the VUMI/VUMM allocator and participates in drop logic. Conversions into `Tensor<T>` from `Span<T>` involve an owned copy.
 
+The reverse explicit cast has view semantics:
+
+- `dynamicTensor as Span<T>` is zero-copy and the borrow checker ties the span to the Tensor owner.
+- `staticTensor as Span<T>` materializes scoped addressable storage for the SIMD value. LLVM can eliminate that storage when the view stays local, but the view cannot escape the frame.
+- `Span<T>.toTensor()` and `span as Tensor<T>` always produce independently owned dynamic storage; they never forge a Tensor owner over borrowed memory.
+
 Example:
 
 ```vex

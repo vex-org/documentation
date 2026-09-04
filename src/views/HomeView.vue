@@ -98,50 +98,89 @@ const principles = [
 
 <template>
   <div>
-    <section class="relative overflow-hidden border-b border-vex-border">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 pt-20 pb-16 sm:pt-28 sm:pb-24">
-        <div class="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 lg:gap-16 items-center">
+    <section class="relative isolate min-h-[calc(100svh-4rem)] overflow-hidden border-b border-vex-border bg-vex-bg">
+      <img
+        src="/brand/vex-panther-hero.webp"
+        alt=""
+        class="absolute inset-0 h-full w-full object-cover object-[68%_45%] opacity-45 sm:opacity-60 lg:opacity-95"
+        fetchpriority="high"
+      />
+      <div class="absolute inset-0 bg-[linear-gradient(90deg,#07090b_0%,rgba(7,9,11,0.98)_28%,rgba(7,9,11,0.72)_52%,rgba(7,9,11,0.08)_82%)]"></div>
+      <div class="absolute inset-0 bg-[linear-gradient(0deg,#07090b_0%,transparent_35%,rgba(7,9,11,0.24)_100%)]"></div>
+      <div class="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(32,38,48,0.28)_1px,transparent_1px),linear-gradient(90deg,rgba(32,38,48,0.28)_1px,transparent_1px)] [background-size:72px_72px] [mask-image:linear-gradient(90deg,black,transparent_58%)]"></div>
+
+      <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-20 sm:py-28 lg:py-32">
+        <div class="max-w-2xl">
+          <div class="flex items-center gap-3 mb-8">
+            <img src="/vex-logo.svg" alt="" class="h-9 w-9" />
+            <span class="brand-kicker text-[11px] font-semibold text-vex-text">Vex Language</span>
+            <span class="h-px w-10 bg-vex-primary"></span>
+          </div>
+
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-vex-border bg-vex-bg/70 text-xs text-vex-text-muted mb-7 backdrop-blur-md">
+            <span class="w-1.5 h-1.5 rounded-full bg-vex-accent shadow-[0_0_12px_rgba(32,214,199,0.75)]"></span>
+            {{ vexVersion }} · pre-1.0
+          </div>
+
+          <h1 class="font-display text-5xl sm:text-6xl lg:text-7xl font-bold tracking-[-0.045em] leading-[0.98] mb-7">
+            <span class="block text-vex-primary-light">Fast.</span>
+            <span class="block text-vex-text">Safe.</span>
+            <span class="block text-vex-accent">Expressive.</span>
+          </h1>
+
+          <p class="font-display text-xl sm:text-2xl font-medium text-vex-text max-w-xl mb-4 leading-snug">
+            Systems programming with parallelism in the language.
+          </p>
+          <p class="text-base sm:text-lg text-vex-text-muted max-w-xl mb-9 leading-relaxed">
+            Explicit ownership, practical concurrency, and a direct compiler path to accelerated native code—without losing a clear model of the program.
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="/docs/guide/introduction" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-vex-primary hover:bg-vex-primary-dim text-white font-semibold transition-colors shadow-[0_12px_40px_rgba(227,10,23,0.2)]">
+              Start building
+              <ArrowRight class="w-4 h-4" />
+            </a>
+            <router-link to="/playground" class="inline-flex items-center gap-2 px-5 py-3 rounded-lg border border-vex-border-light bg-vex-bg/45 text-vex-text hover:bg-vex-surface-light/80 font-medium transition-colors backdrop-blur-md">
+              <Terminal class="w-4 h-4 text-vex-accent" />
+              Try Vex
+            </router-link>
+            <router-link to="/download" class="inline-flex items-center gap-2 px-4 py-3 text-sm text-vex-text-muted hover:text-vex-text transition-colors">
+              <Download class="w-4 h-4" />
+              Install
+            </router-link>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pb-8 sm:pb-10">
+        <p class="brand-kicker text-[10px] text-vex-text-muted">Built for a more capable tomorrow.</p>
+      </div>
+    </section>
+
+    <section class="relative border-b border-vex-border bg-vex-bg-card/65">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+        <div class="grid lg:grid-cols-[0.72fr_1.28fr] gap-10 lg:gap-16 items-center">
           <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-vex-border bg-vex-surface text-sm text-vex-text-muted mb-6">
-              <span class="w-1.5 h-1.5 rounded-full bg-vex-success"></span>
-              {{ vexVersion }} · pre-1.0
-            </div>
-            <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-white mb-6 leading-[1.08]">
-              Systems programming with
-              <span class="text-vex-primary">parallelism</span>
-              in the language.
-            </h1>
-            <p class="text-lg text-vex-text-muted max-w-xl mb-8 leading-relaxed">
-              Vex combines explicit ownership, practical concurrency, and a compiler path to accelerated code. The result is a language for programmers who want control without losing a clear model of the program.
+            <p class="brand-kicker text-[10px] text-vex-primary-light mb-4">Power through precision</p>
+            <h2 class="font-display text-2xl sm:text-3xl font-semibold text-vex-text mb-4">Control you can see.</h2>
+            <p class="text-vex-text-muted leading-relaxed">
+              Vex keeps ownership, mutation, communication, and acceleration visible in source. The compiler does the hard work without hiding the cost model.
             </p>
-            <div class="flex flex-wrap items-center gap-3">
-              <a href="/docs/guide/introduction" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-vex-primary hover:bg-vex-primary-light text-white font-medium transition-colors">
-                Read the guide
-                <ArrowRight class="w-4 h-4" />
-              </a>
-              <router-link to="/playground" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-vex-border text-vex-text hover:bg-vex-surface-light font-medium transition-colors">
-                <Terminal class="w-4 h-4" />
-                Open playground
-              </router-link>
-              <router-link to="/download" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-vex-border text-vex-text hover:bg-vex-surface-light font-medium transition-colors">
-                <Download class="w-4 h-4" />
-                Install
-              </router-link>
-            </div>
           </div>
 
           <div>
-            <div class="rounded-xl border border-vex-border bg-vex-bg-card overflow-hidden shadow-2xl shadow-black/20">
-              <div class="flex items-center gap-2 px-4 py-3 border-b border-vex-border bg-vex-surface">
-                <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
-                <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
-                <div class="w-2.5 h-2.5 rounded-full bg-zinc-700"></div>
-                <span class="ml-2 text-xs text-vex-text-muted font-mono">point.vx</span>
+            <div class="rounded-xl border border-vex-border bg-vex-bg overflow-hidden shadow-2xl shadow-black/30">
+              <div class="flex items-center gap-2 px-4 py-3 border-b border-vex-border bg-vex-surface/80">
+                <span class="w-2 h-2 rounded-full bg-vex-primary"></span>
+                <span class="w-2 h-2 rounded-full bg-vex-border-light"></span>
+                <span class="w-2 h-2 rounded-full bg-vex-accent"></span>
+                <span class="ml-2 text-[11px] text-vex-text-muted font-mono tracking-wide">point.vx</span>
+                <span class="ml-auto brand-kicker text-[9px] text-vex-accent">native</span>
               </div>
-              <pre class="p-5 text-sm leading-relaxed overflow-x-auto font-mono text-vex-text"><code>{{ codeExample }}</code></pre>
+              <pre class="p-5 sm:p-6 text-sm leading-relaxed overflow-x-auto font-mono text-vex-text"><code>{{ codeExample }}</code></pre>
             </div>
             <p class="mt-3 text-xs text-vex-text-muted">
-              This example uses core syntax documented in the language guide. It is intentionally small enough to check and understand in one sitting.
+              Core syntax from the checked language guide—small enough to understand in one sitting.
             </p>
           </div>
         </div>
@@ -150,8 +189,8 @@ const principles = [
 
     <section class="max-w-6xl mx-auto px-4 sm:px-6 py-20">
       <div class="max-w-2xl mb-12">
-        <p class="text-sm font-medium text-vex-primary mb-3">The language model</p>
-        <h2 class="text-2xl sm:text-3xl font-bold text-white mb-4">Make important costs visible.</h2>
+        <p class="brand-kicker text-[10px] font-medium text-vex-primary-light mb-3">The language model</p>
+        <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-4">Make important costs visible.</h2>
         <p class="text-vex-text-muted leading-relaxed">
           Vex is designed to keep data ownership, mutation, communication, and acceleration visible in the source. Its core is compact; the advanced sections build on that core rather than replacing it.
         </p>

@@ -1,61 +1,75 @@
 # MessagePack (`serde/msgpack`)
 
-MessagePack is a compact binary serialization format. It's significantly smaller than JSON in wire size and faster to parse since there's no text tokenization involved—just direct byte reading.
-
-## Modules
-
-| File | Purpose |
-|------|---------|
-| `encoder.vx` | Struct → binary MsgPack bytes |
-| `decoder.vx` | Binary MsgPack → Struct |
-| `value.vx` | `MsgPackValue` dynamic type tree |
-| `serde.vx` | Contract-based `Serializer`/`Deserializer` implementations |
-
-## When to Use
-
-- **RPC and IPC**: Inter-process communication where bandwidth matters.
-- **Network Protocols**: Custom binary protocols between Vex services.
-- **Storage**: Compact struct serialization for caching or databases.
-- **High Throughput**: When JSON text parsing overhead is unacceptable.
-
-## Encoding
+MessagePack exposes comptime-specialized struct codecs and an owning
+`MsgPackValue` dynamic tree.
 
 ```vex
-import { encode } from "serde/msgpack";
+import { msgpackMarshal, msgpackUnmarshalSafe } from "serde/msgpack";
 
 struct Sensor {
-    id: i64
-    temperature: f64
-    active: bool
+    public:
+    id: i64,
+    temperature: f64,
+    active: bool,
 }
 
-let data = Sensor { id: 42, temperature: 23.5, active: true };
-let bytes = encode<Sensor>(&data);
-// Compact binary: ~15 bytes vs ~50+ bytes in JSON
+let source = Sensor { id: 42, temperature: 23.5, active: true };
+let packed = msgpackMarshal(&source);
+let! decoded = Sensor { id: 0, temperature: 0.0, active: false };
+match msgpackUnmarshalSafe(
+    packed.raw_ptr() as Ptr<u8>, packed.len() as u64, &decoded,
+) {
+    Ok(_) => { $println(decoded.temperature); }
+    Err(failure) => { $println(failure.message()); }
+}
 ```
 
-## Decoding
+Dynamic APIs are `msgpackParseDynamic`, `msgpackParseDynamicSafe`,
+`msgpackParseDynamicWithLimits`, `msgpackStringifyDynamic` and `msgpackToJson`.
+Binary parsers take an explicit pointer and byte length.
+
+## Safe and trusted paths
+
+Use `msgpackParseDynamicSafe` or `msgpackUnmarshalSafe` at untrusted file and
+network boundaries. They validate the full document without allocation before
+building a value tree or touching a structured destination. Failures return a
+typed `DecodeErrorKind` and absolute byte offset.
 
 ```vex
-import { decode } from "serde/msgpack";
+import {
+    DecodeLimits,
+    msgpackParseDynamicWithLimits,
+} from "serde/msgpack";
 
-let! sensor = Sensor { };
-decode<Sensor>(bytes, &sensor);
-println("Sensor {sensor.id}: {sensor.temperature}°C");
+let! limits = DecodeLimits.standard();
+limits.maxTotalBytes = 1024 * 1024 as usize;
+limits.maxDepth = 32 as usize;
+limits.maxContainerItems = 65_536 as usize;
+
+match msgpackParseDynamicWithLimits(data, length, limits) {
+    Ok(value) => { /* consume value */ }
+    Err(failure) => { $println(failure.message()); }
+}
 ```
 
-## Wire Format
+The safe dynamic subset covers integers representable as `i64`, 32/64-bit
+floats, strings, binary values, arrays, string-keyed maps, booleans and nil. It
+rejects truncation, forged lengths, trailing bytes, invalid UTF-8, non-string
+keys, over-budget values, the reserved marker and extension-family markers.
+Extensions and timestamps remain rejected until the value model can preserve
+them losslessly.
 
-MessagePack uses type-prefix bytes to encode values efficiently:
+`msgpackParseDynamic` and `msgpackUnmarshal` are single-pass trusted-data paths;
+they intentionally skip preflight and are not an untrusted-input API.
 
-| Type | Prefix | Size |
-|------|--------|------|
-| Positive fixint | `0x00–0x7f` | 1 byte |
-| Negative fixint | `0xe0–0xff` | 1 byte |
-| fixstr | `0xa0–0xbf` | 1 + N bytes |
-| fixarray | `0x90–0x9f` | 1 + elements |
-| fixmap | `0x80–0x8f` | 1 + entries |
-| float64 | `0xcb` | 9 bytes |
-| int64 | `0xd3` | 9 bytes |
-| true/false | `0xc3/0xc2` | 1 byte |
-| nil | `0xc0` | 1 byte |
+The regression matrix covers structured/dynamic round trips, transactional safe
+struct decode, truncation, forged lengths, trailing bytes, invalid UTF-8,
+integer overflow, non-string keys and every resource budget at O0 and O3.
+Official conformance corpora, duplicate/canonical policy and lossless extension
+support remain promotion work.
+
+The 2026-08-25 M2 Max O3 short baseline measured coordinate encode/decode at
+13.35/14.28 ns, trusted dynamic parse at 477.94 ns, allocation-free validation
+at 49.94 ns and safe dynamic parse at 530.92 ns. The safe boundary added about
+11.1% on this small fixture. These are regression baselines, not portable
+promises.

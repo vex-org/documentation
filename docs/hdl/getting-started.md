@@ -10,7 +10,7 @@ title: Getting Started
 
 # VexHDL Getting Started Guide
 
-Welcome to VexHDL! VexHDL is a modern, type-safe, and high-performance Hardware Description Language (HDL) designed to eliminate the common bugs, verbosity, and licensing friction of traditional HDLs (like Verilog and VHDL). 
+Welcome to VexHDL! VexHDL is a modern, type-safe, and high-performance Hardware Description Language (HDL) designed to eliminate the common bugs, verbosity, and licensing friction of traditional HDLs (like Verilog and VHDL).
 
 This guide will walk you through the Vex Studio IDE, the package manager CLI (`vex-pm`), and the steps to write, simulate, and debug your first hardware module.
 

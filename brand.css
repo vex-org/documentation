@@ -1,0 +1,18 @@
+:root {
+  --vex-crimson: #e30a17;
+  --vex-crimson-hover: #bd0712;
+  --vex-crimson-deep: #8f0711;
+  --vex-crimson-readable: #ff3344;
+  --vex-turquoise: #20d6c7;
+  --vex-turquoise-light: #53fff0;
+  --vex-turquoise-deep: #087f78;
+  --vex-obsidian: #07090b;
+  --vex-obsidian-raised: #0d1117;
+  --vex-slate: #11161d;
+  --vex-slate-light: #1a1f24;
+  --vex-border: #202630;
+  --vex-border-strong: #36404c;
+  --vex-moon: #f5f7f6;
+  --vex-muted: #8b949e;
+}
+

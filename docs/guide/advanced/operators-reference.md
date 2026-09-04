@@ -25,6 +25,23 @@ let neg = -42             // -42
 let f_div = 10.0 / 3.0    // 3.333...
 ```
 
+### Scalar numeric operands and borrows
+
+A primitive numeric borrow participates through its referent's value type:
+comparing an `&i64` with zero is a signed numeric comparison, not an address
+comparison. Numeric widening preserves the source's signedness. Arithmetic
+uses its inferred result type; comparisons select a common numeric operand
+type before producing `bool`.
+
+Mixed integer operands need a lossless implicit conversion to one operand's
+type. Integer/float operations use the existing numeric promotion to the
+selected float type. Required compile-time evaluation follows these same
+rules; this does not introduce an implicit float-to-integer conversion.
+
+For `a >> b`, the value type of `a` determines arithmetic versus logical
+right shift. An unsigned shift count does not turn a signed value unsigned.
+Raw pointers are not implicitly loaded by these numeric rules.
+
 ### Compound Assignment
 
 | Operator | Equivalent  |
@@ -117,6 +134,27 @@ let not_val = !t           // false
 // Short-circuit behavior
 let ok = ptr != null_ptr && ptr.read() > 0  // safe: read() only called if ptr is valid
 ```
+
+`&&` and `||` also accept `&bool` operands: they read the referenced boolean,
+not whether its address is non-null. Mixing `bool` and `&bool` preserves the
+same left-to-right, once-only evaluation and short-circuit rules, including
+inside `#const`:
+
+```vex
+const fn both(left: &bool, right: &bool): bool {
+    return left && right;
+}
+
+let enabled = false;
+let ready = true;
+let result = both(&enabled, &ready); // false
+```
+
+Binary operators automatically dereference one reference layer. For nested
+references, dereference the outer layer explicitly (for example, `*left &&
+*right` for `& &bool` parameters). This does not grant logical operators an
+implicit raw-pointer dereference or change unary `!` rules; use `!*reference`
+to negate a referenced boolean.
 
 ## Indexing Operator
 

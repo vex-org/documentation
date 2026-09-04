@@ -10,7 +10,7 @@ Contracts are organized into three layers:
 | ---------------------- | ------------------------------ | ------------------------------------------------------- |
 | **Operator Contracts** | `prelude/ops.vx`               | Arithmetic, bitwise, comparison, indexing operators     |
 | **Builtin Contracts**  | `prelude/builtin_contracts.vx` | Core language capabilities (Display, Clone, Drop, etc.) |
-| **Standard Contracts** | `lib/std/contracts/src/`       | Extended capabilities (conversion, collections, memory) |
+| **Standard Contracts** | `lib/std/contracts/src/`       | Explicit conversion, collection and packed-data protocols |
 
 ---
 
@@ -353,12 +353,25 @@ These are **marker contracts** -- they have no methods and are used by the compi
 
 #### `Copy` -- Bitwise Copyable
 
-Types that can be duplicated by copying their bits. All primitives are `Copy`.
+Types that can be duplicated by copying their bits. Scalar primitives are
+`Copy`. Aggregate declarations opt in explicitly, and the compiler then proves
+the exact instantiated shape before granting the capability:
 
 ```vex
 // Marker -- no methods
 contract Copy { }
+
+struct Pair<T>: Copy {
+    left: T,
+    right: T,
+}
+
+// Pair<i32> is Copy; Pair<string> is not.
 ```
+
+The spelling of a type is irrelevant. Prelude types such as `Option<T>`,
+`Result<T, E>`, `Range<T>`, `Span<T>`, and `Ptr<T>` receive Copy behavior from
+their Vex declarations, not from a Rust-side type-name list.
 
 #### `Pin` -- Self-Referential Prevention
 
@@ -370,7 +383,9 @@ contract Pin { }  // marker
 
 #### `Owner` -- Owning Capability
 
-The value is responsible for eventual destruction. Applied to `Box<T>`, `Vec<T>`, `string`, etc.
+The value is responsible for eventual destruction. VexArch owning types such
+as `Box<T>`, `Vec<T>`, `Map<K, V>`, `Channel<T>`, and `string` declare this
+capability in their source definitions.
 
 ```vex
 contract Owner { }  // marker
@@ -378,10 +393,68 @@ contract Owner { }  // marker
 
 #### `BorrowedView` -- Non-Owning View
 
-Non-owning reference into proven-live storage. Applied to `Span<T>`, `str`, `&T`.
+Non-owning reference into proven-live storage of `T`. `Span<T>` and `str`
+declare this relationship in VexArch; ordinary `&T` and slices have equivalent
+intrinsic borrow semantics.
 
 ```vex
-contract BorrowedView { }  // marker
+contract BorrowedView<T> { }  // marker
+```
+
+#### `IndirectStorage<T>` -- Out-of-Line Storage
+
+States that values of `T` live behind a container-owned backing allocation.
+The borrow checker follows this semantic edge when storage moves or grows; it
+does not recognize `Vec`, `Map`, or any other container name.
+
+```vex
+contract IndirectStorage<T> { }  // marker
+```
+
+The same declaration also informs generic variance. Because the public
+abstraction owns values of `T` independently of its private raw backing
+pointer, `T` can remain covariant without a compiler-side `Vec`/`Map` table.
+
+#### `BulkReclaimSafe` -- Region Drop Elision
+
+Marks an audited VexArch value whose destructor has no observable effect beyond
+releasing storage owned by a compiler-selected region. If the exact allocation
+is routed into that region, Vex may omit the individual destructor and reclaim
+the storage in one bulk operation.
+
+```vex
+contract BulkReclaimSafe { }  // sealed marker
+```
+
+This is not a general-purpose user contract. It is sealed because an incorrect
+implementation could erase file, socket, synchronization, foreign-resource, or
+other observable cleanup. Types that do not need `Drop` are already eligible
+structurally; types that do need `Drop` receive this optimization only from the
+exact compiler-installed contract declaration. A same-named user contract has
+no effect. `string` currently opts in through its VexArch declaration; ordinary
+containers and custom destructors retain full drop behavior unless separately
+audited.
+
+#### `Invariant<T>` -- Invariant Generic Parameter
+
+Declares that an abstraction both consumes and produces `T`, or otherwise
+requires exact type/lifetime identity. `Channel<T>` and `Ptr<T>` use this
+user-available conservative source marker. It overrides representation-only
+variance inference but can only reject conversions; it cannot grant ownership
+or lifetime authority.
+
+```vex
+contract Invariant<T> { }  // marker
+```
+
+#### `ManagedSharing` -- Compiler-Managed Shared Handle
+
+Marks a trusted owning handle whose representation supports compiler-managed
+sharing. Developers still use the normal value type; public `Rc`/`Arc` and
+manual retain/release bookkeeping are not part of the Vex model.
+
+```vex
+contract ManagedSharing { }  // marker
 ```
 
 #### `RawPointer` -- Raw Memory Handle
@@ -438,7 +511,7 @@ contract Dealloc {
 
 ```vex
 contract From<T> {
-    From(value: T): Self
+    static fn fromValue(value: T): Self;
 }
 ```
 
@@ -446,31 +519,35 @@ contract From<T> {
 struct Celsius: From<f64> {
     public:
     value: f64,
-
-    fn Celsius(value: f64): Celsius {
-        return Celsius { value: value }
-    }
 }
 
-let temp: Celsius = Celsius.from(100.0)  // or just Celsius(100.0)
+fn Celsius.fromValue(value: f64): Celsius {
+    return Celsius { value };
+}
+
+let temp = Celsius.fromValue(100.0);
 ```
+
+`From<T>` is an explicit protocol. Constructor-driven implicit coercion is a
+separate compiler feature.
 
 #### `Into<T>` -- Reverse of From
 
 ```vex
 contract Into<T> {
-    into(): T
+    static fn intoValue(value: Self): T;
 }
 ```
 
-`Into<T>` is automatically implemented for any type where `T: From<Self>`.
+The explicit `Self` parameter consumes the owner. Vex does not synthesize a
+blanket `Into<T>` implementation from `From<Self>`.
 
 #### `TryFrom<T>` -- Fallible Conversion
 
 ```vex
 contract TryFrom<T> {
-    type Error
-    try_from(value: T): Result<Self, Self.Error>
+    type Error;
+    static fn tryFromValue(value: T): Result<Self, Self.Error>;
 }
 ```
 
@@ -479,14 +556,14 @@ struct PositiveInt: TryFrom<i32> {
     public:
     value: i32,
 
-    type Error = string
+    type Error = str;
+}
 
-    fn PositiveInt.try_from(value: i32): Result<PositiveInt, string> {
-        if value <= 0 {
-            return Err("value must be positive")
-        }
-        return Ok(PositiveInt { value: value })
+fn PositiveInt.tryFromValue(value: i32): Result<PositiveInt, str> {
+    if value <= 0 {
+        return Err("value must be positive");
     }
+    return Ok(PositiveInt { value });
 }
 ```
 
@@ -494,8 +571,8 @@ struct PositiveInt: TryFrom<i32> {
 
 ```vex
 contract TryInto<T> {
-    type Error
-    try_into(): Result<T, Self.Error>
+    type Error;
+    static fn tryIntoValue(value: Self): Result<T, Self.Error>;
 }
 ```
 
@@ -503,7 +580,7 @@ contract TryInto<T> {
 
 ```vex
 contract Default {
-    Default(): Self
+    static fn defaultValue(): Self;
 }
 ```
 
@@ -512,47 +589,21 @@ struct Config: Default {
     public:
     host: string,
     port: i32,
-
-    fn Config(): Config {
-        return Config { host: "localhost", port: 8080 }
-    }
 }
 
-let defaultConfig = Config.default()
+fn Config.defaultValue(): Config {
+    return Config { host: "localhost", port: 8080 };
+}
+
+let defaultConfig = Config.defaultValue();
 ```
 
 ### Comparison Contracts
 
-#### `Eq` -- Structural Equality
-
-```vex
-contract Eq {
-    eq(other: &Self): bool
-    ne(other: &Self): bool
-}
-```
-
-#### `Ord` -- Total Ordering
-
-```vex
-contract Ord {
-    cmp(other: &Self): Ordering
-    lt(other: &Self): bool
-    le(other: &Self): bool
-    gt(other: &Self): bool
-    ge(other: &Self): bool
-}
-```
-
-`Ordering` is an enum: `Less`, `Equal`, `Greater`.
-
-#### `Hash` -- Hashing
-
-```vex
-contract Hash {
-    hash(): u64
-}
-```
+`std/contracts` exports only the `Ordering` value enum (`Less`, `Equal`, and
+`Greater`) in this category. `Eq`, `Ord`, operator behavior and hashing
+contracts are canonical prelude identities; the package does not create
+parallel aliases for them.
 
 ### Collection Contracts
 
@@ -561,57 +612,55 @@ contract Hash {
 Base contract for all collection types.
 
 ```vex
-contract Collection {
-    type Elem
-    len(): usize
-    isEmpty(): bool
+contract Collection<T> {
+    len(): usize;
+    isEmpty(): bool;
+    clear()!;
 }
 ```
 
 #### `Stack` -- LIFO
 
 ```vex
-contract Stack: Collection {
-    push(value: Self.Elem)
-    pop(): Option<Self.Elem>
-    peek(): Option<Self.Elem>
+contract Stack<T>: Collection<T> + Growable {
+    push(value: T)!;
+    pop()!: Option<T>;
+    peek(): Option<&T>;
+    peekMut()!: Option<&T!>;
 }
 ```
 
 #### `Queue` -- FIFO
 
 ```vex
-contract Queue: Collection {
-    enqueue(value: Self.Elem)
-    dequeue(): Option<Self.Elem>
-    front(): Option<Self.Elem>
+contract Queue<T>: Collection<T> + Growable {
+    enqueue(value: T)!;
+    dequeue()!: Option<T>;
+    front(): Option<&T>;
+    frontMut()!: Option<&T!>;
 }
 ```
 
 #### `Indexable` -- Indexed Access
 
 ```vex
-contract Indexable: Collection {
-    get(index: usize): Option<Self.Elem>
+contract Indexable<T, Idx>: Collection<T> {
+    get(index: Idx): Option<&T>;
+    getMut(index: Idx)!: Option<&T!>;
+    set(index: Idx, value: T)!;
 }
 ```
 
-#### `Iterable` -- Iteration Support
-
-```vex
-contract Iterable: Collection {
-    type Iter
-    iter(): Self.Iter
-}
-```
+Iteration uses the canonical prelude `Iterator` and `IntoIterator` contracts;
+`std/contracts` does not define an `Iterable` alias.
 
 #### `Growable` -- Capacity Management
 
 ```vex
-contract Growable: Collection {
-    reserve(additional: usize)
-    capacity(): usize
-    shrink()
+contract Growable {
+    capacity(): usize;
+    reserve(minimumCapacity: usize)!;
+    shrinkToFit()!;
 }
 ```
 
@@ -623,16 +672,43 @@ Heap ownership uses `Box<T>`. The compiler and VUMM choose unique, shared, or
 thread-safe storage internally—there are no public `Rc`, `Arc`, reference-count,
 retain, or release APIs for application code.
 
+The compiler resolves these contracts by declaration identity. It never grants
+ownership, view, indirect-storage, or sharing semantics because a type happens
+to be named `Vec`, `Span`, `Ptr`, `Box`, or `Channel`. Ordinary user aggregates
+receive the same structural Copy/Drop/borrow analysis as prelude aggregates.
+Memory-authority markers are sealed: only audited VexArch/standard-library
+definitions may assert a raw or hidden-storage invariant that structure alone
+cannot prove. `Invariant<T>` is deliberately open because it is purely
+restrictive and grants no memory capability.
+
 #### `Owner` -- Ownership Marker
 
 ```vex
-contract Owner: Drop { }  // inherits Drop
+contract Owner { }
 ```
 
 #### `BorrowedView` -- Borrow Marker
 
 ```vex
-contract BorrowedView { }
+contract BorrowedView<T> { }
+```
+
+#### `IndirectStorage` -- Backing-Allocation Marker
+
+```vex
+contract IndirectStorage<T> { }
+```
+
+#### `Invariant` -- Exact Generic-Identity Marker
+
+```vex
+contract Invariant<T> { }
+```
+
+#### `ManagedSharing` -- Managed Handle Marker
+
+```vex
+contract ManagedSharing { }
 ```
 
 #### `RawPointer` -- Raw Handle Marker
@@ -651,14 +727,6 @@ contract SuspendSafe { }
 
 ```vex
 contract ConcurrentSafe { }
-```
-
-#### `Dealloc`
-
-```vex
-contract Dealloc {
-    free()!
-}
 ```
 
 ### `PackedType` Contract

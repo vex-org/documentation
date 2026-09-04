@@ -134,8 +134,46 @@ When given an array/tensor, the operation auto-vectorizes to SIMD.
 | `Math.popcount(x)`     | `T, [T;N], Span<T>, Tensor<T>` | Count set bits             |
 | `Math.clz(x)`          | `T, [T;N], Span<T>, Tensor<T>` | Count leading zeros        |
 | `Math.ctz(x)`          | `T, [T;N], Span<T>, Tensor<T>` | Count trailing zeros       |
-| `Math.nextPowerOf2(x)` | `T, [T;N], Span<T>, Tensor<T>` | Next power of 2            |
+| `Math.nextPowerOf2(x)` / `Math.nextPow2(x)` | integer scalar `T -> T` | Width-preserving next power of 2 |
 | `Math.bswap(x)`        | `T, [T;N], Span<T>, Tensor<T>` | Byte-swap (endian reverse) |
+
+### Scalar next power of two at compile time
+
+Both spellings preserve the operand's integer type and bit width, including
+`usize`/`isize` on the compilation target and 128-bit integers. Known scalar
+operands can be evaluated in `#const` or a const function through the ordinary
+`Math` API; no separate intrinsic spelling is needed.
+
+```vex
+let buckets: usize = #const { Math.nextPow2(1000001 as usize) }; // 1048576
+let high: u128 = #const { Math.nextPowerOf2(((1 as u128) << 100) + 1 as u128) };
+```
+
+This is a **wrapping bit-pattern operation**: zero returns zero, and a result
+outside the operand width wraps to zero. Signed inputs retain signedness and
+use their underlying bits; for example, `Math.nextPow2(127 as i8)` yields
+`-128`. For allocation sizes use unsigned inputs and checked `Layout`/collection
+APIs, which reject invalid extents. This scalar CTFE support does not imply
+array, Span, Tensor, or GPU next-power support.
+
+## Float Bit Representation
+
+`Math.toBits` and `Math.fromBits` reinterpret a scalar's representation. They
+are not numeric casts and preserve signed zero and every NaN payload bit.
+
+| Function | Signature | Result |
+|---|---|---|
+| `Math.toBits(x)` | `f32 -> u32`, `f64 -> u64` | Same-width IEEE-754 bits |
+| `Math.fromBits(x)` | `u32 -> f32`, `u64 -> f64` | Same-width IEEE-754 value |
+
+```vex
+let negativeZero = Math.fromBits(0x8000000000000000 as u64);
+let payload = Math.toBits(negativeZero); // exact same u64
+```
+
+Both operations lower to one LLVM SSA `bitcast`. They perform no memory copy,
+allocation, libc call or FFI transition. Other integer widths and signed
+integer arguments are rejected rather than implicitly narrowed or re-signed.
 
 ## Angle Conversion
 

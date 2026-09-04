@@ -21,7 +21,7 @@ match readFileLimit(config.toString(), 1024 as usize * 1024 as usize) {
 - `Path`: lexical cleaning, joining and inspection plus filesystem
   canonicalization.
 - `OpenOptions` and `File`: validated opening, RAII descriptors, partial I/O,
-  positional reads, seeking, metadata, sync and mapping.
+  `ReaderAt`/`WriterAt` positional I/O, seeking, metadata, sync and mapping.
 - Whole-file helpers: complete and explicitly bounded byte/string reads,
   writes, appends, copy, rename and removal.
 - `Metadata`, `FileType` and `Permissions`: one portable surface over
@@ -39,10 +39,33 @@ permission and provider failures; `exists` intentionally collapses them to
 prefer `readFileLimit`, `readBytesLimit`, `readDirVecLimit` or
 `DirCursor` and choose an application-specific bound.
 
+## Random-access I/O
+
+`File` is an `io.ReaderAt` and `io.WriterAt` provider. `readAt` and `writeAt`
+perform native offsetted I/O, so they do not mutate the descriptor's sequential
+cursor and compose directly with `io.readExactAt`, `io.writeAllAt` and
+`io.SectionReader`. This is deliberately one shared `io` contract rather than
+a second filesystem-specific random-access API.
+
+```vex
+import { File } from "fs";
+import { readExactAt, writeAllAt } from "io";
+
+let! file = File.openReadWrite("archive.bin")?;
+let header: [u8; 16] = [0; 16];
+readExactAt(&file, &header[0]!, header.len(), 0 as u64)?;
+
+let marker: [u8; 2] = [0x56 as u8, 0x58 as u8];
+writeAllAt(&file, &marker[0], marker.len(), 64 as u64)?;
+```
+
+An append-mode handle intentionally rejects `writeAt`: append semantics and an
+explicit offset cannot have one portable meaning across all targets. Use
+`File.openReadWrite` when an offset is part of the operation.
+
 ## Platform boundary
 
 Paths are public UTF-8 values. Windows providers use wide Win32 APIs and
 preserve drive-relative, rooted and UNC semantics. macOS and Linux use explicit
 target-routed providers. Native structs, handles, errno values and libc
 constants do not escape the package.
-

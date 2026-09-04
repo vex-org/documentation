@@ -92,7 +92,9 @@ The compiler has an explicit safety guard to avoid silently fabricating an ownin
 
 In practical terms:
 
-- `Span<T> -> Tensor<T>` should be treated as an owned conversion
+- `Span<T> -> Tensor<T>` is an owned materialization
+- `Tensor<T> -> Span<T>` is an owner-bound borrowed view
+- `Tensor<T, N> -> Span<T>` uses scoped addressable storage and cannot escape
 - `Tensor<T>` and `Span<T>` are not just two names for the same thing
 - bugs at generic call boundaries have historically shown up exactly here
 

@@ -1,23 +1,26 @@
 # Crypto Namespace
 
-The `Crypto` namespace provides hardware-accelerated cryptographic micro-helpers. Functions auto-vectorize on arrays, slices, and tensors -- a single `Crypto.aesEncRound()` on a `[u8; 64]` encrypts 4 AES blocks in parallel via SIMD.
+The `Crypto` namespace provides portable semantic cryptographic micro-helpers.
+The compiler selects a target instruction only when the target capability is
+proven; otherwise it emits the constant-flow portable lowering.
 
 > **No import needed.** `Crypto.*` is a builtin namespace available everywhere.
 
 > **These are building blocks, not full algorithms.** For complete crypto implementations (AES-256-GCM, SHA-256, ChaCha20, etc.), see the [`crypto` standard library package](/std/crypto/).
 
-## Scalar vs Vectorized Usage
+## Fixed-block contract
 
 ```vex
-// Scalar: single AES block
 let state: [u8; 16] = [0; 16]
 let key: [u8; 16] = getRoundKey()
 let encrypted = Crypto.aesEncRound(state, key)
-
-// Vectorized: 4 AES blocks in parallel via SIMD
-let states: [[u8; 16]; 4] = [block1, block2, block3, block4]
-let encrypted = Crypto.aesEncRound(states, key)  // key broadcast, 4 blocks at once
 ```
+
+AES round operations currently accept exactly one `[u8;16]` state and one
+`[u8;16]` round key. They do not implicitly map over slices, tensors,
+`[u8;64]`, or nested arrays. Multi-block algorithms expose parallelism by
+scheduling multiple exact block operations; aggregate AES-round types require a
+separate semantic contract and are not inferred from storage shape.
 
 ## Quick Example
 
@@ -54,7 +57,9 @@ Single AES round instructions — the core building block of AES-128/192/256.
 | `aesEncLast`  | `AESENCLAST`       | `AESE`                      |
 | `aesDecLast`  | `AESDECLAST`       | `AESD`                      |
 
-> **~500x faster** than the pure Vex software implementation per round.
+The exact lowering is target-dependent. Inspect emitted assembly and benchmark
+the complete construction; instruction latency alone is not an algorithm-level
+performance guarantee.
 
 ### Usage: AES-256 Encrypt Block
 
@@ -78,23 +83,30 @@ fn aes256EncryptHW(block: [u8;16], roundKeys: &[[u8;16]; 15]): [u8;16] {
 
 ## SHA-256 Hardware Acceleration
 
-Single-instruction SHA-256 computation — replaces the 64-round loop in software SHA-256.
+These operations have target-independent SHA-256 semantics. The compiler selects
+native instructions when the exact target proves them and otherwise emits the
+portable fixed-flow implementation.
 
-| Function                        | Signature                               | Description                    |
-| ------------------------------- | --------------------------------------- | ------------------------------ |
-| `Crypto.sha256H(state, msg, k)` | `([u32;4], [u32;4], [u32;4]) → [u32;4]` | SHA-256 hash update (2 rounds) |
-| `Crypto.sha256Msg0(msg0, msg1)` | `([u32;4], [u32;4]) → [u32;4]`          | Message schedule σ₀            |
-| `Crypto.sha256Msg1(msg, prev)`  | `([u32;4], [u32;4]) → [u32;4]`          | Message schedule σ₁            |
+| Function | Signature | Description |
+| --- | --- | --- |
+| `Crypto.sha256Rounds4(abcd, efgh, wk)` | `([u32;4], [u32;4], [u32;4]) → [u32;8]` | Four rounds; returns the complete `A..H` state |
+| `Crypto.sha256Schedule4(w0, w1, w2, w3)` | `([u32;4], [u32;4], [u32;4], [u32;4]) → [u32;4]` | Produces the next four schedule words |
+| `Crypto.sha256H(cdgh, abef, wk)` | `([u32;4], [u32;4], [u32;4]) → [u32;4]` | Low-level SHA-NI two-round contract |
+| `Crypto.sha256Msg0(msg0, msg1)` | `([u32;4], [u32;4]) → [u32;4]` | Low-level SHA256MSG1 stage |
+| `Crypto.sha256Msg1(msg, prev)` | `([u32;4], [u32;4]) → [u32;4]` | Low-level SHA256MSG2 stage |
 
 ### Platform Mapping
 
-| Vex Function | x86 (SHA-NI)  | ARM (SHA2 Ext.) |
-| ------------ | ------------- | --------------- |
-| `sha256H`    | `SHA256RNDS2` | `SHA256H`       |
-| `sha256Msg0` | `SHA256MSG1`  | `SHA256SU0`     |
-| `sha256Msg1` | `SHA256MSG2`  | `SHA256SU1`     |
+| Vex Function | AArch64 with SHA2 | x86 with SHA-NI | Portable fallback |
+| --- | --- | --- | --- |
+| `sha256Rounds4` | `SHA256H` + `SHA256H2` | fixed-flow lowering | fixed-flow lowering |
+| `sha256Schedule4` | `SHA256SU0` + `SHA256SU1` | fixed-flow lowering | fixed-flow lowering |
+| `sha256H` | fixed-flow lowering | `SHA256RNDS2` | fixed-flow lowering |
+| `sha256Msg0` | fixed-flow lowering | `SHA256MSG1` | fixed-flow lowering |
+| `sha256Msg1` | fixed-flow lowering | `SHA256MSG2` | fixed-flow lowering |
 
-> **~20-50x faster** than software SHA-256. Processes 2 rounds per instruction.
+`crypto` uses the complete-state four-round API so the source remains identical
+across targets. Architecture selection is a compiler/backend responsibility.
 
 ## Carry-Less Multiply
 
@@ -110,7 +122,9 @@ Single-instruction SHA-256 computation — replaces the 64-round loop in softwar
 | ------------------------ | -------------------- |
 | `PCLMULQDQ` (1-3 cycles) | `PMULL` (1-2 cycles) |
 
-> **~200-300x faster** than software GF(2¹²⁸) multiply. Replaces the 128-iteration bit-by-bit loop in GHASH.
+The standard-library GHASH implementation uses this operation with Karatsuba
+multiplication, reflected register state and four-block aggregation. Targets
+without PCLMUL/PMULL use the portable constant-flow lowering.
 
 ```vex
 // GF(2^128) multiply for GCM — single instruction!
@@ -119,27 +133,41 @@ let lo = result[0];  // Lower 64 bits
 let hi = result[1];  // Upper 64 bits
 ```
 
-## CRC-32C
+## CRC-32 and CRC-32C
 
-Hardware-accelerated CRC-32C (Castagnoli polynomial) — used in networking (iSCSI, SCTP) and storage (Btrfs, ext4).
+`Crypto.crc32` implements the reflected IEEE polynomial used by Gzip, while
+`Crypto.crc32c` implements Castagnoli CRC used by networking and storage. Both
+operations accept an exact unsigned chunk width, so one semantic source can
+consume 1, 2, 4 or 8 bytes per update without architecture-specific code.
 
-| Function                   | Signature         | Description              |
-| -------------------------- | ----------------- | ------------------------ |
-| `Crypto.crc32c(crc, byte)` | `(u32, u8) → u32` | Update CRC with one byte |
+| Function | Signature | Description |
+| --- | --- | --- |
+| `Crypto.crc32(crc, chunk)` | `(u32, u8\|u16\|u32\|u64) → u32` | IEEE CRC update |
+| `Crypto.crc32c(crc, chunk)` | `(u32, u8\|u16\|u32\|u64) → u32` | Castagnoli CRC update |
 
 ### Platform Mapping
 
-| x86                       | ARM                 |
-| ------------------------- | ------------------- |
-| `CRC32` (SSE4.2, 1 cycle) | `CRC32CB` (1 cycle) |
+| Operation | x86 | AArch64 |
+| --- | --- | --- |
+| IEEE CRC-32 | portable slicing fallback | `CRC32B/H/W/X` |
+| CRC-32C | SSE4.2 where the exact width is legal; otherwise portable | `CRC32CB/CH/CW/CX` |
+
+The compiler owns target selection and the constant table fallback. Vex source
+sees only polynomial and chunk-width semantics. The `compress` package builds
+its dependency-broken large-buffer CRC pipeline from this operation.
 
 ```vex
 fn checksumData(data: RawBuf, len: i64): u32 {
     let! crc: u32 = 0xFFFFFFFF;
-    let! i: i64 = 0;
-    while i < len {
+    let length = if len > 0 { len as usize } else { 0 as usize };
+    let! i = 0 as usize;
+    while i + 8 as usize <= length {
+        crc = Crypto.crc32c(crc, unsafe { Mem.loadLe64(data.advance(i).base) });
+        i = i + 8 as usize;
+    }
+    while i < length {
         crc = Crypto.crc32c(crc, data.load<u8>(i));
-        i = i + 1;
+        i = i + 1 as usize;
     }
     return crc ^ 0xFFFFFFFF;
 }
@@ -174,7 +202,7 @@ fn generateKey(): [u8; 32] {
     while i < 4 {
         let rand = Crypto.secureRand();
         // Store 8 bytes from each u64
-        let rb = RawBuf.of(&key as Ptr<Opaque!>);
+        let rb = RawBuf.of(&key as Ptr<Opaque>);
         rb.store<u64>(i * 8, rand);
         i = i + 1;
     }
@@ -192,9 +220,9 @@ does not depend on CPU `RDRAND`.
 | Feature    | x86               | ARM              | Apple Silicon |
 | ---------- | ----------------- | ---------------- | ------------- |
 | AES rounds | AES-NI (2010+)    | ARMv8 Crypto     | Yes M1+        |
-| SHA-256    | SHA-NI (2016+)    | ARMv8 SHA2       | Yes M1+        |
+| SHA-256    | SHA-NI (2016+)    | portable fallback | portable fallback |
 | CLMUL      | PCLMULQDQ (2010+) | PMULL (ARMv8)    | Yes M1+        |
-| CRC-32C    | SSE4.2 (2008+)    | CRC32 (ARMv8.1+) | Yes M1+        |
+| CRC-32/32C | CRC-32C via SSE4.2; IEEE portable | CRC32 extension | Yes M1+ |
 | Secure RNG | OS CSPRNG         | OS CSPRNG        | OS CSPRNG      |
 
 > Cryptographic algorithms still need portable implementations or explicit

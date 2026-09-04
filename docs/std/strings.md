@@ -34,7 +34,7 @@ Available methods:
 | `writeI64(value: i64)` | Append signed decimal text |
 | `writeU64(value: u64)` | Append unsigned decimal text |
 | `writeF64(value: f64, precision: i32)` | Append rounded fixed/scientific text without an intermediate string |
-| `toString()` | Copy current bytes into an owned `string` |
+| `toString()` | Copy current bytes into an owned `string`; later builder reuse cannot change it |
 | `len()` / `isEmpty()` | Inspect logical content |
 | `capacity()` | Inspect reserved byte capacity |
 | `reset()` | Clear content while retaining capacity |
@@ -75,6 +75,8 @@ regression baselines for that machine, not cross-platform guarantees.
 `StringBuilder.writeF64` writes through `strconv`'s caller-buffer formatter.
 It shares canonical NaN, infinity, negative-zero, rounding and scientific
 notation behavior without allocating a temporary formatted string.
+`writeF64Shortest` appends exact shortest-roundtrip f64 text through the
+allocation-free 24-byte caller-buffer path.
 
 ## ASCII helpers
 

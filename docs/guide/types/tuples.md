@@ -59,15 +59,26 @@ let point = (10, 20)
 let (x, y) = point
 // x = 10, y = 20
 
-// In function parameters
-fn distance((x1, y1): (f64, f64), (x2, y2): (f64, f64)): f64 {
+// Destructure tuple arguments inside the function
+fn distanceSquared(first: (f64, f64), second: (f64, f64)): f64 {
+    let (x1, y1) = first
+    let (x2, y2) = second
     let dx = x2 - x1
     let dy = y2 - y1
-    return (dx * dx + dy * dy).sqrt()
+    return dx * dx + dy * dy
 }
 
-let dist = distance((0.0, 0.0), (3.0, 4.0))  // 5.0
+let squared = distanceSquared((0.0, 0.0), (3.0, 4.0))  // 25.0
 ```
+
+`let` currently supports flat tuple patterns; unpack nested tuples in successive
+bindings. Nested patterns are supported in `match` and `for`.
+
+Destructuring does not erase reference lifetimes. Returning a selected
+reference retains the lifetime of that element, rather than automatically
+borrowing every sibling. Returning a reference to a local owner is still
+rejected. Alternative (`|`) patterns conservatively retain all possible source
+lifetimes; this does not promise precise disjointness for every pattern shape.
 
 ## Pattern Matching with Tuples
 
@@ -140,7 +151,7 @@ let d = c    // Move, c is consumed
 | Field access  | `.0`, `.1`, `.2` position-based | `.fieldName` name-based   |
 | Type identity | `(T1, T2)` structural           | Named type                |
 | Best for      | Quick, ad-hoc grouping          | Meaningful, reusable data |
-| Destructuring | `let (a, b) = t`                | `let S { x, y } = s`      |
+| Destructuring | `let (a, b) = t`                | `match s { S { x, y } => ... }` |
 
 Use tuples for short-lived, positionally-meaningful groupings (return values, coordinate pairs). Use structs when fields have semantic meaning and the type is reused.
 

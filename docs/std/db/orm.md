@@ -1,89 +1,89 @@
-# ORM — `Db&lt;T&gt;` Query Builder (`db/orm`)
+# Compile-time SQL mapping with `Db<T>`
 
-Vex ships with a powerful GORM-style ORM. All struct-to-column mapping is resolved at **compile time** — zero reflection overhead.
+`Db<T>` maps documented model fields at compile time. There is no runtime field
+reflection. The current ORM is intentionally a strict SQL core, not a facade
+that claims joins, relation loading or schema diffing before they exist.
 
-## Defining Models
-
-Use `db:` tags to map struct fields to column names, and `pk:` for primary keys:
+## Models
 
 ```vex
 struct User {
-    id: i64       `db:"id"   pk:"true"`
-    name: string  `db:"name"`
-    email: string `db:"email"`
-    age: i32      `db:"age"`
+    public:
+    id: i64 `db:"id" pk:"true"`
+    name: string `db:"name"`
+    email: Option<string> `db:"email"`
+    age: i32 `db:"age"`
+    active: bool `db:"active"`
+    score: f64 `db:"score"`
 }
 ```
 
-## Basic CRUD
+Supported mapped fields are `string`, `bool`, `i32`, `u32`, `i64`, `f32`,
+`f64` and `Option` of those types. Fields tagged `rel` are excluded from the
+flat row/schema mapping.
+
+## Construction and migration
 
 ```vex
-import { Connection, Db } from "db";
-
-let conn = Connection.sqlite(":memory:");
-let! db = Db.of<User>(conn, "users");
-
-// Auto-create table from struct schema
-db.autoMigrate();
-
-// Create
-db.create(&User { id: 1, name: "Alice", email: "a@b.c", age: 30 });
-
-// Read
-let! users = Vec.new<User>();
-db.find(&users);  // SELECT * FROM users
-
-// Read with filters
-db.filter("age > 18").order("name ASC").limit(10).find(&users);
-
-// Read single
-let! user = User { };
-db.filter1("id = ?", "1").first(&user);
-
-// Update
-db.filter1("id = ?", "1").update("name", "Alice Updated");
-
-// Delete
-db.filter1("id = ?", "99").delete();
-
-// Count
-let total = db.countRows();
+let! users = match Db.of<User>(&connection, "users") {
+    Result.Ok(value) => value,
+    Result.Err(err) => $panic(err.message()),
+};
+match users.autoMigrate() {
+    Result.Ok(_) => { /* CREATE TABLE IF NOT EXISTS completed */ }
+    Result.Err(err) => $panic(err.message()),
+}
 ```
 
-## Chainable Query Builder
+`Db.of` accepts only safe unquoted table identifiers and SQL-capable drivers.
+`autoMigrate` creates a missing table; it is not a schema-diff engine.
 
-Every modifier returns `&Db&lt;T&gt;!` for clean chaining:
-
-| Method | SQL Equivalent | Example |
-|--------|----------------|---------|
-| `.filter(clause)` | `WHERE clause` | `.filter("age &gt; 18")` |
-| `.filter1(clause, arg)` | `WHERE clause` (parameterized) | `.filter1("name = ?", "Alice")` |
-| `.filter2(clause, a1, a2)` | `WHERE clause` (2 params) | `.filter2("age BETWEEN ? AND ?", "18", "65")` |
-| `.order(clause)` | `ORDER BY` | `.order("name ASC")` |
-| `.limit(n)` | `LIMIT n` | `.limit(10)` |
-| `.offset(n)` | `OFFSET n` | `.offset(20)` |
-| `.cols(columns)` | `SELECT columns` | `.cols("id, name")` |
-| `.join(clause)` | `JOIN` | `.join("LEFT JOIN profiles ON ...")` |
-| `.preload(relation)` | Eager loading | `.preload("posts")` |
-| `.group(clause)` | `GROUP BY` | `.group("category")` |
-| `.having(clause)` | `HAVING` | `.having("COUNT(id) &gt; 1")` |
-
-## Transactions in ORM
+## Querying
 
 ```vex
-db.begin();
-db.create(&newUser);
-db.filter1("id = ?", "1").update("balance", "50");
-db.commit();
+let! args = Vec.new<DbValue>();
+args.push(DbValue.I64(18 as i64));
+args.push(DbValue.Bool(true));
+match users.filterRaw("age >= ? AND active = ?", &args) {
+    Result.Ok(_) => { /* bound */ }
+    Result.Err(err) => $panic(err.message()),
+}
+match users.orderBy("name", false) {
+    Result.Ok(_) => { /* ascending */ }
+    Result.Err(err) => $panic(err.message()),
+}
+users.limit(100 as usize).offset(20 as usize);
+
+let! output = Vec.new<User>();
+match users.find(&output!) {
+    Result.Ok(appended) => $println(appended),
+    Result.Err(err) => $panic(err.message()),
+}
 ```
 
-## Legacy Helpers
+Available operations:
 
-```vex
-import { ormInsert, ormFindById } from "db";
+| API | Behavior |
+|---|---|
+| `filterRaw(clause, arguments)` | Explicit SQL predicate plus typed values |
+| `filter1Raw(clause, argument)` | One typed predicate value |
+| `orderBy(column, descending)` | Validated identifier ordering |
+| `limit(n)` / `offset(n)` | Driver-correct pagination |
+| `find(out)` | Append decoded rows |
+| `first(out)` | Decode at most one row |
+| `countRows()` | Native typed count decode |
+| `create(value)` | Parameterized insert |
+| `update(field, value)` | Parameterized update |
+| `delete()` | Scoped delete |
+| `allRows()` | Explicitly authorize an unfiltered update/delete |
+| `beginTransaction()` | Begin through the owned connection |
 
-ormInsert<User>(conn, "users", &user);
+`filterRaw` is named raw because the clause is developer SQL. Values must still
+travel separately as `DbValue`. Update/delete without a predicate fail unless
+`allRows()` is called explicitly.
 
-let! found = User { };
-ormFindById<i64, User>(conn, "users", "id", 42, &found);
-```
+## Deliberate boundaries
+
+Relation loading, joins, groups, schema diffs, hooks and a hidden global prepared
+cache are not current APIs. They remain future work and are not emulated through
+stringly typed placeholders.

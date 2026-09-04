@@ -48,7 +48,8 @@ $println("{}", failure.renderChain());
 
 `messageView(): str`, `source(): Option<&Error>`, and `rootCause(): &Error`
 borrow without allocation. `message(): string` deliberately returns an owned
-copy. `clone()` deep-clones the chain and is O(depth).
+copy. `clone()` copies the local node and VUMM-shares the immutable source
+chain, so it is O(1) regardless of causal depth.
 
 `toString()` formats only the current layer. `renderChain()` formats all layers
 once:
@@ -59,7 +60,9 @@ caused by: write audit log
 caused by: disk full
 ```
 
-`isKind` and `hasCode` inspect the complete chain. `containsMessage` is only a
+`isKind` and `hasCode` inspect the complete chain. A domain code remains on
+the node that produced it: a contextual wrapper displays its own message while
+`hasCode` can still find the lower-level code. `containsMessage` is only a
 text-search helper and must not drive recovery logic.
 
 ## Independent failures
@@ -86,7 +89,8 @@ match failures.get(1) {
 ```
 
 `ErrorGroup.fromErrors(Vec<Error>)` transfers an existing vector without
-cloning. `get` borrows, while `clone` explicitly deep-clones every chain.
+cloning. `get` borrows; group cloning copies the independent outer nodes and
+shares their immutable causal tails.
 
 ## API summary
 
@@ -97,6 +101,7 @@ cloning. `get` borrows, while `clone` explicitly deep-clones every chain.
 | `messageView`, `source`, `rootCause` | borrowed, zero allocation |
 | `message`, `toString` | return an owned string |
 | `renderChain` | O(total message bytes + depth) rendering |
+| `clone` | O(1) local copy; VUMM-shared immutable source chain |
 | `isKind`, `hasCode`, `containsMessage` | O(depth) inspection |
 | `ErrorGroup.new`, `fromErrors`, `push` | owned independent failures |
 | `ErrorGroup.get` | borrowed indexed lookup |
@@ -108,8 +113,7 @@ They exposed storage, cloned causal chains, or destroyed structure.
 
 ## Current validation status
 
-The source and focused tests are lint-clean. Executable tests currently reach
-the final linker but are held by the repository-wide runtime-image closure
-work, not by an `errors` type or resolution failure. Production sign-off and
-measurement evidence are tracked in
-`docs/std/errors_SIGNOFF_2026-08-09.md` in the compiler repository.
+Focused executable tests pass at O0 and O3 (10/10) and the package is
+lint-clean. The bounded O3 clone benchmark for a 64-source error is 5.38 ns on
+the current Apple Silicon host. Current sign-off is tracked in
+`docs/std/errors_SIGNOFF_2026-08-23.md` in the compiler repository.

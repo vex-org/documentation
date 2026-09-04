@@ -67,6 +67,14 @@ VUMM is backed by a custom runtime memory allocator designed for low latency:
 * **Epoch Quiescence**: FFI and dynamic allocations are retired via epoch-based reclamation, ensuring memory is reclaimed only when no active execution thread holds a reference.
 * **Zero-Copy Unified Memory**: On Apple Silicon and supported APUs, VUMM maps buffers directly between CPU and GPU without copy overhead.
 
+GPU-facing buffers bypass ordinary arenas and slabs so the runtime can preserve
+page alignment for no-copy and DMA paths. VexArch validates the payload bound
+before page-size rounding, preventing an extreme request from wrapping into a
+smaller mapping. On an exception that escapes Vex-generated frames, one
+canonical unwind cleanup clears arena routing and the active region before it
+reclaims all savepoints, deferred drops, and chunks. These are runtime
+guarantees; application code does not call the reserved allocator ABI.
+
 ---
 
 ## Summary

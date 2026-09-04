@@ -71,6 +71,30 @@ contract Add<Rhs = Self> {
 
 This pattern is used in current parser and operator examples.
 
+## Static requirements and generic type designators
+
+Use `static fn` when the operation belongs to the implementing type rather
+than a borrowed instance. A generic bound may invoke the requirement through
+its type parameter; the compiler resolves the exact binder and contract member
+at compile time.
+
+```vex
+contract From<T> {
+    static fn fromValue(value: T): Self;
+}
+
+fn convert<T, U: From<T>>(value: T): U {
+    return U.fromValue(value);
+}
+```
+
+This dispatch is monomorphized. It does not create a runtime contract object or
+perform method-name lookup.
+
+A static requirement may also provide a default body. The body is compiled
+once per exact implementing type and contract specialization. `Self` denotes
+that type, but no instance receiver or vtable is introduced.
+
 ## Associated types
 
 Contracts can also expose associated types.
@@ -81,7 +105,7 @@ contract Iterator {
     next(): Option<Self.Item>;
 }
 
-struct Counter: Drop {
+struct Counter: Iterator {
     type Item = i32;
     count: i32,
 }
@@ -94,7 +118,9 @@ fn (self: &Counter!) next(): Option<i32> {
 
 ## Builtin contracts
 
-Many important contracts live in the prelude and start with `$`.
+Many important contracts live in the prelude and are available without an
+import. `$` prefixes runtime intrinsics such as `$println`; it is not part of a
+contract name.
 
 ### `Copy`
 
@@ -160,6 +186,21 @@ fn (self: &Color) debug(): string {
     return "Color{r:" + self.r.toString() + ",g:" + self.g.toString() + ",b:" + self.b.toString() + "}";
 }
 ```
+
+These contracts integrate directly with formatting:
+
+```vex
+let color = Color { r: 32, g: 64, b: 255 };
+$println("color={} details={:?}", color, color);
+let label = $format("selected: {}", color);
+```
+
+`{}` selects the exact `Display.toString` implementation. `{:?}` and `{:#?}`
+select the exact `Debug.debug` implementation. Resolution is based on the
+trusted contract/member identity, not a type or method name, so an unrelated
+same-spelled contract cannot intercept formatting. Both methods are borrowed
+receiver calls and must return `string`; their temporary result is released
+after formatting consumes it.
 
 ## Operator contracts
 

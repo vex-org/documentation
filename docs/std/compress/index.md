@@ -51,8 +51,13 @@ decompressInto(
 ```
 
 `compressInto` and `decompressInto` leave the destination at its exact logical
-length on success and empty it on failure. Source/destination overlap is staged
-safely.
+length on success and empty it on every failure, including invalid-level and
+known-size limit rejection before a codec runs. Source/destination overlap is staged
+safely. For frames without a trusted decoded-size field, decompression begins
+with a small source-proportional allocation and grows geometrically only when a
+codec reports destination exhaustion. It never reserves `maxOutputBytes`
+eagerly; that value remains a hard security ceiling rather than an allocation
+request.
 
 ## Formats and level ranges
 

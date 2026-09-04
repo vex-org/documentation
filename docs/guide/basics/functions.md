@@ -86,6 +86,10 @@ fn main(): i32 {
 
 Generic structs use the same angle-bracket syntax. Generic functions and structs are implemented, but the interaction between generics, contracts, default parameters, and variadics is still being expanded. See [Language Status](/guide/language-status) before relying on an untested combination.
 
+For a homogeneous variable-length argument list, use a trailing `values: ...T`
+parameter. [Typed variadic packs](/guide/types/variadics) describe ownership,
+borrowed iteration and supported compile-time calls.
+
 ## Methods and associated functions
 
 Methods are declared outside the struct with a receiver. The receiver type determines which value owns the method:

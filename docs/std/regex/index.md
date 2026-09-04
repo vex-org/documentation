@@ -24,6 +24,15 @@ or a parallel Thompson NFA. Capture extraction uses a prioritized Pike VM with
 workspace reused through `Match`. Pattern-specific email/router shortcuts are
 not part of the engine.
 
+## Validation and performance
+
+The engine has a bounded 32-test O0/O3 matrix. Its benchmark harness makes the
+input opaque and consumes every result through a compiler barrier; a benchmark
+cannot be optimized into an empty loop. The current Apple arm64 O3 baseline is
+7.58 ns for literal search, 21.07 ns for group-free literal `exec`, 565.57 ns
+for capture extraction, and 24.0 GB/s for a 9 KiB prefix miss. Each benchmark
+uses an explicit 1-second measurement cap.
+
 ## Source layout
 
 | File | Responsibility |

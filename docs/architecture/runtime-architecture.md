@@ -92,6 +92,20 @@ The scheduler and async state machine support live under `VexArch/src/async`:
 - `timer_wheel.vx` tracks timed wakeups;
 - `poller.<target>.vx` integrates the target event mechanism.
 
+Reachable async code is capability-specialized. Straight-line `async fn` and
+`await` graphs use a single-owner cooperative FIFO without materializing worker,
+timer, channel, or poller machinery. Because that mode has no external wake
+source, live tasks with an empty runnable FIFO are reported immediately as a
+cooperative deadlock instead of consuming a core in finalization. Full async
+graphs retain provider-aware parking because an empty runnable set can be
+waiting legitimately on I/O, timers, or channels.
+
+Background worker bootstrap is also ownership-checked. A native thread enters
+the scheduler only after its thread-local async state is attached to the exact
+shared runtime that spawned it. If attachment fails, the worker cleans up and
+acknowledges exit instead of constructing a second scheduler and leaving the
+original runtime blocked during shutdown.
+
 Target files select the appropriate implementation at compile time. Runtime
 modules import concrete Vex implementations directly where possible. A small
 number of reserved VEX ABI edges remain where two core runtime modules form a

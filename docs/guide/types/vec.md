@@ -26,6 +26,8 @@ Both `Vec.withCapacity(...)` and `Vec.withCap(...)` are present in the current p
 | `clear()`              | remove all elements |
 | `set(index, value)`    | replace old value   |
 | `trySet(index, value)` | `bool`              |
+| `extendSpan(view)`     | clone an external contiguous view |
+| `extendWithin(a, b)`   | clone this Vec's range `[a, b)` onto its tail |
 
 Example:
 
@@ -85,6 +87,50 @@ let! values = Vec.withCapacity<i64>(10);
 values.push(1);
 values.push(2);
 ```
+
+## Bulk prefix commits
+
+`appendPrefix(values, count)` appends the initialized prefix of a fixed Copy
+array and grows the Vec when required. Bulk algorithms that already reserved a
+proven upper bound can use `tryAppendPrefix(values, count)` instead: it never
+allocates, returns `false` without mutation when spare capacity is insufficient,
+and may preserve a fixed SIMD value as one full-width store while committing
+only `count` elements to the logical length.
+
+```vex
+let! output = Vec.withCapacity<i32>(64);
+let packed: [i32; 4] = [10, 30, 0, 0];
+if !output.tryAppendPrefix(packed, 2 as usize) {
+    $panic("reserved capacity invariant violated");
+}
+```
+
+Both operations require `T: Copy`; ownership-bearing values should use
+`push`, `extendSpan`, or a Clone-aware package API.
+
+## Extending from a view or from self
+
+Use `extendSpan(view)` for an externally borrowed `Span<T>`. Use
+`extendWithin(start, end)` when the source range belongs to the destination Vec
+itself:
+
+```vex
+let! values = Vec.withCapacity<i32>(4);
+values.push(10);
+values.push(20);
+values.push(30);
+values.push(40);
+
+values.extendWithin(1 as usize, 4 as usize);
+// [10, 20, 30, 40, 20, 30, 40]
+```
+
+The index-based self-source API is deliberate. Passing a `Span` borrowed from
+`values` back into a call that mutably borrows `values` would create overlapping
+shared and exclusive call arguments. `extendWithin` expresses the same operation
+without weakening the borrow checker or LLVM alias guarantees. It reserves the
+complete destination capacity before reading the range; Copy values use one
+bulk transfer and owning values preserve `Clone` semantics.
 
 ## Interop with `Span<T>`
 

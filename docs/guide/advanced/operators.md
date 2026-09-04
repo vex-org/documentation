@@ -170,6 +170,12 @@ let val = m[5]     // Calls op[]
 m[5] = 3.14        // Calls op[]=
 ```
 
+Index syntax is resolved through the exact selected source callable. Prelude
+containers and user-defined types use the same path; the compiler does not
+infer contiguous storage or element layout from names such as `Vec`, `Map`, or
+`Deque`. Arrays, slices, pointers and tensors remain intrinsic structural HIR
+forms and therefore lower directly.
+
 ### Compound Assignment
 
 | Operator | Contract | Method |

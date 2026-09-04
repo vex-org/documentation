@@ -66,6 +66,11 @@ let popped = vec.pop()            // Option<T>
 
 ### `isSome()` and `isNone()`
 
+These are borrowed inspections: they never clone or move the payload, so they
+are safe to call on an `Option<T>` stored inside a larger value even when `T`
+is move-only. Use `take`, `replace`, `match`, or extraction methods only when
+an ownership transfer is intended.
+
 ```vex
 let opt: Option<i32> = Some(42)
 
