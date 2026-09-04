@@ -1,0 +1,1 @@
+import{_t as e,it as t,n,rt as r}from"./chunks/framework.B5d4da8a.js";var i=JSON.parse(`{"title":"Math Namespace","description":"","frontmatter":{},"headers":[],"relativePath":"guide/math.md","filePath":"guide/math.md"}`),a={name:`guide/math.md`};function o(n,i,a,o,s,c){return e(),r(`div`,null,[...i[0]||=[t("",54)]])}var s=n(a,[[`render`,o]]);export{i as __pageData,s as default};

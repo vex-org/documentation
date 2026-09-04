@@ -1,0 +1,1 @@
+import{_t as e,it as t,n,rt as r}from"./chunks/framework.B5d4da8a.js";var i=JSON.parse(`{"title":"TLS","description":"","frontmatter":{},"headers":[],"relativePath":"std/tls.md","filePath":"std/tls.md"}`),a={name:`std/tls.md`};function o(n,i,a,o,s,c){return e(),r(`div`,null,[...i[0]||=[t("",70)]])}var s=n(a,[[`render`,o]]);export{i as __pageData,s as default};

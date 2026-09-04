@@ -1,0 +1,1 @@
+import{_t as e,it as t,n,rt as r}from"./chunks/framework.B5d4da8a.js";var i=JSON.parse(`{"title":"File I/O","description":"","frontmatter":{},"headers":[],"relativePath":"std/fs/file.md","filePath":"std/fs/file.md"}`),a={name:`std/fs/file.md`};function o(n,i,a,o,s,c){return e(),r(`div`,null,[...i[0]||=[t("",16)]])}var s=n(a,[[`render`,o]]);export{i as __pageData,s as default};

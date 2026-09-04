@@ -1,1 +1,0 @@
-import{_ as s,o as a,c as t,ag as e}from"./chunks/framework.BGkQCay2.js";const c=JSON.parse('{"title":"math","description":"","frontmatter":{},"headers":[],"relativePath":"std/math.md","filePath":"std/math.md"}'),n={name:"std/math.md"};function l(h,i,o,d,p,r){return a(),t("div",null,[...i[0]||(i[0]=[e("",15)])])}const g=s(n,[["render",l]]);export{c as __pageData,g as default};

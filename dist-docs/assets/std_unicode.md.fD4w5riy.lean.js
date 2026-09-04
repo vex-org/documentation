@@ -1,0 +1,1 @@
+import{_t as e,it as t,n,rt as r}from"./chunks/framework.B5d4da8a.js";var i=JSON.parse(`{"title":"unicode","description":"","frontmatter":{},"headers":[],"relativePath":"std/unicode.md","filePath":"std/unicode.md"}`),a={name:`std/unicode.md`};function o(n,i,a,o,s,c){return e(),r(`div`,null,[...i[0]||=[t("",31)]])}var s=n(a,[[`render`,o]]);export{i as __pageData,s as default};

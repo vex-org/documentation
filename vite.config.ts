@@ -47,6 +47,9 @@ export default defineConfig({
     fs: {
       allow: [repoRoot],
     },
+  },  worker: {
+    format: 'es', // Ensures workers are bundled as ECMAScript modules
+    plugins: () => [] // Keeps worker plugins lightweight
   },
   build: {
     target: 'es2020',

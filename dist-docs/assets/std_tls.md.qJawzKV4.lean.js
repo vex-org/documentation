@@ -1,1 +1,0 @@
-import{_ as e,o as i,c as a,ag as t}from"./chunks/framework.BGkQCay2.js";const c=JSON.parse('{"title":"TLS","description":"","frontmatter":{},"headers":[],"relativePath":"std/tls.md","filePath":"std/tls.md"}'),n={name:"std/tls.md"};function l(h,s,r,p,d,k){return i(),a("div",null,[...s[0]||(s[0]=[t("",70)])])}const g=e(n,[["render",l]]);export{c as __pageData,g as default};
