@@ -48,5 +48,11 @@
     "vite": "^8.3.0",
     "vitepress": "^2.0.0-alpha.20",
     "vue-tsc": "^3.3.11"
+  },
+  "resulotions": {
+    "vite": "^8.3.0"
+  },
+  "overrides": {
+    "vite": "^8.3.0"
   }
 }
