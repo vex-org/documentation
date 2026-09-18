@@ -144,3 +144,67 @@ h2 {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-zinc-600;
 }
+
+@keyframes vt-page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes vt-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ===== View Transitions =====
+   Chrome stays put; only the page content does a quick exit and a soft
+   rise-in. Falls back to the legacy fade on browsers without support. */
+.app-header {
+  view-transition-name: app-header;
+}
+
+.app-footer {
+  view-transition-name: app-footer;
+}
+
+#main-content {
+  view-transition-name: app-content;
+}
+
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(app-content) {
+  animation: 0.14s cubic-bezier(0.4, 0, 1, 1) both vt-page-out;
+}
+
+::view-transition-new(app-content) {
+  animation: 0.26s cubic-bezier(0.22, 1, 0.36, 1) both vt-page-in;
+}
+
+/* Header/footer changes (active states, session state) settle quickly. */
+::view-transition-old(app-header),
+::view-transition-new(app-header),
+::view-transition-old(app-footer),
+::view-transition-new(app-footer) {
+  animation-duration: 0.16s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  .page-fade-leave-active,
+  .page-fade-enter-active {
+    transition: none;
+  }
+}

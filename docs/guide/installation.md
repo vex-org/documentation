@@ -39,7 +39,7 @@ target/debug/vex lint examples/01_basics/hello_world.vx
 
 Create hello.vx:
 
-~~~vex
+~~~vex [hello.vx]
 fn main(): i32 {
     $println("Hello, Vex!");
     return 0;

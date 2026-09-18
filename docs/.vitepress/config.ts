@@ -9,6 +9,17 @@ export default defineConfig({
   ignoreDeadLinks: true,
   vite: {
     publicDir: "../public",
+    server: {
+      // Dev-only proxy so code blocks can call the public run API
+      // without relying on CORS from localhost origins.
+      proxy: {
+        "/api": {
+          target: "https://api.vex-lang.org",
+          changeOrigin: true,
+          secure: true,
+        },
+      },
+    },
   },
 
   head: [
@@ -19,6 +30,31 @@ export default defineConfig({
     languageAlias: {
       vex: "rust",
       vexhdl: "rust",
+    },
+
+    // Keep `[title]` fence metadata on the rendered block so the SPA docs
+    // header can show a filename (this VitePress alpha only uses titles
+    // for code-group tabs and drops them for standalone fences).
+    config(md) {
+      const fence = md.renderer.rules.fence;
+      if (!fence) return;
+
+      const escapeAttr = (value: string) =>
+        value
+          .replace(/&/g, "&amp;")
+          .replace(/"/g, "&quot;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const title = String(tokens[idx].info || "").match(/\[(.*)\]/)?.[1]?.trim() || "";
+        const html = fence(tokens, idx, options, env, self);
+        if (!title) return html;
+        return html.replace(
+          /^<div class="language-([^"]*)"/,
+          (_match, langs) => `<div class="language-${langs}" data-title="${escapeAttr(title)}"`,
+        );
+      };
     },
   },
   themeConfig: {
@@ -427,6 +463,29 @@ export default defineConfig({
 
     search: {
       provider: "local",
+      options: {
+        translations: {
+          button: {
+            buttonText: "Search documentation...",
+            buttonAriaLabel: "Search documentation",
+          },
+          modal: {
+            displayDetails: "Display detailed list",
+            resetButtonTitle: "Reset search",
+            backButtonTitle: "Close search",
+            noResultsText: "No results for",
+            footer: {
+              selectText: "to select",
+              selectKeyAriaLabel: "enter",
+              navigateText: "to navigate",
+              navigateUpKeyAriaLabel: "up arrow",
+              navigateDownKeyAriaLabel: "down arrow",
+              closeText: "to close",
+              closeKeyAriaLabel: "escape",
+            },
+          },
+        },
+      },
     },
 
     editLink: {

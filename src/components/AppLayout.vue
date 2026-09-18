@@ -63,7 +63,7 @@ async function logout() {
     <!-- Skip to content -->
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-vex-primary focus:text-white focus:text-sm">Skip to content</a>
     <!-- Header -->
-    <header class="sticky top-0 z-50 border-b border-vex-border bg-vex-bg/85 backdrop-blur-xl">
+    <header class="app-header sticky top-0 z-50 border-b border-vex-border bg-vex-bg/85 backdrop-blur-xl">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-3 group" aria-label="Vex home">
           <img src="/vex-logo.svg" alt="" class="w-8 h-8 transition-transform duration-300 group-hover:scale-105" />
@@ -200,7 +200,7 @@ async function logout() {
     </main>
 
     <!-- Footer -->
-    <footer v-if="!route.path.startsWith('/dashboard') && !['/playground', '/ai'].includes(route.path)" class="border-t border-vex-border mt-auto">
+    <footer v-if="!route.path.startsWith('/dashboard') && !['/playground', '/ai'].includes(route.path)" class="app-footer border-t border-vex-border mt-auto">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
           <div>

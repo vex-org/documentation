@@ -18,7 +18,7 @@ These parts are not equally mature. Core syntax, data types, ownership, and the 
 
 Create hello.vx:
 
-~~~vex
+~~~vex [hello.vx]
 fn main(): i32 {
     let language = "Vex";
     $println("Hello from ", language);
@@ -39,7 +39,7 @@ The compiler reports syntax and semantic errors before it produces a program. Th
 
 Structs hold related fields. Methods are declared outside the struct with a receiver:
 
-~~~vex
+~~~vex [point.vx]
 struct Point {
     public:
     x: i32,

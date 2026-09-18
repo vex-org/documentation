@@ -72,35 +72,151 @@
   color: #f5f7f6 !important;
 }
 
-/* ===== SIDEBAR ===== */
+/* Active section — thin red indicator */
+.VPNavBarMenu {
+  gap: 2px;
+}
+
+.VPNavBarMenuLink {
+  position: relative;
+  padding: 0 14px;
+}
+
+.VPNavBarMenuLink.active::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: #e30a17;
+}
+
+/* Fewer separators in the right cluster */
+.VPNavBar .divider {
+  background-color: transparent !important;
+}
+
+/* A slightly wider search field */
+.VPNavBarSearch {
+  padding-left: 16px;
+}
+
+@media (min-width: 960px) {
+  .VPNavBarSearch button {
+    min-width: 215px;
+  }
+}
+
+/* ===== SIDEBAR =====
+   Documentation tree: plain text items, quiet separators, red active bar. */
 .VPSidebar {
   background: #07090b !important;
   border-right: 1px solid #202630 !important;
 }
 
-.VPSidebarItem.level-0 > .item > .text {
-  color: #b0b8c1 !important;
-  font-weight: 600;
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
-}
-
+/* Leaf items — flat text, no decoration */
 .VPSidebarItem .link .text {
   color: #8b949e !important;
+  font-size: 0.845rem;
+  font-weight: 450;
+  letter-spacing: 0.005em;
   transition: color 0.15s ease;
 }
 
+.VPSidebarItem .link {
+  border-radius: 6px;
+  padding-left: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.VPSidebarItem .link:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .VPSidebarItem .link:hover .text,
-.VPSidebarItem.is-active > .item > .link > .text {
+.VPSidebarItem.is-active > .item > .link .text {
   color: #f5f7f6 !important;
 }
 
+/* Active item — subtle red surface + 2px Vex red bar */
 .VPSidebarItem.is-active > .item {
-  background: rgba(227, 10, 23, 0.08);
-  border-left: 2px solid #e30a17;
+  background: rgba(227, 10, 23, 0.07);
+  border-radius: 6px;
+}
+
+.VPSidebarItem.is-active > .item > .indicator {
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background-color: #e30a17;
+}
+
+.VPSidebarItem.is-active > .item > .link .text {
+  font-weight: 500;
+}
+
+/* Section headers — clearly separated from the items */
+.VPSidebarItem.level-0 > .item > .text {
+  color: #f5f7f6 !important;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.VPSidebarItem.level-0 + .VPSidebarItem.level-0 {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(32, 38, 48, 0.45);
+}
+
+/* Nested collapsible groups — quieter than top-level sections */
+.VPSidebarItem.level-1.collapsible > .item > .text,
+.VPSidebarItem.level-2.collapsible > .item > .text {
+  color: #8b949e !important;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Only collapsible groups keep a caret */
+.VPSidebarItem .caret {
+  color: #52525b;
+  transition: color 0.15s ease;
+}
+
+.VPSidebarItem .caret:hover {
+  color: #b0b8c1;
 }
 
 /* ===== CONTENT ===== */
+
+/* A touch wider than the default so code blocks can breathe */
+.VPDoc .content-container,
+.VPDoc.has-aside .content-container {
+  max-width: 720px;
+}
+
+/* Whitespace carries the hierarchy; separator lines stay quiet */
+.vp-doc > h1 {
+  margin-bottom: 22px;
+}
+
+.vp-doc h2 {
+  margin-top: 64px;
+  padding-top: 26px;
+  border-top-color: rgba(32, 38, 48, 0.55);
+}
+
+.vp-doc h3 {
+  margin-top: 42px;
+}
+
+.vp-doc h4 {
+  margin-top: 30px;
+}
+
 h1, h2, h3, h4 {
   color: #f5f7f6;
   -webkit-text-fill-color: currentColor;
@@ -126,6 +242,25 @@ h3, h4 { font-weight: 600; }
   text-decoration-color: #ff6672;
 }
 
+/* Heading anchors — a link icon that only speaks on hover */
+.vp-doc .header-anchor {
+  color: #8b949e;
+}
+
+.vp-doc .header-anchor::before {
+  content: '';
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.vp-doc .header-anchor:hover {
+  color: #ff3344;
+}
+
 /* ===== CODE BLOCKS ===== */
 .vp-doc div[class*='language-'] {
   background: #0d1117 !important;
@@ -133,11 +268,196 @@ h3, h4 { font-weight: 600; }
   border-radius: 8px;
 }
 
-.vp-doc div[class*='language-']::before {
-  color: #8b949e !important;
+/* ===== VEX CODE COMPONENT =====
+   Header: `filename · LANG · Run · Copy`, optional inline run output. */
+.vp-doc div[class*='language-'] pre {
+  background: transparent !important;
+}
+
+.vp-doc div.vex-enhanced > .lang,
+.vp-doc div.vex-enhanced > button.copy {
+  display: none !important;
+}
+
+.vex-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px 7px 14px;
+  border-bottom: 1px solid rgba(32, 38, 48, 0.65);
+  background: rgba(13, 17, 23, 0.55);
+}
+
+.vex-code-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.vex-code-filename {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  color: #b0b8c1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vex-code-lang {
+  font-family: var(--vp-font-family-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.7rem;
+  color: #8b949e;
+  padding: 2px 6px;
+  border: 1px solid rgba(54, 64, 76, 0.6);
+  border-radius: 4px;
+  background: rgba(7, 9, 11, 0.5);
+}
+
+.vex-code-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.vp-doc div[class*='language-']:hover .vex-code-actions {
+  opacity: 1;
+}
+
+.vex-code-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #8b949e;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.vex-code-btn:hover {
+  color: #f5f7f6;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.vex-code-btn.vex-run {
+  color: #ff3344;
+  border-color: rgba(227, 10, 23, 0.45);
+}
+
+.vex-code-btn.vex-run:hover {
+  color: #ff6672;
+  border-color: #e30a17;
+  background: rgba(227, 10, 23, 0.08);
+}
+
+.vex-code-btn.vex-run:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.vex-code-btn.vex-copy.is-done {
+  color: #20d6c7;
+}
+
+/* Terminal blocks — same family, quieter surface */
+.vp-doc div.vex-terminal {
+  background: #0a0e13 !important;
+}
+
+.vp-doc div.vex-terminal .vex-code-lang {
+  color: #52525b;
+}
+
+/* ===== RUN OUTPUT ===== */
+.vex-run-output {
+  border-top: 1px solid rgba(32, 38, 48, 0.65);
+  background: rgba(7, 9, 11, 0.55);
+  padding: 10px 14px 12px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+}
+
+.vex-run-state {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #b0b8c1;
+}
+
+.vex-run-tick {
+  color: #20d6c7;
+}
+
+.vex-run-dot {
+  color: #36404c;
+}
+
+.vex-run-exit,
+.vex-run-fail {
+  color: #ef4444;
+}
+
+.vex-run-reason {
+  color: #8b949e;
+}
+
+.vex-run-output pre {
+  margin: 8px 0 0;
+  padding: 0;
+  background: transparent !important;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.vex-run-stdout {
+  color: #f5f7f6;
+}
+
+.vex-run-stderr {
+  color: #fca5a5;
+}
+
+.vex-run-links {
+  margin-top: 8px;
+}
+
+.vex-run-links a {
+  color: #8b949e;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+.vex-run-links a:hover {
+  color: #ff3344;
+}
+
+.vex-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(54, 64, 76, 0.8);
+  border-top-color: #e30a17;
+  border-radius: 50%;
+  animation: vex-spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes vex-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .vp-doc :not(pre) > code {
@@ -325,4 +645,142 @@ h3, h4 { font-weight: 600; }
 /* ===== EXTERNAL LINK ICON HIDE FOR SAME-SITE NAV ===== */
 .VPNavBarMenuLink .vp-external-link-icon {
   display: none;
+}
+
+/* ===== BREADCRUMB ===== */
+.vex-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 18px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+  color: rgba(139, 148, 158, 0.75);
+}
+
+.vex-breadcrumb-item.is-current {
+  color: rgba(176, 184, 193, 0.9);
+}
+
+.vex-breadcrumb-sep {
+  color: rgba(70, 80, 92, 0.8);
+}
+
+/* ===== ASIDE UTILITIES ===== */
+.vex-aside-utils {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(32, 38, 48, 0.5);
+}
+
+.vex-aside-util {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.vex-aside-util + .vex-aside-util {
+  margin-top: 2px;
+}
+
+.vex-aside-util:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.vex-aside-util .util-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b0b8c1;
+}
+
+.vex-aside-util:hover .util-title {
+  color: #f5f7f6;
+}
+
+.vex-aside-util .util-sub {
+  display: block;
+  margin-top: 1px;
+  font-size: 11px;
+  color: #8b949e;
+}
+
+/* ===== ASIDE QUOTE ===== */
+.vex-quote {
+  margin: 24px 0 0;
+  padding: 2px 0 2px 12px;
+  border-left: 1px solid rgba(227, 10, 23, 0.35);
+}
+
+.vex-quote blockquote {
+  margin: 0;
+  font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(176, 184, 193, 0.55);
+}
+
+.vex-quote figcaption {
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(139, 148, 158, 0.5);
+}
+@keyframes vt-page-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes vt-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ===== View Transitions =====
+   Nav and sidebar stay put; only the page content does a quick exit and a
+   soft rise-in. */
+.VPNav {
+  view-transition-name: vp-nav;
+}
+
+.VPSidebar {
+  view-transition-name: vp-sidebar;
+}
+
+.VPContent {
+  view-transition-name: vp-content;
+}
+
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(vp-content) {
+  animation: 0.14s cubic-bezier(0.4, 0, 1, 1) both vt-page-out;
+}
+
+::view-transition-new(vp-content) {
+  animation: 0.26s cubic-bezier(0.22, 1, 0.36, 1) both vt-page-in;
+}
+
+::view-transition-old(vp-nav),
+::view-transition-new(vp-nav) {
+  animation-duration: 0.16s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
