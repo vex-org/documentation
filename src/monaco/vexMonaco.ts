@@ -2,8 +2,8 @@ import * as monaco from 'monaco-editor'
 import EditorWorker from 'monaco-editor/editor/editor.worker.js?worker'
 import { Registry } from 'monaco-textmate'
 import { wireTmGrammars } from 'monaco-editor-textmate'
-import { loadWASM } from 'vscode-oniguruma'
-import onigWasmUrl from 'vscode-oniguruma/release/onig.wasm?url'
+import { loadWASM } from 'onigasm'
+import onigWasmUrl from 'onigasm/lib/onigasm.wasm?url'
 
 import vexGrammar from './vscode-assets/vex.tmLanguage.json'
 import vexTheme from './vscode-assets/vex-dark.json'
@@ -77,7 +77,10 @@ async function ensureRegistry() {
     registryPromise = (async () => {
       if (!onigasmPromise) {
         onigasmPromise = (async () => {
-          await loadWASM(await fetch(onigWasmUrl))
+          // onigasm fetches the URL itself; the WASM binding is module-scoped
+          // and must live in the same module instance monaco-textmate's
+          // `require('onigasm')` scanner uses.
+          await loadWASM(onigWasmUrl)
         })()
       }
 

@@ -118,7 +118,7 @@ The most common integer type is \`i32\`, and the default float is \`f64\`.`,
     println(greeting)
     return 0
 }`,
-    expectedOutput: '25\n3.14159\ntrue\nHello',
+    expectedOutput: '25\n3.141590\ntrue\nHello',
   },
 
   // ─── TYPES & DATA ────────────────────────────────────────
@@ -145,10 +145,11 @@ You can access elements with \`arr[i]\` indexing notation.`,
     let a = [1.0, 2.0, 3.0, 4.0]
     let b = [5.0, 6.0, 7.0, 8.0]
     let c = a + b
-    println(c)
+    println(c[0])
+    println(c[3])
     return 0
 }`,
-    expectedOutput: '10\n40\n[6.0, 8.0, 10.0, 12.0]',
+    expectedOutput: '10\n40\n6.000000\n12.000000',
   },
   {
     id: 'tuples',
@@ -215,6 +216,133 @@ fn main(): i32 {
     return 0
 }`,
     expectedOutput: 'Going north\nGoing west',
+  },
+  {
+    id: 'strings',
+    title: 'Strings',
+    section: 'types',
+    description: 'Text handling with str and string.',
+    explanation: `Vex has two string-facing types:
+
+- \`str\` — a borrowed string view, for reading text
+- \`string\` — an owned string value, for storing and returning text
+
+Both live in the prelude, so no import is needed. Methods are camelCase:
+
+\`\`\`
+ text.len() // length
+ text.contains("vex") // substring search
+ text.startsWith("https://") // prefix check
+ text.endsWith(".org") // suffix check
+ text.indexOf("vex") // position, or -1
+ text.trim() // strip surrounding whitespace
+ text.toUpper() / text.toLower()
+ text.repeat(3) // repeat n times
+\`\`\`
+
+Build new strings with \`+\`, and use \`.toString()\` to turn other values into text.`,
+    code: `fn main(): i32 {
+    let name: string = "  Vex  "
+    let trimmed = name.trim()
+    println(trimmed)
+    println(trimmed.toUpper())
+    println(trimmed.repeat(3))
+
+    let url: string = "https://vex-lang.org"
+    println(url.startsWith("https://"))
+    println(url.endsWith(".org"))
+    println(url.contains("lang"))
+    println(url.indexOf("vex"))
+
+    let count = 42
+    println("count=" + count.toString())
+    return 0
+}`,
+    expectedOutput: 'Vex\nVEX\nVexVexVex\ntrue\ntrue\ntrue\n8\ncount=42',
+  },
+  {
+    id: 'casting',
+    title: 'Type Casting',
+    section: 'types',
+    description: 'Explicit conversions with the as operator.',
+    explanation: `Vex never converts types implicitly. Use the \`as\` operator for every numeric conversion:
+
+\`\`\`
+let big: i64 = small as i64     // widening
+let n: i32 = pi as i32          // float → int truncates
+let f: f64 = n as f64           // int → float
+let code: i32 = c as i32        // char → code point
+\`\`\`
+
+This strictness catches bugs early — for example, a \`usize\` length never silently becomes \`i32\`. The compiler asks for an explicit \`as i32\`.
+
+For converting values to text, use \`.toString()\` instead.`,
+    code: `fn main(): i32 {
+    // Widening
+    let small: i32 = 100
+    let big: i64 = small as i64
+    println(big)
+
+    // Float → integer truncates
+    let pi: f64 = 3.99
+    let truncated = pi as i32
+    println(truncated)
+
+    // Integer → float
+    let n: i32 = 7
+    let f = n as f64
+    println(f / 2.0)
+
+    // Char → code point
+    let c: char = 'A'
+    println(c as i32)
+    return 0
+}`,
+    expectedOutput: '100\n3\n3.500000\n65',
+  },
+  {
+    id: 'generics',
+    title: 'Generics',
+    section: 'types',
+    description: 'Write code that works with any type.',
+    explanation: `Generic functions and structs are declared with \`<T>\` placeholders, and the compiler infers them at each use site:
+
+\`\`\`
+fn identity<T>(x: T): T {
+    return x
+}
+
+struct Pair<T> {
+    first: T,
+    second: T
+}
+\`\`\`
+
+You'll see generics all over the standard library: \`Vec<i32>\`, \`Map<string, i32>\`, \`Option<T>\`. One definition, any type — and since the compiler monomorphizes each use, generics cost nothing at runtime.`,
+    code: `struct Pair<T> {
+    first: T,
+    second: T
+}
+
+fn identity<T>(x: T): T {
+    return x
+}
+
+fn main(): i32 {
+    let a = identity(42)
+    let b = identity("hello")
+    println(a)
+    println(b)
+
+    let ints = Pair { first: 1, second: 2 }
+    println(ints.first)
+    println(ints.second)
+
+    let text = Pair { first: "Vex", second: "Lang" }
+    println(text.first)
+    return 0
+}`,
+    expectedOutput: '42\nhello\n1\n2\nVex',
   },
 
   // ─── CONTROL FLOW ────────────────────────────────────────
@@ -299,6 +427,53 @@ loop {
     expectedOutput: '0\n1\n2\n3\n4\n0',
   },
   {
+    id: 'loop-control',
+    title: 'Loop Control',
+    section: 'control',
+    description: 'Loops are expressions — break values and continue.',
+    explanation: `Loops in Vex are **expressions**: a \`loop\` can hand a value back through \`break\`:
+
+\`\`\`
+let found = loop {
+    i = i + 1
+    if i * i > 50 {
+        break i // the loop evaluates to i
+    }
+}
+\`\`\`
+
+- \`break value\` — only value-producing \`loop\` expressions can yield; plain \`while\` loops can't
+- \`continue\` — skip to the next iteration
+- \`for\` ranges and \`while\` conditions work like you'd expect
+
+These three pieces cover almost every loop you'll write.`,
+    code: `fn main(): i32 {
+    let! i = 0
+    let found = loop {
+        i = i + 1
+        if i * i > 50 {
+            break i
+        }
+    }
+    println(found)
+
+    for n in 1..10 {
+        if n % 2 == 1 {
+            continue
+        }
+        println(n)
+    }
+
+    let! total = 0
+    while total < 100 {
+        total = total + 25
+    }
+    println(total)
+    return 0
+}`,
+    expectedOutput: '8\n2\n4\n6\n8\n100',
+  },
+  {
     id: 'match',
     title: 'Pattern Matching',
     section: 'control',
@@ -328,6 +503,69 @@ fn main(): i32 {
     return 0
 }`,
     expectedOutput: '1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz',
+  },
+  {
+    id: 'patterns',
+    title: 'Advanced Patterns',
+    section: 'control',
+    description: 'if let, while let, and match guards.',
+    explanation: `Three pattern tools go beyond a plain \`match\`:
+
+**\`if let\`** — test one pattern without a full match:
+\`\`\`
+if let Some(s) = score {
+    println(s)
+}
+\`\`\`
+
+**\`while let\`** — loop while a pattern keeps matching:
+\`\`\`
+while let Some(item) = queue.pop() {
+    println(item)
+}
+\`\`\`
+
+**Match guards** — attach a condition to an arm with \`if\`:
+\`\`\`
+match n {
+    x if x < 0 => "negative",
+    0 => "zero",
+    _ => "positive"
+}
+\`\`\``,
+    code: `fn grade(score: Option<i32>): string {
+    if let Some(s) = score {
+        return "Score: " + s.toString()
+    }
+    return "No score"
+}
+
+fn describe(n: i32): string {
+    match n {
+        n if n < 0 => return "negative",
+        0 => return "zero",
+        n if n < 10 => return "single digit",
+        _ => return "large"
+    }
+}
+
+fn main(): i32 {
+    println(grade(Some(95)))
+    println(grade(None))
+    println(describe(-4))
+    println(describe(7))
+    println(describe(999))
+
+    let! queue = Vec.new<i32>()
+    queue.push(1)
+    queue.push(2)
+    queue.push(3)
+    while let Some(item) = queue.pop() {
+        println("pop " + item.toString())
+    }
+    return 0
+}`,
+    expectedOutput: 'Score: 95\nNo score\nnegative\nsingle digit\nlarge\npop 3\npop 2\npop 1',
   },
 
   // ─── FUNCTIONS ────────────────────────────────────────────
@@ -438,6 +676,38 @@ fn main(): i32 {
 }`,
     expectedOutput: '3628800\n55',
   },
+  {
+    id: 'higher-order',
+    title: 'Higher-Order Functions',
+    section: 'functions',
+    description: 'Functions that take and return other functions.',
+    explanation: `Functions are values in Vex. Function types are written \`fn(Args): Ret\`, so you can accept them as parameters and return them:
+
+\`\`\`
+fn make_adder(n: i32): fn(i32): i32 {
+    return |x: i32|: i32 { x + n }
+}
+\`\`\`
+
+Closures capture their environment, so \`make_adder(5)\` returns a function that remembers \`n\`. Composing small functions into bigger ones is where Vex starts to feel powerful.`,
+    code: `fn make_adder(n: i32): fn(i32): i32 {
+    return |x: i32|: i32 { x + n }
+}
+
+fn compose(f: fn(i32): i32, g: fn(i32): i32): fn(i32): i32 {
+    return |x: i32|: i32 { g(f(x)) }
+}
+
+fn main(): i32 {
+    let add5 = make_adder(5)
+    println(add5(10))
+
+    let double_then_inc = compose(|x: i32|: i32 { x * 2 }, |x: i32|: i32 { x + 1 })
+    println(double_then_inc(10))
+    return 0
+}`,
+    expectedOutput: '15\n21',
+  },
 
   // ─── STRUCTS & METHODS ────────────────────────────────────
   {
@@ -474,7 +744,7 @@ fn main(): i32 {
     println(rect.width * rect.height)
     return 0
 }`,
-    expectedOutput: '3.0\n4.0\n50.0',
+    expectedOutput: '3.000000\n4.000000\n50.000000',
   },
   {
     id: 'methods',
@@ -510,7 +780,7 @@ fn main(): i32 {
     println(c.circumference())
     return 0
 }`,
-    expectedOutput: '78.53975\n31.4159',
+    expectedOutput: '78.539750\n31.415900',
     challenge: {
       prompt: 'Add a `diameter` method to Circle that returns `radius * 2.0`, and print it.',
       initialCode: `struct Circle {
@@ -531,6 +801,57 @@ fn main(): i32 {
 }`,
       validate: '10.0',
     },
+  },
+  {
+    id: 'constructors',
+    title: 'Constructors & Statics',
+    section: 'structs',
+    description: 'Type-level functions with fn Type.name().',
+    explanation: `Static functions are declared with \`fn Type.name()\` — there is no \`self\` receiver:
+
+\`\`\`
+fn Point.new(x: f64, y: f64): Point {
+    return Point { x: x, y: y }
+}
+
+fn Point.origin(): Point {
+    return Point.new(0.0, 0.0)
+}
+\`\`\`
+
+By convention \`Type.new\` is the primary constructor — the same pattern the standard library uses for \`Vec.new<i32>()\` and \`Map.new<string, i32>()\`. Call statics with dot syntax: \`Point.origin()\`.`,
+    code: `struct Point {
+    x: f64,
+    y: f64
+}
+
+fn Point.new(x: f64, y: f64): Point {
+    return Point { x: x, y: y }
+}
+
+fn Point.origin(): Point {
+    return Point.new(0.0, 0.0)
+}
+
+fn (self: &Point) describe(): string {
+    return "(" + self.x.toString() + ", " + self.y.toString() + ")"
+}
+
+fn (self: &Point) scale(f: f64): Point {
+    return Point.new(self.x * f, self.y * f)
+}
+
+fn main(): i32 {
+    let p = Point.new(3.0, 4.0)
+    let o = Point.origin()
+    println(p.describe())
+    println(o.describe())
+
+    let big = p.scale(2.0)
+    println(big.describe())
+    return 0
+}`,
+    expectedOutput: '(3.000000, 4.000000)\n(0.000000, 0.000000)\n(6.000000, 8.000000)',
   },
   {
     id: 'contracts',
@@ -556,7 +877,7 @@ struct Dog {
 }
 
 fn (self: &Dog) describe(): string {
-    return self.name + " the " + self.breed
+    return $format("{} the {}", self.name, self.breed)
 }
 
 struct Cat {
@@ -566,9 +887,9 @@ struct Cat {
 
 fn (self: &Cat) describe(): string {
     if self.indoor {
-        return self.name + " (indoor cat)"
+        return $format("{} (indoor cat)", self.name)
     }
-    return self.name + " (outdoor cat)"
+    return $format("{} (outdoor cat)", self.name)
 }
 
 fn main(): i32 {
@@ -651,6 +972,80 @@ fn main(): i32 {
 }`,
     expectedOutput: 'Hello, borrowing!\nHello, borrowing!\n42',
   },
+  {
+    id: 'move',
+    title: 'Move Semantics',
+    section: 'memory',
+    description: 'Ownership transfers when values are passed.',
+    explanation: `When you pass an owned value to a function, ownership **moves** — the function becomes the new owner:
+
+\`\`\`
+fn consume(text: string): i32 { return text.len() as i32 }
+
+let n = consume(owned)   // owned moved — its owner is now consume
+\`\`\`
+
+If you only need to read the value, borrow it with \`&\` instead:
+
+\`\`\`
+fn borrow(text: &string): i32 { ... }
+
+borrow(&owned)   // owned stays yours
+\`\`\`
+
+Moves are how Vex achieves memory safety without a garbage collector: exactly one owner at a time, freed automatically when the owner goes out of scope.`,
+    code: `fn consume(text: string): i32 {
+    return text.len() as i32
+}
+
+fn borrow(text: &string): i32 {
+    return text.len() as i32
+}
+
+fn main(): i32 {
+    let owned: string = "hello"
+
+    println(borrow(&owned))
+    println(owned)
+
+    let n = consume(owned)
+    println(n)
+    return 0
+}`,
+    expectedOutput: '5\nhello\n5',
+  },
+  {
+    id: 'lifetimes',
+    title: 'Lifetimes',
+    section: 'memory',
+    description: 'References are checked automatically — no annotations.',
+    explanation: `Vex checks references automatically — **there are no lifetime annotations**.
+
+In Rust you would write \`fn longest<'a>(x: &'a string, y: &'a string) -> &'a string\`. In Vex, you simply write:
+
+\`\`\`
+fn longest(a: &string, b: &string): &string {
+    return b
+}
+\`\`\`
+
+The compiler verifies that every returned borrow outlives its use, and rejects programs where a reference could outlive the data it points to — no ceremony required.`,
+    code: `fn longest(a: &string, b: &string): &string {
+    if a.len() >= b.len() {
+        return a
+    }
+    return b
+}
+
+fn main(): i32 {
+    let a: string = "Vex"
+    let b: string = "Compiler"
+    let l = longest(&a, &b)
+    println(l)
+    return 0
+}`,
+    expectedOutput: 'Compiler',
+  },
 
   // ─── COLLECTIONS ──────────────────────────────────────────
   {
@@ -670,7 +1065,7 @@ println(v.len())    // 3
 
 Note: \`Vec\` must be declared with \`let!\` because pushing modifies it.
 
-Access elements with \`v.get(i)\` (returns \`Option<T>\`) or iterate with \`for i in 0..v.len()\`.`,
+Access elements directly with \`v[i]\`, or iterate with \`for i in 0..v.len()\`.`,
     code: `fn main(): i32 {
     let! v = Vec.new<i32>()
     v.push(10)
@@ -681,7 +1076,7 @@ Access elements with \`v.get(i)\` (returns \`Option<T>\`) or iterate with \`for 
     println(v.len())
 
     for i in 0..v.len() {
-        println(v.get(i))
+        println(v[i])
     }
     return 0
 }`,
@@ -696,27 +1091,64 @@ Access elements with \`v.get(i)\` (returns \`Option<T>\`) or iterate with \`for 
 
 \`\`\`
 let! m = Map.new<string, i32>()
-m.set("key", 42)
-let val = m.get("key")    // Option<i32>
+m.insert("key", 42)            // true — key was new
+let val = m.getOwned("key")    // Option<i32>
 \`\`\`
 
-Maps support \`set\`, \`get\`, \`contains\`, \`remove\`, and \`len\` operations.`,
+Maps support \`insert\`, \`getOwned\`, \`contains\`, \`remove\`, and \`len\` operations.`,
     code: `fn main(): i32 {
     let! scores = Map.new<string, i32>()
-    scores.set("alice", 95)
-    scores.set("bob", 87)
-    scores.set("charlie", 92)
+    scores.insert("alice", 95)
+    scores.insert("bob", 87)
+    scores.insert("charlie", 92)
 
-    println(scores.get("alice"))
     println(scores.len())
     println(scores.contains("bob"))
+
+    match scores.getOwned("alice") {
+        Some(v) => println(v),
+        None => println("missing")
+    }
 
     scores.remove("bob")
     println(scores.len())
     println(scores.contains("bob"))
     return 0
 }`,
-    expectedOutput: '95\n3\ntrue\n2\nfalse',
+    expectedOutput: '3\ntrue\n95\n2\nfalse',
+  },
+  {
+    id: 'set',
+    title: 'Set<T> — Unique Values',
+    section: 'collections',
+    description: 'Unique values with fast membership checks.',
+    explanation: `\`Set<T>\` stores **unique** values with constant-time membership checks:
+
+\`\`\`
+let! tags = Set.new<string>()
+tags.insert("vex")      // true — newly added
+tags.insert("vex")      // false — duplicate ignored
+tags.contains("vex")    // membership check
+tags.remove("vex")      // true when removed
+\`\`\`
+
+\`insert\` returns a \`bool\`: \`true\` only when the element was actually new. Perfect for deduplication passes.`,
+    code: `fn main(): i32 {
+    let! tags = Set.new<string>()
+    tags.insert("vex")
+    tags.insert("compiler")
+    tags.insert("vex")
+
+    println(tags.len())
+    println(tags.contains("compiler"))
+    println(tags.contains("rust"))
+
+    let removed = tags.remove("compiler")
+    println(removed)
+    println(tags.len())
+    return 0
+}`,
+    expectedOutput: '2\ntrue\nfalse\ntrue\n1',
   },
 
   // ─── ERROR HANDLING ───────────────────────────────────────
@@ -737,7 +1169,7 @@ enum Option<T> {
 Use \`match\` to handle both cases, or methods like \`.unwrap()\`, \`.unwrapOr(default)\`.`,
     code: `fn find_first_even(nums: &Vec<i32>): Option<i32> {
     for i in 0..nums.len() {
-        let n = nums.get(i)
+        let n = nums[i]
         if n % 2 == 0 {
             return Some(n)
         }
@@ -796,6 +1228,54 @@ fn main(): i32 {
 }`,
     expectedOutput: '3.333333\ndivision by zero',
   },
+  {
+    id: 'propagation',
+    title: 'The ? Operator',
+    section: 'errors',
+    description: 'Propagate errors without boilerplate.',
+    explanation: `The \`?\` operator propagates errors without boilerplate. Place it after a \`Result\` value, inside a function that returns the same \`Result\` shape:
+
+\`\`\`
+fn compute(): Result<i32, string> {
+    let a = divide(100, 5)?    // Ok → unwraps, Err → early-returns
+    let b = divide(a, 2)?
+    return Ok(b)
+}
+\`\`\`
+
+On success the value unwraps; on failure the error travels straight up to the caller — no nested matches, no exceptions.`,
+    code: `fn divide(a: i32, b: i32): Result<i32, string> {
+    if b == 0 {
+        return Err("division by zero")
+    }
+    return Ok(a / b)
+}
+
+fn compute_ok(): Result<i32, string> {
+    let a = divide(100, 5)?
+    let b = divide(a, 2)?
+    return Ok(b)
+}
+
+fn compute_err(): Result<i32, string> {
+    let a = divide(100, 5)?
+    let c = divide(a, 0)?
+    return Ok(c)
+}
+
+fn main(): i32 {
+    match compute_ok() {
+        Ok(val) => println(val),
+        Err(msg) => println("Error: " + msg)
+    }
+    match compute_err() {
+        Ok(val) => println(val),
+        Err(msg) => println("Error: " + msg)
+    }
+    return 0
+}`,
+    expectedOutput: '10\nError: division by zero',
+  },
 
   // ─── CONCURRENCY ──────────────────────────────────────────
   {
@@ -817,16 +1297,20 @@ Goroutines are incredibly cheap — you can spawn millions of them. They're perf
     let ch = Channel.new<i32>(4)
 
     for i in 0..4 {
-        let sender = ch
         go {
-            sender.send(i * 10)
+            ch.send(i * 10)
         };
     }
 
     // Collect results
     let! sum = 0
     for _ in 0..4 {
-        sum = sum + ch.recv()
+        match ch.recv() {
+            Some(v) => {
+                sum = sum + v
+            }
+            None => {}
+        }
     }
     println(sum)
     return 0
@@ -846,8 +1330,8 @@ ch.send(42)                      // send a value
 let val = ch.recv()              // receive a value
 \`\`\`
 
-Channels are typed (\`Channel<T>\`) and bounded. \`send\` blocks when full, \`recv\` blocks when empty.`,
-    code: `fn producer(ch: Channel<string>, id: i32) {
+Channels are typed (\`Channel<T>\`) and bounded. \`send\` blocks when full, \`recv\` blocks when empty and returns \`Option<T>\`.`,
+    code: `fn producer(ch: &Channel<string>, id: i32) {
     ch.send("message from " + id.toString())
 }
 
@@ -855,17 +1339,60 @@ fn main(): i32 {
     let ch = Channel.new<string>(8)
 
     for i in 0..4 {
-        let c = ch
         go {
-            producer(c, i)
+            producer(&ch, i)
         };
     }
 
     for _ in 0..4 {
-        println(ch.recv())
+        match ch.recv() {
+            Some(msg) => println(msg),
+            None => {}
+        }
     }
     return 0
 }`,
+  },
+  {
+    id: 'async',
+    title: 'Async & Await',
+    section: 'concurrency',
+    description: 'Suspension-based workflows with async fn and await.',
+    explanation: `\`async fn\` declares a function that can suspend, and \`await\` waits for its result:
+
+\`\`\`
+async fn fetch(id: i32): i32 {
+    return id * 2
+}
+
+async fn process(): i32 {
+    let a = await fetch(10)
+    let b = await fetch(20)
+    return a + b
+}
+\`\`\`
+
+- \`await\` is a prefix operator — \`let x = await work()\`
+- \`async fn main()\` works as an entry point
+- async composes with \`go { }\` blocks and channels
+
+Where \`go { }\` is fire-and-forget concurrency, \`async\`/\`await\` gives you ordered, suspending workflows.`,
+    code: `async fn fetch(id: i32): i32 {
+    return id * 2
+}
+
+async fn process(): i32 {
+    let a = await fetch(10)
+    let b = await fetch(20)
+    return a + b
+}
+
+async fn main(): i32 {
+    let result = await process()
+    println(result)
+    return 0
+}`,
+    expectedOutput: '60',
   },
 
   // ─── SIMD & TENSORS ──────────────────────────────────────
@@ -893,79 +1420,86 @@ Horizontal reductions use prefix operators:
     let a = [1.0, 2.0, 3.0, 4.0]
     let b = [5.0, 6.0, 7.0, 8.0]
 
-    // Element-wise operations
+    // Element-wise add — one SIMD instruction
     let sum = a + b
-    println(sum)
-
-    let product = a * b
-    println(product)
+    println(sum[0])
+    println(sum[3])
 
     // Scalar broadcast
     let scaled = a * 2.0
-    println(scaled)
+    println(scaled[2])
 
     // Horizontal reduction
     let total = <+ a
     println(total)
     return 0
 }`,
-    expectedOutput: '[6.0, 8.0, 10.0, 12.0]\n[5.0, 12.0, 21.0, 32.0]\n[2.0, 4.0, 6.0, 8.0]\n10.0',
+    expectedOutput: '6.000000\n12.000000\n6.000000\n10.000000',
   },
   {
-    id: 'congratulations',
-    title: 'Congratulations! 🎉',
+    id: 'masks',
+    title: 'Masks & Comparisons',
     section: 'simd',
-    description: "You've completed the Tour of Vex!",
-    explanation: `**Congratulations!** You've completed the Tour of Vex!
+    description: 'Comparisons produce lane masks.',
+    explanation: `Comparing a vector yields a **Mask** — a lane of booleans the width of the data:
 
-You've learned:
-- ✅ Variables, types, and mutability (\`let\` vs \`let!\`)
-- ✅ Control flow: \`if\`, \`for\`, \`while\`, \`match\`
-- ✅ Functions, closures, and recursion
-- ✅ Structs, methods, and contracts
-- ✅ Ownership and borrowing
-- ✅ Collections: \`Vec<T>\`, \`Map<K,V>\`
-- ✅ Error handling: \`Option<T>\`, \`Result<T,E>\`
-- ✅ Concurrency: goroutines and channels
-- ✅ SIMD auto-vectorization
+\`\`\`
+let data = [3.0, -1.0, 4.0, -2.0]
+let positive: Mask<4> = data > 0.0
 
-**What's next?**
-- 📖 [Read the full documentation](/docs/) for in-depth coverage
-- 🎮 [Try the Playground](/playground) for free-form experimentation
-- 📦 [Browse packages](/packages) to see what the community has built
-- ⬇️ [Install Vex](/download) on your machine
+positive.countBits()   // how many lanes are true
+positive.any()         // at least one?
+positive.all()         // all of them?
+\`\`\`
 
-*Every Cycle, Every Core, Every Time.* 🚀`,
-    code: `// You're ready to write Vex!
-// Here's a mini program combining what you learned:
+Masks combine with \`&\`, \`|\` and \`!\`, and drive selective operations like \`masked\`, \`maskedFill\` and \`maskedMap\` on tensors — branch-free SIMD in one line.`,
+    code: `fn main(): i32 {
+    let data = [3.0, -1.0, 4.0, -2.0]
+    let positive: Mask<4> = data > 0.0
 
-struct Counter {
-    value: i32
-}
-
-fn (self: &Counter!) increment() {
-    self.value = self.value + 1
-}
-
-fn (self: &Counter) get(): i32 {
-    return self.value
-}
-
-fn main(): i32 {
-    let! c = Counter { value: 0 }
-    
-    for _ in 0..10 {
-        c.increment()
-    }
-    
-    println("Final count: " + c.get().toString())
-
-    // SIMD bonus
-    let scores = [95.0, 87.0, 92.0, 88.0]
-    let average = <+ scores / 4.0
-    println("Average: " + average.toString())
-    
+    println(positive.countBits())
+    println(positive.any())
+    println(positive.all())
     return 0
 }`,
+    expectedOutput: '2\ntrue\nfalse',
+  },
+  {
+    id: 'tensors',
+    title: 'Dynamic Tensors',
+    section: 'simd',
+    description: 'Runtime-sized tensors with SIMD ops.',
+    explanation: `\`Tensor<f64, N>\` has a compile-time size, while \`Tensor<f64>\` — a dynamic tensor — carries its length at runtime. Build one from a Vec's span:
+
+\`\`\`
+let t: Tensor<f64> = data.asSpan()
+
+t.len()          // element count
+t[0]             // indexing
+t * 2.0          // element-wise scalar op
+let sum = <+ t   // horizontal reduction
+\`\`\`
+
+Reductions use prefix operators: \`<+\` sum, \`<*\` product, \`<?|\` min, \`>?|\` max. Element-wise operations compile to SIMD instructions, and the same operations flow into GPU backends.`,
+    code: `fn main(): i32 {
+    let! data = Vec.new<f64>()
+    data.push(1.0)
+    data.push(2.0)
+    data.push(3.0)
+    data.push(4.0)
+
+    let t: Tensor<f64> = data.asSpan()
+
+    println(t.len())
+    println(t[0])
+
+    let doubled = t * 2.0
+    println(doubled[3])
+
+    let total = <+ t
+    println(total)
+    return 0
+}`,
+    expectedOutput: '4\n1.000000\n8.000000\n10.000000',
   },
 ]

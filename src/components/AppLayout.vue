@@ -83,13 +83,9 @@ async function logout() {
                 <svg class="w-4 h-4 text-vex-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 <div><div class="font-medium text-white">Documentation</div><div class="text-xs text-vex-text-muted">Language reference & guides</div></div>
               </a>
-              <RouterLink to="/tour" @click="closeDropdowns" class="flex items-center gap-3 px-4 py-2.5 text-sm text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors">
-                <svg class="w-4 h-4 text-vex-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                <div><div class="font-medium text-white">Tour of Vex</div><div class="text-xs text-vex-text-muted">Interactive step-by-step tutorial</div></div>
-              </RouterLink>
               <RouterLink to="/playground" @click="closeDropdowns" class="flex items-center gap-3 px-4 py-2.5 text-sm text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors">
                 <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <div><div class="font-medium text-white">Playground</div><div class="text-xs text-vex-text-muted">Try Vex in your browser</div></div>
+                <div><div class="font-medium text-white">Playground</div><div class="text-xs text-vex-text-muted">Learn Vex step by step</div></div>
               </RouterLink>
             </div>
           </div>
@@ -167,7 +163,6 @@ async function logout() {
       <div v-if="mobileOpen" class="md:hidden border-t border-vex-border bg-vex-bg px-4 py-3 space-y-1 max-h-[calc(100vh-57px)] overflow-y-auto">
         <div class="px-3 py-1 text-[10px] font-bold text-vex-text-muted uppercase tracking-widest">Learn</div>
         <a href="/docs/" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Documentation</a>
-        <RouterLink to="/tour" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Tour of Vex</RouterLink>
         <RouterLink to="/playground" class="block px-3 py-2 rounded-lg text-sm text-vex-text-muted hover:text-white hover:bg-vex-surface-light" @click="mobileOpen = false">Playground</RouterLink>
         <div class="border-t border-vex-border my-2"></div>
         <div class="px-3 py-1 text-[10px] font-bold text-vex-text-muted uppercase tracking-widest">Community</div>
@@ -208,7 +203,6 @@ async function logout() {
             <ul class="space-y-2 text-sm">
               <li><a href="/docs/guide/introduction" class="text-vex-text-muted hover:text-white transition-colors">Get Started</a></li>
               <li><a href="/docs/" class="text-vex-text-muted hover:text-white transition-colors">Documentation</a></li>
-              <li><RouterLink to="/tour" class="text-vex-text-muted hover:text-white transition-colors">Tour of Vex</RouterLink></li>
               <li><RouterLink to="/playground" class="text-vex-text-muted hover:text-white transition-colors">Playground</RouterLink></li>
               <li><RouterLink to="/ai" class="text-vex-text-muted hover:text-white transition-colors">AI Assistant</RouterLink></li>
               <li><RouterLink to="/arena" class="text-vex-text-muted hover:text-white transition-colors">Benchmark Arena</RouterLink></li>

@@ -172,6 +172,21 @@ export default defineConfig({
     ],
   },
 
+  optimizeDeps: {
+    /**
+     * monaco-textmate@3 creates its Onig scanners via `require('onigasm')`
+     * while the app calls `loadWASM` from the ESM side of the same package.
+     * Both must resolve to one module instance: the WASM binding that
+     * `loadWASM` installs is module-scoped, and if the scanner sees another
+     * copy, every tokenize throws `_malloc` of undefined.
+     */
+    include: [
+      'onigasm',
+      'monaco-textmate',
+      'monaco-editor-textmate',
+    ],
+  },
+
   server: {
     port: 3334,
 

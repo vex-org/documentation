@@ -1,464 +1,882 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Play, Code, Terminal, Share2, Sparkles, BookOpen, ChevronRight, Zap, Target, Cpu, Wifi, WifiOff, Settings } from 'lucide-vue-next'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  SquareTerminal, Terminal, FileCode, Maximize2, Minimize2, Trash2, Plus, X,
+  BookOpen, ExternalLink, Lightbulb, CheckCircle2, ChevronUp, ChevronDown,
+  ChevronLeft, ChevronRight, Play, Share2, RotateCcw, Loader2, Layers,
+  GitBranch, Box, Shield, Database, AlertTriangle, Cpu, Zap, Code,
+  PanelLeftOpen,
+} from 'lucide-vue-next'
+import { tourLessons, tourSections } from '../data/tourLessons'
 import { runCode as apiRunCode, emitIR, healthCheck } from '../api/vex'
 import MonacoVexEditor from '../components/MonacoVexEditor.vue'
 
-const examples = [
-  {
-    name: 'Hello Vex',
-    icon: Sparkles,
-    code: `fn main(): i32 {
-    println("Hello from Vex Playground!")
-    
-    let x = 42
-    println(x)
-    return 0
-}`
-  },
-  {
-    name: 'Fibonacci',
-    icon: Zap,
-    code: `fn fib(n: i32): i32 {
-    if n <= 1 { return n }
-    return fib(n - 1) + fib(n - 2)
+const route = useRoute()
+const router = useRouter()
+
+// ─── Static data ─────────────────────────────────────────
+const sectionIcons: Record<string, any> = {
+  'book': BookOpen,
+  'layers': Layers,
+  'git-branch': GitBranch,
+  'code': Code,
+  'box': Box,
+  'shield': Shield,
+  'database': Database,
+  'alert-triangle': AlertTriangle,
+  'cpu': Cpu,
+  'zap': Zap,
 }
 
-fn main(): i32 {
-    let result = fib(20)
-    println(result)
+const optLevels = ['O0', 'O1', 'O2', 'O3'].map((v) => ({ label: `-${v}`, value: v }))
+
+const SCRATCH_TEMPLATE = `fn main(): i32 {
+    println("Hello from Vex!")
     return 0
 }`
-  },
-  {
-    name: 'Structs & Methods',
-    icon: BookOpen,
-    code: `struct Point {
-    x: f64,
-    y: f64
-}
 
-fn (self: &Point) distance(): f64 {
-    return (self.x * self.x + self.y * self.y)
-}
-
-fn main(): i32 {
-    let p = Point { x: 3.0, y: 4.0 }
-    println(p.distance())
-    return 0
-}`
-  },
-  {
-    name: 'Pattern Matching',
-    icon: Target,
-    code: `fn classify(n: i32): string {
-    match n {
-        0 => return "zero",
-        1..=9 => return "small",
-        10..=99 => return "medium",
-        _ => return "large"
-    }
-}
-
-fn main(): i32 {
-    println(classify(0))
-    println(classify(5))
-    println(classify(42))
-    println(classify(100))
-    return 0
-}`
-  },
-  {
-    name: 'Vectors',
-    icon: Cpu,
-    code: `fn main(): i32 {
-    let! v = Vec.new<i32>()
-    v.push(10)
-    v.push(20)
-    v.push(30)
-    
-    println(v.len())
-    
-    for i in 0..v.len() {
-        println(v.get(i))
-    }
-    return 0
-}`
-  },
-  {
-    name: 'Error Handling',
-    icon: Target,
-    code: `fn divide(a: f64, b: f64): Result<f64, string> {
-    if b == 0.0 {
-        return Err("division by zero")
-    }
-    return Ok(a / b)
-}
-
-fn main(): i32 {
-    match divide(10.0, 3.0) {
-        Ok(val) => println(val),
-        Err(msg) => println(msg)
-    }
-    
-    match divide(10.0, 0.0) {
-        Ok(val) => println(val),
-        Err(msg) => println(msg)
-    }
-    return 0
-}`
-  },
-  {
-    name: 'Closures',
-    icon: Sparkles,
-    code: `fn apply(x: i32, f: fn(i32): i32): i32 {
-    return f(x)
-}
-
-fn main(): i32 {
-    let double = |x: i32|: i32 { x * 2 }
-    let square = |x: i32|: i32 { x * x }
-    
-    println(apply(5, double))
-    println(apply(5, square))
-    return 0
-}`
-  },
-  {
-    name: 'String Operations',
-    icon: BookOpen,
-    code: `fn main(): i32 {
-    let greeting = "Hello, Vex!"
-    println(greeting)
-    println(greeting.len())
-    
-    let name = "World"
-    println("Hello, " + name + "!")
-    return 0
-}`
-  },
-  {
-    name: 'SIMD Vectors',
-    icon: Zap,
-    code: `fn main(): i32 {
-    // Arrays auto-promote to SIMD Tensors
-    let a = [1.0, 2.0, 3.0, 4.0]
-    let b = [5.0, 6.0, 7.0, 8.0]
-
-    // Single SIMD instruction: vadd <4 x f64>
-    let c = a + b
-    println(c)
-
-    // Scalar broadcast: splat 2.0 then vmul
-    let scaled = a * 2.0
-    println(scaled)
-
-    // Horizontal reduction: sum all elements
-    let total = <+ a
-    println(total)
-    return 0
-}`
-  },
-  {
-    name: 'Concurrency',
-    icon: Cpu,
-    code: `fn main(): i32 {
-    let ch = Channel.new<i32>(4)
-
-    // Spawn goroutines that send values
-    for i in 0..4 {
-        let sender = ch
-        go {
-            sender.send(i * 10)
-        };
-    }
-
-    // Receive all values
-    let! sum = 0
-    for _ in 0..4 {
-        sum = sum + ch.recv()
-    }
-    println(sum)
-    return 0
-}`
-  },
-  {
-    name: 'Map & Set',
-    icon: Target,
-    code: `fn main(): i32 {
-    let! m = Map.new<string, i32>()
-    m.set("alice", 42)
-    m.set("bob", 7)
-    m.set("charlie", 99)
-
-    println(m.get("alice"))
-    println(m.len())
-    println(m.contains("bob"))
-
-    m.remove("bob")
-    println(m.len())
-    return 0
-}`
-  }
-]
-
-const code = ref(examples[0].code)
+// ─── State ───────────────────────────────────────────────
+const currentIndex = ref(0)
+const editorCode = ref(tourLessons[0].code)
 const output = ref('')
-const errors = ref('')
+const errorText = ref('')
 const isRunning = ref(false)
-const wasmLoaded = ref(false)
-const activeExample = ref(0)
-const activeView = ref<'output' | 'ir'>('output')
 const optLevel = ref('O2')
-const optLevels = [
-  { value: 'O0', label: '-O0', desc: 'No optimization' },
-  { value: 'O1', label: '-O1', desc: 'Basic' },
-  { value: 'O2', label: '-O2', desc: 'Recommended' },
-  { value: 'O3', label: '-O3', desc: 'Aggressive' },
-]
-const compileTime = ref(0)
-const runTime = ref(0)
-const userTime = ref(0)
-const sysTime = ref(0)
-const memoryKB = ref(0)
-const irOutput = ref('')
-const isLoadingIR = ref(false)
-const shareLabel = ref('Share')
 
-function shareCode() {
-  const encoded = encodeURIComponent(code.value)
-  const url = `${window.location.origin}/playground?code=${encoded}`
-  navigator.clipboard.writeText(url)
-  shareLabel.value = 'Copied!'
-  setTimeout(() => { shareLabel.value = 'Share' }, 2000)
+const activeOutputTab = ref<'output' | 'ir' | 'assembly' | 'analysis'>('output')
+const irOutput = ref('')
+const irLoading = ref(false)
+
+const sidebarOpen = ref(true)
+const expandedSections = ref<Set<string>>(new Set(['basics']))
+const lessonPanelOpen = ref(false)
+
+const challengeMode = ref(false)
+const challengePassed = ref(false)
+const scratchMode = ref(false)
+
+const shareCopied = ref(false)
+const runMenuOpen = ref(false)
+const versionMenuOpen = ref(false)
+const version = ref('Vex (latest)')
+const editorFullscreen = ref(false)
+
+const wasmConnected = ref(false)
+
+// ─── Computed ────────────────────────────────────────────
+const lesson = computed(() => tourLessons[currentIndex.value])
+const total = tourLessons.length
+const isFirst = computed(() => currentIndex.value === 0)
+const isLast = computed(() => currentIndex.value === total - 1)
+const section = computed(() => tourSections.find((s) => s.id === lesson.value.section))
+const fileName = computed(() => (scratchMode.value ? 'scratch.vx' : 'main.vx'))
+
+const groupedLessons = computed(() =>
+  tourSections.map((s) => ({
+    ...s,
+    iconComponent: sectionIcons[s.icon] || BookOpen,
+    lessons: tourLessons
+      .map((l, i) => ({ ...l, index: i }))
+      .filter((l) => l.section === s.id),
+  })),
+)
+
+const explanationHtml = computed(() =>
+  scratchMode.value
+    ? '<p class="mb-3">Switch to a lesson from the learning path when you want guided explanations and challenges.</p>'
+    : renderMarkdown(lesson.value.explanation),
+)
+
+// ─── Navigation ──────────────────────────────────────────
+function goTo(index: number) {
+  if (index < 0 || index >= total) return
+  currentIndex.value = index
+  scratchMode.value = false
+  expandedSections.value.add(tourLessons[index].section)
+  const id = tourLessons[index].id
+  if (route.query.lesson !== id) {
+    router.replace({ query: { lesson: id } })
+  }
+  requestAnimationFrame(() => {
+    document.getElementById(`lesson-item-${id}`)?.scrollIntoView({ block: 'nearest' })
+  })
 }
 
-async function runCode() {
-  isRunning.value = true
-  output.value = 'Running...'
-  errors.value = ''
-  
-  try {
-    const result = await apiRunCode(code.value, optLevel.value)
-    // Extract actual program output (filter compiler timing lines)
-    const lines = result.stdout.split('\n')
-    const programOutput = lines.filter(l => 
-      !l.includes('Compile time:') && !l.includes('Running (JIT)') && !l.includes('Run time:') && l.trim() !== ''
-    ).join('\n')
-    
-    // Filter informational messages from stderr, keep actual errors
-    const stderrFiltered = (result.stderr || '').split('\n').filter(l => {
+function next() {
+  goTo(currentIndex.value + 1)
+}
+
+function prev() {
+  goTo(currentIndex.value - 1)
+}
+
+function toggleSection(id: string) {
+  if (expandedSections.value.has(id)) expandedSections.value.delete(id)
+  else expandedSections.value.add(id)
+}
+
+function startScratch() {
+  scratchMode.value = true
+  editorCode.value = SCRATCH_TEMPLATE
+  output.value = ''
+  errorText.value = ''
+  challengeMode.value = false
+  challengePassed.value = false
+}
+
+function resetCode() {
+  editorCode.value = scratchMode.value ? SCRATCH_TEMPLATE : lesson.value.code
+  output.value = ''
+  errorText.value = ''
+  challengeMode.value = false
+  challengePassed.value = false
+}
+
+// ─── Code execution ──────────────────────────────────────
+function cleanStdout(stdout: string) {
+  return stdout
+    .split('\n')
+    .filter(
+      (l) =>
+        !l.includes('Compile time:') &&
+        !l.includes('Running (JIT)') &&
+        !l.includes('Run time:'),
+    )
+    .join('\n')
+    .trim()
+}
+
+function cleanStderr(stderr: string) {
+  return stderr
+    .split('\n')
+    .filter((l) => {
       const t = l.trim()
       if (!t) return false
       if (t.startsWith('Codegen:') || t.startsWith('Compiling') || t.startsWith('Linking')) return false
       return true
-    }).join('\n')
-    
-    if (result.exit_code !== 0 && !programOutput) {
-      output.value = stderrFiltered || '(compilation error)'
-      errors.value = ''
+    })
+    .join('\n')
+    .trim()
+}
+
+async function runCode() {
+  if (isRunning.value) return
+  isRunning.value = true
+  runMenuOpen.value = false
+  activeOutputTab.value = 'output'
+  output.value = ''
+  errorText.value = ''
+  try {
+    const result = await apiRunCode(editorCode.value, optLevel.value)
+    const filtered = cleanStdout(result.stdout)
+    if (result.exit_code !== 0 && !filtered) {
+      errorText.value = cleanStderr(result.stderr) || '(compilation error)'
     } else {
-      output.value = programOutput || '(no output)'
-      errors.value = result.exit_code !== 0 ? stderrFiltered : ''
+      output.value = filtered || '(no output)'
+      if (challengeMode.value && lesson.value.challenge?.validate) {
+        challengePassed.value = filtered.includes(lesson.value.challenge.validate)
+      }
     }
-    
-    compileTime.value = result.compile_time_ms
-    runTime.value = result.run_time_ms
-    userTime.value = result.user_time_ms
-    sysTime.value = result.sys_time_ms
-    memoryKB.value = result.memory_kb
-    // Also fetch IR in background
-    fetchIR()
   } catch (err: any) {
-    output.value = ''
-    errors.value = `Connection Error: ${err.message}`
+    errorText.value = `Error: ${err.message}`
   } finally {
     isRunning.value = false
   }
 }
 
-async function fetchIR() {
-  isLoadingIR.value = true
+function runAndNext() {
+  runCode()
+  if (!isLast.value) setTimeout(() => next(), 120)
+}
+
+async function showIR() {
+  if (irOutput.value) return
+  irLoading.value = true
   try {
-    const result = await emitIR(code.value, optLevel.value)
+    const result = await emitIR(editorCode.value, optLevel.value)
     irOutput.value = result.ir
-  } catch {
-    irOutput.value = ''
+  } catch (err: any) {
+    irOutput.value = `Error: ${err.message}`
   } finally {
-    isLoadingIR.value = false
+    irLoading.value = false
   }
 }
 
-function loadExample(index: number) {
-  activeExample.value = index
-  code.value = examples[index].code
+function clearOutput() {
   output.value = ''
-  errors.value = ''
+  errorText.value = ''
+  irOutput.value = ''
+  challengePassed.value = false
 }
+
+function selectOutputTab(tab: typeof activeOutputTab.value) {
+  activeOutputTab.value = tab
+  if (tab === 'ir') showIR()
+}
+
+async function share() {
+  const url = `${window.location.origin}/playground?lesson=${lesson.value.id}`
+  try {
+    await navigator.clipboard.writeText(url)
+  } catch {
+    /* clipboard unavailable */
+  }
+  shareCopied.value = true
+  setTimeout(() => (shareCopied.value = false), 1600)
+}
+
+// ─── Challenge ───────────────────────────────────────────
+function startChallenge() {
+  if (!lesson.value.challenge) return
+  challengeMode.value = true
+  challengePassed.value = false
+  editorCode.value = lesson.value.challenge.initialCode
+  output.value = ''
+  errorText.value = ''
+}
+
+function exitChallenge() {
+  challengeMode.value = false
+  challengePassed.value = false
+  resetCode()
+}
+
+// ─── Markdown (lightweight) ──────────────────────────────
+function renderMarkdown(text: string): string {
+  return text
+    .replace(
+      /```(\w*)\n([\s\S]*?)```/g,
+      '<pre class="bg-black/30 rounded-lg p-4 my-3 overflow-x-auto text-sm font-mono text-vex-primary-light"><code>$2</code></pre>',
+    )
+    .replace(
+      /\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)*)/g,
+      (_m, header: string, body: string) => {
+        const heads = header.split('|').map((h: string) => h.trim()).filter(Boolean)
+        const rows = body
+          .trim()
+          .split('\n')
+          .map((row: string) => row.split('|').map((c: string) => c.trim()).filter(Boolean))
+        return `<div class="overflow-x-auto my-3"><table class="text-sm w-full"><thead><tr>${heads
+          .map((h: string) => `<th class="text-left px-3 py-1.5 text-vex-text-muted border-b border-vex-border">${h}</th>`)
+          .join('')}</tr></thead><tbody>${rows
+          .map((r: string[]) => `<tr>${r.map((c: string) => `<td class="px-3 py-1.5 border-b border-vex-border/50">${c}</td>`).join('')}</tr>`)
+          .join('')}</tbody></table></div>`
+      },
+    )
+    .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-white/10 text-vex-primary-light text-xs font-mono">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-vex-primary hover:text-vex-primary-light underline">$1</a>')
+    .replace(/\n\n/g, '</p><p class="mb-3">')
+    .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    .replace(/^### (.+)$/gm, '<h3 class="text-lg font-bold text-white mt-4 mb-2">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold text-white mt-4 mb-2">$1</h2>')
+    .replace(/^(?!<)/, '<p class="mb-3">')
+}
+
+// ─── Keyboard ────────────────────────────────────────────
+function onKeyDown(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault()
+    runCode()
+  }
+  if (e.altKey && e.key === 'ArrowRight' && !isLast.value) {
+    e.preventDefault()
+    next()
+  }
+  if (e.altKey && e.key === 'ArrowLeft' && !isFirst.value) {
+    e.preventDefault()
+    prev()
+  }
+  if (e.key === 'Escape') {
+    editorFullscreen.value = false
+    runMenuOpen.value = false
+    versionMenuOpen.value = false
+  }
+}
+
+function closeMenus() {
+  runMenuOpen.value = false
+  versionMenuOpen.value = false
+}
+
+// ─── Lifecycle ───────────────────────────────────────────
+watch(currentIndex, () => {
+  editorCode.value = lesson.value.code
+  output.value = ''
+  errorText.value = ''
+  irOutput.value = ''
+  challengeMode.value = false
+  challengePassed.value = false
+  if (route.query.lesson !== lesson.value.id) {
+    router.replace({ query: { lesson: lesson.value.id } })
+  }
+}, { immediate: false })
+
+watch(
+  () => route.query.lesson,
+  (val) => {
+    if (typeof val !== 'string') return
+    const idx = tourLessons.findIndex((l) => l.id === val)
+    if (idx >= 0 && idx !== currentIndex.value) currentIndex.value = idx
+  },
+)
 
 onMounted(async () => {
-  wasmLoaded.value = await healthCheck()
-  // Load shared code from URL
-  const params = new URLSearchParams(window.location.search)
-  const shared = params.get('code')
-  if (shared) {
-    code.value = shared
-    activeExample.value = -1
+  const step = route.query.lesson
+  if (typeof step === 'string') {
+    const idx = tourLessons.findIndex((l) => l.id === step)
+    if (idx >= 0) currentIndex.value = idx
   }
+  expandedSections.value.add(lesson.value.section)
+  if (window.innerWidth < 1024) sidebarOpen.value = false
+  document.addEventListener('keydown', onKeyDown)
+  document.addEventListener('click', closeMenus)
+  wasmConnected.value = await healthCheck()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeyDown)
+  document.removeEventListener('click', closeMenus)
 })
 </script>
 
 <template>
-  <div class="tool-page">
-    <div class="tool-heading">
-      <div>
-        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-          <Sparkles class="w-6 h-6 text-vex-primary" />
-          Playground
-        </h1>
-        <p class="text-vex-text-muted text-sm flex items-center gap-2">
-          Experiment with Vex in your browser
-          <span v-if="wasmLoaded" class="inline-flex items-center gap-1 text-[10px] text-green-400"><Wifi class="w-3 h-3" /> Connected</span>
-          <span v-else class="inline-flex items-center gap-1 text-[10px] text-red-400"><WifiOff class="w-3 h-3" /> Offline</span>
-        </p>
-      </div>
-      
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- Opt Level -->
-        <div class="flex items-center gap-1 bg-white/5 rounded-lg p-1">
-          <Settings class="w-3.5 h-3.5 text-vex-text-muted ml-2" />
-          <button
-            v-for="o in optLevels"
-            :key="o.value"
-            @click="optLevel = o.value"
-            :title="o.desc"
-            :class="['px-2 py-1 rounded text-[11px] font-mono font-bold transition-all', optLevel === o.value ? 'bg-vex-primary text-vex-bg' : 'text-vex-text-muted hover:text-white']"
-          >{{ o.label }}</button>
-        </div>
-        <button @click="shareCode" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-vex-border text-vex-text-muted hover:text-white transition-all cursor-pointer">
-          <Share2 class="w-4 h-4" />
-          {{ shareLabel }}
-        </button>
-        <button 
-          @click="runCode"
-          :disabled="isRunning"
-          class="ui-button ui-button-primary disabled:opacity-50"
-        >
-          <Play v-if="!isRunning" class="w-4 h-4" />
-          <div v-else class="w-4 h-4 border-2 border-vex-bg border-t-transparent rounded-full animate-spin"></div>
-          {{ isRunning ? 'Running...' : 'Run' }}
-        </button>
-      </div>
-    </div>
-
-    <div class="playground-grid flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
-      <!-- Sidebar / Examples -->
-      <div class="lg:col-span-1 flex flex-col gap-4">
-        <div class="rounded-2xl border border-vex-border bg-vex-bg-card h-full overflow-hidden flex flex-col">
-          <div class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2">
-            <BookOpen class="w-4 h-4 text-vex-primary" />
-            <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Examples</span>
-          </div>
-          <div class="flex-1 overflow-auto p-2">
+  <div class="flex flex-col h-[calc(100vh-65px)] overflow-hidden">
+    <div class="flex flex-1 min-h-0">
+      <!-- ═══════════ Learning path sidebar ═══════════ -->
+      <aside
+        :class="[
+          'flex-shrink-0 border-r border-vex-border bg-vex-bg overflow-y-auto transition-all duration-300',
+          sidebarOpen ? 'w-64' : 'w-0 border-r-0',
+        ]"
+      >
+        <div class="w-64 flex flex-col min-h-full p-4">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-[11px] font-bold text-vex-text-muted uppercase tracking-wider">Learning Path</span>
             <button
-              v-for="(ex, index) in examples"
-              :key="index"
-              @click="loadExample(index)"
-              :class="['w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left mb-1 group', activeExample === index ? 'bg-vex-primary/10 text-vex-primary-light' : 'text-vex-text-muted hover:bg-white/5 hover:text-white']"
+              @click="sidebarOpen = false"
+              class="p-1 rounded-lg text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              title="Collapse sidebar"
             >
-              <component :is="ex.icon" class="w-4 h-4 flex-shrink-0" />
-              <span class="truncate flex-1">{{ ex.name }}</span>
-              <ChevronRight :class="['w-3 h-3 transition-transform', activeExample === index ? 'translate-x-0' : '-translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0']" />
+              <ChevronUp class="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
-      </div>
 
-      <!-- Editor & Console -->
-      <div class="playground-panels lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 lg:h-full min-h-0">
-        <!-- Editor -->
-        <div class="flex flex-col rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden h-full">
-          <div class="flex items-center gap-2 px-4 py-2 border-b border-vex-border bg-vex-surface/50">
-            <Code class="w-4 h-4 text-vex-primary" />
-            <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Editor</span>
+          <nav class="space-y-1">
+            <div v-for="group in groupedLessons" :key="group.id">
+              <button
+                @click="toggleSection(group.id)"
+                :class="[
+                  'w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm transition-colors cursor-pointer',
+                  group.id === lesson.section && !scratchMode
+                    ? 'text-white'
+                    : 'text-vex-text-muted hover:text-white hover:bg-white/5',
+                ]"
+              >
+                <component :is="group.iconComponent" class="w-4 h-4 flex-shrink-0" />
+                <span class="font-medium truncate">{{ group.title }}</span>
+                <span class="ml-auto text-xs text-vex-text-muted/70 font-mono">{{ group.lessons.length }}</span>
+                <ChevronDown
+                  :class="[
+                    'w-3.5 h-3.5 flex-shrink-0 transition-transform',
+                    expandedSections.has(group.id) ? 'rotate-180' : '',
+                  ]"
+                />
+              </button>
+
+              <div v-if="expandedSections.has(group.id)" class="mt-0.5 mb-1.5 ml-[15px] border-l border-vex-border/70">
+                <button
+                  v-for="item in group.lessons"
+                  :key="item.id"
+                  :id="`lesson-item-${item.id}`"
+                  @click="goTo(item.index)"
+                  :class="[
+                    'w-full flex items-center gap-2 pl-3 pr-2 py-1.5 text-sm text-left transition-colors cursor-pointer border-l-2 -ml-px',
+                    item.index === currentIndex && !scratchMode
+                      ? 'border-vex-primary bg-vex-primary/10 text-vex-primary-light font-medium'
+                      : 'border-transparent text-vex-text-muted hover:text-white hover:bg-white/5',
+                  ]"
+                >
+                  <span class="truncate">{{ item.title }}</span>
+                </button>
+              </div>
+            </div>
+          </nav>
+
+          <!-- New to Vex? -->
+          <div class="mt-6 mb-2 rounded-xl border border-vex-border bg-vex-bg-card p-3.5">
+            <div class="flex items-center gap-2 mb-1.5">
+              <div class="w-7 h-7 rounded-lg bg-vex-primary/10 border border-vex-primary/25 flex items-center justify-center flex-shrink-0">
+                <FileCode class="w-3.5 h-3.5 text-vex-primary" />
+              </div>
+              <span class="text-sm font-semibold text-white">New to Vex?</span>
+            </div>
+            <p class="text-xs text-vex-text-muted leading-relaxed mb-2">Check out the documentation to get started.</p>
+            <a
+              href="/docs/guide/introduction"
+              class="inline-flex items-center gap-1 text-xs font-medium text-vex-primary hover:text-vex-primary-light transition-colors"
+            >
+              Open Docs
+              <ExternalLink class="w-3 h-3" />
+            </a>
           </div>
-          <MonacoVexEditor
-            v-model="code"
-            class="flex-1 min-h-0"
-            submit-on-mod-enter
-            @submit="runCode"
-          />
         </div>
+      </aside>
 
-        <!-- Console -->
-        <div class="flex flex-col rounded-2xl border border-vex-border bg-[#050508] overflow-hidden h-full">
-          <div class="flex items-center justify-between px-4 py-2 border-b border-vex-border bg-vex-surface/50">
-            <div class="flex items-center gap-2">
-              <Terminal class="w-4 h-4 text-vex-accent" />
-              <span class="text-xs font-bold text-vex-text-muted uppercase tracking-wider">Output</span>
+      <!-- ═══════════ Main column ═══════════ -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- Page header -->
+        <header class="flex items-center justify-between gap-4 px-6 py-4 border-b border-vex-border">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-xl bg-vex-primary/10 border border-vex-primary/30 flex items-center justify-center flex-shrink-0">
+              <SquareTerminal class="w-5 h-5 text-vex-primary" />
             </div>
-            <!-- View Selector -->
-            <div class="flex bg-white/5 p-1 rounded-lg">
-              <button 
-                @click="activeView = 'output'"
-                :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all', activeView === 'output' ? 'bg-vex-primary text-vex-bg shadow-sm' : 'text-vex-text-muted hover:text-white']"
-              >Console</button>
-              <button 
-                @click="activeView = 'ir'"
-                :class="['px-2 py-0.5 rounded text-[10px] font-bold uppercase transition-all', activeView === 'ir' ? 'bg-vex-primary text-vex-bg shadow-sm' : 'text-vex-text-muted hover:text-white']"
-              >LLVM IR</button>
+            <div class="min-w-0">
+              <h1 class="text-xl font-bold text-white leading-tight">Playground</h1>
+              <div class="flex items-center gap-3 text-xs text-vex-text-muted">
+                <span class="truncate">Experiment with Vex in your browser. Learn mode enabled.</span>
+                <span class="flex items-center gap-1.5 flex-shrink-0">
+                  <span :class="['w-1.5 h-1.5 rounded-full', wasmConnected ? 'bg-emerald-400' : 'bg-vex-text-muted/50']" />
+                  {{ wasmConnected ? 'Connected' : 'Offline' }}
+                </span>
+              </div>
             </div>
           </div>
-          <div class="flex-1 p-6 font-mono text-sm overflow-auto">
-            <!-- Output View -->
-            <div v-if="activeView === 'output'">
-              <pre v-if="output" class="text-vex-text break-words whitespace-pre-wrap mb-4">{{ output }}</pre>
-              <div v-if="compileTime > 0 || runTime > 0" class="flex flex-wrap gap-3 text-[10px] text-vex-text-muted mb-2 pb-2 border-b border-vex-border">
-                <span v-if="compileTime > 0" class="flex items-center gap-1">⚡ Compile: {{ compileTime.toFixed(1) }}ms</span>
-                <span v-if="runTime > 0" class="flex items-center gap-1">▶ Run: {{ runTime.toFixed(1) }}ms</span>
-                <span v-if="userTime > 0" class="flex items-center gap-1">👤 User: {{ userTime.toFixed(2) }}ms</span>
-                <span v-if="sysTime > 0" class="flex items-center gap-1">⚙️ Sys: {{ sysTime.toFixed(2) }}ms</span>
-                <span v-if="memoryKB > 0" class="flex items-center gap-1">💾 {{ memoryKB > 1024 ? (memoryKB / 1024).toFixed(1) + ' MB' : memoryKB + ' KB' }}</span>
-              </div>
-              <pre v-if="errors" class="p-4 rounded-xl bg-vex-error/10 border border-vex-error/20 text-vex-error break-words whitespace-pre-wrap">{{ errors }}</pre>
-            </div>
-            
-            <!-- LLVM IR View -->
-            <div v-if="activeView === 'ir'">
-              <div v-if="isLoadingIR" class="flex items-center gap-2 text-vex-text-muted">
-                <div class="w-4 h-4 border-2 border-vex-primary border-t-transparent rounded-full animate-spin"></div>
-                Generating LLVM IR...
-              </div>
-              <pre v-else-if="irOutput" class="text-vex-primary-light break-words whitespace-pre-wrap text-[11px]">{{ irOutput }}</pre>
-              <div v-else class="h-full flex flex-col items-center justify-center text-vex-text-muted opacity-50 py-12">
-                <Code class="w-8 h-8 mb-2" />
-                <p>Run your code to see LLVM IR</p>
+
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button
+              :disabled="isFirst"
+              @click="prev"
+              class="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-vex-border text-sm text-vex-text-muted hover:text-white hover:border-vex-border-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              <ChevronLeft class="w-4 h-4" />
+              Prev
+            </button>
+            <button
+              :disabled="isLast"
+              @click="next"
+              class="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-vex-primary hover:bg-vex-primary-light text-white text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Next
+              <ChevronRight class="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        <!-- Toolbar: breadcrumb + controls -->
+        <div class="flex items-center justify-between gap-4 px-6 py-2.5 border-b border-vex-border bg-vex-surface/30">
+          <div class="flex items-center gap-2 min-w-0">
+            <button
+              v-if="!sidebarOpen"
+              @click="sidebarOpen = true"
+              class="p-1.5 rounded-lg text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+              title="Show learning path"
+            >
+              <PanelLeftOpen class="w-4 h-4" />
+            </button>
+            <button
+              @click="lessonPanelOpen = !lessonPanelOpen"
+              :class="[
+                'flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer flex-shrink-0',
+                lessonPanelOpen
+                  ? 'border-vex-primary/40 bg-vex-primary/10 text-vex-primary-light'
+                  : 'border-vex-border text-vex-text-muted hover:text-white hover:border-vex-border-light',
+              ]"
+              title="Lesson notes"
+            >
+              <BookOpen class="w-3.5 h-3.5" />
+              <span class="text-xs font-medium hidden sm:inline">Lesson</span>
+            </button>
+
+            <nav class="flex items-center gap-2 text-sm min-w-0 pl-1">
+              <template v-if="scratchMode">
+                <span class="text-vex-text-muted">Scratch</span>
+                <ChevronRight class="w-3.5 h-3.5 text-vex-text-muted/50 flex-shrink-0" />
+                <span class="text-white font-medium truncate">Free coding</span>
+              </template>
+              <template v-else>
+                <span class="text-vex-text-muted truncate">{{ section?.title }}</span>
+                <ChevronRight class="w-3.5 h-3.5 text-vex-text-muted/50 flex-shrink-0" />
+                <span class="text-vex-primary font-mono text-xs flex-shrink-0">{{ currentIndex + 1 }}/{{ total }}</span>
+                <ChevronRight class="w-3.5 h-3.5 text-vex-text-muted/50 flex-shrink-0" />
+                <span class="text-white font-medium truncate">{{ lesson.title }}</span>
+              </template>
+            </nav>
+          </div>
+
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="hidden md:flex items-center gap-2">
+              <span class="text-xs text-vex-text-muted">Opt level</span>
+              <div class="flex items-center gap-0.5">
+                <button
+                  v-for="o in optLevels"
+                  :key="o.value"
+                  @click="optLevel = o.value"
+                  :class="[
+                    'px-2 py-1 rounded-md text-xs font-mono transition-colors cursor-pointer',
+                    optLevel === o.value
+                      ? 'bg-vex-primary text-white font-bold'
+                      : 'text-vex-text-muted hover:text-white hover:bg-white/5',
+                  ]"
+                >
+                  {{ o.label }}
+                </button>
               </div>
             </div>
 
-            <div v-if="!output && !errors && !irOutput && activeView === 'output'" class="h-full flex flex-col items-center justify-center text-vex-text-muted opacity-50">
-              <Terminal class="w-12 h-12 mb-4" />
-              <p>Ready to run</p>
+            <button
+              @click="share"
+              class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-vex-border text-sm text-vex-text-muted hover:text-white hover:border-vex-border-light transition-colors cursor-pointer"
+            >
+              <Share2 class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">{{ shareCopied ? 'Copied!' : 'Share' }}</span>
+            </button>
+
+            <div class="relative">
+              <div class="flex items-stretch">
+                <button
+                  @click="runCode"
+                  :disabled="isRunning"
+                  class="flex items-center gap-2 pl-4 pr-3 py-1.5 rounded-l-lg bg-vex-primary hover:bg-vex-primary-light text-white text-sm font-semibold transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  <Loader2 v-if="isRunning" class="w-4 h-4 animate-spin" />
+                  <Play v-else class="w-4 h-4" />
+                  Run
+                </button>
+                <button
+                  @click.stop="runMenuOpen = !runMenuOpen"
+                  class="px-1.5 rounded-r-lg bg-vex-primary hover:bg-vex-primary-light text-white border-l border-white/20 transition-colors cursor-pointer"
+                  title="Run options"
+                >
+                  <ChevronDown class="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div
+                v-if="runMenuOpen"
+                class="absolute right-0 top-full mt-1 w-44 rounded-xl border border-vex-border bg-vex-bg-card shadow-xl shadow-black/40 py-1 z-50"
+              >
+                <button
+                  @click.stop="runCode"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <Play class="w-3.5 h-3.5" />
+                  Run
+                  <kbd class="ml-auto text-[10px] px-1.5 py-0.5 rounded border border-vex-border font-mono">⌘↵</kbd>
+                </button>
+                <button
+                  :disabled="isLast"
+                  @click.stop="runAndNext"
+                  class="w-full flex items-center gap-2 px-3 py-2 text-sm text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors disabled:opacity-30 cursor-pointer"
+                >
+                  <ChevronRight class="w-3.5 h-3.5" />
+                  Run &amp; Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lesson notes drawer -->
+        <div
+          v-if="lessonPanelOpen"
+          class="border-b border-vex-border bg-vex-bg max-h-[36vh] overflow-y-auto px-6 py-5"
+        >
+          <div class="max-w-3xl">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <h2 class="text-base font-bold text-white">{{ scratchMode ? 'Free coding' : lesson.title }}</h2>
+                <p class="text-xs text-vex-text-muted">{{ scratchMode ? 'Write anything — nothing is graded here.' : lesson.description }}</p>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button
+                  @click="resetCode"
+                  class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <RotateCcw class="w-3 h-3" />
+                  Reset code
+                </button>
+                <button
+                  @click="lessonPanelOpen = false"
+                  class="p-1.5 rounded-lg text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  <X class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="prose-vex text-vex-text text-sm leading-relaxed"
+              v-html="explanationHtml"
+            />
+
+            <div v-if="!scratchMode && lesson.challenge" class="mt-4">
+              <div class="rounded-xl border border-vex-accent/30 bg-vex-accent/5 p-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <Lightbulb class="w-4 h-4 text-vex-accent" />
+                  <span class="text-sm font-semibold text-vex-accent">Try it yourself</span>
+                  <span
+                    v-if="challengeMode && challengePassed"
+                    class="ml-auto flex items-center gap-1.5 text-xs font-medium text-vex-success"
+                  >
+                    <CheckCircle2 class="w-3.5 h-3.5" />
+                    Correct!
+                  </span>
+                </div>
+                <p class="text-sm text-vex-text mb-3">{{ lesson.challenge.prompt }}</p>
+                <div class="flex items-center gap-2">
+                  <button
+                    v-if="!challengeMode"
+                    @click="startChallenge"
+                    class="px-3 py-1.5 rounded-lg bg-vex-accent hover:bg-vex-accent/80 text-vex-bg text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Load challenge into editor
+                  </button>
+                  <button
+                    v-else
+                    @click="exitChallenge"
+                    class="px-3 py-1.5 rounded-lg border border-vex-border text-xs text-vex-text-muted hover:text-white transition-colors cursor-pointer"
+                  >
+                    Exit challenge
+                  </button>
+                  <span v-if="challengeMode" class="text-xs text-vex-text-muted">Run with ⌘↵ — the output is checked automatically.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Editor + Output -->
+        <div class="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] gap-3 p-3">
+          <!-- Editor card -->
+          <div
+            :class="[
+              'flex flex-col min-h-0 rounded-xl border border-vex-border bg-vex-bg-card overflow-hidden h-[420px] xl:h-auto',
+              editorFullscreen ? 'fixed inset-3 z-40 h-auto shadow-2xl shadow-black/60' : '',
+            ]"
+          >
+            <div class="flex items-center justify-between px-2 py-1.5 border-b border-vex-border bg-vex-surface/50 flex-shrink-0">
+              <div class="flex items-center gap-1 min-w-0">
+                <div class="flex items-center gap-2 pl-2 pr-1.5 py-1 rounded-lg bg-vex-bg border border-vex-border text-sm min-w-0">
+                  <FileCode class="w-3.5 h-3.5 text-vex-primary flex-shrink-0" />
+                  <span class="text-vex-text truncate">{{ fileName }}</span>
+                  <button
+                    @click="resetCode"
+                    class="p-0.5 rounded text-vex-text-muted hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Reset code"
+                  >
+                    <X class="w-3 h-3" />
+                  </button>
+                </div>
+                <button
+                  @click="startScratch"
+                  class="p-1.5 rounded-lg text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  title="New scratch file"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <div class="relative">
+                  <button
+                    @click.stop="versionMenuOpen = !versionMenuOpen"
+                    class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-vex-border text-xs text-vex-text-muted hover:text-white transition-colors cursor-pointer"
+                  >
+                    {{ version }}
+                    <ChevronDown class="w-3 h-3" />
+                  </button>
+                  <div
+                    v-if="versionMenuOpen"
+                    class="absolute right-0 top-full mt-1 w-36 rounded-xl border border-vex-border bg-vex-bg-card shadow-xl shadow-black/40 py-1 z-50"
+                  >
+                    <button
+                      v-for="v in ['Vex (latest)', 'Vex 0.4.0']"
+                      :key="v"
+                      @click.stop="version = v; versionMenuOpen = false"
+                      :class="[
+                        'w-full px-3 py-1.5 text-left text-xs transition-colors cursor-pointer',
+                        version === v ? 'text-vex-primary-light' : 'text-vex-text-muted hover:text-white hover:bg-white/5',
+                      ]"
+                    >
+                      {{ v }}
+                    </button>
+                  </div>
+                </div>
+                <button
+                  @click="editorFullscreen = !editorFullscreen"
+                  class="p-1.5 rounded-lg text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  :title="editorFullscreen ? 'Exit fullscreen' : 'Fullscreen'"
+                >
+                  <Minimize2 v-if="editorFullscreen" class="w-3.5 h-3.5" />
+                  <Maximize2 v-else class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <MonacoVexEditor
+              v-model="editorCode"
+              class="flex-1 min-h-0"
+              submit-on-mod-enter
+              @submit="runCode"
+            />
+          </div>
+
+          <!-- Output card -->
+          <div class="flex flex-col min-h-0 rounded-xl border border-vex-border bg-[#050508] overflow-hidden h-[320px] xl:h-auto">
+            <div class="flex items-center justify-between border-b border-vex-border bg-vex-surface/50 flex-shrink-0 pr-2">
+              <div class="flex items-center min-w-0">
+                <button
+                  @click="selectOutputTab('output')"
+                  :class="[
+                    'flex items-center gap-1.5 px-4 py-2.5 text-sm transition-colors cursor-pointer border-b-2',
+                    activeOutputTab === 'output'
+                      ? 'border-vex-primary text-vex-primary-light'
+                      : 'border-transparent text-vex-text-muted hover:text-white',
+                  ]"
+                >
+                  <Terminal class="w-3.5 h-3.5" />
+                  Output
+                </button>
+                <button
+                  @click="selectOutputTab('ir')"
+                  :class="[
+                    'px-4 py-2.5 text-sm transition-colors cursor-pointer border-b-2',
+                    activeOutputTab === 'ir'
+                      ? 'border-vex-primary text-vex-primary-light'
+                      : 'border-transparent text-vex-text-muted hover:text-white',
+                  ]"
+                >
+                  LLVM IR
+                </button>
+                <button
+                  @click="selectOutputTab('assembly')"
+                  :class="[
+                    'px-4 py-2.5 text-sm transition-colors cursor-pointer border-b-2',
+                    activeOutputTab === 'assembly'
+                      ? 'border-vex-primary text-vex-primary-light'
+                      : 'border-transparent text-vex-text-muted hover:text-white',
+                  ]"
+                >
+                  Assembly
+                </button>
+                <button
+                  @click="selectOutputTab('analysis')"
+                  :class="[
+                    'px-4 py-2.5 text-sm transition-colors cursor-pointer border-b-2',
+                    activeOutputTab === 'analysis'
+                      ? 'border-vex-primary text-vex-primary-light'
+                      : 'border-transparent text-vex-text-muted hover:text-white',
+                  ]"
+                >
+                  Analysis
+                </button>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button
+                  @click="clearOutput"
+                  class="px-2 py-1 rounded-lg text-xs text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+                <button
+                  @click="clearOutput"
+                  class="p-1 rounded-lg text-vex-text-muted hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  title="Clear output"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Output body -->
+            <div class="flex-1 min-h-0 overflow-auto p-5 font-mono text-sm">
+              <template v-if="activeOutputTab === 'output'">
+                <div v-if="isRunning" class="flex items-center gap-2 text-vex-text-muted">
+                  <Loader2 class="w-4 h-4 animate-spin" />
+                  Running...
+                </div>
+                <template v-else>
+                  <pre
+                    v-if="output"
+                    class="whitespace-pre-wrap text-vex-text leading-relaxed"
+                  >{{ output }}</pre>
+                  <pre
+                    v-if="errorText"
+                    class="whitespace-pre-wrap text-red-400 leading-relaxed mb-2"
+                  >{{ errorText }}</pre>
+                  <div class="flex items-center gap-2 text-vex-accent/80 pt-2">
+                    <span class="text-xs font-bold">&gt;_</span>
+                    <span v-if="!output && !errorText" class="text-vex-text-muted/50 text-xs">Press Run or ⌘↵ to execute</span>
+                    <span v-else class="w-2 h-4 bg-vex-accent/50 animate-pulse" />
+                  </div>
+                </template>
+              </template>
+
+              <template v-else-if="activeOutputTab === 'ir'">
+                <div v-if="irLoading" class="flex items-center gap-2 text-vex-text-muted">
+                  <Loader2 class="w-4 h-4 animate-spin" />
+                  Generating LLVM IR...
+                </div>
+                <pre v-else-if="irOutput" class="whitespace-pre-wrap text-vex-text/90 text-xs leading-relaxed">{{ irOutput }}</pre>
+                <div v-else class="h-full flex items-center justify-center text-vex-text-muted/40 text-xs">No IR yet</div>
+              </template>
+
+              <template v-else>
+                <div class="h-full flex flex-col items-center justify-center gap-2 text-vex-text-muted/40">
+                  <Cpu class="w-6 h-6" />
+                  <p class="text-xs">
+                    {{ activeOutputTab === 'assembly' ? 'Assembly view is coming soon.' : 'Analysis view is coming soon.' }}
+                  </p>
+                  <button
+                    @click="selectOutputTab('ir')"
+                    class="text-xs text-vex-primary/80 hover:text-vex-primary transition-colors cursor-pointer"
+                  >
+                    View LLVM IR instead
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Features footer -->
-    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="p-4 rounded-xl border border-vex-border bg-vex-primary/5">
-        <h4 class="text-xs font-bold text-vex-primary uppercase mb-1">Server Execution</h4>
-        <p class="text-xs text-vex-text-muted">Code runs on a sandboxed Vex compiler with full stdlib support.</p>
+    <!-- ═══════════ Slim status footer ═══════════ -->
+    <div class="flex items-center justify-between gap-4 px-6 py-2.5 border-t border-vex-border bg-vex-bg flex-shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="font-display text-sm font-bold tracking-[0.18em]">
+          <span class="text-vex-primary">V</span><span class="text-vex-text">EX</span>
+        </span>
+        <span class="text-xs text-vex-text-muted truncate">Build faster. Run everywhere.</span>
       </div>
-      <div class="p-4 rounded-xl border border-vex-border bg-vex-accent/5">
-        <h4 class="text-xs font-bold text-vex-accent uppercase mb-1">LLVM IR</h4>
-        <p class="text-xs text-vex-text-muted">View the generated LLVM IR for any Vex program.</p>
-      </div>
-      <div class="p-4 rounded-xl border border-vex-border bg-white/5">
-        <h4 class="text-xs font-bold text-vex-text-muted uppercase mb-1">Safety First</h4>
-        <p class="text-xs text-vex-text-muted">Sandboxed environment with memory limits and timeouts.</p>
+      <div class="flex items-center gap-5 text-xs text-vex-text-muted flex-shrink-0">
+        <span class="hidden sm:flex items-center gap-1.5">
+          <span :class="['w-1.5 h-1.5 rounded-full', wasmConnected ? 'bg-emerald-400' : 'bg-vex-text-muted/50']" />
+          Server Execution
+        </span>
+        <span class="hidden md:inline">Safety First</span>
+        <a href="/docs" class="flex items-center gap-1 hover:text-white transition-colors">
+          Docs <ExternalLink class="w-3 h-3" />
+        </a>
+        <a href="https://github.com/meftunca/vex" target="_blank" rel="noopener" class="flex items-center gap-1 hover:text-white transition-colors">
+          GitHub <ExternalLink class="w-3 h-3" />
+        </a>
+        <a href="https://discord.gg/vex" target="_blank" rel="noopener" class="hidden sm:flex items-center gap-1 hover:text-white transition-colors">
+          Discord <ExternalLink class="w-3 h-3" />
+        </a>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+aside::-webkit-scrollbar {
+  width: 4px;
+}
+aside::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+</style>

@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
-  Play,
-  Trophy,
   AlertTriangle,
-  ChevronRight,
-  Sparkles,
-  Code,
+  ArrowLeftRight,
+  ArrowRight,
+  BadgeCheck,
+  BarChart3,
+  Check,
+  ChevronDown,
+  Code2,
   Cpu,
-  Settings,
+  Funnel,
+  ListChecks,
+  Loader2,
+  Maximize2,
+  Minimize2,
+  Play,
+  Search,
+  Settings2,
+  Share2,
+  Sparkles,
+  Trophy,
+  Wand2,
   WandSparkles,
-  FlaskConical,
 } from "lucide-vue-next";
 import { compareCode, comparePreset, type LangResult } from "../api/vex";
 import { benchmarks } from "../data/benchmarks";
@@ -20,7 +32,7 @@ const LANG_META: Record<
   string,
   { label: string; color: string; logo: string }
 > = {
-  vex: { label: "Vex", color: "#00e5a0", logo: "/logos/vex.png" },
+  vex: { label: "Vex", color: "#e30a17", logo: "/logos/vex.png" },
   go: { label: "Go", color: "#00ADD8", logo: "/logos/go.png" },
   rust: { label: "Rust", color: "#CE422B", logo: "/logos/rust.png" },
   zig: { label: "Zig", color: "#F7A41D", logo: "/logos/zig.png" },
@@ -28,22 +40,35 @@ const LANG_META: Record<
   cpp: { label: "C++", color: "#00599C", logo: "/logos/cpp.png" },
 };
 
-// Tabs: "preset" or "custom"
-const activeTab = ref<"preset" | "custom">("preset");
+const optLevels = [
+  { value: "O0", label: "-O0" },
+  { value: "O1", label: "-O1" },
+  { value: "O2", label: "-O2" },
+  { value: "O3", label: "-O3" },
+];
 
-// Preset state
+// --- Layout / navigation state ---
+const activeTab = ref<"preset" | "custom">("preset");
+const rightTab = ref<"config" | "results">("config");
+const searchQuery = ref("");
+const editorFullscreen = ref(false);
+const showAdvanced = ref(false);
+const showGeneratedCode = ref(false);
+const shareCopied = ref(false);
+
+// --- Preset state ---
 const activeExample = ref(0);
 const presetResults = ref<Record<string, LangResult> | null>(null);
 const presetRunning = ref(false);
 const presetError = ref("");
 
-// Custom state
+// --- Custom state ---
 const customCode = ref(`fn main(): i32 {
     let! sum = 0
     for i in 0..1000000 {
         sum = sum + i
     }
-    println(sum)
+    $println(sum)
     return 0
 }`);
 const customResults = ref<Record<string, LangResult> | null>(null);
@@ -51,31 +76,25 @@ const customRunning = ref(false);
 const customError = ref("");
 const customDisclaimer = ref("");
 
-// Shared
-const selectedLangs = ref(["go", "rust", "zig", "c", "cpp"]);
-const availableLangs = computed(() => {
-  if (activeTab.value === "custom") {
-    return ["go", "rust", "zig"];
-  }
-  return ["go", "rust", "zig", "c", "cpp"];
-});
-
-watch(activeTab, (newTab) => {
-  if (newTab === "custom") {
-    selectedLangs.value = selectedLangs.value.filter((l) => l !== "c" && l !== "cpp");
-  }
-});
-
+// --- Shared ---
+const selectedLangs = ref<string[]>(["go", "rust", "zig"]);
 const optLevel = ref("O2");
 const langVersions = ref<Record<string, string>>({});
-const optLevels = [
-  { value: "O0", label: "-O0", desc: "No optimization" },
-  { value: "O1", label: "-O1", desc: "Basic" },
-  { value: "O2", label: "-O2", desc: "Recommended" },
-  { value: "O3", label: "-O3", desc: "Aggressive" },
-];
 
-// Current results based on active tab
+const availableLangs = computed(() =>
+  activeTab.value === "custom" ? ["go", "rust", "zig"] : ["go", "rust", "zig", "c", "cpp"],
+);
+
+const opponents = computed(() =>
+  availableLangs.value.map((id) => ({ id, ...LANG_META[id] })),
+);
+
+const allSelected = computed(
+  () =>
+    availableLangs.value.length > 0 &&
+    availableLangs.value.every((lang) => selectedLangs.value.includes(lang)),
+);
+
 const results = computed(() =>
   activeTab.value === "preset" ? presetResults.value : customResults.value,
 );
@@ -107,7 +126,70 @@ const maxTime = computed(() => {
   return valid.length > 0 ? Math.max(...valid.map((r) => r.time_ms)) : 1;
 });
 
-function loadExample(index: number) {
+const filteredBenchmarks = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  const rows = benchmarks.map((benchmark, index) => ({ ...benchmark, index }));
+  if (!query) return rows;
+  return rows.filter(
+    (row) =>
+      row.name.toLowerCase().includes(query) ||
+      row.description.toLowerCase().includes(query),
+  );
+});
+
+const editorTitle = computed(() =>
+  activeTab.value === "preset"
+    ? `${benchmarks[activeExample.value].name} — Vex Code`
+    : "Your Vex Code",
+);
+
+const statBlocks = computed(() => [
+  {
+    icon: ArrowLeftRight,
+    value: String(Object.keys(LANG_META).length),
+    label: "Languages",
+  },
+  { icon: BarChart3, value: String(benchmarks.length), label: "Benchmarks" },
+  { icon: Cpu, value: "Real", label: "Compilers" },
+  { icon: BadgeCheck, value: "Reproducible", label: "Results" },
+]);
+
+const runningMessage = computed(() =>
+  activeTab.value === "preset"
+    ? "Compiling & running all languages in parallel..."
+    : "AI translating & running all languages in parallel...",
+);
+
+watch(activeTab, (newTab) => {
+  if (newTab === "custom") {
+    selectedLangs.value = selectedLangs.value.filter(
+      (lang) => lang !== "c" && lang !== "cpp",
+    );
+  }
+});
+
+// Single Monaco instance for both modes: remounting the editor on every tab
+// switch tears down its worker/WASM setup, so the buffer is swapped instead.
+const editorText = ref(benchmarks[0].vex);
+
+watch(
+  [activeTab, activeExample, customCode],
+  () => {
+    const next =
+      activeTab.value === "preset"
+        ? benchmarks[activeExample.value].vex
+        : customCode.value;
+    if (editorText.value !== next) editorText.value = next;
+  },
+  { immediate: true },
+);
+
+function onEditorUpdate(value: string) {
+  editorText.value = value;
+  if (activeTab.value === "custom") customCode.value = value;
+}
+
+function selectExample(index: number) {
   activeExample.value = index;
   presetResults.value = null;
   presetError.value = "";
@@ -119,12 +201,17 @@ function toggleLang(lang: string) {
   else selectedLangs.value.push(lang);
 }
 
-// Run preset benchmark with pre-written code (no AI)
+function toggleAll() {
+  selectedLangs.value = allSelected.value ? [] : [...availableLangs.value];
+}
+
+// --- Run ---
 async function runPreset() {
   if (presetRunning.value) return;
   presetRunning.value = true;
   presetResults.value = null;
   presetError.value = "";
+  rightTab.value = "results";
 
   const ex = benchmarks[activeExample.value];
   try {
@@ -133,8 +220,8 @@ async function runPreset() {
       go_code: selectedLangs.value.includes("go") ? ex.go : "",
       rust_code: selectedLangs.value.includes("rust") ? ex.rust : "",
       zig_code: selectedLangs.value.includes("zig") ? ex.zig : "",
-      c_code: selectedLangs.value.includes("c") ? ex.c : "",
-      cpp_code: selectedLangs.value.includes("cpp") ? ex.cpp : "",
+      c_code: selectedLangs.value.includes("c") ? ex.c ?? "" : "",
+      cpp_code: selectedLangs.value.includes("cpp") ? ex.cpp ?? "" : "",
       opt_level: optLevel.value,
     });
     presetResults.value = res.results;
@@ -146,13 +233,13 @@ async function runPreset() {
   }
 }
 
-// Run custom benchmark with AI translation
 async function runCustom() {
   if (customRunning.value || !customCode.value.trim()) return;
   customRunning.value = true;
   customResults.value = null;
   customError.value = "";
   customDisclaimer.value = "";
+  rightTab.value = "results";
 
   try {
     const res = await compareCode(
@@ -171,519 +258,671 @@ async function runCustom() {
 }
 
 function runBenchmark() {
+  if (isRunning.value || !selectedLangs.value.length) return;
   if (activeTab.value === "preset") runPreset();
   else runCustom();
 }
+
+// --- Editor toolbar ---
+function formatCode() {
+  if (activeTab.value !== "custom") return;
+  customCode.value = customCode.value
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+$/, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\n*$/, "\n");
+}
+
+async function shareBenchmark() {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.searchParams.set("bench", String(activeExample.value));
+  url.searchParams.set("tab", activeTab.value);
+  url.searchParams.set("opt", optLevel.value);
+  url.searchParams.set("langs", selectedLangs.value.join(","));
+  try {
+    await navigator.clipboard.writeText(url.toString());
+    shareCopied.value = true;
+    window.setTimeout(() => (shareCopied.value = false), 1600);
+  } catch {
+    /* clipboard unavailable */
+  }
+}
+
+// --- Helpers ---
+const fmtMs = (value?: number | null) =>
+  value == null ? "—" : value >= 100 ? value.toFixed(0) : value >= 10 ? value.toFixed(1) : value.toFixed(2);
+
+const fmtKb = (kb?: number | null) =>
+  kb == null ? "—" : kb >= 1024 ? `${(kb / 1024).toFixed(1)} MB` : `${Math.round(kb)} KB`;
+
+// --- Query params (share links) ---
+function readQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const bench = Number(params.get("bench"));
+  if (Number.isInteger(bench) && bench >= 0 && bench < benchmarks.length) {
+    activeExample.value = bench;
+  }
+  const tab = params.get("tab");
+  if (tab === "custom" || tab === "preset") activeTab.value = tab;
+  const opt = params.get("opt");
+  if (opt && optLevels.some((level) => level.value === opt)) optLevel.value = opt;
+  const langs = params.get("langs");
+  if (langs) {
+    selectedLangs.value = langs
+      .split(",")
+      .filter((lang) => availableLangs.value.includes(lang));
+  }
+}
+
+// --- Keyboard shortcut ---
+function onKeydown(event: KeyboardEvent) {
+  if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+    event.preventDefault();
+    runBenchmark();
+  }
+  if (event.key === "Escape" && editorFullscreen.value) {
+    editorFullscreen.value = false;
+  }
+}
+
+onMounted(() => {
+  readQuery();
+  window.addEventListener("keydown", onKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeydown);
+});
 </script>
 
 <template>
-  <div class="content-page content-page-wide">
-    <!-- Header -->
-    <div class="tool-heading">
+  <div class="content-page">
+    <!-- Heading + stats -->
+    <div class="flex flex-wrap items-start justify-between gap-8">
       <div>
-        <h1 class="flex items-center gap-2">
-          <Trophy class="w-6 h-6 text-vex-accent" />
+        <h1 class="flex items-center gap-3">
+          <span
+            class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-vex-primary/40 bg-vex-primary/10"
+          >
+            <Trophy class="h-5 w-5 text-vex-primary" />
+          </span>
           Benchmark Arena
         </h1>
-        <p class="text-vex-text-muted text-sm mt-1">
-          Compare Vex against Go, Rust & Zig — fair benchmarks, real compilers
+        <p class="mt-3 text-sm text-vex-text-muted">
+          Compare Vex against Go, Rust &amp; Zig — fair benchmarks, real
+          compilers
         </p>
       </div>
-      <button
-        @click="runBenchmark"
-        :disabled="isRunning"
-        class="ui-button ui-button-primary disabled:opacity-50"
-      >
-        <Play v-if="!isRunning" class="w-4 h-4" />
+
+      <div class="flex flex-wrap items-center gap-x-8 gap-y-4">
         <div
-          v-else
-          class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"
-        ></div>
-        {{ isRunning ? "Running..." : "Run benchmarks" }}
-      </button>
+          v-for="stat in statBlocks"
+          :key="stat.label"
+          class="flex items-center gap-3"
+        >
+          <span
+            class="grid h-9 w-9 place-items-center rounded-lg border border-vex-border bg-vex-bg-card"
+          >
+            <component :is="stat.icon" class="h-4 w-4 text-vex-accent" />
+          </span>
+          <div class="leading-tight">
+            <div class="text-sm font-semibold text-vex-text">
+              {{ stat.value }}
+            </div>
+            <div class="text-[11px] text-vex-text-muted">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <!-- Left sidebar -->
+    <div
+      class="mt-8 grid grid-cols-1 gap-5 xl:grid-cols-[264px_minmax(0,1fr)_292px]"
+    >
+      <!-- ================= LEFT: benchmark picker ================= -->
       <div class="space-y-4">
-        <!-- Tab Switcher -->
+        <!-- Tabs -->
         <div
-          class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
+          class="grid grid-cols-2 gap-1.5 rounded-2xl border border-vex-border bg-vex-bg-card p-1.5"
         >
-          <div class="p-2 flex gap-1">
-            <button
-              @click="activeTab = 'preset'"
-              :class="[
-                'flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                activeTab === 'preset'
-                  ? 'bg-yellow-500/15 text-yellow-400'
-                  : 'text-vex-text-muted hover:text-white hover:bg-white/5',
-              ]"
-            >
-              <Sparkles class="w-4 h-4" />
-              Benchmarks
-            </button>
-            <button
-              @click="activeTab = 'custom'"
-              :class="[
-                'flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                activeTab === 'custom'
-                  ? 'bg-purple-500/15 text-purple-400'
-                  : 'text-vex-text-muted hover:text-white hover:bg-white/5',
-              ]"
-            >
-              <FlaskConical class="w-4 h-4" />
-              Try your own code.
-            </button>
-          </div>
+          <button
+            type="button"
+            class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors"
+            :class="
+              activeTab === 'preset'
+                ? 'border-vex-primary bg-vex-primary/10 text-white'
+                : 'border-transparent text-vex-text-muted hover:bg-white/5 hover:text-white'
+            "
+            @click="activeTab = 'preset'"
+          >
+            <Sparkles class="h-3.5 w-3.5" />
+            Benchmarks
+          </button>
+          <button
+            type="button"
+            class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-[13px] font-medium transition-colors"
+            :class="
+              activeTab === 'custom'
+                ? 'border-vex-primary bg-vex-primary/10 text-white'
+                : 'border-transparent text-vex-text-muted hover:bg-white/5 hover:text-white'
+            "
+            @click="activeTab = 'custom'"
+          >
+            <Code2 class="h-3.5 w-3.5" />
+            Try your code
+          </button>
         </div>
 
-        <!-- Examples (preset tab) -->
+        <!-- Benchmark list -->
         <div
           v-if="activeTab === 'preset'"
-          class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
+          class="flex flex-col overflow-hidden rounded-2xl border border-vex-border bg-vex-bg-card"
         >
-          <div
-            class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2"
-          >
-            <Sparkles class="w-4 h-4 text-yellow-400" />
-            <span
-              class="text-xs font-bold text-vex-text-muted uppercase tracking-wider"
-              >Examples</span
-            >
-            <span class="ml-auto text-[10px] text-vex-text-muted">{{
-              benchmarks.length
-            }}</span>
-          </div>
-          <div class="p-2 max-h-[520px] overflow-y-auto">
+          <div class="flex items-center gap-2 border-b border-vex-border p-3">
+            <div class="relative flex-1">
+              <Search
+                class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-vex-text-muted"
+              />
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search benchmarks..."
+                class="h-9 w-full rounded-lg border border-vex-border bg-vex-bg pl-8 pr-3 text-[13px] text-vex-text placeholder-vex-text-muted focus:border-vex-border-light focus:outline-none"
+              />
+            </div>
             <button
-              v-for="(ex, i) in benchmarks"
-              :key="i"
-              @click="loadExample(i)"
-              :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all text-left mb-1 group',
-                activeExample === i
-                  ? 'bg-yellow-500/10 text-yellow-400'
-                  : 'text-vex-text-muted hover:bg-white/5 hover:text-white',
-              ]"
+              type="button"
+              class="grid h-9 w-9 cursor-pointer place-items-center rounded-lg border border-vex-border text-vex-text-muted transition-colors hover:border-vex-border-light hover:text-white disabled:cursor-default disabled:opacity-40"
+              :disabled="!searchQuery"
+              title="Clear search"
+              @click="searchQuery = ''"
+            >
+              <Funnel class="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div class="max-h-[430px] overflow-y-auto p-2">
+            <button
+              v-for="row in filteredBenchmarks"
+              :key="row.index"
+              type="button"
+              class="mb-1 flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors"
+              :class="
+                activeExample === row.index
+                  ? 'border-vex-primary/60 bg-vex-primary/[0.07] text-white'
+                  : 'border-transparent text-vex-text hover:bg-white/[0.04] hover:text-white'
+              "
+              @click="selectExample(row.index)"
             >
               <span
-                class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold"
-                :class="
-                  activeExample === i
-                    ? 'bg-yellow-500/20 text-yellow-400'
-                    : 'bg-white/5 text-vex-text-muted'
-                "
-                >{{ i + 1 }}</span
+                class="w-6 shrink-0 text-right font-mono text-[11px] text-vex-text-muted"
+                >{{ row.index + 1 }}</span
               >
-              <div class="flex-1 min-w-0">
-                <span class="truncate block">{{ ex.name }}</span>
-                <span class="text-[10px] text-vex-text-muted truncate block">{{
-                  ex.description
+              <span class="min-w-0 flex-1 text-left">
+                <span class="block truncate text-[13px] font-medium">{{
+                  row.name
                 }}</span>
-              </div>
-              <ChevronRight
-                :class="[
-                  'w-3 h-3 transition-transform flex-shrink-0',
-                  activeExample === i
-                    ? 'translate-x-0'
-                    : '-translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0',
-                ]"
-              />
+                <span
+                  class="mt-0.5 block truncate text-[11px] text-vex-text-muted"
+                  >{{ row.description }}</span
+                >
+              </span>
             </button>
+            <p
+              v-if="!filteredBenchmarks.length"
+              class="px-3 py-6 text-center text-xs text-vex-text-muted"
+            >
+              No benchmarks match "{{ searchQuery }}".
+            </p>
           </div>
+
+          <a
+            class="flex items-center gap-3 border-t border-vex-border p-3 transition-colors hover:bg-white/[0.03]"
+            href="https://github.com/meftunca/vex/issues"
+            target="_blank"
+            rel="noopener"
+          >
+            <span
+              class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-vex-primary/40 bg-vex-primary/10"
+            >
+              <ListChecks class="h-4 w-4 text-vex-primary" />
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-[12px] font-medium text-vex-text"
+                >Have a benchmark idea?</span
+              >
+              <span class="block text-[11px] text-vex-text-muted"
+                >Open an issue or submit a PR</span
+              >
+            </span>
+            <ArrowRight class="h-4 w-4 shrink-0 text-vex-text-muted" />
+          </a>
         </div>
 
-        <!-- Custom mode info -->
+        <!-- Custom-mode note -->
         <div
-          v-if="activeTab === 'custom'"
-          class="rounded-2xl border border-purple-500/20 bg-purple-500/5 p-4"
+          v-else
+          class="rounded-2xl border border-vex-border bg-vex-bg-card p-4"
         >
-          <div class="flex items-center gap-2 mb-2">
-            <WandSparkles class="w-4 h-4 text-purple-400" />
-            <span class="text-sm font-medium text-purple-300"
-              >AI Translation</span
-            >
+          <div class="flex items-center gap-2 text-[13px] font-medium text-vex-text">
+            <WandSparkles class="h-4 w-4 text-vex-primary" />
+            AI translation
           </div>
-          <p class="text-xs text-vex-text-muted leading-relaxed">
-            Write Vex code and AI will translate it to Go, Rust & Zig. All 4
-            versions run on real compilers for fair comparison.
+          <p class="mt-2 text-xs leading-relaxed text-vex-text-muted">
+            Write Vex code and AI translates it to the selected opponents.
+            Every version runs on a real compiler for a fair comparison.
           </p>
         </div>
+      </div>
 
-        <!-- Language selector -->
+      <!-- ================= CENTER: editor ================= -->
+      <div class="min-w-0">
         <div
-          class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
+          :class="
+            editorFullscreen
+              ? 'fixed inset-0 z-[120] flex flex-col gap-3 bg-vex-bg p-4'
+              : 'overflow-hidden rounded-2xl border border-vex-border bg-vex-bg-card'
+          "
         >
           <div
-            class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2"
+            class="flex items-center gap-3 border-b border-vex-border bg-vex-surface/50 px-4 py-2.5"
           >
-            <Cpu class="w-4 h-4 text-vex-primary" />
+            <Code2 class="h-4 w-4 shrink-0 text-vex-primary" />
             <span
-              class="text-xs font-bold text-vex-text-muted uppercase tracking-wider"
-              >Opponents</span
+              class="truncate font-mono text-[11px] uppercase tracking-[0.14em] text-vex-text-muted"
             >
-          </div>
-          <div class="p-3 space-y-2">
-            <button
-              v-for="lang in availableLangs"
-              :key="lang"
-              @click="toggleLang(lang)"
-              :class="[
-                'w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all',
-                selectedLangs.includes(lang)
-                  ? 'bg-white/10 text-white'
-                  : 'text-vex-text-muted opacity-50 hover:opacity-100',
-              ]"
-            >
-              <img :src="LANG_META[lang].logo" :alt="LANG_META[lang].label" class="w-5 h-5 object-contain" />
-              <span class="flex-1 text-left">{{ LANG_META[lang].label }}</span>
-              <div
-                :class="[
-                  'w-4 h-4 rounded border-2 transition-all',
-                  selectedLangs.includes(lang)
-                    ? 'border-vex-primary bg-vex-primary'
-                    : 'border-vex-border',
-                ]"
+              {{ editorTitle }}
+            </span>
+            <div class="ml-auto flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-vex-border px-2.5 py-1.5 text-[11px] text-vex-text-muted transition-colors hover:border-vex-border-light hover:text-white disabled:cursor-default disabled:opacity-40"
+                :disabled="activeTab !== 'custom'"
+                title="Trim trailing whitespace and collapse blank lines"
+                @click="formatCode"
               >
-                <svg
-                  v-if="selectedLangs.includes(lang)"
-                  class="w-full h-full text-black"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="3"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-            </button>
+                <Wand2 class="h-3.5 w-3.5" />
+                Format
+              </button>
+              <button
+                type="button"
+                class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-vex-border px-2.5 py-1.5 text-[11px] text-vex-text-muted transition-colors hover:border-vex-border-light hover:text-white"
+                @click="shareBenchmark"
+              >
+                <Share2 class="h-3.5 w-3.5" />
+                {{ shareCopied ? "Copied!" : "Share" }}
+              </button>
+              <button
+                type="button"
+                class="grid h-7 w-7 cursor-pointer place-items-center rounded-lg border border-vex-border text-vex-text-muted transition-colors hover:border-vex-border-light hover:text-white"
+                :title="editorFullscreen ? 'Exit fullscreen' : 'Fullscreen editor'"
+                @click="editorFullscreen = !editorFullscreen"
+              >
+                <Minimize2 v-if="editorFullscreen" class="h-3.5 w-3.5" />
+                <Maximize2 v-else class="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Optimization Level -->
-        <div
-          class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
-        >
-          <div
-            class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2"
-          >
-            <Settings class="w-4 h-4 text-vex-primary" />
-            <span
-              class="text-xs font-bold text-vex-text-muted uppercase tracking-wider"
-              >Opt Level</span
-            >
-          </div>
-          <div class="p-3 flex gap-2">
-            <button
-              v-for="o in optLevels"
-              :key="o.value"
-              @click="optLevel = o.value"
-              :title="o.desc"
-              :class="[
-                'flex-1 px-2 py-2 rounded-xl text-xs font-mono font-bold transition-all text-center',
-                optLevel === o.value
-                  ? 'bg-vex-primary text-vex-bg'
-                  : 'bg-white/5 text-vex-text-muted hover:text-white',
-              ]"
-            >
-              {{ o.label }}
-            </button>
+          <div class="relative" :class="editorFullscreen ? 'min-h-0 flex-1' : ''">
+            <div :class="editorFullscreen ? 'h-full' : 'h-[320px] md:h-[440px]'">
+              <MonacoVexEditor
+                :model-value="editorText"
+                :read-only="activeTab === 'preset'"
+                submit-on-mod-enter
+                class="h-full"
+                :aria-label="
+                  activeTab === 'custom' ? 'Vex benchmark editor' : 'Benchmark source'
+                "
+                @update:model-value="onEditorUpdate"
+                @submit="runBenchmark"
+              />
+            </div>
+
+            <div class="absolute bottom-3 right-3 z-10">
+              <div class="relative">
+                <select
+                  v-model="activeTab"
+                  class="cursor-pointer appearance-none rounded-lg border border-vex-border bg-vex-surface/95 py-1.5 pl-3 pr-8 text-[11px] text-vex-text focus:outline-none"
+                >
+                  <option value="preset">Vex (pre-written)</option>
+                  <option value="custom">Your own code</option>
+                </select>
+                <ChevronDown
+                  class="pointer-events-none absolute right-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-vex-text-muted"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Main content -->
-      <div class="lg:col-span-3 flex flex-col gap-6">
-        <!-- Code editor -->
+      <!-- ================= RIGHT: configuration / results ================= -->
+      <div class="space-y-4">
         <div
-          class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
+          class="overflow-hidden rounded-2xl border border-vex-border bg-vex-bg-card"
         >
-          <div
-            class="flex items-center gap-2 px-4 py-2 border-b border-vex-border bg-vex-surface/50"
-          >
-            <Code class="w-4 h-4 text-vex-primary" />
-            <span
-              class="text-xs font-bold text-vex-text-muted uppercase tracking-wider"
+          <div class="grid grid-cols-2 gap-1.5 border-b border-vex-border p-1.5">
+            <button
+              type="button"
+              class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-medium transition-colors"
+              :class="
+                rightTab === 'config'
+                  ? 'border-vex-primary bg-vex-primary/10 text-white'
+                  : 'border-transparent text-vex-text-muted hover:bg-white/5 hover:text-white'
+              "
+              @click="rightTab = 'config'"
             >
-              {{
-                activeTab === "preset"
-                  ? benchmarks[activeExample].name + " — Vex Code"
-                  : "Your Vex Code"
-              }}
-            </span>
-            <span
-              v-if="activeTab === 'preset'"
-              class="ml-auto text-[10px] text-vex-text-muted"
-              >Pre-written code for all languages</span
+              <Settings2 class="h-3.5 w-3.5" />
+              Configuration
+            </button>
+            <button
+              type="button"
+              class="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2 text-[12px] font-medium transition-colors"
+              :class="
+                rightTab === 'results'
+                  ? 'border-vex-primary bg-vex-primary/10 text-white'
+                  : 'border-transparent text-vex-text-muted hover:bg-white/5 hover:text-white'
+              "
+              @click="rightTab = 'results'"
             >
-            <span v-else class="ml-auto text-[10px] text-vex-text-muted"
-              >AI will translate to other languages</span
-            >
+              <BarChart3 class="h-3.5 w-3.5" />
+              Results
+            </button>
           </div>
-          <div v-if="activeTab === 'custom'" class="h-48">
-            <MonacoVexEditor
-              v-model="customCode"
-              class="h-full"
-              submit-on-mod-enter
-              @submit="runBenchmark"
-            />
-          </div>
-          <pre
-            v-else
-            class="p-4 text-sm text-white font-mono whitespace-pre-wrap max-h-48 overflow-auto"
-            >{{ benchmarks[activeExample].vex }}</pre
-          >
-        </div>
 
-        <!-- Loading animation -->
-        <div
-          v-if="isRunning"
-          class="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-8"
-        >
-          <div class="flex items-center justify-center gap-4">
-            <div class="flex gap-6">
-              <div
-                v-for="(lang, index) in ['vex', ...selectedLangs]"
-                :key="lang"
-                class="flex flex-col items-center gap-2"
-              >
-                <div
-                  class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl animate-bounce"
-                  :style="{
-                    animationDelay: `${index * 100}ms`,
-                    backgroundColor: LANG_META[lang]?.color + '15',
-                  }"
+          <!-- Configuration -->
+          <div v-if="rightTab === 'config'" class="space-y-5 p-4">
+            <div>
+              <div class="mb-2 flex items-center justify-between">
+                <span
+                  class="text-[11px] font-semibold uppercase tracking-[0.14em] text-vex-text-muted"
+                  >Opponents</span
                 >
-                  <img :src="LANG_META[lang]?.logo" :alt="LANG_META[lang]?.label" class="w-6 h-6 object-contain" />
+                <button
+                  type="button"
+                  class="cursor-pointer text-[11px] text-vex-primary transition-colors hover:text-vex-primary-light"
+                  @click="toggleAll"
+                >
+                  {{ allSelected ? "Clear" : "Select all" }}
+                </button>
+              </div>
+
+              <div class="space-y-1.5">
+                <!-- Vex is always in the race -->
+                <div
+                  class="flex items-center gap-3 rounded-xl border border-vex-primary/40 bg-vex-primary/[0.06] px-3 py-2"
+                >
+                  <span
+                    class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-vex-primary text-white"
+                  >
+                    <Check class="h-3.5 w-3.5" />
+                  </span>
+                  <img
+                    :src="LANG_META.vex.logo"
+                    alt=""
+                    class="h-4 w-4 shrink-0 object-contain"
+                  />
+                  <span class="flex-1 text-[13px] text-white">Vex</span>
+                  <span class="text-[10px] text-vex-text-muted">(current)</span>
                 </div>
-                <span class="text-xs text-vex-text-muted">{{
-                  LANG_META[lang]?.label
-                }}</span>
+
+                <button
+                  v-for="op in opponents"
+                  :key="op.id"
+                  type="button"
+                  class="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-vex-border px-3 py-2 text-left transition-colors hover:border-vex-border-light"
+                  @click="toggleLang(op.id)"
+                >
+                  <span
+                    class="grid h-6 w-6 shrink-0 place-items-center rounded-md border transition-colors"
+                    :class="
+                      selectedLangs.includes(op.id)
+                        ? 'border-transparent'
+                        : 'border-vex-border'
+                    "
+                    :style="
+                      selectedLangs.includes(op.id)
+                        ? { backgroundColor: op.color }
+                        : {}
+                    "
+                  >
+                    <Check
+                      v-if="selectedLangs.includes(op.id)"
+                      class="h-3.5 w-3.5 text-black"
+                    />
+                  </span>
+                  <img
+                    :src="op.logo"
+                    alt=""
+                    class="h-4 w-4 shrink-0 object-contain"
+                  />
+                  <span
+                    class="flex-1 text-[13px]"
+                    :class="
+                      selectedLangs.includes(op.id)
+                        ? 'text-white'
+                        : 'text-vex-text-muted'
+                    "
+                    >{{ op.label }}</span
+                  >
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span
+                class="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-vex-text-muted"
+                >Opt Level</span
+              >
+              <div class="grid grid-cols-4 gap-1.5">
+                <button
+                  v-for="level in optLevels"
+                  :key="level.value"
+                  type="button"
+                  class="cursor-pointer rounded-lg py-2 text-center font-mono text-[11px] font-bold transition-colors"
+                  :class="
+                    optLevel === level.value
+                      ? 'bg-vex-primary text-white'
+                      : 'bg-white/5 text-vex-text-muted hover:text-white'
+                  "
+                  @click="optLevel = level.value"
+                >
+                  {{ level.label }}
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-vex-border">
+              <button
+                type="button"
+                class="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-[12px] text-vex-text-muted transition-colors hover:text-white"
+                @click="showAdvanced = !showAdvanced"
+              >
+                <Settings2 class="h-3.5 w-3.5" />
+                Advanced options
+                <ChevronDown
+                  class="ml-auto h-3.5 w-3.5 transition-transform"
+                  :class="showAdvanced ? 'rotate-180' : ''"
+                />
+              </button>
+              <label
+                v-if="showAdvanced"
+                class="flex cursor-pointer items-start gap-2.5 border-t border-vex-border px-3 py-3 text-[12px] leading-relaxed text-vex-text-muted"
+              >
+                <input
+                  v-model="showGeneratedCode"
+                  type="checkbox"
+                  class="mt-0.5 accent-[#e30a17]"
+                />
+                <span>
+                  <span class="text-vex-text">Show generated source</span>
+                  <br />
+                  List the translated Go / Rust / Zig code in the results.
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <button
+                type="button"
+                class="ui-button ui-button-primary w-full disabled:opacity-50"
+                :disabled="isRunning || !selectedLangs.length"
+                @click="runBenchmark"
+              >
+                <Loader2 v-if="isRunning" class="h-4 w-4 animate-spin" />
+                <Play v-else class="h-4 w-4" />
+                {{ isRunning ? "Running..." : "Run benchmarks" }}
+                <kbd
+                  v-if="!isRunning"
+                  class="ml-1 rounded border border-white/25 bg-white/10 px-1.5 py-0.5 font-sans text-[10px] leading-none"
+                  >⌘↵</kbd
+                >
+              </button>
+              <p class="mt-2.5 text-[11px] leading-relaxed text-vex-text-muted">
+                Compiles each language with the selected options and runs them
+                for a fair comparison.
+              </p>
+              <div
+                v-if="errorMsg"
+                class="mt-3 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/5 p-3 text-[12px] text-red-400"
+              >
+                <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{{ errorMsg }}</span>
               </div>
             </div>
           </div>
-          <p class="text-center text-sm text-vex-text-muted mt-4">
-            {{
-              activeTab === "preset"
-                ? "Compiling &amp; running all languages in parallel..."
-                : "AI translating &amp; running all languages in parallel..."
-            }}
-          </p>
-        </div>
 
-        <!-- Error -->
-        <div
-          v-if="errorMsg"
-          class="rounded-2xl border border-red-500/30 bg-red-500/5 p-4"
-        >
-          <div class="flex items-center gap-2 text-red-400">
-            <AlertTriangle class="w-5 h-5" />
-            <span class="text-sm font-medium">{{ errorMsg }}</span>
-          </div>
-        </div>
+          <!-- Results -->
+          <div v-else class="space-y-3 p-4">
+            <template v-if="isRunning">
+              <div class="flex items-center gap-2 text-[12px] text-vex-text-muted">
+                <Loader2 class="h-4 w-4 animate-spin text-vex-primary" />
+                {{ runningMessage }}
+              </div>
+              <div
+                v-for="i in 3"
+                :key="i"
+                class="h-14 animate-pulse rounded-xl border border-vex-border bg-white/[0.02]"
+              />
+            </template>
 
-        <!-- Results -->
-        <div v-if="results && !isRunning" class="space-y-4">
-          <!-- Podium -->
-          <div
-            class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
-          >
-            <div
-              class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2"
-            >
-              <Trophy class="w-4 h-4 text-yellow-400" />
-              <span
-                class="text-xs font-bold text-vex-text-muted uppercase tracking-wider"
-                >Results</span
-              >
-              <span
+            <template v-else-if="results">
+              <p
                 v-if="customDisclaimer && activeTab === 'custom'"
-                class="ml-auto text-[10px] text-vex-text-muted italic"
-                >{{ customDisclaimer }}</span
+                class="text-[10px] italic text-vex-text-muted"
               >
-              <span
-                v-if="activeTab === 'preset'"
-                class="ml-auto text-[10px] text-vex-text-muted"
-                >Hand-written code · No AI translation</span
-              >
-            </div>
-            <div class="p-4 space-y-3">
+                {{ customDisclaimer }}
+              </p>
+
               <div
                 v-for="(r, i) in sortedResults"
                 :key="r.lang"
-                :class="[
-                  'flex items-center gap-4 p-3 rounded-xl transition-all',
+                class="rounded-xl border px-3 py-2.5"
+                :class="
                   r.lang === fastest
-                    ? 'bg-yellow-500/10 border border-yellow-500/20'
-                    : 'bg-white/[0.02]',
-                ]"
+                    ? 'border-vex-primary/40 bg-vex-primary/[0.06]'
+                    : 'border-vex-border bg-white/[0.02]'
+                "
               >
-                <!-- Rank -->
-                <div
-                  :class="[
-                    'w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm',
-                    i === 0 && !r.error
-                      ? 'bg-yellow-500 text-black'
-                      : i === 1 && !r.error
-                        ? 'bg-gray-300 text-black'
-                        : i === 2 && !r.error
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-white/10 text-vex-text-muted',
-                  ]"
-                >
-                  {{ r.error ? "✗" : i + 1 }}
-                </div>
-
-                <!-- Lang -->
-                <div class="flex items-center gap-2 w-28">
-                  <img :src="LANG_META[r.lang]?.logo" :alt="LANG_META[r.lang]?.label" class="w-5 h-5 object-contain" />
-                  <div class="flex flex-col">
-                    <span class="text-sm font-medium text-white">{{
-                      LANG_META[r.lang]?.label
-                    }}</span>
-                    <span
-                      v-if="langVersions[r.lang]"
-                      class="text-[9px] text-vex-text-muted leading-tight"
-                      >{{ langVersions[r.lang] }}</span
-                    >
-                  </div>
-                </div>
-
-                <!-- Bar + Metrics -->
-                <div class="flex-1">
-                  <div
-                    v-if="!r.error"
-                    class="h-6 rounded-full overflow-hidden bg-white/5"
-                  >
-                    <div
-                      class="h-full rounded-full transition-all duration-1000 ease-out flex items-center justify-end pr-2"
-                      :style="{
-                        width: Math.max(8, (r.time_ms / maxTime) * 100) + '%',
-                        backgroundColor: LANG_META[r.lang]?.color,
-                      }"
-                    >
-                      <span
-                        class="text-[10px] font-bold text-black whitespace-nowrap"
-                        >{{ r.time_ms.toFixed(1) }}ms</span
-                      >
-                    </div>
-                  </div>
-                  <div
-                    v-if="!r.error"
-                    class="flex flex-wrap gap-3 mt-1.5 text-[10px] text-vex-text-muted"
-                  >
-                    <span v-if="r.compile_time_ms"
-                      >⚡ Compile: {{ r.compile_time_ms.toFixed(1) }}ms</span
-                    >
-                    <span v-if="r.run_time_ms"
-                      >▶ Total Run: {{ r.run_time_ms.toFixed(1) }}ms</span
-                    >
-                    <span v-if="r.execution_time_ms != null"
-                      >⏱️ Code Execution: {{ r.execution_time_ms.toFixed(2) }}ms</span
-                    >
-                    <span
-                      >👤 User:
-                      {{
-                        r.user_time_ms != null
-                          ? r.user_time_ms.toFixed(2)
-                          : "0.00"
-                      }}ms</span
-                    >
-                    <span
-                      >⚙️ Sys:
-                      {{
-                        r.sys_time_ms != null
-                          ? r.sys_time_ms.toFixed(2)
-                          : "0.00"
-                      }}ms</span
-                    >
-                    <span v-if="r.memory_kb"
-                      >💾
-                      {{
-                        r.memory_kb > 1024
-                          ? (r.memory_kb / 1024).toFixed(1) + " MB"
-                          : r.memory_kb + " KB"
-                      }}</span
-                    >
-                    <span v-if="r.binary_kb"
-                      >📦
-                      {{
-                        r.binary_kb > 1024
-                          ? (r.binary_kb / 1024).toFixed(1) + " MB"
-                          : r.binary_kb + " KB"
-                      }}</span
-                    >
-                  </div>
-                  <div v-if="r.error" class="text-xs text-red-400">
-                    {{
-                      r.error.length > 120
-                        ? r.error.substring(0, 120) + "..."
-                        : r.error
-                    }}
-                  </div>
-                </div>
-
-                <!-- Trophy for winner -->
-                <div class="w-6">
-                  <Trophy
-                    v-if="i === 0 && !r.error"
-                    class="w-5 h-5 text-yellow-400"
+                <div class="flex items-center gap-2">
+                  <span class="w-4 font-mono text-[10px] text-vex-text-muted">{{
+                    r.error ? "×" : i + 1
+                  }}</span>
+                  <img
+                    :src="LANG_META[r.lang]?.logo"
+                    alt=""
+                    class="h-3.5 w-3.5 shrink-0 object-contain"
                   />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Code Tabs -->
-          <div
-            class="rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden"
-          >
-            <div
-              class="px-4 py-3 border-b border-vex-border bg-vex-surface/50 flex items-center gap-2"
-            >
-              <Code class="w-4 h-4 text-vex-primary" />
-              <span
-                class="text-xs font-bold text-vex-text-muted uppercase tracking-wider"
-              >
-                {{
-                  activeTab === "preset" ? "Source Code" : "AI-Generated Code"
-                }}
-              </span>
-            </div>
-            <div class="p-2">
-              <details
-                v-for="r in sortedResults.filter(
-                  (x) => x.code && x.lang !== 'vex',
-                )"
-                :key="r.lang"
-                class="mb-2"
-              >
-                <summary
-                  class="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer hover:bg-white/5 text-sm text-vex-text-muted"
-                >
-                  <img :src="LANG_META[r.lang]?.logo" :alt="LANG_META[r.lang]?.label" class="w-5 h-5 object-contain" />
-                  <span class="font-medium text-white">{{
+                  <span class="text-[12px] font-medium text-white">{{
                     LANG_META[r.lang]?.label
                   }}</span>
                   <span
-                    v-if="r.stdout"
-                    class="ml-2 text-[10px] text-vex-text-muted/70"
-                    >stdout: {{ r.stdout.trim().substring(0, 40) }}</span
+                    v-if="langVersions[r.lang]"
+                    class="truncate text-[9px] text-vex-text-muted"
+                    >{{ langVersions[r.lang] }}</span
                   >
-                  <span class="ml-auto text-[10px] text-vex-text-muted"
-                    >click to expand</span
+                  <Trophy
+                    v-if="r.lang === fastest"
+                    class="h-3.5 w-3.5 shrink-0 text-vex-primary"
+                  />
+                  <span
+                    class="ml-auto text-[12px] font-semibold tabular-nums text-white"
+                    >{{ r.error ? "—" : fmtMs(r.time_ms) + "ms" }}</span
                   >
-                </summary>
-                <pre
-                  class="mx-3 mb-2 p-4 rounded-xl bg-black/30 text-[11px] text-vex-text overflow-auto font-mono whitespace-pre-wrap max-h-64"
-                  >{{ r.code }}</pre
+                </div>
+
+                <div
+                  v-if="!r.error"
+                  class="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5"
                 >
-              </details>
+                  <div
+                    class="h-full rounded-full"
+                    :style="{
+                      width: Math.max(6, (r.time_ms / maxTime) * 100) + '%',
+                      backgroundColor: LANG_META[r.lang]?.color,
+                    }"
+                  />
+                </div>
+
+                <p v-if="r.error" class="mt-1.5 text-[10px] leading-snug text-red-400">
+                  {{ r.error }}
+                </p>
+                <div
+                  v-else
+                  class="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-vex-text-muted"
+                >
+                  <span v-if="r.compile_time_ms != null"
+                    >compile {{ fmtMs(r.compile_time_ms) }}ms</span
+                  >
+                  <span v-if="r.run_time_ms != null"
+                    >run {{ fmtMs(r.run_time_ms) }}ms</span
+                  >
+                  <span v-if="r.memory_kb">mem {{ fmtKb(r.memory_kb) }}</span>
+                  <span v-if="r.binary_kb">bin {{ fmtKb(r.binary_kb) }}</span>
+                </div>
+              </div>
+
+              <div v-if="showGeneratedCode" class="space-y-2 pt-1">
+                <span
+                  class="block text-[11px] font-semibold uppercase tracking-[0.14em] text-vex-text-muted"
+                  >Generated source</span
+                >
+                <details
+                  v-for="r in sortedResults.filter(
+                    (x) => x.code && x.lang !== 'vex',
+                  )"
+                  :key="'code-' + r.lang"
+                  class="rounded-xl border border-vex-border bg-vex-bg"
+                >
+                  <summary
+                    class="cursor-pointer list-none px-3 py-2 text-[12px] text-vex-text-muted transition-colors hover:text-white"
+                  >
+                    {{ LANG_META[r.lang]?.label }} source
+                  </summary>
+                  <pre
+                    class="max-h-56 overflow-auto border-t border-vex-border p-3 text-[10px] leading-relaxed text-vex-text">{{ r.code }}</pre>
+                </details>
+              </div>
+
+              <p class="pt-1 text-[10px] text-vex-text-muted">
+                {{
+                  activeTab === "preset"
+                    ? "Hand-written code · no AI translation"
+                    : "AI-translated opponents · may not be idiomatic"
+                }}
+              </p>
+            </template>
+
+            <div
+              v-else
+              class="flex flex-col items-center gap-2 py-8 text-center"
+            >
+              <BarChart3 class="h-5 w-5 text-vex-text-muted" />
+              <p class="max-w-[15rem] text-[12px] leading-relaxed text-vex-text-muted">
+                Run the benchmark to see how each language compares.
+              </p>
             </div>
           </div>
         </div>
