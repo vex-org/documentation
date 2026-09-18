@@ -81,6 +81,11 @@ instead rejects it before connection ownership changes.
 
 ## Ownership and backpressure
 
+`WsMessage.text()` returns an independent owned `string` without consuming the
+message. It copies the payload, so use `message.data.asStr()` when a borrowed,
+allocation-free view is sufficient. That view must not outlive its backing
+message data; the owned `text()` result may outlive the message.
+
 After a valid `101` handoff, the original HTTP/1 connection state changes in
 place to a worker-owned `WsSession`. The worker remains the sole fd owner:
 

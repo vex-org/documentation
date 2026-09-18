@@ -96,7 +96,154 @@ The precise statement here is: the current checker already rejects several class
 
 ## Common Patterns
 
+### Borrowed Results from Temporary Owners
+
+A call may borrow an unnamed source value and return a view into it. When
+that view is consumed directly by another call, the source owner stays alive
+until the consuming expression finishes:
+
+```vex
+// makeOwner() returns an owned value; view() borrows it; read() returns i32.
+let value = makeOwner().view().read();
+```
+
+This applies to ordinary user-defined types, free functions and method chains;
+it is not a special rule for strings or collections. Scalar field and pointer
+dereference reads through a safe reference are evaluated before cleanup.
+Owners sharing a cleanup boundary are destroyed in reverse construction order.
+A scalar-returning call without a borrowed-result chain still cleans its own
+temporary operands immediately after that call.
+
+The chain does **not** extend an owner across a binding, a block boundary, a
+return, a capture or a suspension. To keep a view, keep its owner explicitly:
+
+```vex
+let owner = makeOwner();
+let view = owner.view();
+let value = view.read();
+
+// Invalid when the view borrows the temporary owner's storage:
+// let dangling = makeOwner().view();
+```
+
+This rule concerns borrowing existing source storage. Ownership-producing
+argument conversions have separate temporary/escape checks; a constructor
+conversion does not automatically make its borrowed result escapable.
+
+### Temporaries Created by Argument Conversions
+
+A conversion that only borrows existing storage does not create a new owner.
+For example, `&string` (including nested references) can provide a `str` view
+of the original string's bytes. The view retains that owner's lifetime; it
+cannot outlive the string. This conversion is not an implicit clone.
+
+An argument conversion may create a new owner before borrowing it for the
+callee. For example, passing a `str` to an `&string` parameter constructs
+temporary owned storage. The source `str` and that new owner have different
+lifetimes, even when the source is a string literal.
+
+The converted owner is registered before later arguments are evaluated.
+Normal completion and early `return`, `break` or `continue` use the same
+cleanup mechanism. Variadic arguments follow the same sealed conversion and
+ownership rules as ordinary arguments.
+
+A callee cannot export this temporary's reference through an output field
+merely because its return type is `None`:
+
+```vex
+struct View { source: &string }
+fn store(output: &View!, input: &string) { output.source = input; }
+
+fn invalid(initial: &string, text: str): &string {
+    let! output = View { source: initial };
+    store(&output!, text); // A separate converted owner lives for this call.
+    return output.source; // Rejected: that owner has already expired.
+}
+```
+
+Keep an owned value explicitly when the stored view must remain usable.
+Replacing an expired reference field with a valid reference before reading it
+is allowed; taking a direct field's address to overwrite it does not read its
+old reference value.
+
+Typed variadic calls follow the same rule. Every element in `...&T` contributes
+its own reference origins to the pack; later arguments cannot escape the
+check. An empty pack contributes no element references. The pack owns its
+element storage, but does not become the owner of external values referenced
+by those elements. Returning an element's reference can therefore be valid
+when its external owner remains alive; returning a borrow of the pack's own
+element storage is not.
+
+Native calls can borrow an owning pack through the shared Span API (`get`,
+`getUnchecked`, `slice`, `splitAt`). This does not convert the pack into an
+owned Span value or transfer its cleanup responsibility. A nested view must
+remain within the pack's lifetime. The descriptor view requires identical
+element types and does not admit an exclusive descriptor borrow.
+
+::: warning Current validation boundary
+Ordinary direct, method, static, generic and function-value output writes,
+plus typed variadic direct/method/static/generic writes, have focused
+regressions. This is not whole-language lifetime qualification.
+Constructor-returned converted views retain their conservative escape
+restriction until the full lifetime model is implemented. Native owning-pack
+views have O0/O3 ownership, drop and escape regressions. CTFE uses the same
+shared pack-view recipe for const-capable source methods: it materializes a
+descriptor pointing into the original pack instead of copying the elements.
+Its pointers preserve allocation identity and cannot outlive the pack frame.
+This does not implicitly mark ordinary Span methods as `const`; the existing
+comptime callable-admission rules still apply.
+:::
+
+### Named Values and Field Borrows
+
+The dot in `State.Ready` selects an enum value; it does not borrow a field from
+a runtime object named `State`. Passing that value to a reference parameter
+materializes temporary storage for the value. An explicit `&State.Ready` can
+also be used within its enclosing lifetime, but cannot be returned as a
+reference to permanent storage merely because the variant has a name.
+
+By contrast, `&object.field` borrows the object's existing field storage. A
+projection such as `&makeOwner().field` retains the complete temporary owner,
+not just an independently copied field. These rules follow resolved values
+and storage projections, not type names or prelude privileges.
+
+### Reading a Value Through a Reference
+
+A contextual `&T` to `T` load does not transfer ownership from the referent.
+It can copy a `Copy` value, including a user-defined type with the appropriate
+contract. For a non-Copy owner, retain a reference or explicitly clone it when
+the type supports cloning. The same rule applies to pattern bindings, fields,
+indexed elements, function/method results, and block/branch results.
+
+```vex
+enum Message { Text(string), Empty }
+
+fn copyText(message: &Message): string {
+    return match message {
+        Message.Text(text) => text.clone(),
+        Message.Empty => "",
+    };
+}
+```
+
+Here `text` borrows the payload. Returning `text` directly as an owned `string`
+is rejected; returning its explicit clone leaves the original message intact.
+Matching an owned `Message` by value can instead transfer its payload normally.
+Serde's dynamic `asString()` getters follow the explicit-clone contract: their
+owned results remain valid after the source value is destroyed. Read-only
+views should be used when an independent owned result is unnecessary.
+
 ### Returning References from Functions
+
+A getter returning a reference reborrows existing storage; it does not move
+the referenced value. For example, `&*reference` remains a reborrow even when
+the pointee is a non-Copy generic type. Writing through a mutable getter's
+result uses that result's capability. Two separate live getter results do not
+become interchangeable permissions: a conflicting write is still rejected.
+
+Shared references can retain the lifetime of their mutable parent without
+gaining mutable access. These rules apply structurally to user-defined types
+and adapters, not just to prelude or standard-library getters.
 
 ```vex
 struct User {

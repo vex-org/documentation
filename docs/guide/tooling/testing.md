@@ -28,6 +28,16 @@ and benchmark names, `async`, context parameters and return types therefore
 retain the same meaning when a legal signature spans multiple lines. Receiver
 methods are not free test entrypoints.
 
+Select an existing directory, an exact `.vx` file, or a quoted glob. Directory
+discovery includes `*.test.vx`, `*_test.vx` and `*_bench.vx`; file globs can select
+other `.vx` filenames explicitly. Missing paths and globs selecting no source
+files fail with a nonzero exit status. An existing empty directory or a name
+filter matching no functions is an empty selection, not a passing test suite.
+Automatic traversal excludes generated runners and build/cache directories,
+does not follow directory symlinks, and deduplicates source-file aliases. An
+explicit directory-symlink root is supported. See the
+[`vex test` reference](/references/vex-test-reference) for the full selection rules.
+
 Skipped contexts are reported as SKIP, not PASS. Test state is private and
 cannot be overwritten by the test body. A test file containing discovered test
 functions must not define `main`.
@@ -78,6 +88,7 @@ different workloads.
 
 ```bash
 vex test path/to/tests
+vex test "lib/std/net/tests/*.test.vx"
 vex test --run expression path/to/tests
 vex test --no-parallel --timeout 60 path/to/tests
 vex test --failfast path/to/tests
@@ -88,3 +99,14 @@ vex test --analyze-comptime path/to/tests
 
 `--analyze-comptime` is observation-only; it does not change semantics or
 enable speculative rewrites.
+
+For tests, `--timeout` limits execution of each generated file runner, starting
+at entry to `main`. It is not multiplied by the number of test functions.
+Compilation and process startup use separate watchdogs; a slow compile does
+not consume the runtime allowance.
+
+A later timeout preserves completed test outcomes and partial diagnostics.
+Failure during process finalization is reported separately from individual
+tests, including when every test has already passed. JSON consumers should
+check the process exit status and `file_errors` as well as test counts; see the
+[`vex test` reference](/references/vex-test-reference).

@@ -157,6 +157,20 @@ underlying implementation and use a private 16 KiB buffer. Dispatch remains
 static—there is no trait object or per-operation heap allocation. Large reads
 and writes bypass the intermediate buffer.
 
+While an adapter is in use, access its underlying reader/writer through
+`getRef()` (read-only) or `getRefMut()` (mutable), not through the original
+binding. Both methods reborrow the existing object; they do not clone it or
+allocate. A returned reference follows the adapter's normal borrow rules.
+
+Direct underlying operations do not synchronize the private buffer:
+
+- After seeking or reading through `BufReader.getRefMut()`, call
+  `discardBuffered()` if the old read-ahead bytes are no longer wanted.
+- Flush `BufWriter` successfully before writing directly to its underlying
+  writer when byte ordering matters. `getRefMut()` does not flush implicitly;
+  it can also be used to repair a provider after a failed flush, then retry
+  the preserved buffered suffix.
+
 ```vex
 let! source = openRead("records.txt".toString()).unwrap();
 let! reader = bufReader(&source);

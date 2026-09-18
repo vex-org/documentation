@@ -29,31 +29,31 @@ async function deletePost(postId: string, title: string) {
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
+  <div class="workspace-page">
+    <div class="workspace-heading">
       <div>
-        <h1 class="text-xl font-bold text-white">Posts</h1>
-        <p v-if="!loading" class="text-xs text-zinc-500 mt-0.5">{{ posts.length }} total</p>
+        <h1>Posts</h1>
+        <p v-if="!loading" class="text-xs text-vex-text-muted mt-0.5">{{ posts.length }} total</p>
       </div>
-      <router-link to="/dashboard/posts/new" class="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium transition-colors">+ New post</router-link>
+      <router-link to="/dashboard/posts/new" class="ui-button ui-button-primary">+ New post</router-link>
     </div>
     <div v-if="loading" class="flex items-center justify-center py-16">
-      <div class="w-5 h-5 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin"></div>
+      <div class="w-5 h-5 border-2 border-zinc-700 border-t-vex-primary rounded-full animate-spin"></div>
     </div>
-    <div v-else-if="posts.length" class="space-y-1.5">
+    <div v-else-if="posts.length" class="workspace-list space-y-2">
       <div v-for="p in posts" :key="p.id" class="flex items-center gap-3 px-4 py-3 rounded-lg border border-zinc-800/50 hover:bg-zinc-800/30 transition-all group">
         <router-link :to="`/dashboard/posts/${p.id}/edit`" class="flex-1 text-sm text-zinc-300 group-hover:text-white transition-colors truncate">{{ p.title }}</router-link>
-        <span :class="['text-[10px] px-1.5 py-0.5 rounded font-medium', p.status === 'published' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500']">{{ p.status }}</span>
-        <span class="text-[11px] text-zinc-600 w-20 text-right">{{ p.published_at ? new Date(p.published_at).toLocaleDateString() : 'Draft' }}</span>
-        <button type="button" class="p-1.5 rounded-lg text-zinc-700 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer opacity-0 group-hover:opacity-100" title="Delete post" @click.prevent="deletePost(p.id, p.title)">
+        <span :class="['text-xs px-1.5 py-0.5 rounded font-medium', p.status === 'published' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500']">{{ p.status }}</span>
+        <span class="text-xs text-vex-text-muted w-20 text-right">{{ p.published_at ? new Date(p.published_at).toLocaleDateString() : 'Draft' }}</span>
+        <button type="button" class="p-1.5 rounded-lg text-vex-text-muted hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer opacity-100" title="Delete post" @click.prevent="deletePost(p.id, p.title)">
           <Trash2 class="w-4 h-4" />
         </button>
       </div>
     </div>
-    <div v-else class="text-center py-16">
-      <FileText class="w-8 h-8 text-zinc-700 mx-auto mb-2" />
-      <p class="text-sm text-zinc-500 mb-3">No posts yet.</p>
-      <router-link to="/dashboard/posts/new" class="text-sky-500 text-sm hover:underline">Write your first post</router-link>
+    <div v-else class="ui-empty-state workspace-panel">
+      <FileText class="w-8 h-8 text-vex-text-muted mx-auto mb-2" />
+      <p class="text-sm text-vex-text-muted mb-3">No posts yet.</p>
+      <router-link to="/dashboard/posts/new" class="text-vex-primary-light text-sm hover:underline">Write your first post</router-link>
     </div>
   </div>
 </template>

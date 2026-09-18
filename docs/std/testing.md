@@ -37,6 +37,20 @@ Message-bearing variants are `assertEqMsg`, `assertStrEqMsg` and
 `assertTrueMsg`. Standalone status helpers `eq`, `ne`, `ok`, `okMsg`, `gt`,
 `lt`, `gte`, and `lte` return `0` on success and `1` on failure.
 
+For fallible fixture setup, report the failure before returning from the test:
+
+```vex
+let fixture = match createFixture() {
+    Some(value) => value,
+    None => { t.err("fixture initialization failed"); return; }
+};
+```
+
+Do not use `!> || { return; }` here: it returns unit from the fallback closure,
+not from the test function. A benchmark setup failure must also be visible;
+panic with a fixture-specific message instead of silently returning before
+`b.iter` and reporting an empty measurement.
+
 ## BenchCtx
 
 ```vex

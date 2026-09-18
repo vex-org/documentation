@@ -200,7 +200,7 @@ async function logout() {
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-vex-border mt-auto">
+    <footer v-if="!route.path.startsWith('/dashboard') && !['/playground', '/ai'].includes(route.path)" class="border-t border-vex-border mt-auto">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
           <div>

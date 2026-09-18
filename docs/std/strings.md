@@ -35,9 +35,19 @@ Available methods:
 | `writeU64(value: u64)` | Append unsigned decimal text |
 | `writeF64(value: f64, precision: i32)` | Append rounded fixed/scientific text without an intermediate string |
 | `toString()` | Copy current bytes into an owned `string`; later builder reuse cannot change it |
+| `asStr()` | Borrow initialized bytes without copying; end this view before mutating the builder |
 | `len()` / `isEmpty()` | Inspect logical content |
 | `capacity()` | Inspect reserved byte capacity |
 | `reset()` | Clear content while retaining capacity |
+| `discardPrefix(count: usize)` | Remove leading bytes in place with an overlap-safe move; retain capacity and allocator region |
+
+Use `discardPrefix` to consume a parsed prefix of an incremental byte buffer.
+Do not reset a builder and append a view into that same builder: `writeStr`
+requires disjoint source storage, and growing the buffer can invalidate the
+view. `discardPrefix` requires exclusive access, performs no allocation, and
+moves only the remaining bytes. Zero is a no-op; consuming the entire buffer
+keeps its allocation; a count greater than `len()` panics. Counts are bytes,
+so UTF-8 text consumers must choose a character boundary.
 
 ## Search
 

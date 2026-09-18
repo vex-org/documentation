@@ -45,9 +45,10 @@ async function doSearch() {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <div class="content-page">
     <div class="mb-10">
-      <h1 class="text-2xl font-bold text-white mb-1">Packages</h1>
+      <p class="page-eyebrow">Package registry</p>
+        <h1>Packages</h1>
       <p class="text-sm text-vex-text-muted">Discover and share Vex libraries.</p>
     </div>
 
@@ -72,17 +73,17 @@ async function doSearch() {
     </div>
 
     <!-- Results -->
-    <div v-else-if="packages.length" class="space-y-px">
+    <div v-else-if="packages.length" class="catalogue-list">
       <router-link
         v-for="pkg in packages"
         :key="pkg.id"
         :to="`/packages/${pkg.name}`"
-        class="group flex items-start gap-4 p-4 -mx-2 px-2 rounded-lg hover:bg-vex-bg-card transition-colors"
+        class="group flex items-start gap-4 p-5 rounded-xl border border-vex-border bg-vex-bg-card hover:bg-vex-bg-card transition-colors"
       >
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-0.5">
             <h3 class="text-sm font-semibold text-white group-hover:text-vex-primary transition-colors font-mono">{{ pkg.name }}</h3>
-            <span v-if="pkg.latest_version" class="text-[11px] px-1.5 py-0.5 rounded bg-vex-surface-light text-vex-text-muted font-mono">v{{ pkg.latest_version }}</span>
+            <span v-if="pkg.latest_version" class="text-xs px-1.5 py-0.5 rounded bg-vex-surface-light text-vex-text-muted font-mono">v{{ pkg.latest_version }}</span>
           </div>
           <p v-if="pkg.description" class="text-xs text-vex-text-muted mt-0.5 line-clamp-1">{{ pkg.description }}</p>
         </div>
@@ -97,8 +98,11 @@ async function doSearch() {
     </div>
 
     <!-- Empty -->
-    <div v-else class="text-center py-20">
-      <p class="text-sm text-vex-text-muted">No packages found.</p>
+    <div v-else class="ui-empty-state workspace-panel">
+      <div class="empty-state-icon"><Download :size="24" /></div>
+      <h2 class="text-base font-semibold text-white">No packages found</h2>
+      <p>Try a different search, or share a library with the Vex community.</p>
+      <router-link to="/dashboard/packages/new" class="ui-button ui-button-secondary">Publish a package</router-link>
     </div>
   </div>
 </template>

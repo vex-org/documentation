@@ -53,109 +53,83 @@ function timeAgo(dateStr: string): string {
 </script>
 
 <template>
-  <div>
-    <!-- Welcome -->
-    <div class="mb-8">
-      <h1 class="text-xl font-semibold text-white">Welcome back, {{ displayName }}</h1>
-      <p class="text-sm text-zinc-500 mt-0.5">Here's what's happening with your content.</p>
-    </div>
+  <div class="workspace-page">
+    <header class="workspace-heading">
+      <div>
+        <p class="page-eyebrow">Workspace / Overview</p>
+        <h1>{{ displayName ? 'Welcome back, ' + displayName : 'Your workspace' }}</h1>
+        <p>Your writing, packages, and projects. All in one place.</p>
+      </div>
+      <router-link to="/dashboard/posts/new" class="ui-button ui-button-primary"><PenSquare :size="16" /> New post</router-link>
+    </header>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex items-center justify-center py-16">
-      <div class="w-5 h-5 border-2 border-zinc-700 border-t-sky-500 rounded-full animate-spin"></div>
+    <div v-if="loading" class="workspace-loading" role="status" aria-label="Loading workspace">
+      <div v-for="n in 4" :key="n" class="skeleton-card"><span></span><strong></strong><span></span></div>
+      <p>Loading your workspace…</p>
     </div>
-
     <template v-else>
-      <!-- Stats -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-        <div class="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Posts</span>
-            <FileText class="w-4 h-4 text-zinc-700" />
-          </div>
-          <p class="text-2xl font-bold text-white">{{ stats.posts }}</p>
-          <p class="text-[11px] text-zinc-600 mt-1">{{ stats.published }} published · {{ stats.drafts }} drafts</p>
-        </div>
-        <div class="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Packages</span>
-            <Package class="w-4 h-4 text-zinc-700" />
-          </div>
-          <p class="text-2xl font-bold text-white">{{ stats.packages }}</p>
-        </div>
-        <div class="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Projects</span>
-            <GitBranch class="w-4 h-4 text-zinc-700" />
-          </div>
-          <p class="text-2xl font-bold text-white">{{ stats.projects }}</p>
-        </div>
-        <div class="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/50">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">Engagement</span>
-            <Heart class="w-4 h-4 text-zinc-700" />
-          </div>
-          <p class="text-2xl font-bold text-white">{{ stats.claps }}</p>
-          <p class="text-[11px] text-zinc-600 mt-1">{{ stats.comments }} comments</p>
+      <div class="metric-grid">
+        <router-link to="/dashboard/posts" class="metric-card">
+          <div><span>Posts</span><FileText :size="18" /></div>
+          <strong>{{ stats.posts }}</strong>
+          <p>{{ stats.published }} published <span>·</span> {{ stats.drafts }} {{ stats.drafts === 1 ? 'draft' : 'drafts' }}</p>
+        </router-link>
+        <router-link to="/dashboard/packages" class="metric-card">
+          <div><span>Packages</span><Package :size="18" /></div>
+          <strong>{{ stats.packages }}</strong>
+          <p>Libraries you maintain</p>
+        </router-link>
+        <router-link to="/dashboard/projects" class="metric-card">
+          <div><span>Projects</span><GitBranch :size="18" /></div>
+          <strong>{{ stats.projects }}</strong>
+          <p>Ideas you're building</p>
+        </router-link>
+        <div class="metric-card">
+          <div><span>Claps</span><Heart :size="18" /></div>
+          <strong>{{ stats.claps }}</strong>
+          <p>{{ stats.comments }} comments on your posts</p>
         </div>
       </div>
 
-      <!-- Recent Posts + Quick Actions -->
-      <div class="grid lg:grid-cols-5 gap-6">
-        <!-- Recent Posts -->
-        <div class="lg:col-span-3">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-semibold text-zinc-400">Recent Posts</h2>
-            <router-link to="/dashboard/posts" class="text-xs text-zinc-600 hover:text-zinc-400 transition-colors flex items-center gap-1">
-              View all <ArrowRight class="w-3 h-3" />
+      <div class="workspace-overview-grid">
+        <section class="workspace-panel">
+          <header class="panel-heading">
+            <div><h2>Recent writing</h2><p>Pick up where you left off.</p></div>
+            <router-link to="/dashboard/posts" class="ui-text-link">View all <ArrowRight :size="14" /></router-link>
+          </header>
+          <div v-if="recentPosts.length" class="workspace-recent">
+            <router-link v-for="post in recentPosts" :key="post.id" :to="`/dashboard/posts/${post.id}/edit`" class="recent-row">
+              <FileText :size="18" class="recent-icon" />
+              <div class="recent-title"><strong>{{ post.title }}</strong><span>{{ timeAgo(post.created_at) }}</span></div>
+              <span class="status-badge" :class="post.status === 'published' ? 'status-published' : 'status-draft'">{{ post.status }}</span>
+              <ArrowRight :size="16" class="recent-arrow" />
             </router-link>
           </div>
-          <div v-if="recentPosts.length" class="space-y-1">
-            <router-link v-for="post in recentPosts" :key="post.id" :to="`/dashboard/posts/${post.id}/edit`"
-              class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-800/40 transition-colors group">
-              <span class="text-sm text-zinc-300 group-hover:text-white transition-colors truncate mr-3">{{ post.title }}</span>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <span :class="['text-[10px] px-1.5 py-0.5 rounded font-medium', post.status === 'published' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500']">{{ post.status }}</span>
-                <span class="text-[11px] text-zinc-600 w-14 text-right">{{ timeAgo(post.created_at) }}</span>
-              </div>
-            </router-link>
+          <div v-else class="ui-empty-state">
+            <div class="empty-state-icon"><PenSquare :size="24" /></div>
+            <h3>Your next idea starts here.</h3>
+            <p>Share a tutorial, a discovery, or what you're building with Vex.</p>
+            <router-link to="/dashboard/posts/new" class="ui-button ui-button-secondary">Write your first post <ArrowRight :size="15" /></router-link>
           </div>
-          <p v-else class="text-sm text-zinc-600 px-3 py-6">No posts yet. Write your first one!</p>
-        </div>
+        </section>
 
-        <!-- Quick Actions -->
-        <div class="lg:col-span-2">
-          <h2 class="text-sm font-semibold text-zinc-400 mb-3">Quick Actions</h2>
-          <div class="space-y-2">
-            <router-link to="/dashboard/posts/new" class="flex items-center gap-3 px-3 py-3 rounded-lg border border-zinc-800/50 hover:border-sky-500/20 hover:bg-sky-500/5 transition-all group">
-              <div class="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center flex-shrink-0">
-                <PenSquare class="w-4 h-4 text-sky-500" />
-              </div>
-              <div>
-                <p class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">New Post</p>
-                <p class="text-[11px] text-zinc-600">Write a blog post</p>
-              </div>
+        <section class="workspace-panel">
+          <header class="panel-heading"><div><h2>Start something</h2><p>Contribute to the Vex ecosystem.</p></div></header>
+          <div class="workspace-actions">
+            <router-link to="/dashboard/posts/new" class="workspace-action">
+              <span class="action-icon"><PenSquare :size="19" /></span>
+              <div><strong>Write a post</strong><span>Share what you've learned.</span></div><ArrowRight :size="16" />
             </router-link>
-            <router-link to="/dashboard/packages/new" class="flex items-center gap-3 px-3 py-3 rounded-lg border border-zinc-800/50 hover:border-sky-500/20 hover:bg-sky-500/5 transition-all group">
-              <div class="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center flex-shrink-0">
-                <Rocket class="w-4 h-4 text-sky-500" />
-              </div>
-              <div>
-                <p class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">Publish Package</p>
-                <p class="text-[11px] text-zinc-600">Share a Vex package</p>
-              </div>
+            <router-link to="/dashboard/packages/new" class="workspace-action">
+              <span class="action-icon"><Rocket :size="19" /></span>
+              <div><strong>Publish a package</strong><span>Put your library to work.</span></div><ArrowRight :size="16" />
             </router-link>
-            <router-link to="/dashboard/projects/new" class="flex items-center gap-3 px-3 py-3 rounded-lg border border-zinc-800/50 hover:border-sky-500/20 hover:bg-sky-500/5 transition-all group">
-              <div class="w-8 h-8 rounded-lg bg-sky-500/10 flex items-center justify-center flex-shrink-0">
-                <FolderPlus class="w-4 h-4 text-sky-500" />
-              </div>
-              <div>
-                <p class="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors">New Project</p>
-                <p class="text-[11px] text-zinc-600">Rally the community</p>
-              </div>
+            <router-link to="/dashboard/projects/new" class="workspace-action">
+              <span class="action-icon"><FolderPlus :size="19" /></span>
+              <div><strong>Create a project</strong><span>Build something together.</span></div><ArrowRight :size="16" />
             </router-link>
           </div>
-        </div>
+        </section>
       </div>
     </template>
   </div>

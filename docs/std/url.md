@@ -62,13 +62,18 @@ formEncode("a b+c");    // a+b%2Bc
 
 ## Query components
 
-`tryParseQuery` returns `Result<Vec<QueryParam>, UrlDecodeError>` and preserves
+`tryParseQuery(raw: str)` returns `Result<Vec<QueryParam>, UrlDecodeError>` and preserves
 the distinction between `bare` and `empty=` through `QueryParam.hasValue`.
-`buildQuery` uses form encoding. `parseQuery` is the compatibility wrapper and
+`buildQuery` uses form encoding. `parseQuery(raw: str)` is the compatibility wrapper and
 returns an empty vector for malformed input. Parsing reserves the component
 upper bound before decode. Building computes the exact encoded length, performs
 one owned allocation, and writes the canonical `FormUrl` representation
 directly into the final string.
+
+Both query parsers borrow their input as `str`; passing an owned `string` does
+not consume or implicitly clone it. Returned keys and values are independent
+owned strings. URL query accessors can therefore be called repeatedly without
+copying the complete query merely to start parsing it.
 
 ## Resource limits
 
@@ -83,7 +88,15 @@ Useful URL methods include `toString`, `hostPort`, `tryQueryParams`,
 
 ## Current validation
 
-The package passes strict lint and 42 tests at O0 and O3. The RFC 3986 section
+On 2026-09-06 the full package passed **45 tests at both O0 and O3**, including
+repeated borrowed-input reuse, heap-backed decode results, and cleanup after a
+partially decoded query fails. Cleanup tests require zero live-allocation and
+byte growth after warming the same loop boundary: the first arena save creates
+reusable runtime metadata, which straight-line warmup does not exercise. The
+separate thread-cleanup regression verifies that cached metadata is released.
+Strict lint and the benchmark figures below are earlier baselines, not new
+measurements from this recovery run.
+The RFC 3986 section
 5.4 normal and abnormal resolution examples are regression tests. On the local
 Apple M2 Max O3 baseline, simple/full parsing measures about 132/340 ns,
 five-component query parse/build about 223/169 ns, URI serialization about

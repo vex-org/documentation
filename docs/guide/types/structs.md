@@ -91,6 +91,30 @@ fn main(): i32 {
 
 Use associated functions for constructors and type-level operations. Use receiver methods when an existing value is the subject of the operation.
 
+## Callable constructors
+
+A function can share its name with its result type. Constructor overloads are
+ordinary source-defined functions; their bodies supply initialization policy:
+
+~~~vex
+struct Counter { value: i64 }
+
+fn Counter(): Counter { return Counter { value: 73 }; }
+fn Counter(value: i64): Counter { return Counter { value: value + 1 }; }
+
+fn main(): i32 {
+    let first = Counter();
+    let second = Counter(40);
+    return if first.value == 73 && second.value == 41 { 0 } else { 1 };
+}
+~~~
+
+Overload selection and generic arguments are resolved before code generation.
+The backend does not replace a selected constructor with zero-initialization
+because a type is registered in the Prelude. `Vec<T>()` and `Channel<T>(n)` use
+their Vex constructor bodies. Box construction remains integrated with VUMM's
+compiler-managed ownership strategy.
+
 ## Generic structs
 
 Structs may have type parameters:

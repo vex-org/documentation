@@ -82,7 +82,7 @@ function setMode(m: typeof mode.value) {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 h-[calc(100vh-80px)] flex flex-col">
+  <div class="tool-page tool-page-chat">
     <!-- Header -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-white flex items-center gap-2">
@@ -93,7 +93,7 @@ function setMode(m: typeof mode.value) {
     </div>
 
     <!-- Mode Selector -->
-    <div class="flex gap-2 mb-4">
+    <div class="flex flex-wrap gap-2 mb-4">
       <button
         v-for="m in modes"
         :key="m.key"
@@ -108,7 +108,7 @@ function setMode(m: typeof mode.value) {
     <!-- Chat Messages -->
     <div ref="chatContainer" class="flex-1 overflow-auto rounded-2xl border border-vex-border bg-vex-bg-card p-4 space-y-4 min-h-0">
       <!-- Empty State -->
-      <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-vex-text-muted">
+      <div v-if="messages.length === 0" class="h-full flex flex-col items-center justify-center text-center text-vex-text-muted">
         <Bot class="w-16 h-16 mb-4 opacity-30" />
         <p class="text-lg font-medium mb-2">Vex AI Assistant</p>
         <p class="text-sm opacity-70">Ask anything about Vex syntax, concepts, or get help with your code</p>
@@ -122,7 +122,7 @@ function setMode(m: typeof mode.value) {
         <div :class="['max-w-[80%] rounded-2xl px-4 py-3 text-sm', msg.role === 'user' ? 'bg-vex-primary/15 text-white' : 'bg-white/5 text-vex-text']">
           <div v-if="msg.role === 'assistant'" class="prose-vex prose-sm prose-pre:bg-black/40 prose-pre:border prose-pre:border-white/10 prose-pre:rounded-xl prose-code:before:content-none prose-code:after:content-none" v-html="renderMarkdown(msg.content)"></div>
           <pre v-else class="whitespace-pre-wrap font-sans break-words">{{ msg.content }}</pre>
-          <div v-if="msg.model" class="mt-2 text-[10px] text-vex-text-muted opacity-50">{{ msg.model }}</div>
+          <div v-if="msg.model" class="mt-2 text-xs text-vex-text-muted">{{ msg.model }}</div>
         </div>
         <div v-if="msg.role === 'user'" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
           <User class="w-4 h-4 text-vex-text-muted" />
@@ -161,12 +161,14 @@ function setMode(m: typeof mode.value) {
         @keydown="handleKeydown"
         :placeholder="mode === 'ask' ? 'Ask about Vex...' : mode === 'explain' ? 'Any specific question? (optional)' : mode === 'translate' ? 'Describe what the code does (optional)' : 'Describe the error...'"
         rows="1"
-        class="flex-1 px-4 py-3 rounded-xl bg-vex-bg-card border border-vex-border text-white text-sm resize-none focus:outline-none focus:border-vex-primary/50"
+        aria-label="Message to Vex AI"
+        class="flex-1 min-w-0 px-4 py-3 rounded-xl bg-vex-bg-card border border-vex-border text-white text-sm resize-none focus:outline-none focus:border-vex-primary/50"
       ></textarea>
       <button 
         @click="sendMessage"
         :disabled="isLoading || (!input.trim() && !codeInput.trim())"
-        class="px-5 py-3 rounded-xl bg-vex-primary hover:bg-vex-primary-light text-vex-bg font-bold transition-all disabled:opacity-50 cursor-pointer"
+        aria-label="Send message"
+        class="ui-button ui-button-primary disabled:opacity-50"
       >
         <Send class="w-5 h-5" />
       </button>

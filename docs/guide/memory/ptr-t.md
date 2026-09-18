@@ -23,13 +23,31 @@ Allocation constructors are:
 
 | Constructor | Result |
 | --- | --- |
-| `Ptr.null<T>()` | null typed pointer |
-| `Ptr.nullMut<T>()` | null pointer with writable-pointee capability |
+| `Ptr.null<T>()` | const-callable null typed pointer |
+| `Ptr.nullMut<T>()` | const-callable null pointer with writable-pointee capability |
 | `Ptr.alloc<T>()` | allocate one uninitialized `T` |
 | `Ptr.allocWith<T>(value)` | allocate and initialize one `T` |
 | `Ptr.allocN<T>(count)` | allocate `count` uninitialized contiguous elements |
 
 An uninitialized allocation must be written before it is read.
+
+`Ptr.null` and `Ptr.nullMut` are ordinary Vex `const fn` declarations. They can
+run at runtime or inside `#const` without allocating; they do not require a
+special permission reserved for prelude functions. A user-defined const
+function returning `0 as Ptr<T>` uses the same evaluation rules. A null handle
+does not authorize a read or write through that pointer.
+
+```vex
+const fn emptyHandle<T>(): Ptr<T> { return 0 as Ptr<T>; }
+
+let handle = #const { emptyHandle<i32>() }; // inferred as Ptr<i32>
+let writable = #const { Ptr.nullMut<u8>() }; // inferred as Ptr<u8!>
+let opaque = #const { Ptr.null<Opaque>() }; // inferred as Ptr<Opaque>
+```
+
+Required evaluation preserves the result's pointer type and access mode when
+embedding it back into runtime code; the local binding needs no extra cast or
+type annotation.
 
 ## Reads and writes
 
@@ -84,6 +102,21 @@ units. Use `RawBuf` when the layout is naturally byte-oriented.
 Creating a reference, span, or slice from a raw pointer is unsafe: the caller
 must prove lifetime, extent, alignment, initialization, and aliasing.
 
+The borrow checker retains known subobject paths, so borrowing distinct
+fields through the same typed pointer does not automatically borrow the whole
+pointee. This precision does not prove the allocation's lifetime or make raw
+pointer aliases unique; those remain obligations at the unsafe boundary.
+
+A whole-pointee reference and a field reference through the same tracked
+address participate in the same conflict checks. Direct raw-pointer copies,
+pointer-to-pointer casts, and proven raw-to-reference call returns retain
+that address relation. Copying an address does not itself create a safe loan.
+The local variable holding the address and the pointee have distinct
+lifetimes: ending the former does not validate or invalidate the allocation,
+and borrowing the pointer variable itself is still an ordinary local borrow.
+These checks are not a complete raw-pointer alias analysis; unchecked
+addresses and opaque memory effects remain the unsafe caller's responsibility.
+
 To reinterpret the element type, cross an explicit opaque-pointer boundary:
 
 ```vex
@@ -105,7 +138,8 @@ That distinction is intentional and should stay visible at call sites.
 
 ## Deallocation
 
-- `free()` destroys an allocation created for one `T` and nulls the handle.
+- `free()` frees an allocation created for one `T`. It does not null the
+  pointer or its copies; all aliases must be treated as dangling afterward.
 - `freeN(count)` destroys an allocation created by `allocN(count)` and supplies
   the correct total byte size.
 

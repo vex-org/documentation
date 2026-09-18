@@ -43,10 +43,11 @@ function coverUrl(path: string | null): string | null {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <div class="content-page">
     <div class="mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-white mb-1">Blog</h1>
+        <p class="page-eyebrow">Journal</p>
+        <h1>Blog</h1>
         <p class="text-sm text-vex-text-muted">Updates, tutorials, and insights from the Vex team.</p>
       </div>
       <a href="/feed.xml" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-medium text-vex-text-muted hover:text-white transition-colors">
@@ -92,7 +93,7 @@ function coverUrl(path: string | null): string | null {
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-2">
-                <span v-for="t in (post.post_tags || []).slice(0, 2)" :key="t.tag" class="text-[10px] px-1.5 py-0.5 rounded bg-vex-surface-light text-vex-text-muted uppercase tracking-wider font-medium">{{ t.tag }}</span>
+                <span v-for="t in (post.post_tags || []).slice(0, 2)" :key="t.tag" class="text-xs px-1.5 py-0.5 rounded bg-vex-surface-light text-vex-text-muted uppercase tracking-wider font-medium">{{ t.tag }}</span>
               </div>
               <h2 class="text-xl font-semibold text-white group-hover:text-vex-primary transition-colors mb-2 leading-snug">{{ post.title }}</h2>
               <p v-if="post.excerpt" class="text-sm text-vex-text-muted line-clamp-2 mb-3">{{ post.excerpt }}</p>
@@ -127,7 +128,7 @@ function coverUrl(path: string | null): string | null {
     </div>
 
     <!-- Empty -->
-    <div v-else class="text-center py-20">
+    <div v-else class="ui-empty-state workspace-panel">
       <p class="text-sm text-vex-text-muted">No posts yet. Check back soon.</p>
     </div>
 

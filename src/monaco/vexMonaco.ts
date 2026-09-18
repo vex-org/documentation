@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor'
+import EditorWorker from 'monaco-editor/editor/editor.worker.js?worker'
 import { Registry } from 'monaco-textmate'
 import { wireTmGrammars } from 'monaco-editor-textmate'
 import { loadWASM } from 'vscode-oniguruma'
@@ -40,10 +41,7 @@ function ensureMonacoEnvironment() {
 
   monacoGlobal.MonacoEnvironment = {
     getWorker() {
-      return new Worker(
-        new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
-        { type: 'module' },
-      )
+      return new EditorWorker()
     },
   }
 }

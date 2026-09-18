@@ -37,6 +37,11 @@ fn main(): i32 {
 
 The channel type carries the element type. Sending a value of another type is a semantic error.
 
+`Channel<T>()` and `Channel<T>(capacity)` are source-defined Prelude constructor
+overloads that delegate to `Channel.new<T>`. Their defaults and initialization
+belong to that Vex source, not a second constructor implementation in the
+compiler. The no-argument overload currently selects capacity 16.
+
 ## Capacity
 
 The integer passed to Channel is the buffer capacity:

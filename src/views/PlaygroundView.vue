@@ -309,8 +309,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 h-[calc(100vh-80px)] flex flex-col">
-    <div class="flex items-center justify-between mb-6">
+  <div class="tool-page">
+    <div class="tool-heading">
       <div>
         <h1 class="text-2xl font-bold text-white flex items-center gap-2">
           <Sparkles class="w-6 h-6 text-vex-primary" />
@@ -323,7 +323,7 @@ onMounted(async () => {
         </p>
       </div>
       
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <!-- Opt Level -->
         <div class="flex items-center gap-1 bg-white/5 rounded-lg p-1">
           <Settings class="w-3.5 h-3.5 text-vex-text-muted ml-2" />
@@ -342,7 +342,7 @@ onMounted(async () => {
         <button 
           @click="runCode"
           :disabled="isRunning"
-          class="flex items-center gap-2 px-6 py-2 rounded-lg bg-vex-primary hover:bg-vex-primary-light text-vex-bg font-bold transition-all disabled:opacity-50 cursor-pointer shadow-lg shadow-vex-primary/20"
+          class="ui-button ui-button-primary disabled:opacity-50"
         >
           <Play v-if="!isRunning" class="w-4 h-4" />
           <div v-else class="w-4 h-4 border-2 border-vex-bg border-t-transparent rounded-full animate-spin"></div>
@@ -351,7 +351,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-0">
+    <div class="playground-grid flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 min-h-0">
       <!-- Sidebar / Examples -->
       <div class="lg:col-span-1 flex flex-col gap-4">
         <div class="rounded-2xl border border-vex-border bg-vex-bg-card h-full overflow-hidden flex flex-col">
@@ -375,7 +375,7 @@ onMounted(async () => {
       </div>
 
       <!-- Editor & Console -->
-      <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 h-full min-h-0">
+      <div class="playground-panels lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4 lg:h-full min-h-0">
         <!-- Editor -->
         <div class="flex flex-col rounded-2xl border border-vex-border bg-vex-bg-card overflow-hidden h-full">
           <div class="flex items-center gap-2 px-4 py-2 border-b border-vex-border bg-vex-surface/50">
@@ -462,4 +462,3 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-

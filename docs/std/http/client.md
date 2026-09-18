@@ -311,6 +311,14 @@ the exchange. `101 Switching Protocols` returns `IoErrorKind.Unsupported`. A
 successful `CONNECT` response is rejected for the same ownership reason: the
 current surface cannot safely pretend to hand over a live WebSocket or tunnel.
 
+Interim headers may arrive together with a larger final header or across
+arbitrary read boundaries. Buffered and streaming clients consume their prefix
+using `StringBuilder.discardPrefix`, an overlap-safe in-place move without a
+temporary allocation. Final parsed header views retain their backing buffer
+until body processing finishes; that buffer cannot re-enter the header append
+loop. A partial status-line remains incomplete until its delimiter arrives,
+including a split CRLF. An empty, CRLF-terminated reason phrase is complete.
+
 Method comparison is ASCII-case-insensitive for response semantics. `HEAD`,
 `204`, and `304` consume no body bytes. Informational responses and `204` must
 not contain message framing. A `205 Reset Content` accepts no framing,

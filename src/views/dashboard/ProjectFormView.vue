@@ -141,15 +141,15 @@ async function save() {
 </script>
 
 <template>
-  <div>
-    <h1 class="text-xl font-bold text-white mb-6">{{ isEdit ? 'Edit Project' : 'New Project' }}</h1>
+  <div class="workspace-page">
+    <h1 class="mb-6">{{ isEdit ? 'Edit Project' : 'New Project' }}</h1>
 
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-12">
       <div class="w-6 h-6 border-2 border-vex-border border-t-vex-primary rounded-full animate-spin"></div>
     </div>
 
-    <form v-else class="space-y-6 max-w-2xl" @submit.prevent="save">
+    <form v-else class="editor-form space-y-6" @submit.prevent="save">
       <!-- Error -->
       <div v-if="error" class="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{{ error }}</div>
 
@@ -209,7 +209,7 @@ async function save() {
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-1.5">Looking For (select roles)</label>
         <div class="flex flex-wrap gap-2">
-          <label v-for="role in roleOptions" :key="role" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors" :class="lookingFor.includes(role) ? 'border-sky-500/40 bg-sky-500/10 text-sky-400' : 'border-vex-border bg-vex-bg-card text-zinc-500 hover:text-zinc-300'">
+          <label v-for="role in roleOptions" :key="role" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm cursor-pointer transition-colors" :class="lookingFor.includes(role) ? 'border-vex-primary/40 bg-vex-primary/10 text-vex-primary-light' : 'border-vex-border bg-vex-bg-card text-vex-text-muted hover:text-zinc-300'">
             <input type="checkbox" :value="role" v-model="lookingFor" class="sr-only" />
             {{ role }}
           </label>
@@ -234,15 +234,15 @@ async function save() {
           <div v-for="(ms, idx) in milestones" :key="idx" class="flex items-center gap-2">
             <button type="button" class="flex-shrink-0 cursor-pointer" @click="toggleMilestone(idx)">
               <CheckCircle2 v-if="ms.completed" class="w-4 h-4 text-green-500" />
-              <Circle v-else class="w-4 h-4 text-zinc-600 hover:text-zinc-400" />
+              <Circle v-else class="w-4 h-4 text-vex-text-muted hover:text-zinc-400" />
             </button>
             <input v-model="ms.title" type="text" class="flex-1 px-3 py-1.5 rounded-lg border border-vex-border bg-vex-bg-card text-white text-sm focus:outline-none focus:border-vex-primary/50" placeholder="Milestone title" />
-            <button type="button" class="p-1 text-zinc-600 hover:text-red-400 transition-colors cursor-pointer" @click="removeMilestone(idx)">
+            <button type="button" class="p-1 text-vex-text-muted hover:text-red-400 transition-colors cursor-pointer" @click="removeMilestone(idx)">
               <Trash2 class="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
-        <p v-if="milestones.length === 0" class="text-xs text-zinc-600 mt-1">No milestones yet. Add some to track progress.</p>
+        <p v-if="milestones.length === 0" class="text-xs text-vex-text-muted mt-1">No milestones yet. Add some to track progress.</p>
       </div>
 
       <!-- Submit -->

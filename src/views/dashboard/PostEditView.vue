@@ -160,9 +160,9 @@ async function save() {
 </script>
 
 <template>
-  <div>
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-white">{{ isEdit ? 'Edit Post' : 'New Post' }}</h1>
+  <div class="workspace-page">
+    <div class="workspace-heading">
+      <h1>{{ isEdit ? 'Edit Post' : 'New Post' }}</h1>
       <div class="flex items-center gap-3">
         <select v-model="status" class="px-3 py-1.5 rounded-lg border border-vex-border bg-vex-surface text-sm text-white focus:outline-none focus:border-vex-primary transition-all cursor-pointer">
           <option value="draft">Draft</option>
@@ -175,13 +175,13 @@ async function save() {
     <div class="space-y-4">
       <!-- Title -->
       <input v-model="title" placeholder="Post title" class="w-full text-3xl font-bold bg-transparent text-white placeholder-zinc-700 focus:outline-none border-none" />
-      <p v-if="slugPreview && !isEdit" class="text-[11px] text-zinc-600 font-mono -mt-2">/blog/{{ slugPreview }}-•••</p>
-      <p v-if="isEdit && slug" class="text-[11px] text-zinc-600 font-mono -mt-2">/blog/{{ slug }}</p>
+      <p v-if="slugPreview && !isEdit" class="text-xs text-vex-text-muted font-mono -mt-2">/blog/{{ slugPreview }}-•••</p>
+      <p v-if="isEdit && slug" class="text-xs text-vex-text-muted font-mono -mt-2">/blog/{{ slug }}</p>
 
       <!-- Meta row -->
       <div class="flex flex-wrap gap-3">
-        <input v-model="excerpt" placeholder="Short description…" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/50 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500/30 transition-all" />
-        <input v-model="tagsStr" placeholder="Tags (comma-separated)" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/50 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500/30 transition-all" />
+        <input v-model="excerpt" placeholder="Short description…" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/50 text-sm text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary/30 transition-all" />
+        <input v-model="tagsStr" placeholder="Tags (comma-separated)" class="flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-zinc-800 bg-zinc-900/50 text-sm text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary/30 transition-all" />
       </div>
 
       <!-- Cover image -->

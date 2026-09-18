@@ -66,6 +66,7 @@ No import is required.
 | `shrinkToFit()` | Reclaim unused heap capacity; arena allocations remain bulk-owned. |
 | `clear()` | Drop every live owner exactly once and retain storage. |
 | `iter()` | Borrow front-to-back without allocation. |
+| `for item in deque` | Use the same borrowed logical order as `iter()`, including across ring wrap. |
 | `asSlices()` | Borrow logical contents as one or two contiguous `Span<T>` values. |
 
 ## `Stack<T>`

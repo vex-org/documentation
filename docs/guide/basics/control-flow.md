@@ -97,6 +97,16 @@ for item in values {
 
 C-style for loops are not part of the supported Vex syntax. Use a range, collection iteration, or while loop.
 
+For a source-defined iterable, `for` uses the exact `IntoIterator.iter()` and
+`Iterator.next()` implementations selected by type checking. The source
+expression is evaluated once, and the iterator's `Item` determines whether the
+body receives a value or a reference. Prelude collections follow the same rule:
+for example, `Deque<T>` yields borrowed elements in logical front-to-back order,
+including when its ring buffer wraps. Physical field names or backing-array
+order do not override the source iterator. Optimizations must preserve these
+semantics; source iterator calls can inline and vectorize without a per-type
+compiler implementation.
+
 ## while loops
 
 Use while when the next iteration depends on mutable state:

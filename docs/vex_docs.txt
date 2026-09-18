@@ -1177,6 +1177,16 @@ for item in values {
 
 C-style for loops are not part of the supported Vex syntax. Use a range, collection iteration, or while loop.
 
+For a source-defined iterable, `for` uses the exact `IntoIterator.iter()` and
+`Iterator.next()` implementations selected by type checking. The source
+expression is evaluated once, and the iterator's `Item` determines whether the
+body receives a value or a reference. Prelude collections follow the same rule:
+for example, `Deque<T>` yields borrowed elements in logical front-to-back order,
+including when its ring buffer wraps. Physical field names or backing-array
+order do not override the source iterator. Optimizations must preserve these
+semantics; source iterator calls can inline and vectorize without a per-type
+compiler implementation.
+
 ## while loops
 
 Use while when the next iteration depends on mutable state:
@@ -3967,6 +3977,16 @@ and benchmark names, `async`, context parameters and return types therefore
 retain the same meaning when a legal signature spans multiple lines. Receiver
 methods are not free test entrypoints.
 
+Select an existing directory, an exact `.vx` file, or a quoted glob. Directory
+discovery includes `*.test.vx`, `*_test.vx` and `*_bench.vx`; file globs can select
+other `.vx` filenames explicitly. Missing paths and globs selecting no source
+files fail with a nonzero exit status. An existing empty directory or a name
+filter matching no functions is an empty selection, not a passing test suite.
+Automatic traversal excludes generated runners and build/cache directories,
+does not follow directory symlinks, and deduplicates source-file aliases. An
+explicit directory-symlink root is supported. See the
+[`vex test` reference](/references/vex-test-reference) for the full selection rules.
+
 Skipped contexts are reported as SKIP, not PASS. Test state is private and
 cannot be overwritten by the test body. A test file containing discovered test
 functions must not define `main`.
@@ -4017,6 +4037,7 @@ different workloads.
 
 ```bash
 vex test path/to/tests
+vex test "lib/std/net/tests/*.test.vx"
 vex test --run expression path/to/tests
 vex test --no-parallel --timeout 60 path/to/tests
 vex test --failfast path/to/tests
@@ -4027,6 +4048,17 @@ vex test --analyze-comptime path/to/tests
 
 `--analyze-comptime` is observation-only; it does not change semantics or
 enable speculative rewrites.
+
+For tests, `--timeout` limits execution of each generated file runner, starting
+at entry to `main`. It is not multiplied by the number of test functions.
+Compilation and process startup use separate watchdogs; a slow compile does
+not consume the runtime allowance.
+
+A later timeout preserves completed test outcomes and partial diagnostics.
+Failure during process finalization is reported separately from individual
+tests, including when every test has already passed. JSON consumers should
+check the process exit status and `file_errors` as well as test counts; see the
+[`vex test` reference](/references/vex-test-reference).
 
 
 // ============================================================================
@@ -5963,6 +5995,30 @@ fn main(): i32 {
 ~~~
 
 Use associated functions for constructors and type-level operations. Use receiver methods when an existing value is the subject of the operation.
+
+## Callable constructors
+
+A function can share its name with its result type. Constructor overloads are
+ordinary source-defined functions; their bodies supply initialization policy:
+
+~~~vex
+struct Counter { value: i64 }
+
+fn Counter(): Counter { return Counter { value: 73 }; }
+fn Counter(value: i64): Counter { return Counter { value: value + 1 }; }
+
+fn main(): i32 {
+    let first = Counter();
+    let second = Counter(40);
+    return if first.value == 73 && second.value == 41 { 0 } else { 1 };
+}
+~~~
+
+Overload selection and generic arguments are resolved before code generation.
+The backend does not replace a selected constructor with zero-initialization
+because a type is registered in the Prelude. `Vec<T>()` and `Channel<T>(n)` use
+their Vex constructor bodies. Box construction remains integrated with VUMM's
+compiler-managed ownership strategy.
 
 ## Generic structs
 
@@ -11752,7 +11808,154 @@ The precise statement here is: the current checker already rejects several class
 
 ## Common Patterns
 
+### Borrowed Results from Temporary Owners
+
+A call may borrow an unnamed source value and return a view into it. When
+that view is consumed directly by another call, the source owner stays alive
+until the consuming expression finishes:
+
+```vex
+// makeOwner() returns an owned value; view() borrows it; read() returns i32.
+let value = makeOwner().view().read();
+```
+
+This applies to ordinary user-defined types, free functions and method chains;
+it is not a special rule for strings or collections. Scalar field and pointer
+dereference reads through a safe reference are evaluated before cleanup.
+Owners sharing a cleanup boundary are destroyed in reverse construction order.
+A scalar-returning call without a borrowed-result chain still cleans its own
+temporary operands immediately after that call.
+
+The chain does **not** extend an owner across a binding, a block boundary, a
+return, a capture or a suspension. To keep a view, keep its owner explicitly:
+
+```vex
+let owner = makeOwner();
+let view = owner.view();
+let value = view.read();
+
+// Invalid when the view borrows the temporary owner's storage:
+// let dangling = makeOwner().view();
+```
+
+This rule concerns borrowing existing source storage. Ownership-producing
+argument conversions have separate temporary/escape checks; a constructor
+conversion does not automatically make its borrowed result escapable.
+
+### Temporaries Created by Argument Conversions
+
+A conversion that only borrows existing storage does not create a new owner.
+For example, `&string` (including nested references) can provide a `str` view
+of the original string's bytes. The view retains that owner's lifetime; it
+cannot outlive the string. This conversion is not an implicit clone.
+
+An argument conversion may create a new owner before borrowing it for the
+callee. For example, passing a `str` to an `&string` parameter constructs
+temporary owned storage. The source `str` and that new owner have different
+lifetimes, even when the source is a string literal.
+
+The converted owner is registered before later arguments are evaluated.
+Normal completion and early `return`, `break` or `continue` use the same
+cleanup mechanism. Variadic arguments follow the same sealed conversion and
+ownership rules as ordinary arguments.
+
+A callee cannot export this temporary's reference through an output field
+merely because its return type is `None`:
+
+```vex
+struct View { source: &string }
+fn store(output: &View!, input: &string) { output.source = input; }
+
+fn invalid(initial: &string, text: str): &string {
+    let! output = View { source: initial };
+    store(&output!, text); // A separate converted owner lives for this call.
+    return output.source; // Rejected: that owner has already expired.
+}
+```
+
+Keep an owned value explicitly when the stored view must remain usable.
+Replacing an expired reference field with a valid reference before reading it
+is allowed; taking a direct field's address to overwrite it does not read its
+old reference value.
+
+Typed variadic calls follow the same rule. Every element in `...&T` contributes
+its own reference origins to the pack; later arguments cannot escape the
+check. An empty pack contributes no element references. The pack owns its
+element storage, but does not become the owner of external values referenced
+by those elements. Returning an element's reference can therefore be valid
+when its external owner remains alive; returning a borrow of the pack's own
+element storage is not.
+
+Native calls can borrow an owning pack through the shared Span API (`get`,
+`getUnchecked`, `slice`, `splitAt`). This does not convert the pack into an
+owned Span value or transfer its cleanup responsibility. A nested view must
+remain within the pack's lifetime. The descriptor view requires identical
+element types and does not admit an exclusive descriptor borrow.
+
+::: warning Current validation boundary
+Ordinary direct, method, static, generic and function-value output writes,
+plus typed variadic direct/method/static/generic writes, have focused
+regressions. This is not whole-language lifetime qualification.
+Constructor-returned converted views retain their conservative escape
+restriction until the full lifetime model is implemented. Native owning-pack
+views have O0/O3 ownership, drop and escape regressions. CTFE uses the same
+shared pack-view recipe for const-capable source methods: it materializes a
+descriptor pointing into the original pack instead of copying the elements.
+Its pointers preserve allocation identity and cannot outlive the pack frame.
+This does not implicitly mark ordinary Span methods as `const`; the existing
+comptime callable-admission rules still apply.
+:::
+
+### Named Values and Field Borrows
+
+The dot in `State.Ready` selects an enum value; it does not borrow a field from
+a runtime object named `State`. Passing that value to a reference parameter
+materializes temporary storage for the value. An explicit `&State.Ready` can
+also be used within its enclosing lifetime, but cannot be returned as a
+reference to permanent storage merely because the variant has a name.
+
+By contrast, `&object.field` borrows the object's existing field storage. A
+projection such as `&makeOwner().field` retains the complete temporary owner,
+not just an independently copied field. These rules follow resolved values
+and storage projections, not type names or prelude privileges.
+
+### Reading a Value Through a Reference
+
+A contextual `&T` to `T` load does not transfer ownership from the referent.
+It can copy a `Copy` value, including a user-defined type with the appropriate
+contract. For a non-Copy owner, retain a reference or explicitly clone it when
+the type supports cloning. The same rule applies to pattern bindings, fields,
+indexed elements, function/method results, and block/branch results.
+
+```vex
+enum Message { Text(string), Empty }
+
+fn copyText(message: &Message): string {
+    return match message {
+        Message.Text(text) => text.clone(),
+        Message.Empty => "",
+    };
+}
+```
+
+Here `text` borrows the payload. Returning `text` directly as an owned `string`
+is rejected; returning its explicit clone leaves the original message intact.
+Matching an owned `Message` by value can instead transfer its payload normally.
+Serde's dynamic `asString()` getters follow the explicit-clone contract: their
+owned results remain valid after the source value is destroyed. Read-only
+views should be used when an independent owned result is unnecessary.
+
 ### Returning References from Functions
+
+A getter returning a reference reborrows existing storage; it does not move
+the referenced value. For example, `&*reference` remains a reborrow even when
+the pointee is a non-Copy generic type. Writing through a mutable getter's
+result uses that result's capability. Two separate live getter results do not
+become interchangeable permissions: a conflicting write is still rejected.
+
+Shared references can retain the lifetime of their mutable parent without
+gaining mutable access. These rules apply structurally to user-defined types
+and adapters, not just to prelude or standard-library getters.
 
 ```vex
 struct User {
@@ -12859,13 +13062,31 @@ Allocation constructors are:
 
 | Constructor | Result |
 | --- | --- |
-| `Ptr.null<T>()` | null typed pointer |
-| `Ptr.nullMut<T>()` | null pointer with writable-pointee capability |
+| `Ptr.null<T>()` | const-callable null typed pointer |
+| `Ptr.nullMut<T>()` | const-callable null pointer with writable-pointee capability |
 | `Ptr.alloc<T>()` | allocate one uninitialized `T` |
 | `Ptr.allocWith<T>(value)` | allocate and initialize one `T` |
 | `Ptr.allocN<T>(count)` | allocate `count` uninitialized contiguous elements |
 
 An uninitialized allocation must be written before it is read.
+
+`Ptr.null` and `Ptr.nullMut` are ordinary Vex `const fn` declarations. They can
+run at runtime or inside `#const` without allocating; they do not require a
+special permission reserved for prelude functions. A user-defined const
+function returning `0 as Ptr<T>` uses the same evaluation rules. A null handle
+does not authorize a read or write through that pointer.
+
+```vex
+const fn emptyHandle<T>(): Ptr<T> { return 0 as Ptr<T>; }
+
+let handle = #const { emptyHandle<i32>() }; // inferred as Ptr<i32>
+let writable = #const { Ptr.nullMut<u8>() }; // inferred as Ptr<u8!>
+let opaque = #const { Ptr.null<Opaque>() }; // inferred as Ptr<Opaque>
+```
+
+Required evaluation preserves the result's pointer type and access mode when
+embedding it back into runtime code; the local binding needs no extra cast or
+type annotation.
 
 ## Reads and writes
 
@@ -12920,6 +13141,21 @@ units. Use `RawBuf` when the layout is naturally byte-oriented.
 Creating a reference, span, or slice from a raw pointer is unsafe: the caller
 must prove lifetime, extent, alignment, initialization, and aliasing.
 
+The borrow checker retains known subobject paths, so borrowing distinct
+fields through the same typed pointer does not automatically borrow the whole
+pointee. This precision does not prove the allocation's lifetime or make raw
+pointer aliases unique; those remain obligations at the unsafe boundary.
+
+A whole-pointee reference and a field reference through the same tracked
+address participate in the same conflict checks. Direct raw-pointer copies,
+pointer-to-pointer casts, and proven raw-to-reference call returns retain
+that address relation. Copying an address does not itself create a safe loan.
+The local variable holding the address and the pointee have distinct
+lifetimes: ending the former does not validate or invalidate the allocation,
+and borrowing the pointer variable itself is still an ordinary local borrow.
+These checks are not a complete raw-pointer alias analysis; unchecked
+addresses and opaque memory effects remain the unsafe caller's responsibility.
+
 To reinterpret the element type, cross an explicit opaque-pointer boundary:
 
 ```vex
@@ -12941,7 +13177,8 @@ That distinction is intentional and should stay visible at call sites.
 
 ## Deallocation
 
-- `free()` destroys an allocation created for one `T` and nulls the handle.
+- `free()` frees an allocation created for one `T`. It does not null the
+  pointer or its copies; all aliases must be treated as dangling afterward.
 - `freeN(count)` destroys an allocation created by `allocN(count)` and supplies
   the correct total byte size.
 
@@ -13190,6 +13427,35 @@ fn (point: &Point!) move_by(dx: i32, dy: i32) {
 ~~~
 
 The call-site value must satisfy the receiver's mutability requirement.
+
+## Borrowing an indexed element
+
+For a source-defined index operator, exclusive use selects the declared
+mutable getter (`&Container! -> &Element!`). This applies to field assignment,
+an explicit mutable borrow, a contextually mutable reference argument, and a
+method whose selected receiver is `&Element!`:
+
+~~~vex
+struct IndexedCounter { value: i32 }
+fn (self: &IndexedCounter!) increment() { self.value = self.value + 1; }
+
+fn update(counters: &Vec<IndexedCounter>!) {
+    counters[0 as usize].increment();
+    let counter = &counters[0 as usize]!;
+    counter.increment();
+}
+~~~
+
+The same rule applies to user-defined containers and nested index projections;
+it is not a special privilege of `Vec`. The getter must return a mutable
+reference to the value required by the consuming operation. A getter returning
+a different element type cannot replace the value underneath an already
+resolved method call.
+
+Selecting a mutable getter does not grant permission to mutate a shared owner,
+nor does it override a live conflicting borrow. A container with only a shared
+getter still cannot provide mutable element access. The selection is resolved
+at compile time and does not add runtime dispatch.
 
 A freshly written `&value` can also take its shared/exclusive reference type
 from its consuming field or parameter. This applies after generic literal
@@ -15967,6 +16233,19 @@ go {
 
 Whether a capture is accepted depends on the lifetime and capture kind. Prefer moving an owned value into a task, borrowing only when the task is guaranteed to remain within the borrow's lifetime, and communicating results through a channel.
 
+For bounded iteration such as `go(cpu: 4) for item in bundle.items { ... }`, an
+independently owned source field can move into the task without moving
+`bundle.label`. This also covers nested generic fields and user-defined
+iterators; it is not a special privilege of `Vec`. An iterator call such as
+`bundle.items.iter()` stays inside the task, after its source owner is transferred,
+so it cannot leave a borrow pointing into the spawning function's storage.
+
+This precise source transfer does not permit reading the moved field again or
+moving it while a live borrow exists. A custom destructor or sharing protocol on
+an enclosing aggregate, an indexed/borrowed source place, or use of the same root
+inside the loop body retains the existing whole-root capture rules. It is not a
+promise of field-by-field capture for every closure or `go { ... }` block.
+
 ## Runtime status
 
 The macOS ARM64 development runtime covers scheduler ownership, channel close/drain behavior, same-worker blocking progress, and event-driven select regressions. Cross-target objects and internal-symbol checks cover Linux and Windows; native execution on those operating systems remains a CI validation item.
@@ -16720,6 +16999,11 @@ fn main(): i32 {
 ~~~
 
 The channel type carries the element type. Sending a value of another type is a semantic error.
+
+`Channel<T>()` and `Channel<T>(capacity)` are source-defined Prelude constructor
+overloads that delegate to `Channel.new<T>`. Their defaults and initialization
+belong to that Vex source, not a second constructor implementation in the
+compiler. The no-argument overload currently selects capacity 16.
 
 ## Capacity
 
@@ -17533,6 +17817,24 @@ let value = fallible !> handle_error
 
 Do not assume that a fallback operator is lazy unless its API documentation says so.
 
+An `!>` handler supplies a replacement success payload. Its `return` exits
+the **handler closure**, not the enclosing function. For example,
+`missing !> || { return 7; }` produces `7` when `missing` is an absent
+`Option<i32>`. `missing !> || { return; }` cannot initialize an `i32`: that
+closure returns unit.
+
+Use explicit outer control flow when failure must stop the caller:
+
+```vex
+fn consume(optional: Option<i32>): i32 {
+    let value = match optional {
+        Some(value) => value,
+        None => return -1,
+    };
+    return value + 1;
+}
+```
+
 ## Null pointers
 
 Use typed pointer constructors and `isNull()` at FFI boundaries. Null pointers
@@ -17975,9 +18277,28 @@ vex test [OPTIONS] [PATTERN]
 
 | File/function | Meaning |
 | --- | --- |
-| `*.test.vx`, `*_test.vx` | Discoverable source |
+| `*.test.vx`, `*_test.vx`, `*_bench.vx` | Discoverable source under a selected directory |
 | `test_*`, `Test*` | Test function |
 | `bench_*`, `Benchmark*` | Benchmark function |
+
+`PATTERN` accepts an existing directory, an existing regular `.vx` file, or a
+quoted glob such as `"lib/std/net/tests/*.test.vx"`. Existing literal paths take
+precedence over glob syntax, including filenames containing brackets and
+directories whose names end in `.vx`. With no argument, discovery starts in the
+current directory.
+
+A file glob can select any ordinary `.vx` filename. A matched directory selects
+its conventionally named test/benchmark sources recursively. Recursive `**`
+globs are supported. Automatic traversal skips generated runners, hidden
+directories, `target`, `node_modules`, `vex-builds` and `archived`. It does not
+follow discovered directory symlinks; pass a directory symlink explicitly to
+select that root. Source-file symlinks are accepted and deduplicated by their
+resolved path. Pipes, sockets and devices are never opened as test sources.
+
+A missing explicit path, invalid/unmatched glob, or unreadable selected source
+is an error with a nonzero exit status, not an empty successful run. A real empty
+directory or a `--run` filter selecting no functions remains a valid empty
+selection. Neither is evidence that tests passed.
 
 Accepted test signatures are zero arguments or one `&TestCtx!` argument.
 Zero-argument `bool` uses `true` as success; integer status uses `0`; context
@@ -17992,7 +18313,7 @@ generated async main. A discovered file with a custom `main` is rejected.
 | `-v`, `--verbose` | Detailed execution output |
 | `--run <REGEX>` | Filter test names |
 | `--no-parallel` | Serialize test files |
-| `--timeout <SECONDS>` | Bound compilation/execution |
+| `--timeout <SECONDS>` | Bound runtime for each generated test-file runner |
 | `--failfast` | Stop after first failure |
 | `--short` | Select short-mode behavior |
 | `--json` | Structured result output |
@@ -18014,6 +18335,35 @@ Benchmark-only options:
 | `--benchmem` | Report allocation counters |
 
 Use `vex test --help` as the authoritative flag list for the installed CLI.
+For tests, the runtime watchdog starts when the generated runner enters `main`;
+it covers the whole file, not a separate budget per function. Compilation has a
+separate 180-second watchdog and process startup has its own deadline. These
+are not charged to `--timeout`. Runtime timeout terminates the runner's process
+group, including its child processes.
+
+Completed test results survive a later timeout: a reported `PASS`, `FAIL` or `SKIP`
+keeps its status and measured duration. Only tests without a complete result
+record receive `timeout`. The CLI retains partial stdout/stderr for diagnosis.
+
+Test completion and process completion are separate. A file may print all its
+test results and then hang while waiting for detached tasks, or terminate
+abnormally during finalization. Such a run exits nonzero and reports a **file
+execution error**; it does not invent an additional failed test or rewrite
+completed outcomes. `--failfast` stops on file errors as well as test failures.
+
+In `--json` output, `passed`, `failed`, `skipped`, `total` and `results` describe
+actual test functions. A skipped test has status `skip` and counts toward
+`skipped` and `total`, not `passed` or `failed`. An all-skipped run succeeds but
+is summarized as `SKIP`, not as evidence of passing tests. Calling `skip()` after
+`err()` does not suppress the failure.
+
+The additive `file_errors` array contains objects with `file`,
+`status` (`timeout` or `runtime_error`), `message` and diagnostic `details`.
+It is empty on a clean run. Automation must check the CLI exit status and
+`file_errors`, not just `failed == 0`: all tests can pass while finalization
+fails. Compilation failures remain `compile_error` test results, not runtime
+timeouts.
+
 The API reference for `TestCtx` and `BenchCtx` is on the
 [`testing` package page](/std/testing).
 
@@ -24717,6 +25067,19 @@ Current advanced boundaries:
 
 See the format pages for exact codec behavior and implementation details.
 
+## Validation checkpoint — 2026-09-06
+
+All 63 ordinary package tests pass on native macOS arm64 at both O0 and O3
+with compiler caches disabled. This includes a repaired Deflate encoder
+scratch-buffer overflow: the distance-code table now allocates and initializes
+the same 120 bytes, independently of the 1,144-byte literal-code table.
+
+The regression covers levels 6–9, five input sizes, exact round trips, and
+sentinels before and after the caller-owned encoded/decoded buffers. Existing gzip,
+zlib, streaming, checksum and multiblock tests also pass. No allocator safety
+check was relaxed. These are correctness results, not new throughput figures
+or fresh external-decoder/cross-platform qualification.
+
 
 // ============================================================================
 // File: ./std/compress/gzip.md
@@ -24920,13 +25283,18 @@ formEncode("a b+c");    // a+b%2Bc
 
 ## Query components
 
-`tryParseQuery` returns `Result<Vec<QueryParam>, UrlDecodeError>` and preserves
+`tryParseQuery(raw: str)` returns `Result<Vec<QueryParam>, UrlDecodeError>` and preserves
 the distinction between `bare` and `empty=` through `QueryParam.hasValue`.
-`buildQuery` uses form encoding. `parseQuery` is the compatibility wrapper and
+`buildQuery` uses form encoding. `parseQuery(raw: str)` is the compatibility wrapper and
 returns an empty vector for malformed input. Parsing reserves the component
 upper bound before decode. Building computes the exact encoded length, performs
 one owned allocation, and writes the canonical `FormUrl` representation
 directly into the final string.
+
+Both query parsers borrow their input as `str`; passing an owned `string` does
+not consume or implicitly clone it. Returned keys and values are independent
+owned strings. URL query accessors can therefore be called repeatedly without
+copying the complete query merely to start parsing it.
 
 ## Resource limits
 
@@ -24941,7 +25309,15 @@ Useful URL methods include `toString`, `hostPort`, `tryQueryParams`,
 
 ## Current validation
 
-The package passes strict lint and 42 tests at O0 and O3. The RFC 3986 section
+On 2026-09-06 the full package passed **45 tests at both O0 and O3**, including
+repeated borrowed-input reuse, heap-backed decode results, and cleanup after a
+partially decoded query fails. Cleanup tests require zero live-allocation and
+byte growth after warming the same loop boundary: the first arena save creates
+reusable runtime metadata, which straight-line warmup does not exercise. The
+separate thread-cleanup regression verifies that cached metadata is released.
+Strict lint and the benchmark figures below are earlier baselines, not new
+measurements from this recovery run.
+The RFC 3986 section
 5.4 normal and abnormal resolution examples are regression tests. On the local
 Apple M2 Max O3 baseline, simple/full parsing measures about 132/340 ns,
 five-component query parse/build about 223/169 ns, URI serialization about
@@ -25191,33 +25567,68 @@ vex test -O3 --bench --benchmem lib/std/rand/tests/bench.test.vx
 // ============================================================================
 # ml
 
-Vex isn't just for building network infrastructure or CLI tools—it was designed ground-up for the new era of computing: **Machine Learning and Local LLMs**.
-
-The `ml` module houses essential Deep Learning primitive operations. These algorithms form the standard building blocks of Transformer architectures and neural networks, directly optimized via Vex's `graph fn` for parallel execution on the CPU and GPU (Metal/SPIR-V).
+`ml` provides pure Vex building blocks for normalization, activations, linear
+algebra and attention. Compute kernels use Tensor operators and `graph fn`
+where supported; orchestration and borrowed-view helpers also use ordinary
+functions. A graph declaration is not a guarantee of GPU execution or a
+single fused dispatch.
 
 ## Integrated Operations
 
-The `ml` module includes primitives that ordinarily require importing massive dependency chains (like `torch` or `llama.cpp`) in other ecosystems. In Vex, they are native standard library utilities:
+- `norm`, `rms_norm`: RMS normalization.
+- `layernorm`, `layer_norm`: layer normalization.
+- `softmax`, `log_softmax`, `relu`, `silu`, `swiglu`, `gelu`: activations.
+  Softmax subtracts the maximum before exponentiation; this does not define
+  every empty-input, NaN or infinity case. `gelu` currently uses a sigmoid
+  approximation, not the exact Gaussian-error-function formula.
+- `linear`, `dot`, `matvec`: linear algebra, with additional Span helpers.
+- `fused_attend`, `extract_k_head`, `extract_v_head_t`,
+  `multi_head_attention`, `argmax`: attention and scoring helpers.
 
-- **`RMSNorm`**: Root Mean Square Normalization. Extensively unrolled and vectorized for CPU; reduced via tree-reductions on GPU.
-- **`LayerNorm`**: Standard Layer Normalization.
-- **`Softmax`**: Matrix and vector softmax functionality with safety assertions to avoid over-tensor exponentiation `NaN` corruption.
-- **`Attention`**: Scaled Dot-Product Attention kernels (and soon Flash Attention paths).
+## Graph composition and ownership
 
-## Zero-Ping-Pong Architecture
-
-All of `ml` functions are labeled as `graph fn`. When used inside a Vex `graph { }` execution block, the entire logic tree pushes onto the GPU synchronously without costly ping-ponging of data buffers back to the CPU between layers.
+Import the actual lowercase API names. For example:
 
 ```vex
-import { RMSNorm, Softmax } from "ml";
+import { norm, softmax } from "ml";
 
-// When compiled inside a graph execution pipeline:
-graph fn my_hidden_layer(t: Tensor<f32>, w: Tensor<f32>) {
-    let normalized = RMSNorm(t, w); // Stays on GPU
-    let probabilities = Softmax(normalized); // Stays on GPU
-    return probabilities;
+graph fn hidden_layer(t: Tensor<f32>, w: Tensor<f32>): Tensor<f32> {
+    return softmax(norm(t, w));
 }
 ```
+
+Graph composition exposes operations to SIR. Backend support, shapes and
+dispatch decisions determine the actual execution plan. Inspect compiler
+diagnostics and retained IR before claiming fusion or transfer-free GPU work.
+
+Attention cache extraction accepts a borrowed `Span<T>` over a row-major
+`[seq_len, kv_dim]` cache. K extraction returns `[seq_len, head_dim]`; V
+extraction returns its transposed `[head_dim, seq_len]` layout. Both return
+independent owned Tensors and preserve the cache. Negative dimensions,
+out-of-row heads and layouts larger than the supplied Span panic before
+generating indices. Empty rows/heads return empty Tensors.
+
+`span_view(&tensor)` and `tensor_ptr(&tensor)` borrow an existing Tensor;
+they do not consume it. The Span cannot outlive its owner. `tensor_view(span)`
+creates an independent owned Tensor in ordinary code. `copy_tensor` requires
+`Ptr<T!>`, `&Tensor<T>` and `T: Copy`; it is unsafe because the caller must
+prove destination capacity and non-overlap. Its source count is checked.
+
+## Validation boundary — 2026-09-07
+
+The discoverable ML suite has 31 passing tests at both O0 and O3, including
+the package-root example above. Separate ownership and invalid-layout gates
+are retained in the source report. This is not yet a complete model-inference
+or physical-GPU qualification.
+
+Known compiler work remains: dynamic `Tensor.arange` graph lowering and shape
+transport, generic graph-callee staging for the composed example, and GPU
+bridging for multiple runtime-K matrix multiplications in one graph. These
+currently prevent some helpers from staying on the intended fused SIR/GPU
+path. CPU test success must not be presented as GPU parity.
+
+See `lib/std/ml/tests/README.md` in the source repository for commands and the
+current retained test report.
 
 
 // ============================================================================
@@ -25507,6 +25918,13 @@ renders the selected canonical command path. Output is ANSI-free and includes
 aliases, argument/value shapes, possible values, env/default/required
 metadata, relationships and inherited persistent flags.
 
+Read-only formatting preserves the schema's owned strings: `toString()` and
+`debug()` do not consume names or error payloads. `Flag.defaultValue()` and
+`Arg.defaultValue()` return an independent `Option<string>` and can be called
+repeatedly. When building your own diagnostic from borrowed metadata, use its
+`.asStr()` view; passing an owned string to the consuming `+` overload transfers
+ownership.
+
 ## Prompts and terminal style
 
 `input`, `confirm`, and `choose` return `Result<_, IoError>`. Empty/default and
@@ -25516,11 +25934,18 @@ application knows color output is appropriate.
 
 ## Current advanced boundary
 
-The production-signed core covers schema, parsing, help and dispatch. Shell
+The core API covers schema, parsing, help and dispatch. Shell
 completion, hidden/deprecated migration metadata, typo suggestions,
 schema-generated man pages and explicit config-file integration are staged on
 the same command model. They are not silently emulated by ambient global
 configuration.
+
+## Validation checkpoint — 2026-09-06
+
+The native O0 and O3 suites each pass **26/26** tests, including repeated reads of
+non-inline default strings and metadata. This checkpoint covers parser/schema,
+help and ownership regressions; it is not a cross-platform or interactive
+terminal qualification, and no new benchmark result is claimed.
 
 
 // ============================================================================
@@ -25563,9 +25988,19 @@ Available methods:
 | `writeU64(value: u64)` | Append unsigned decimal text |
 | `writeF64(value: f64, precision: i32)` | Append rounded fixed/scientific text without an intermediate string |
 | `toString()` | Copy current bytes into an owned `string`; later builder reuse cannot change it |
+| `asStr()` | Borrow initialized bytes without copying; end this view before mutating the builder |
 | `len()` / `isEmpty()` | Inspect logical content |
 | `capacity()` | Inspect reserved byte capacity |
 | `reset()` | Clear content while retaining capacity |
+| `discardPrefix(count: usize)` | Remove leading bytes in place with an overlap-safe move; retain capacity and allocator region |
+
+Use `discardPrefix` to consume a parsed prefix of an incremental byte buffer.
+Do not reset a builder and append a view into that same builder: `writeStr`
+requires disjoint source storage, and growing the buffer can invalidate the
+view. `discardPrefix` requires exclusive access, performs no allocation, and
+moves only the remaining bytes. Zero is a no-op; consuming the entire buffer
+keeps its allocation; a count greater than `len()` panics. Counts are bytes,
+so UTF-8 text consumers must choose a character boundary.
 
 ## Search
 
@@ -26109,6 +26544,20 @@ owns it and rejects a custom main to prevent false-green suites.
 Message-bearing variants are `assertEqMsg`, `assertStrEqMsg` and
 `assertTrueMsg`. Standalone status helpers `eq`, `ne`, `ok`, `okMsg`, `gt`,
 `lt`, `gte`, and `lte` return `0` on success and `1` on failure.
+
+For fallible fixture setup, report the failure before returning from the test:
+
+```vex
+let fixture = match createFixture() {
+    Some(value) => value,
+    None => { t.err("fixture initialization failed"); return; }
+};
+```
+
+Do not use `!> || { return; }` here: it returns unit from the fallback closure,
+not from the test function. A benchmark setup failure must also be visible;
+panic with a fixture-specific message instead of silently returning before
+`b.iter` and reporting an empty measurement.
 
 ## BenchCtx
 
@@ -57946,6 +58395,11 @@ instead rejects it before connection ownership changes.
 
 ## Ownership and backpressure
 
+`WsMessage.text()` returns an independent owned `string` without consuming the
+message. It copies the payload, so use `message.data.asStr()` when a borrowed,
+allocation-free view is sufficient. That view must not outlive its backing
+message data; the owned `text()` result may outlive the message.
+
 After a valid `101` handoff, the original HTTP/1 connection state changes in
 place to a worker-owned `WsSession`. The worker remains the sole fd owner:
 
@@ -59979,6 +60433,14 @@ Interim `1xx` responses are consumed before the final response under
 the exchange. `101 Switching Protocols` returns `IoErrorKind.Unsupported`. A
 successful `CONNECT` response is rejected for the same ownership reason: the
 current surface cannot safely pretend to hand over a live WebSocket or tunnel.
+
+Interim headers may arrive together with a larger final header or across
+arbitrary read boundaries. Buffered and streaming clients consume their prefix
+using `StringBuilder.discardPrefix`, an overlap-safe in-place move without a
+temporary allocation. Final parsed header views retain their backing buffer
+until body processing finishes; that buffer cannot re-enter the header append
+loop. A partial status-line remains incomplete until its delimiter arrives,
+including a split CRLF. An empty, CRLF-terminated reason phrase is complete.
 
 Method comparison is ASCII-case-insensitive for response semantics. `HEAD`,
 `204`, and `304` consume no body bytes. Informational responses and `204` must
@@ -68779,6 +69241,7 @@ No import is required.
 | `shrinkToFit()` | Reclaim unused heap capacity; arena allocations remain bulk-owned. |
 | `clear()` | Drop every live owner exactly once and retain storage. |
 | `iter()` | Borrow front-to-back without allocation. |
+| `for item in deque` | Use the same borrowed logical order as `iter()`, including across ring wrap. |
 | `asSlices()` | Borrow logical contents as one or two contiguous `Span<T>` values. |
 
 ## `Stack<T>`
@@ -74497,6 +74960,16 @@ quoted fields, escaped quotes and CRLF records.
 explicit row-oriented codec use. There is no exported generic `encode` or
 `decode` convenience function.
 
+::: info Decoder ownership — 2026-09-06
+The decoder's numeric/bool reads borrow its selected string; `parseString`
+returns an independent owned clone without consuming that selection. The
+implicit `&string` to `str` argument conversion preserves the original owner’s
+storage, including inline string bytes. It does not clone the string or
+transfer ownership. Regression tests cover repeated reads and a returned owned
+string surviving decoder destruction. The older parser benchmarks below have
+not been rerun as part of this ownership repair.
+:::
+
 The safe path validates UTF-8 and RFC-style quoting, rejects garbage after a
 closing quote and ragged rows, and enforces input/field/row/column/node budgets
 before allocating output. Quoted fields allocate their exact decoded length and
@@ -75061,6 +75534,20 @@ are not closed by their wrappers.
 underlying implementation and use a private 16 KiB buffer. Dispatch remains
 static—there is no trait object or per-operation heap allocation. Large reads
 and writes bypass the intermediate buffer.
+
+While an adapter is in use, access its underlying reader/writer through
+`getRef()` (read-only) or `getRefMut()` (mutable), not through the original
+binding. Both methods reborrow the existing object; they do not clone it or
+allocate. A returned reference follows the adapter's normal borrow rules.
+
+Direct underlying operations do not synchronize the private buffer:
+
+- After seeking or reading through `BufReader.getRefMut()`, call
+  `discardBuffered()` if the old read-ahead bytes are no longer wanted.
+- Flush `BufWriter` successfully before writing directly to its underlying
+  writer when byte ordering matters. `getRefMut()` does not flush implicitly;
+  it can also be used to repair a provider after a failed flush, then retry
+  the preserved buffered suffix.
 
 ```vex
 let! source = openRead("records.txt".toString()).unwrap();

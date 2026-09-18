@@ -21,6 +21,16 @@ quoted fields, escaped quotes and CRLF records.
 explicit row-oriented codec use. There is no exported generic `encode` or
 `decode` convenience function.
 
+::: info Decoder ownership — 2026-09-06
+The decoder's numeric/bool reads borrow its selected string; `parseString`
+returns an independent owned clone without consuming that selection. The
+implicit `&string` to `str` argument conversion preserves the original owner’s
+storage, including inline string bytes. It does not clone the string or
+transfer ownership. Regression tests cover repeated reads and a returned owned
+string surviving decoder destruction. The older parser benchmarks below have
+not been rerun as part of this ownership repair.
+:::
+
 The safe path validates UTF-8 and RFC-style quoting, rejects garbage after a
 closing quote and ragged rows, and enforces input/field/row/column/node budgets
 before allocating output. Quoted fields allocate their exact decoded length and

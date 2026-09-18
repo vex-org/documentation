@@ -118,3 +118,16 @@ Current advanced boundaries:
   ordinary application code should use the safe facade above.
 
 See the format pages for exact codec behavior and implementation details.
+
+## Validation checkpoint — 2026-09-06
+
+All 63 ordinary package tests pass on native macOS arm64 at both O0 and O3
+with compiler caches disabled. This includes a repaired Deflate encoder
+scratch-buffer overflow: the distance-code table now allocates and initializes
+the same 120 bytes, independently of the 1,144-byte literal-code table.
+
+The regression covers levels 6–9, five input sizes, exact round trips, and
+sentinels before and after the caller-owned encoded/decoded buffers. Existing gzip,
+zlib, streaming, checksum and multiblock tests also pass. No allocator safety
+check was relaxed. These are correctness results, not new throughput figures
+or fresh external-decoder/cross-platform qualification.

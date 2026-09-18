@@ -1,0 +1,1 @@
+import{_t as e,it as t,n,rt as r}from"./chunks/framework.Bc6s-rUw.js";var i=JSON.parse(`{"title":"testing","description":"","frontmatter":{},"headers":[],"relativePath":"std/testing.md","filePath":"std/testing.md"}`),a={name:`std/testing.md`};function o(n,i,a,o,s,c){return e(),r(`div`,null,[...i[0]||=[t("",15)]])}var s=n(a,[[`render`,o]]);export{i as __pageData,s as default};

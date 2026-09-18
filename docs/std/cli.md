@@ -105,6 +105,13 @@ renders the selected canonical command path. Output is ANSI-free and includes
 aliases, argument/value shapes, possible values, env/default/required
 metadata, relationships and inherited persistent flags.
 
+Read-only formatting preserves the schema's owned strings: `toString()` and
+`debug()` do not consume names or error payloads. `Flag.defaultValue()` and
+`Arg.defaultValue()` return an independent `Option<string>` and can be called
+repeatedly. When building your own diagnostic from borrowed metadata, use its
+`.asStr()` view; passing an owned string to the consuming `+` overload transfers
+ownership.
+
 ## Prompts and terminal style
 
 `input`, `confirm`, and `choose` return `Result<_, IoError>`. Empty/default and
@@ -114,8 +121,15 @@ application knows color output is appropriate.
 
 ## Current advanced boundary
 
-The production-signed core covers schema, parsing, help and dispatch. Shell
+The core API covers schema, parsing, help and dispatch. Shell
 completion, hidden/deprecated migration metadata, typo suggestions,
 schema-generated man pages and explicit config-file integration are staged on
 the same command model. They are not silently emulated by ambient global
 configuration.
+
+## Validation checkpoint — 2026-09-06
+
+The native O0 and O3 suites each pass **26/26** tests, including repeated reads of
+non-inline default strings and metadata. This checkpoint covers parser/schema,
+help and ownership regressions; it is not a cross-platform or interactive
+terminal qualification, and no new benchmark result is claimed.

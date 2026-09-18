@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../supabase/client'
-import AppLayout from '../components/AppLayout.vue'
+
 import { Search, Users, GitBranch, ArrowRight, Filter } from 'lucide-vue-next'
 
 interface ProjectRow {
@@ -104,11 +104,12 @@ function progressPercent(p: ProjectRow): number {
 </script>
 
 <template>
-  <AppLayout>
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+    <div class="content-page">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-3xl font-bold text-white mb-2">Community Projects</h1>
+        <p class="page-eyebrow">Built with Vex</p>
+        <h1>Community Projects</h1>
         <p class="text-vex-text-muted max-w-2xl">Discover projects built with Vex, find teams to join, or start your own. Communication happens through GitHub — we keep it simple.</p>
       </div>
 
@@ -140,7 +141,7 @@ function progressPercent(p: ProjectRow): number {
       </div>
 
       <!-- Empty -->
-      <div v-else-if="filtered.length === 0" class="text-center py-16">
+      <div v-else-if="filtered.length === 0" class="ui-empty-state workspace-panel">
         <GitBranch class="w-10 h-10 text-zinc-600 mx-auto mb-3" />
         <p class="text-vex-text-muted">No projects found.</p>
         <router-link to="/dashboard/projects/new" class="inline-block mt-4 px-4 py-2 rounded-lg bg-vex-primary text-white text-sm font-medium hover:bg-vex-primary-dim transition-colors">Start a Project</router-link>
@@ -157,7 +158,7 @@ function progressPercent(p: ProjectRow): number {
           <!-- Top row -->
           <div class="flex items-start justify-between mb-3">
             <h3 class="text-sm font-semibold text-white group-hover:text-vex-primary transition-colors line-clamp-1">{{ project.name }}</h3>
-            <span :class="statusColors[project.status]" class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ml-2">{{ statusLabels[project.status] }}</span>
+            <span :class="statusColors[project.status]" class="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ml-2">{{ statusLabels[project.status] }}</span>
           </div>
 
           <!-- Tagline -->
@@ -165,18 +166,18 @@ function progressPercent(p: ProjectRow): number {
 
           <!-- Category -->
           <div class="flex items-center gap-2 mb-3">
-            <span class="text-[10px] font-medium text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded">{{ categoryLabels[project.category] || project.category }}</span>
+            <span class="text-xs font-medium text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded">{{ categoryLabels[project.category] || project.category }}</span>
           </div>
 
           <!-- Looking for -->
           <div v-if="project.looking_for?.length" class="flex flex-wrap gap-1 mb-3">
-            <span v-for="role in project.looking_for.slice(0, 3)" :key="role" class="text-[10px] text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded">{{ role }}</span>
-            <span v-if="project.looking_for.length > 3" class="text-[10px] text-zinc-500">+{{ project.looking_for.length - 3 }}</span>
+            <span v-for="role in project.looking_for.slice(0, 3)" :key="role" class="text-xs text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded">{{ role }}</span>
+            <span v-if="project.looking_for.length > 3" class="text-xs text-zinc-500">+{{ project.looking_for.length - 3 }}</span>
           </div>
 
           <!-- Progress bar -->
           <div v-if="project.milestone_progress && project.milestone_progress.total > 0" class="mb-3">
-            <div class="flex items-center justify-between text-[10px] text-zinc-500 mb-1">
+            <div class="flex items-center justify-between text-xs text-zinc-500 mb-1">
               <span>Progress</span>
               <span>{{ project.milestone_progress.done }}/{{ project.milestone_progress.total }}</span>
             </div>
@@ -191,9 +192,9 @@ function progressPercent(p: ProjectRow): number {
               <div class="w-5 h-5 rounded-full bg-zinc-700 overflow-hidden">
                 <img v-if="project.owner?.avatar_url" :src="project.owner.avatar_url" :alt="project.owner.display_name" class="w-full h-full object-cover" />
               </div>
-              <span class="text-[11px] text-zinc-400">{{ project.owner?.display_name || project.owner?.username || 'Unknown' }}</span>
+              <span class="text-xs text-zinc-400">{{ project.owner?.display_name || project.owner?.username || 'Unknown' }}</span>
             </div>
-            <div class="flex items-center gap-1 text-[11px] text-zinc-500">
+            <div class="flex items-center gap-1 text-xs text-zinc-500">
               <Users class="w-3 h-3" />
               <span>{{ project.member_count }}</span>
             </div>
@@ -201,5 +202,5 @@ function progressPercent(p: ProjectRow): number {
         </router-link>
       </div>
     </div>
-  </AppLayout>
+
 </template>

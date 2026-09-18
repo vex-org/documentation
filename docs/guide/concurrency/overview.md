@@ -89,6 +89,19 @@ go {
 
 Whether a capture is accepted depends on the lifetime and capture kind. Prefer moving an owned value into a task, borrowing only when the task is guaranteed to remain within the borrow's lifetime, and communicating results through a channel.
 
+For bounded iteration such as `go(cpu: 4) for item in bundle.items { ... }`, an
+independently owned source field can move into the task without moving
+`bundle.label`. This also covers nested generic fields and user-defined
+iterators; it is not a special privilege of `Vec`. An iterator call such as
+`bundle.items.iter()` stays inside the task, after its source owner is transferred,
+so it cannot leave a borrow pointing into the spawning function's storage.
+
+This precise source transfer does not permit reading the moved field again or
+moving it while a live borrow exists. A custom destructor or sharing protocol on
+an enclosing aggregate, an indexed/borrowed source place, or use of the same root
+inside the loop body retains the existing whole-root capture rules. It is not a
+promise of field-by-field capture for every closure or `go { ... }` block.
+
 ## Runtime status
 
 The macOS ARM64 development runtime covers scheduler ownership, channel close/drain behavior, same-worker blocking progress, and event-driven select regressions. Cross-target objects and internal-symbol checks cover Linux and Windows; native execution on those operating systems remains a CI validation item.

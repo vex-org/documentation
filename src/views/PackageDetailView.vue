@@ -76,7 +76,7 @@ async function yankVersion(versionId: string) {
 </script>
 
 <template>
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+  <div class="content-page">
     <!-- Loading -->
     <div v-if="loading" class="flex items-center justify-center py-20">
       <div class="w-6 h-6 border-2 border-vex-border border-t-vex-primary rounded-full animate-spin"></div>

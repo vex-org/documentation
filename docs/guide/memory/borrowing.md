@@ -218,6 +218,35 @@ fn (point: &Point!) move_by(dx: i32, dy: i32) {
 
 The call-site value must satisfy the receiver's mutability requirement.
 
+## Borrowing an indexed element
+
+For a source-defined index operator, exclusive use selects the declared
+mutable getter (`&Container! -> &Element!`). This applies to field assignment,
+an explicit mutable borrow, a contextually mutable reference argument, and a
+method whose selected receiver is `&Element!`:
+
+~~~vex
+struct IndexedCounter { value: i32 }
+fn (self: &IndexedCounter!) increment() { self.value = self.value + 1; }
+
+fn update(counters: &Vec<IndexedCounter>!) {
+    counters[0 as usize].increment();
+    let counter = &counters[0 as usize]!;
+    counter.increment();
+}
+~~~
+
+The same rule applies to user-defined containers and nested index projections;
+it is not a special privilege of `Vec`. The getter must return a mutable
+reference to the value required by the consuming operation. A getter returning
+a different element type cannot replace the value underneath an already
+resolved method call.
+
+Selecting a mutable getter does not grant permission to mutate a shared owner,
+nor does it override a live conflicting borrow. A container with only a shared
+getter still cannot provide mutable element access. The selection is resolved
+at compile time and does not add runtime dispatch.
+
 A freshly written `&value` can also take its shared/exclusive reference type
 from its consuming field or parameter. This applies after generic literal
 inference too. The borrow checker uses that inferred capability: if the field

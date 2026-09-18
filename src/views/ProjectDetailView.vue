@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { supabase } from '../supabase/client'
 import { useSEO } from '../composables/useSEO'
-import AppLayout from '../components/AppLayout.vue'
+
 import { Users, GitBranch, ExternalLink, CheckCircle2, Circle, UserPlus, UserMinus, Github } from 'lucide-vue-next'
 
 interface ProjectDetail {
@@ -123,8 +123,8 @@ function roleColor(role: string): string {
 </script>
 
 <template>
-  <AppLayout>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+
+    <div class="content-page">
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
         <div class="w-6 h-6 border-2 border-vex-border border-t-vex-primary rounded-full animate-spin"></div>
@@ -256,5 +256,5 @@ function roleColor(role: string): string {
         </div>
       </template>
     </div>
-  </AppLayout>
+
 </template>

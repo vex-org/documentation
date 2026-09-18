@@ -80,9 +80,9 @@ async function upload() {
 </script>
 
 <template>
-  <div>
-    <h1 class="text-2xl font-bold text-white mb-6">Publish Version: <span class="text-vex-primary">{{ packageName }}</span></h1>
-    <form @submit.prevent="upload" class="max-w-lg space-y-4">
+  <div class="workspace-page">
+    <h1 class="mb-6">Publish Version: <span class="text-vex-primary">{{ packageName }}</span></h1>
+    <form @submit.prevent="upload" class="editor-form space-y-5">
       <div>
         <label class="block text-sm font-medium text-vex-text mb-1.5">Version (semver)</label>
         <input v-model="version" required placeholder="1.0.0" class="w-full px-4 py-2.5 rounded-xl border border-vex-border bg-vex-surface text-white placeholder-vex-text-muted focus:outline-none focus:border-vex-primary focus:ring-1 focus:ring-vex-primary transition-all" />

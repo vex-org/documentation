@@ -105,6 +105,24 @@ let value = fallible !> handle_error
 
 Do not assume that a fallback operator is lazy unless its API documentation says so.
 
+An `!>` handler supplies a replacement success payload. Its `return` exits
+the **handler closure**, not the enclosing function. For example,
+`missing !> || { return 7; }` produces `7` when `missing` is an absent
+`Option<i32>`. `missing !> || { return; }` cannot initialize an `i32`: that
+closure returns unit.
+
+Use explicit outer control flow when failure must stop the caller:
+
+```vex
+fn consume(optional: Option<i32>): i32 {
+    let value = match optional {
+        Some(value) => value,
+        None => return -1,
+    };
+    return value + 1;
+}
+```
+
 ## Null pointers
 
 Use typed pointer constructors and `isNull()` at FFI boundaries. Null pointers

@@ -177,12 +177,12 @@ function runBenchmark() {
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+  <div class="content-page content-page-wide">
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="tool-heading">
       <div>
-        <h1 class="text-2xl font-bold text-white flex items-center gap-2">
-          <Trophy class="w-6 h-6 text-yellow-400" />
+        <h1 class="flex items-center gap-2">
+          <Trophy class="w-6 h-6 text-vex-accent" />
           Benchmark Arena
         </h1>
         <p class="text-vex-text-muted text-sm mt-1">
@@ -192,14 +192,14 @@ function runBenchmark() {
       <button
         @click="runBenchmark"
         :disabled="isRunning"
-        class="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold transition-all disabled:opacity-50 cursor-pointer shadow-lg shadow-yellow-500/20"
+        class="ui-button ui-button-primary disabled:opacity-50"
       >
         <Play v-if="!isRunning" class="w-4 h-4" />
         <div
           v-else
           class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"
         ></div>
-        {{ isRunning ? "Running..." : "Battle!" }}
+        {{ isRunning ? "Running..." : "Run benchmarks" }}
       </button>
     </div>
 

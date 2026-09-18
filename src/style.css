@@ -1,5 +1,6 @@
 @import "../brand.css";
 @import "tailwindcss";
+@import "./styles/product.css";
 @plugin "@tailwindcss/typography";
 
 @theme {
@@ -24,14 +25,14 @@
 
   /* Text */
   --color-vex-text: #f5f7f6;
-  --color-vex-text-muted: #8b949e;
+  --color-vex-text-muted: #a2abb8;
 
   /* Semantic */
   --color-vex-success: #22c55e;
   --color-vex-error: #ef4444;
   --color-vex-warning: #f59e0b;
 
-  --font-family-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 }
 
 @utility prose-vex {
